@@ -11,10 +11,7 @@ const getJwt = (): string | null => {
   }
 };
 
-async function request<T>(
-  path: string,
-  options: RequestInit = {}
-): Promise<T> {
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const jwt = getJwt();
   const res = await fetch(path, {
     ...options,

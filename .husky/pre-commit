@@ -1,0 +1,2 @@
+npm run changelog:staged
+npx lint-staged

@@ -19,12 +19,15 @@ export function Navbar() {
     <header className="sticky top-0 z-50 border-b border-ink-100 bg-panda-white/80 backdrop-blur-sm">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
         {/* Logo */}
-        <Link href="/" className="font-serif text-xl font-bold text-bamboo-900 hover:text-bamboo-500 transition-colors">
+        <Link
+          href="/"
+          className="font-serif text-xl font-bold text-bamboo-900 transition-colors hover:text-bamboo-500"
+        >
           🐼 TradingPanda
         </Link>
 
         {/* Nav links */}
-        <nav className="hidden md:flex items-center gap-1">
+        <nav className="hidden items-center gap-1 md:flex">
           {NAV_LINKS.map(({ href, label }) => (
             <Link
               key={href}
@@ -33,7 +36,7 @@ export function Navbar() {
                 "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
                 pathname === href
                   ? "bg-bamboo-50 text-bamboo-500"
-                  : "text-ink-500 hover:text-ink-900 hover:bg-ink-100"
+                  : "text-ink-500 hover:bg-ink-100 hover:text-ink-900"
               )}
             >
               {label}
@@ -46,7 +49,7 @@ export function Navbar() {
                 "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
                 pathname === "/profile"
                   ? "bg-bamboo-50 text-bamboo-500"
-                  : "text-ink-500 hover:text-ink-900 hover:bg-ink-100"
+                  : "text-ink-500 hover:bg-ink-100 hover:text-ink-900"
               )}
             >
               我的

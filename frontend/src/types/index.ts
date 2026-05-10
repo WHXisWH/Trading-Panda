@@ -11,12 +11,12 @@ export type EmotionState =
 export type GrowthStage = "cub" | "growing" | "mature";
 
 export interface PandaPersonality {
-  boldness: number;    // 0–100 胆识
-  patience: number;    // 0–100 耐性 (also drives emotion_stability)
-  intuition: number;   // 0–100 直觉
-  focus: number;       // 0–100 专注
-  contrarian: number;  // 0–100 逆向性
-  talent: number;      // 0–6  天赋 (0 = none)
+  boldness: number; // 0–100 胆识
+  patience: number; // 0–100 耐性 (also drives emotion_stability)
+  intuition: number; // 0–100 直觉
+  focus: number; // 0–100 专注
+  contrarian: number; // 0–100 逆向性
+  talent: number; // 0–6  天赋 (0 = none)
 }
 
 export interface Panda {
@@ -24,7 +24,7 @@ export interface Panda {
   suiObjectId: string;
   name: string;
   personality: PandaPersonality;
-  experienceLevel: number;       // 0–100
+  experienceLevel: number; // 0–100
   growthStage: GrowthStage;
   emotionState: EmotionState;
   isTrading: boolean;
@@ -56,7 +56,7 @@ export interface Strategy {
   parsedJson: ParsedStrategy;
   strategyHash: string;
   philosophy: Philosophy;
-  proficiency: number;   // 0–100
+  proficiency: number; // 0–100
   isActive: boolean;
   createdAt: string;
 }
@@ -81,7 +81,7 @@ export interface Trade {
   action: TradeAction;
   price: number;
   quantity: number;
-  finalScore: number;       // Step 8 output
+  finalScore: number; // Step 8 output
   emotionAtTrade: EmotionState;
   proficiencyAtTrade: number;
   pnlPct: number | null;
@@ -93,14 +93,18 @@ export interface Trade {
 
 // ─── User ────────────────────────────────────────────────────────────────────
 
-export type ExperienceLevel = "beginner" | "intermediate" | "advanced" | "expert";
+export type ExperienceLevel =
+  | "beginner"
+  | "intermediate"
+  | "advanced"
+  | "expert";
 
 export interface OnboardingSurvey {
   tradingExp: string;
   style: string[];
   maxLoss: number;
   indicators: string[];
-  pandaAutonomy: number;  // 1–5
+  pandaAutonomy: number; // 1–5
 }
 
 export interface User {

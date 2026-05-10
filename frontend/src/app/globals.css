@@ -15,15 +15,27 @@
 
 @layer base {
   body {
-    @apply bg-panda-white text-ink-900 font-sans antialiased;
+    @apply bg-panda-white font-sans text-ink-900 antialiased;
   }
 }
 
 @layer utilities {
-  .emotion-focused  { @apply text-emotion-focused; }
-  .emotion-excited  { @apply text-emotion-excited; }
-  .emotion-greedy   { @apply text-emotion-greedy; }
-  .emotion-cautious { @apply text-emotion-cautious; }
-  .emotion-panicking { @apply text-emotion-panicking; }
-  .emotion-numb     { @apply text-emotion-numb; }
+  .emotion-focused {
+    @apply text-emotion-focused;
+  }
+  .emotion-excited {
+    @apply text-emotion-excited;
+  }
+  .emotion-greedy {
+    @apply text-emotion-greedy;
+  }
+  .emotion-cautious {
+    @apply text-emotion-cautious;
+  }
+  .emotion-panicking {
+    @apply text-emotion-panicking;
+  }
+  .emotion-numb {
+    @apply text-emotion-numb;
+  }
 }

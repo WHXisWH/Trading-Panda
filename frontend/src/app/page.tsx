@@ -39,9 +39,9 @@ export default function LandingPage() {
     queryKey: ["pandas", jwt],
     enabled: !!jwt,
     queryFn: () =>
-      fetch("/api/pandas", { headers: { Authorization: `Bearer ${jwt}` } }).then(
-        (r) => r.json()
-      ),
+      fetch("/api/pandas", {
+        headers: { Authorization: `Bearer ${jwt}` },
+      }).then((r) => r.json()),
   });
 
   const hasPandas = pandas && pandas.length > 0;
@@ -60,22 +60,22 @@ export default function LandingPage() {
           }}
         />
 
-        <PageContainer className="flex min-h-[calc(100vh-64px)] flex-col items-center justify-center text-center gap-8 py-24">
+        <PageContainer className="flex min-h-[calc(100vh-64px)] flex-col items-center justify-center gap-8 py-24 text-center">
           {/* Panda mascot */}
           <div className="relative">
-            <span className="text-[96px] leading-none animate-panda-breathe inline-block">
+            <span className="inline-block animate-panda-breathe text-[96px] leading-none">
               🐼
             </span>
           </div>
 
-          <div className="space-y-4 max-w-2xl">
-            <h1 className="font-serif text-5xl font-bold text-bamboo-900 leading-tight">
+          <div className="max-w-2xl space-y-4">
+            <h1 className="font-serif text-5xl font-bold leading-tight text-bamboo-900">
               TradingPanda
             </h1>
-            <p className="text-xl text-ink-500 font-light">
+            <p className="text-xl font-light text-ink-500">
               养一只会交易的 AI 熊猫
             </p>
-            <p className="text-base text-ink-500 max-w-lg mx-auto leading-relaxed">
+            <p className="mx-auto max-w-lg text-base leading-relaxed text-ink-500">
               铸造你的专属熊猫 NFT，喂给它交易策略，看它在模拟盘上自主成长。
               性格由链上随机决定，经验 Merkle Root 上链存证。
             </p>
@@ -83,7 +83,7 @@ export default function LandingPage() {
 
           {/* CTA */}
           {account && jwt ? (
-            <div className="flex flex-wrap gap-3 justify-center">
+            <div className="flex flex-wrap justify-center gap-3">
               <Link href="/mint">
                 <Button size="lg">🐾 铸造熊猫</Button>
               </Link>
@@ -96,13 +96,13 @@ export default function LandingPage() {
               )}
             </div>
           ) : (
-            <p className="text-sm text-ink-500 mt-2">
+            <p className="mt-2 text-sm text-ink-500">
               连接钱包后即可铸造你的第一只熊猫
             </p>
           )}
 
           {/* Stats strip */}
-          <div className="mt-8 flex flex-wrap gap-8 justify-center text-center">
+          <div className="mt-8 flex flex-wrap justify-center gap-8 text-center">
             {[
               { value: "5轴", label: "链上性格" },
               { value: "8步", label: "决策管道" },
@@ -110,8 +110,10 @@ export default function LandingPage() {
               { value: "Testnet", label: "Sui 网络" },
             ].map(({ value, label }) => (
               <div key={label}>
-                <div className="font-serif text-2xl font-bold text-bamboo-500">{value}</div>
-                <div className="text-xs text-ink-500 mt-0.5">{label}</div>
+                <div className="font-serif text-2xl font-bold text-bamboo-500">
+                  {value}
+                </div>
+                <div className="mt-0.5 text-xs text-ink-500">{label}</div>
               </div>
             ))}
           </div>
@@ -121,15 +123,15 @@ export default function LandingPage() {
       {/* Features */}
       <section className="border-t border-ink-100 bg-white">
         <PageContainer className="py-20">
-          <h2 className="font-serif text-3xl font-bold text-bamboo-900 text-center mb-12">
+          <h2 className="mb-12 text-center font-serif text-3xl font-bold text-bamboo-900">
             为什么选择 TradingPanda
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
             {FEATURES.map(({ emoji, title, desc }) => (
               <Card key={title} variant="ink" className="space-y-3">
                 <div className="text-3xl">{emoji}</div>
                 <h3 className="font-semibold text-bamboo-900">{title}</h3>
-                <p className="text-sm text-ink-500 leading-relaxed">{desc}</p>
+                <p className="text-sm leading-relaxed text-ink-500">{desc}</p>
               </Card>
             ))}
           </div>
@@ -138,9 +140,7 @@ export default function LandingPage() {
 
       {/* Footer strip */}
       <footer className="border-t border-ink-100 py-8 text-center text-xs text-ink-500">
-        <p>
-          TradingPanda · Sui Overflow 2026 · 模拟交易，非真实下单
-        </p>
+        <p>TradingPanda · Sui Overflow 2026 · 模拟交易，非真实下单</p>
       </footer>
     </>
   );

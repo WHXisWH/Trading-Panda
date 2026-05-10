@@ -1,10 +1,17 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useCurrentAccount, useSignAndExecuteTransaction } from "@mysten/dapp-kit";
+import {
+  useCurrentAccount,
+  useSignAndExecuteTransaction,
+} from "@mysten/dapp-kit";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import { buildMintTx, fetchPandaFields, extractPandaObjectId } from "@/lib/sui/mintPanda";
+import {
+  buildMintTx,
+  fetchPandaFields,
+  extractPandaObjectId,
+} from "@/lib/sui/mintPanda";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -67,17 +74,22 @@ export default function MintPage() {
   return (
     <PageContainer className="flex min-h-[calc(100vh-64px)] flex-col items-center justify-center gap-10">
       {/* Intro */}
-      <div className="text-center space-y-3 max-w-lg">
-        <h1 className="font-serif text-4xl font-bold text-bamboo-900">铸造你的熊猫</h1>
+      <div className="max-w-lg space-y-3 text-center">
+        <h1 className="font-serif text-4xl font-bold text-bamboo-900">
+          铸造你的熊猫
+        </h1>
         <p className="text-ink-500">
-          每只熊猫的性格由 Sui 链上随机数永久决定，铸造后不可更改。
-          15% 概率获得稀有天赋，影响整个成长轨迹。
+          每只熊猫的性格由 Sui 链上随机数永久决定，铸造后不可更改。 15%
+          概率获得稀有天赋，影响整个成长轨迹。
         </p>
       </div>
 
       {/* Preview card */}
-      <Card variant="ink" className="w-full max-w-sm text-center space-y-6 py-8">
-        <div className="text-[80px] leading-none animate-panda-breathe inline-block">
+      <Card
+        variant="ink"
+        className="w-full max-w-sm space-y-6 py-8 text-center"
+      >
+        <div className="inline-block animate-panda-breathe text-[80px] leading-none">
           🐼
         </div>
         <div className="space-y-1">
@@ -86,15 +98,15 @@ export default function MintPage() {
         </div>
 
         {/* Personality axes preview */}
-        <div className="space-y-2 text-left px-2">
+        <div className="space-y-2 px-2 text-left">
           {PERSONALITY_AXES.map((axis) => (
             <div key={axis.key} className="flex items-center gap-3">
-              <span className="w-8 text-xs text-ink-500 text-right shrink-0">
+              <span className="w-8 shrink-0 text-right text-xs text-ink-500">
                 {axis.label}
               </span>
-              <div className="flex-1 h-1.5 rounded-full bg-ink-100 overflow-hidden">
+              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-ink-100">
                 <div
-                  className="h-full rounded-full bg-ink-100 animate-pulse"
+                  className="h-full animate-pulse rounded-full bg-ink-100"
                   style={{ width: "60%", backgroundColor: axis.color + "55" }}
                 />
               </div>

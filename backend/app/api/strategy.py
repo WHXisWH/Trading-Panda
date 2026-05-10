@@ -1,4 +1,5 @@
 """Strategy parsing — natural language → 4-layer JSON, stored in DB."""
+
 import hashlib
 import json
 
@@ -41,6 +42,7 @@ async def parse_strategy(
         raise HTTPException(404, "Panda not found")
 
     from app.config import settings
+
     if settings.deepseek_api_key:
         try:
             parsed = await parse_strategy_text(body.raw_text)
@@ -49,9 +51,7 @@ async def parse_strategy(
     else:
         parsed = _MOCK_PARSED
 
-    strategy_hash = hashlib.sha256(
-        json.dumps(parsed, sort_keys=True).encode()
-    ).hexdigest()
+    strategy_hash = hashlib.sha256(json.dumps(parsed, sort_keys=True).encode()).hexdigest()
 
     # Deactivate existing active strategies
     await db.execute(

@@ -6,6 +6,7 @@ Strategy parsing: natural language → 4-layer structured JSON
 Agent Coordinator: called when final_score is in ambiguous zone 0.40–0.65.
   Has 3s hard timeout; on timeout → rule engine pre-decision is used.
 """
+
 import json
 from openai import AsyncOpenAI
 from app.config import settings
@@ -62,12 +63,13 @@ async def agent_coordinator(context: dict, timeout: float = 3.0) -> dict:
       - reasoning: short explanation (used for panda diary)
     """
     import asyncio
-    prompt = f"""
-You are the inner voice of a trading panda. Its final signal score is {context.get('final_score', 0.5):.2f}
-(ambiguous zone). The panda's emotion is {context.get('emotion', 'focused')}.
 
-Current market: {context.get('market_summary', 'unknown')}
-Active strategy philosophy: {context.get('philosophy', 'unknown')}
+    prompt = f"""
+You are the inner voice of a trading panda. Its final signal score is {context.get("final_score", 0.5):.2f}
+(ambiguous zone). The panda's emotion is {context.get("emotion", "focused")}.
+
+Current market: {context.get("market_summary", "unknown")}
+Active strategy philosophy: {context.get("philosophy", "unknown")}
 
 Should the panda act? Reply with JSON: {{"decision": "BUY|SELL|HOLD", "reasoning": "one sentence"}}
 """

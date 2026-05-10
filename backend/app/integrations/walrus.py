@@ -6,6 +6,7 @@ Used for:
 
 Doc ref: docs/database-schema.md §6
 """
+
 import json
 import httpx
 from app.config import settings

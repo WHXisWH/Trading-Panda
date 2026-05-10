@@ -26,6 +26,7 @@ backend/**/__pycache__/
 .venv/
 backend/.venv/
 venv/
+.ruff_cache/
 *.egg-info/
 dist/
 build/

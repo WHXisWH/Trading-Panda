@@ -1,9 +1,19 @@
 """SQLAlchemy ORM models — all 18 tables."""
+
 import uuid
 from datetime import datetime, date
 from sqlalchemy import (
-    Boolean, Column, Date, DateTime, ForeignKey, Integer,
-    Numeric, SmallInteger, String, Text, UniqueConstraint,
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    Numeric,
+    SmallInteger,
+    String,
+    Text,
+    UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
@@ -72,7 +82,9 @@ class Strategy(Base):
     __tablename__ = "strategies"
 
     id = Column(UUID(as_uuid=False), primary_key=True, default=_uuid)
-    panda_id = Column(UUID(as_uuid=False), ForeignKey("pandas.id", ondelete="CASCADE"), nullable=False)
+    panda_id = Column(
+        UUID(as_uuid=False), ForeignKey("pandas.id", ondelete="CASCADE"), nullable=False
+    )
     raw_text = Column(Text, nullable=False)
     parsed_json = Column(JSONB, nullable=False)
     strategy_hash = Column(Text, nullable=False)
@@ -89,7 +101,9 @@ class StrategyHistory(Base):
     __tablename__ = "strategy_history"
 
     id = Column(UUID(as_uuid=False), primary_key=True, default=_uuid)
-    panda_id = Column(UUID(as_uuid=False), ForeignKey("pandas.id", ondelete="CASCADE"), nullable=False)
+    panda_id = Column(
+        UUID(as_uuid=False), ForeignKey("pandas.id", ondelete="CASCADE"), nullable=False
+    )
     strategy_id = Column(UUID(as_uuid=False), ForeignKey("strategies.id"), nullable=False)
     event_type = Column(String(30), nullable=False)  # activated | deactivated | proficiency_updated
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
@@ -101,7 +115,9 @@ class Simulation(Base):
     __tablename__ = "simulations"
 
     id = Column(UUID(as_uuid=False), primary_key=True, default=_uuid)
-    panda_id = Column(UUID(as_uuid=False), ForeignKey("pandas.id", ondelete="CASCADE"), nullable=False)
+    panda_id = Column(
+        UUID(as_uuid=False), ForeignKey("pandas.id", ondelete="CASCADE"), nullable=False
+    )
     strategy_id = Column(UUID(as_uuid=False), ForeignKey("strategies.id"), nullable=True)
     status = Column(String(20), nullable=False, default="running")  # running | stopped | completed
     speed = Column(String(10), nullable=False, default="1x")
@@ -120,7 +136,9 @@ class Trade(Base):
     __tablename__ = "trades"
 
     id = Column(UUID(as_uuid=False), primary_key=True, default=_uuid)
-    panda_id = Column(UUID(as_uuid=False), ForeignKey("pandas.id", ondelete="CASCADE"), nullable=False)
+    panda_id = Column(
+        UUID(as_uuid=False), ForeignKey("pandas.id", ondelete="CASCADE"), nullable=False
+    )
     strategy_id = Column(UUID(as_uuid=False), ForeignKey("strategies.id"), nullable=False)
     simulation_id = Column(UUID(as_uuid=False), ForeignKey("simulations.id"), nullable=False)
 
@@ -147,7 +165,9 @@ class ExperiencePattern(Base):
     __tablename__ = "experience_patterns"
 
     id = Column(UUID(as_uuid=False), primary_key=True, default=_uuid)
-    panda_id = Column(UUID(as_uuid=False), ForeignKey("pandas.id", ondelete="CASCADE"), nullable=False)
+    panda_id = Column(
+        UUID(as_uuid=False), ForeignKey("pandas.id", ondelete="CASCADE"), nullable=False
+    )
     pattern_type = Column(String(50), nullable=False)
     pattern_data = Column(JSONB, nullable=False, default=dict)
     confidence = Column(Numeric(5, 4), nullable=False, default=0)
@@ -159,7 +179,9 @@ class ExperienceMastery(Base):
     __tablename__ = "experience_mastery"
 
     id = Column(UUID(as_uuid=False), primary_key=True, default=_uuid)
-    panda_id = Column(UUID(as_uuid=False), ForeignKey("pandas.id", ondelete="CASCADE"), nullable=False)
+    panda_id = Column(
+        UUID(as_uuid=False), ForeignKey("pandas.id", ondelete="CASCADE"), nullable=False
+    )
     asset = Column(String(10), nullable=False)
     mastery_score = Column(Numeric(5, 4), nullable=False, default=0)
     trade_count = Column(Integer, nullable=False, default=0)
@@ -172,7 +194,9 @@ class ExperienceMistake(Base):
     __tablename__ = "experience_mistakes"
 
     id = Column(UUID(as_uuid=False), primary_key=True, default=_uuid)
-    panda_id = Column(UUID(as_uuid=False), ForeignKey("pandas.id", ondelete="CASCADE"), nullable=False)
+    panda_id = Column(
+        UUID(as_uuid=False), ForeignKey("pandas.id", ondelete="CASCADE"), nullable=False
+    )
     trade_id = Column(UUID(as_uuid=False), ForeignKey("trades.id"), nullable=True)
     mistake_type = Column(String(50), nullable=False)
     penalty = Column(Numeric(5, 4), nullable=False, default=0)
@@ -183,7 +207,9 @@ class ExperienceCycle(Base):
     __tablename__ = "experience_cycles"
 
     id = Column(UUID(as_uuid=False), primary_key=True, default=_uuid)
-    panda_id = Column(UUID(as_uuid=False), ForeignKey("pandas.id", ondelete="CASCADE"), nullable=False)
+    panda_id = Column(
+        UUID(as_uuid=False), ForeignKey("pandas.id", ondelete="CASCADE"), nullable=False
+    )
     cycle_type = Column(String(30), nullable=False)  # bull | bear | sideways
     performance_data = Column(JSONB, nullable=False, default=dict)
     started_at = Column(DateTime(timezone=True), nullable=False)
@@ -194,7 +220,9 @@ class EmotionLog(Base):
     __tablename__ = "emotions_log"
 
     id = Column(UUID(as_uuid=False), primary_key=True, default=_uuid)
-    panda_id = Column(UUID(as_uuid=False), ForeignKey("pandas.id", ondelete="CASCADE"), nullable=False)
+    panda_id = Column(
+        UUID(as_uuid=False), ForeignKey("pandas.id", ondelete="CASCADE"), nullable=False
+    )
     from_state = Column(String(20), nullable=False)
     to_state = Column(String(20), nullable=False)
     trigger = Column(String(50), nullable=False)
@@ -207,7 +235,9 @@ class MerkleRoot(Base):
     __tablename__ = "merkle_roots"
 
     id = Column(UUID(as_uuid=False), primary_key=True, default=_uuid)
-    panda_id = Column(UUID(as_uuid=False), ForeignKey("pandas.id", ondelete="CASCADE"), nullable=False)
+    panda_id = Column(
+        UUID(as_uuid=False), ForeignKey("pandas.id", ondelete="CASCADE"), nullable=False
+    )
     root_hash = Column(Text, nullable=False)
     trade_count = Column(Integer, nullable=False)
     batch_index = Column(Integer, nullable=False)
@@ -234,8 +264,12 @@ class UserAchievement(Base):
     __tablename__ = "user_achievements"
 
     id = Column(UUID(as_uuid=False), primary_key=True, default=_uuid)
-    user_id = Column(UUID(as_uuid=False), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    panda_id = Column(UUID(as_uuid=False), ForeignKey("pandas.id", ondelete="CASCADE"), nullable=True)
+    user_id = Column(
+        UUID(as_uuid=False), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    panda_id = Column(
+        UUID(as_uuid=False), ForeignKey("pandas.id", ondelete="CASCADE"), nullable=True
+    )
     achievement_id = Column(UUID(as_uuid=False), ForeignKey("achievements.id"), nullable=False)
     unlocked_at = Column(DateTime(timezone=True), default=datetime.utcnow)
 
@@ -249,7 +283,9 @@ class Checkin(Base):
     __tablename__ = "checkins"
 
     id = Column(UUID(as_uuid=False), primary_key=True, default=_uuid)
-    user_id = Column(UUID(as_uuid=False), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(
+        UUID(as_uuid=False), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
     streak_count = Column(Integer, nullable=False, default=1)
     checkin_date = Column(Date, nullable=False)
     reward_type = Column(Text, nullable=False)
@@ -284,7 +320,9 @@ class PandaDiary(Base):
     __tablename__ = "panda_diary"
 
     id = Column(UUID(as_uuid=False), primary_key=True, default=_uuid)
-    panda_id = Column(UUID(as_uuid=False), ForeignKey("pandas.id", ondelete="CASCADE"), nullable=False)
+    panda_id = Column(
+        UUID(as_uuid=False), ForeignKey("pandas.id", ondelete="CASCADE"), nullable=False
+    )
     content = Column(Text, nullable=False)
     trade_id = Column(UUID(as_uuid=False), ForeignKey("trades.id"), nullable=True)
     emotion_state = Column(String(20), nullable=False)

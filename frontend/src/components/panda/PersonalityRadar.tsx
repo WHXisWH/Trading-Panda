@@ -22,11 +22,18 @@ export function PersonalityRadar({ scores, size = 220 }: Props) {
 
   return (
     <ResponsiveContainer width="100%" height={size}>
-      <RadarChart data={data} margin={{ top: 10, right: 20, bottom: 10, left: 20 }}>
+      <RadarChart
+        data={data}
+        margin={{ top: 10, right: 20, bottom: 10, left: 20 }}
+      >
         <PolarGrid stroke="#e8e0d8" />
         <PolarAngleAxis
           dataKey="subject"
-          tick={{ fill: "#5c5248", fontSize: 12, fontFamily: "Noto Sans SC, sans-serif" }}
+          tick={{
+            fill: "#5c5248",
+            fontSize: 12,
+            fontFamily: "Noto Sans SC, sans-serif",
+          }}
         />
         <Radar
           name="性格"

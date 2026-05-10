@@ -2,6 +2,7 @@
 
 Coverage target: 80%+ (see docs/testing-strategy.md)
 """
+
 import pytest
 from app.engine.decision_pipeline import DecisionPipeline
 
@@ -52,6 +53,7 @@ class TestDecisionPipeline:
 class TestEmotionStateMachine:
     def test_win_streak_triggers_excited(self):
         from app.engine.emotion_state_machine import EmotionStateMachine, EmotionContext
+
         machine = EmotionStateMachine()
         ctx = EmotionContext(current="focused", win_streak=0)
         for _ in range(3):
@@ -60,6 +62,7 @@ class TestEmotionStateMachine:
 
     def test_calm_bamboo_resets_to_focused(self):
         from app.engine.emotion_state_machine import EmotionStateMachine, EmotionContext
+
         machine = EmotionStateMachine()
         ctx = EmotionContext(current="panicking")
         state = machine.transition(ctx, "calm_bamboo")
@@ -67,6 +70,7 @@ class TestEmotionStateMachine:
 
     def test_talent_1_prevents_panic(self):
         from app.engine.emotion_state_machine import EmotionStateMachine, EmotionContext
+
         machine = EmotionStateMachine()
         ctx = EmotionContext(current="cautious", talent=1)
         state = machine.transition(ctx, "drawdown", 0.15)

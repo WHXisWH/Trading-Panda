@@ -9,6 +9,7 @@ Flow:
 
 Doc ref: docs/PRD.md §11 (Trust Model), docs/database-schema.md §3.12
 """
+
 import hashlib
 from typing import List
 
@@ -23,10 +24,7 @@ def compute_merkle_root(leaves: List[str]) -> str:
     while len(nodes) > 1:
         if len(nodes) % 2 == 1:
             nodes.append(nodes[-1])  # duplicate last node if odd
-        nodes = [
-            hashlib.sha256(nodes[i] + nodes[i + 1]).digest()
-            for i in range(0, len(nodes), 2)
-        ]
+        nodes = [hashlib.sha256(nodes[i] + nodes[i + 1]).digest() for i in range(0, len(nodes), 2)]
 
     return nodes[0].hex()
 

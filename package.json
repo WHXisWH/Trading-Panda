@@ -1,0 +1,22 @@
+{
+  "name": "trading-panda-tooling",
+  "private": true,
+  "scripts": {
+    "changelog:staged": "python3.11 scripts/changelog/generate_staged_changelog.py",
+    "prepare": "husky",
+    "format": "prettier --write package.json package-lock.json prettier.config.mjs .env.example --ignore-unknown && npm --prefix frontend run format && python3.11 -m ruff format backend/app backend/tests scripts",
+    "format:check": "prettier --check package.json package-lock.json prettier.config.mjs .env.example --ignore-unknown && npm --prefix frontend run format:check && python3.11 -m ruff format --check backend/app backend/tests scripts"
+  },
+  "lint-staged": {
+    "*.{json,mjs}": "prettier --write --ignore-unknown",
+    "changelogs/**/*.md": "prettier --write --ignore-unknown",
+    "frontend/**/*.{ts,tsx,js,jsx,mjs,cjs,json,css,md,mdx}": "prettier --write --ignore-unknown",
+    "{backend,scripts}/**/*.py": "python3.11 -m ruff format"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.8.3",
+    "prettier-plugin-tailwindcss": "^0.8.0"
+  }
+}

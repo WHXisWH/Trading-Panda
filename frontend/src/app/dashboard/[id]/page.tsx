@@ -113,7 +113,7 @@ export default function DashboardPage({ params }: { params: { id: string } }) {
   if (isLoading || !panda) {
     return (
       <PageContainer className="py-10">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           <Skeleton className="h-64" />
           <Skeleton className="h-64" />
           <Skeleton className="h-64" />
@@ -133,10 +133,12 @@ export default function DashboardPage({ params }: { params: { id: string } }) {
   return (
     <PageContainer className="space-y-6 py-8">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="space-y-0.5">
-          <h1 className="font-serif text-2xl font-bold text-bamboo-900">模拟盘</h1>
-          <p className="text-xs text-ink-500 font-mono">
+          <h1 className="font-serif text-2xl font-bold text-bamboo-900">
+            模拟盘
+          </h1>
+          <p className="font-mono text-xs text-ink-500">
             {panda.sui_object_id?.slice(0, 20)}…
           </p>
         </div>
@@ -145,7 +147,7 @@ export default function DashboardPage({ params }: { params: { id: string } }) {
           <TalentBadge talentId={panda.talent} />
           {simRunning && (
             <Badge color="#4a7c59">
-              <span className="h-1.5 w-1.5 rounded-full bg-current animate-pulse" />
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current" />
               模拟中
             </Badge>
           )}
@@ -153,13 +155,16 @@ export default function DashboardPage({ params }: { params: { id: string } }) {
       </div>
 
       {/* Main 3-column grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Column 1: Panda avatar + emotion + experience */}
         <Card variant="ink" className="flex flex-col items-center gap-5 py-8">
           <PandaAvatar emotionState={panda.emotion_state} size="xl" />
           <EmotionIndicator state={panda.emotion_state} showDesc />
           <div className="w-full px-2">
-            <ExperienceBar level={panda.experience_level} progress={(panda.experience_level % 10) * 10} />
+            <ExperienceBar
+              level={panda.experience_level}
+              progress={(panda.experience_level % 10) * 10}
+            />
           </div>
           <Button
             size="sm"
@@ -185,7 +190,9 @@ export default function DashboardPage({ params }: { params: { id: string } }) {
                   {key === "focus" && "专注"}
                   {key === "contrarian" && "逆向"}
                 </span>
-                <span className="font-mono font-medium text-bamboo-900">{val}</span>
+                <span className="font-mono font-medium text-bamboo-900">
+                  {val}
+                </span>
               </div>
             ))}
           </div>
@@ -198,7 +205,7 @@ export default function DashboardPage({ params }: { params: { id: string } }) {
           {strategy ? (
             <div className="space-y-2">
               <Badge color="#4a7c59">{strategy.philosophy}</Badge>
-              <p className="text-sm text-ink-500 italic leading-relaxed">
+              <p className="text-sm italic leading-relaxed text-ink-500">
                 &ldquo;{strategy.raw_text}&rdquo;
               </p>
               <p className="text-xs text-ink-500">
@@ -212,7 +219,7 @@ export default function DashboardPage({ params }: { params: { id: string } }) {
           <div className="mt-auto space-y-2">
             <p className="text-xs text-ink-500">用自然语言描述新策略</p>
             <textarea
-              className="w-full rounded-lg border border-ink-100 p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-bamboo-500 bg-white"
+              className="w-full resize-none rounded-lg border border-ink-100 bg-white p-3 text-sm focus:outline-none focus:ring-2 focus:ring-bamboo-500"
               rows={4}
               placeholder={"例如：RSI < 30 时买入，设 5% 止损，仓位不超过 10%"}
               value={strategyText}
@@ -234,7 +241,7 @@ export default function DashboardPage({ params }: { params: { id: string } }) {
       {/* K-line placeholder */}
       <Card variant="bordered" className="space-y-3">
         <h2 className="font-semibold text-bamboo-900">交易记录 / K 线图</h2>
-        <div className="flex h-48 items-center justify-center rounded-lg bg-ink-100 text-ink-500 text-sm">
+        <div className="flex h-48 items-center justify-center rounded-lg bg-ink-100 text-sm text-ink-500">
           模拟运行中数据将在此处展示（WebSocket 接入后显示实时 K 线）
         </div>
       </Card>

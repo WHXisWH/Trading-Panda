@@ -1,4 +1,5 @@
 """Panda CRUD endpoints."""
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -116,9 +117,7 @@ async def get_panda(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    result = await db.execute(
-        select(Panda).where(Panda.id == panda_id, Panda.owner_id == user.id)
-    )
+    result = await db.execute(select(Panda).where(Panda.id == panda_id, Panda.owner_id == user.id))
     panda = result.scalar_one_or_none()
     if panda is None:
         raise HTTPException(404, "Panda not found")
@@ -132,9 +131,7 @@ async def get_panda_strategy(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    result = await db.execute(
-        select(Panda).where(Panda.id == panda_id, Panda.owner_id == user.id)
-    )
+    result = await db.execute(select(Panda).where(Panda.id == panda_id, Panda.owner_id == user.id))
     if result.scalar_one_or_none() is None:
         raise HTTPException(404, "Panda not found")
     s_result = await db.execute(

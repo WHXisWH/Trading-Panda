@@ -1,4 +1,5 @@
 """Auth endpoints — wallet login issues a JWT."""
+
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
@@ -50,7 +51,9 @@ async def wallet_login(body: WalletLoginRequest, db: AsyncSession = Depends(get_
         await db.refresh(user)
 
     token = _issue_jwt(user.id, user.wallet_address)
-    return AuthResponse(jwt=token, user_id=user.id, wallet_address=user.wallet_address, is_new_user=is_new)
+    return AuthResponse(
+        jwt=token, user_id=user.id, wallet_address=user.wallet_address, is_new_user=is_new
+    )
 
 
 @router.get("/me")

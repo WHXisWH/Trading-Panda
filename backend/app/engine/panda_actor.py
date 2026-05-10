@@ -4,6 +4,7 @@ Listens to market data on Redis channel, runs the 8-step decision pipeline,
 updates emotion state machine, updates experience engine, triggers Merkle Root
 worker every MERKLE_BATCH_SIZE trades.
 """
+
 import asyncio
 from dataclasses import dataclass, field
 from typing import Any, Dict
@@ -29,9 +30,7 @@ class PandaActor:
     """One actor = one panda running in simulation."""
 
     def __init__(self, panda_id: str, simulation_id: str, speed: str) -> None:
-        self.state = PandaActorState(
-            panda_id=panda_id, simulation_id=simulation_id, speed=speed
-        )
+        self.state = PandaActorState(panda_id=panda_id, simulation_id=simulation_id, speed=speed)
         self._pipeline = DecisionPipeline()
         self._emotion_machine = EmotionStateMachine()
         self._experience = ExperienceEngine(panda_id)

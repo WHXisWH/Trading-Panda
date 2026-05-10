@@ -1,4 +1,5 @@
 """Async SQLAlchemy engine setup."""
+
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import DeclarativeBase
 from app.config import settings
@@ -15,7 +16,9 @@ def _make_engine():
 
 
 engine = _make_engine()
-AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession) if engine else None
+AsyncSessionLocal = (
+    async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession) if engine else None
+)
 
 
 async def get_db():

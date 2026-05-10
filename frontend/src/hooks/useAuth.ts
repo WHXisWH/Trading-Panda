@@ -30,15 +30,13 @@ export function useAuth() {
     signingRef.current = true;
     const message = `TradingPanda:login:${Date.now()}`;
 
-    signMessage(
-      { message: new TextEncoder().encode(message) },
-    )
+    signMessage({ message: new TextEncoder().encode(message) })
       .then(({ signature }) =>
         apiClient.post<LoginResponse>("/api/auth/wallet-login", {
           wallet_address: account.address,
           message,
           signature,
-        }),
+        })
       )
       .then((data) => {
         const u: User = {

@@ -22,7 +22,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <SuiClientProvider
-        networks={{ testnet: { url: getFullnodeUrl("testnet") }, mainnet: { url: getFullnodeUrl("mainnet") } }}
+        networks={{
+          testnet: { url: getFullnodeUrl("testnet") },
+          mainnet: { url: getFullnodeUrl("mainnet") },
+        }}
         defaultNetwork={SUI_NETWORK}
       >
         <WalletProvider autoConnect>

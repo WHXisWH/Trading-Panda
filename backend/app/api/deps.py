@@ -1,4 +1,5 @@
 """FastAPI dependencies: JWT auth, current user."""
+
 from fastapi import Depends, HTTPException, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select

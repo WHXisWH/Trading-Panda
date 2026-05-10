@@ -6,18 +6,19 @@ Doc ref: docs/PRD.md §4.3
 
 Talent override: talent=1 (竹林禅心) → never panic, minimum cautious.
 """
+
 from dataclasses import dataclass
 from typing import Literal
 
 EmotionState = Literal["focused", "excited", "greedy", "cautious", "panicking", "numb"]
 
 EMOTION_COEFFICIENTS: dict[EmotionState, float] = {
-    "focused":   1.00,
-    "excited":   1.10,
-    "greedy":    1.30,   # position sizing ×1.6
-    "cautious":  0.85,
+    "focused": 1.00,
+    "excited": 1.10,
+    "greedy": 1.30,  # position sizing ×1.6
+    "cautious": 0.85,
     "panicking": 0.50,
-    "numb":      0.60,
+    "numb": 0.60,
 }
 
 
@@ -26,8 +27,8 @@ class EmotionContext:
     current: EmotionState = "focused"
     win_streak: int = 0
     loss_streak: int = 0
-    idle_count: int = 0   # consecutive non-action ticks
-    talent: int = 0       # 0=none, 1=竹林禅心
+    idle_count: int = 0  # consecutive non-action ticks
+    talent: int = 0  # 0=none, 1=竹林禅心
 
 
 class EmotionStateMachine:

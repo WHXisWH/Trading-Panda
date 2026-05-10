@@ -14,7 +14,11 @@ const SIZE_CLASS = {
   xl: "h-48 w-48 text-8xl",
 };
 
-export function PandaAvatar({ emotionState = "neutral", size = "md", animate = true }: Props) {
+export function PandaAvatar({
+  emotionState = "neutral",
+  size = "md",
+  animate = true,
+}: Props) {
   const meta = emotionMeta(emotionState);
   return (
     <div

@@ -14,6 +14,7 @@ Final score thresholds (PRD C12):
   0.40–0.65 → OBSERVE (may trigger Agent Coordinator)
   < 0.40  → IGNORE
 """
+
 from dataclasses import dataclass
 from typing import Any, Dict
 
@@ -21,8 +22,8 @@ from typing import Any, Dict
 @dataclass
 class DecisionResult:
     final_score: float
-    action: str          # BUY | SELL | HOLD
-    steps: list[dict]    # full 8-step trace for decision chain UI
+    action: str  # BUY | SELL | HOLD
+    steps: list[dict]  # full 8-step trace for decision chain UI
 
 
 class DecisionPipeline:
@@ -89,7 +90,9 @@ class DecisionPipeline:
         # TODO: pattern memory correction + mastery correction + mistake penalty
         return s_prof
 
-    def _step4_fusion(self, s_prof: float, s_exp: float, personality: dict, ghost_weight: float) -> float:
+    def _step4_fusion(
+        self, s_prof: float, s_exp: float, personality: dict, ghost_weight: float
+    ) -> float:
         # TODO: weights depend on experience_level (cub/growing/mature)
         # TODO: apply ghost_weight for strategy shadow
         return s_prof * 0.7 + s_exp * 0.3
@@ -106,8 +109,12 @@ class DecisionPipeline:
     def _step8_emotion(self, s_social: float, emotion: str, personality: dict) -> float:
         # TODO: × emotion_coefficient × (1 - patience/100)
         EMOTION_COEFF = {
-            "focused": 1.0, "excited": 1.1, "greedy": 1.3,
-            "cautious": 0.85, "panicking": 0.5, "numb": 0.6,
+            "focused": 1.0,
+            "excited": 1.1,
+            "greedy": 1.3,
+            "cautious": 0.85,
+            "panicking": 0.5,
+            "numb": 0.6,
         }
         coeff = EMOTION_COEFF.get(emotion, 1.0)
         patience = personality.get("patience", 50) / 100

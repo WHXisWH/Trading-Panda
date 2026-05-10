@@ -3,7 +3,10 @@ import type { NextRequest } from "next/server";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:8000";
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
   const h: Record<string, string> = {};
   const auth = req.headers.get("authorization");
   if (auth) h["Authorization"] = auth;
