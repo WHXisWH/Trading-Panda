@@ -1,0 +1,44 @@
+# Web framework
+fastapi==0.111.0
+uvicorn[standard]==0.30.1
+python-multipart==0.0.9
+
+# Async PostgreSQL
+sqlalchemy[asyncio]==2.0.31
+asyncpg==0.29.0
+alembic==1.13.2
+
+# Redis (Pub/Sub + cache)
+redis[hiredis]==5.0.7
+
+# Data validation
+pydantic==2.8.2
+pydantic-settings==2.3.4
+
+# Auth
+PyJWT==2.8.0
+
+# HTTP client
+httpx==0.27.0
+
+# Cryptography (Merkle Root, SHA-256)
+cryptography==42.0.8
+
+# Sui SDK
+pysui==0.50.0
+
+# Math
+numpy==1.26.4
+scipy==1.14.0
+
+# LLM
+openai==1.35.0
+
+# Utilities
+python-dotenv==1.0.1
+tenacity==8.4.2
+structlog==24.2.0
+
+# Testing
+pytest==8.2.2
+pytest-asyncio==0.23.7

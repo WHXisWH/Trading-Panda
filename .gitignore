@@ -1,0 +1,54 @@
+# ── Secrets / Env ────────────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+backend/.env
+# keep examples
+!.env.example
+!backend/.env.example
+!frontend/.env.example
+
+# ── Node / Frontend ──────────────────────────────────────────────────────────
+node_modules/
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.turbo/
+
+# ── Python / Backend ─────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+backend/__pycache__/
+backend/**/__pycache__/
+.venv/
+backend/.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# ── Sui / Contracts ──────────────────────────────────────────────────────────
+contracts/build/
+
+# ── OS / Editor ──────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── Misc ─────────────────────────────────────────────────────────────────────
+.vercel
+.render
+coverage/
+.nyc_output/

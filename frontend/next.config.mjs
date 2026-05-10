@@ -1,0 +1,15 @@
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "**.walrus.space" },
+      { protocol: "https", hostname: "**.supabase.co" },
+      { protocol: "https", hostname: "aggregator.walrus-testnet.walrus.space" },
+    ],
+  },
+  env: {
+    BACKEND_URL: process.env.BACKEND_URL ?? "http://localhost:8000",
+  },
+};
+
+export default nextConfig;

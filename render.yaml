@@ -1,0 +1,42 @@
+services:
+  - type: web
+    name: trading-panda-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: trading-panda-db
+          property: connectionString
+      - key: REDIS_URL
+        sync: false
+      - key: DEEPSEEK_API_KEY
+        sync: false
+      - key: SUI_RPC_URL
+        value: https://fullnode.testnet.sui.io:443
+      - key: SUI_PRIVATE_KEY
+        sync: false
+      - key: PACKAGE_ID
+        sync: false
+      - key: REGISTRY_ID
+        sync: false
+      - key: WALRUS_PUBLISHER_URL
+        value: https://publisher.walrus-testnet.walrus.space
+      - key: WALRUS_AGGREGATOR_URL
+        value: https://aggregator.walrus-testnet.walrus.space
+      - key: INTERNAL_SECRET
+        sync: false
+      - key: MAX_ACTORS
+        value: "100"
+      - key: MERKLE_BATCH_SIZE
+        value: "50"
+
+databases:
+  - name: trading-panda-db
+    plan: free
+    databaseName: trading_panda
+    postgresMajorVersion: "15"

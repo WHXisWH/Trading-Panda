@@ -1,0 +1,29 @@
+@import "@fontsource/noto-sans-sc/400.css";
+@import "@fontsource/noto-sans-sc/700.css";
+@import "@fontsource/noto-serif-sc/400.css";
+@import "@fontsource/inter/400.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bamboo-500: #4a7c59;
+  --ink-900: #1a1510;
+  --panda-white: #f5f5f0;
+}
+
+@layer base {
+  body {
+    @apply bg-panda-white text-ink-900 font-sans antialiased;
+  }
+}
+
+@layer utilities {
+  .emotion-focused  { @apply text-emotion-focused; }
+  .emotion-excited  { @apply text-emotion-excited; }
+  .emotion-greedy   { @apply text-emotion-greedy; }
+  .emotion-cautious { @apply text-emotion-cautious; }
+  .emotion-panicking { @apply text-emotion-panicking; }
+  .emotion-numb     { @apply text-emotion-numb; }
+}
