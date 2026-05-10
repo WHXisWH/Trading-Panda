@@ -189,6 +189,38 @@ Staged diff:
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {
             "responseMimeType": "application/json",
+            "responseJsonSchema": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "feat",
+                            "fix",
+                            "docs",
+                            "style",
+                            "refactor",
+                            "test",
+                            "chore",
+                        ],
+                    },
+                    "scope": {
+                        "type": "string",
+                        "enum": [
+                            "frontend",
+                            "backend",
+                            "contracts",
+                            "docs",
+                            "tooling",
+                            "multi",
+                            "unknown",
+                        ],
+                    },
+                    "summary": {"type": "string"},
+                    "slug": {"type": "string"},
+                },
+                "required": ["type", "scope", "summary", "slug"],
+            },
             "temperature": 0.2,
         },
     }
@@ -211,6 +243,10 @@ Staged diff:
 
     text = data["candidates"][0]["content"]["parts"][0]["text"]
     parsed = json.loads(text)
+    if isinstance(parsed, list):
+        parsed = parsed[0] if parsed and isinstance(parsed[0], dict) else {}
+    if not isinstance(parsed, dict):
+        parsed = {}
     return {
         "type": parsed.get("type") or infer_type(files),
         "scope": parsed.get("scope") or infer_scope(files),
