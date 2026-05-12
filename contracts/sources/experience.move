@@ -1,46 +1,99 @@
-/// Experience level + Walrus blob_id — on-chain milestones.
-/// Doc ref: docs/contract-design.md §experience
 module trading_panda::experience {
     use sui::dynamic_field;
-    use sui::object::UID;
     use sui::event;
+    use sui::object::{Self, ID};
+    use sui::clock::{Self, Clock};
+    use sui::tx_context::TxContext;
     use std::string::String;
+    use trading_panda::panda::{Self, AdminCap, Panda};
 
-    public struct ExperienceData has store, drop {
-        level: u8,           // 0–100
+    const E_INVALID_LEVEL: u64 = 30;
+
+    public struct ExperienceDigest has store, drop {
+        level: u16,
+        total_trades: u64,
+        win_rate: u64,
         walrus_blob_id: String,
-        last_synced_at: u64,
+        last_updated: u64,
     }
 
-    public struct MilestoneEvent has copy, drop {
-        panda_id: address,
-        milestone_level: u8,
+    public struct ExperienceMilestone has copy, drop {
+        panda_id: ID,
+        level: u16,
+        total_trades: u64,
+        win_rate: u64,
+        stage: u8,
+        walrus_blob_id: String,
         timestamp: u64,
     }
 
     const KEY: vector<u8> = b"experience";
-    const MILESTONES: vector<u8> = vector[25, 50, 65, 80, 100];
 
-    public fun update_experience(
-        panda_id: &mut UID,
-        panda_addr: address,
-        new_level: u8,
-        blob_id: String,
-        timestamp: u64,
+    public entry fun update_milestone(
+        panda: &mut Panda,
+        _admin: &AdminCap,
+        level: u16,
+        total_trades: u64,
+        win_rate: u64,
+        walrus_blob_id: String,
+        clock: &Clock,
+        _ctx: &mut TxContext,
     ) {
-        let data = ExperienceData { level: new_level, walrus_blob_id: blob_id, last_synced_at: timestamp };
-        if (dynamic_field::exists(panda_id, KEY)) {
-            *dynamic_field::borrow_mut(panda_id, KEY) = data;
-        } else {
-            dynamic_field::add(panda_id, KEY, data);
+        assert!(level <= 100, E_INVALID_LEVEL);
+        let timestamp = clock::timestamp_ms(clock);
+
+        if (dynamic_field::exists(panda::uid(panda), KEY)) {
+            let _old: ExperienceDigest = dynamic_field::remove(panda::uid_mut(panda), KEY);
         };
-        // Emit milestone event at thresholds
-        if (is_milestone(new_level)) {
-            event::emit(MilestoneEvent { panda_id: panda_addr, milestone_level: new_level, timestamp });
+
+        dynamic_field::add(panda::uid_mut(panda), KEY, ExperienceDigest {
+            level,
+            total_trades,
+            win_rate,
+            walrus_blob_id,
+            last_updated: timestamp,
+        });
+
+        event::emit(ExperienceMilestone {
+            panda_id: object::id(panda),
+            level,
+            total_trades,
+            win_rate,
+            stage: growth_stage(level),
+            walrus_blob_id,
+            timestamp,
+        });
+    }
+
+    public fun has_experience(panda: &Panda): bool {
+        dynamic_field::exists(panda::uid(panda), KEY)
+    }
+
+    public fun get_experience(panda: &Panda): &ExperienceDigest {
+        dynamic_field::borrow(panda::uid(panda), KEY)
+    }
+
+    public fun get_level(panda: &Panda): u16 {
+        if (dynamic_field::exists(panda::uid(panda), KEY)) {
+            let digest: &ExperienceDigest = dynamic_field::borrow(panda::uid(panda), KEY);
+            digest.level
+        } else {
+            0
         }
     }
 
-    fun is_milestone(level: u8): bool {
-        level == 25 || level == 50 || level == 65 || level == 80 || level == 100
+    public fun level(digest: &ExperienceDigest): u16 { digest.level }
+    public fun total_trades(digest: &ExperienceDigest): u64 { digest.total_trades }
+    public fun win_rate(digest: &ExperienceDigest): u64 { digest.win_rate }
+    public fun walrus_blob_id(digest: &ExperienceDigest): String { digest.walrus_blob_id }
+
+    fun growth_stage(level: u16): u8 {
+        if (level < 25) {
+            0
+        } else if (level < 65) {
+            1
+        } else {
+            2
+        }
     }
 }

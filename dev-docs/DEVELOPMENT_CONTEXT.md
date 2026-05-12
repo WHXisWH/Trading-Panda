@@ -1,7 +1,7 @@
 # TradingPanda 产品与进度上下文
 
 > 本文档以「忒修斯之船」方式持续维护，记录产品目标、当前状态、里程碑进展和下一步行动项。
-> 最后更新：2026-05-10（项目骨架初始化）
+> 最后更新：2026-05-13（合约本地实现与转让税设计同步）
 
 **与 `dev-docs/DEV_CONTEXT.md` 的关系**：DEV_CONTEXT.md 写「部署事实」（环境变量、端口、API路径、数据库结构），本文写「产品与进度事实」；**两份文档都由 §9 变更日志承接时间轴**，任何合并级改动必须在 `DEV_CONTEXT.md` §9 追加一行，保证「谁改了什么」可查。
 
@@ -49,7 +49,7 @@ TradingPanda 是 Sui 链上的 **AI 交易宠物养成系统**，目标是 **Sui
 | 里程碑 | 状态 | 进度 | 负责人 | 备注 |
 |--------|------|------|--------|------|
 | 项目骨架 | ✅ 完成 | 100% | — | frontend/backend/contracts 目录结构、CLAUDE.md、DEV_CONTEXT.md |
-| Sui Move 合约 | ⏸️ 待开始 | 0% | — | 8个模块存根已建，panda.move + registry 优先 |
+| Sui Move 合约 | 🟡 本地实现完成 | 70% | — | 核心模块按 `docs/contract-design.md` 实现，`sui move test` 通过 11/11；待重新部署 Testnet 与 5% Kiosk 版税深化 |
 | PostgreSQL Schema | ⏸️ 待开始 | 0% | — | Alembic 首个迁移文件待写 |
 | 钱包登录（JWT） | ⏸️ 待开始 | 0% | — | Sui signature verify + JWT 签发 |
 | Onboarding 问卷 | ⏸️ 待开始 | 0% | — | 5步问卷 + 推导 experience_level |
@@ -61,7 +61,7 @@ TradingPanda 是 Sui 链上的 **AI 交易宠物养成系统**，目标是 **Sui
 | Merkle Root Worker | ⏸️ 待开始 | 0% | — | 每50笔 → 上链 |
 | WebSocket 实时推送 | ⏸️ 待开始 | 0% | — | Next.js WS Hub ↔ Redis Pub/Sub |
 | Dashboard 前端 | ⏸️ 待开始 | 0% | — | K线 + 决策链可视化 + 情绪展示 |
-| NFT 市场（Kiosk） | ⏸️ 待开始 | 0% | — | Sui Kiosk SDK 集成 |
+| NFT 市场（Kiosk） | 🟡 合约 MVP | 20% | — | 合约侧已具备 Kiosk 上架/下架/购买骨架；需补 5% TransferPolicy 版税规则、前端 SDK 集成与端到端测试 |
 | 排行榜/成就/签到 | ⏸️ 待开始 | 0% | — | |
 | Walrus 集成 | ⏸️ 待开始 | 0% | — | 经验数据备份，NFT 转让前强制同步 |
 | 黑客松 MVP 验收 | ⏸️ 待开始 | 0% | — | 目标：2026年6月提交 |
@@ -73,6 +73,7 @@ TradingPanda 是 Sui 链上的 **AI 交易宠物养成系统**，目标是 **Sui
 | DeepBook Testnet Pool 地址 | Dashboard K线数据 | 待部署合约后从 Sui Explorer 获取 |
 | Walrus Testnet Publisher URL | 经验数据备份 | 已在 .env.example 填入官方测试节点 |
 | Supabase / Render DB 创建 | 后端数据库连接 | 黑客松阶段用 Render 免费 PostgreSQL |
+| Panda 转让税强制性 | 项目方 5% 收益能否覆盖所有转让路径 | MVP 采用 Kiosk/TransferPolicy 收二级市场 5% 版税；若要禁止绕过，需在合约层牺牲自由 public transfer，改为受控托管/市场路径 |
 
 ---
 
@@ -88,6 +89,7 @@ TradingPanda 是 Sui 链上的 **AI 交易宠物养成系统**，目标是 **Sui
 | C9 | 情绪稳定性 | 从 patience 推导，非独立轴 | 2026-05-08 | 简化五轴设计 |
 | C11 | 胜率 | 链下 trades 表计算 | 2026-05-08 | 不上链 |
 | C12 | 执行阈值 | >0.65 执行 / 0.40-0.65 观望 / <0.40 忽视 | 2026-05-08 | PRD 勘误 |
+| C13 | Panda 二级市场收益 | MVP 统一通过 Sui Kiosk + TransferPolicy 收取 5% 版税 | 2026-05-13 | Sui 标准市场兼容、用户体验较好；普通钱包转账不视作市场交易，前端不提供绕过路径 |
 
 ---
 
@@ -95,15 +97,15 @@ TradingPanda 是 Sui 链上的 **AI 交易宠物养成系统**，目标是 **Sui
 
 按顺序执行，每项完成后更新 §2.1 进度并追加 §9 变更日志：
 
-1. **数据库 Schema** — 写 Alembic 首个迁移文件（18张表）
-2. **Sui Move 合约核心** — 实现 `panda.mint()` + `panda_registry`
+1. **合约 v2 与市场税** — 将 Panda 市场路径固定为 Kiosk + TransferPolicy 5% 版税，补测试后重新部署 Testnet
+2. **数据库 Schema** — 写 Alembic 首个迁移文件（18张表）
 3. **钱包登录** — Next.js API route + JWT 签发
 4. **策略解析** — DeepSeek V3 接入，`/engine/strategy/parse` 端点
 5. **决策引擎核心** — `DecisionPipeline` 8步实现 + 单元测试
 6. **情绪状态机** — 完善 transitions + WebSocket 广播
 7. **Dashboard MVP** — K线图 + 决策链 + WebSocket 接入
 8. **铸造前端** — MintPage + 链上 mint() 调用
-9. **Merkle Root** — 50笔触发 + 链上提交
+9. **Merkle Root Worker** — 50笔触发 + 链上提交
 
 ---
 
@@ -124,3 +126,4 @@ TradingPanda 是 Sui 链上的 **AI 交易宠物养成系统**，目标是 **Sui
 | 日期 | 变更 | 影响 |
 |------|------|------|
 | 2026-05-10 | **项目骨架初始化**：创建 CLAUDE.md、dev-docs/DEV_CONTEXT.md（部署事实）、dev-docs/DEVELOPMENT_CONTEXT.md（本文，产品进度）、frontend/ Next.js 14骨架、backend/ Python FastAPI骨架、contracts/ Sui Move骨架（8模块）、vercel.json、render.yaml | 仓库从纯文档状态进入可开发状态；骨架可直接 npm install / pip install / sui move build 验证 |
+| 2026-05-13 | **合约本地实现与市场税设计同步**：Sui Move 核心模块本地实现完成并通过 `sui move test` 11/11；产品进度更新为合约 70%、Kiosk 市场 20%；新增 C13 决策：Panda 二级市场通过 Sui Kiosk + TransferPolicy 收取 5% 版税。 | 合约进入重新部署前准备阶段；下一步优先补齐 5% 版税规则、市场路径测试与 Testnet 重新发布 |
