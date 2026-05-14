@@ -64,7 +64,7 @@
 
 | 端点 | 简述 |
 |------|------|
-| `ws://api/ws?token=JWT` | 实时推送通道 |
+| `wss://…`（完整基址 = `NEXT_PUBLIC_WS_URL`）`{PATH}?token=JWT` | 实时推送；**Cloudflare Workers + DO**，非 Vercel。`PATH` 以实现为准。见 `docs/websocket-hub-design.md`。 |
 
 ---
 
@@ -3036,11 +3036,13 @@ interface CorrelationResponse {
 
 ### 4.1 连接与认证
 
-**连接地址**：
+**连接地址**（浏览器使用 `NEXT_PUBLIC_WS_URL` 完整 `wss://...` 基址；与 Next.js 部署域名无关）：
 
 ```
-wss://{host}/api/ws?token={JWT}
+{NEXT_PUBLIC_WS_URL}?token={JWT}
 ```
+
+示例（占位）：`wss://trading-panda-ws.<your-subdomain>.workers.dev/ws?token={JWT}`
 
 **连接成功**：服务端推送 `connected` 事件
 

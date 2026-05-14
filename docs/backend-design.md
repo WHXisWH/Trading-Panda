@@ -1,8 +1,8 @@
 # TradingPanda 后端设计文档
 
-> 版本 1.0 · 2026-05-08
+> 版本 1.1 · 2026-05-13
 > 基于：product-design.md / technical-feasibility-study.md / cost-model.md
-> 架构：双服务 (Next.js API Gateway + Python Decision Engine)
+> 架构：三边缘组件 — **Next.js HTTP Gateway（Vercel）** + **WebSocket Hub（Cloudflare Workers + DO）** + **Python Decision Engine（Render）**
 
 ---
 
@@ -12,23 +12,19 @@
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                              用户层                                         │
 │    Web App (Next.js 14)  │  Telegram Bot (未来)  │  Sui Wallet (zkLogin)    │
-└──────────────┬──────────────────────────────────────────────────────────────┘
-               │ HTTPS / WSS
-┌──────────────▼──────────────────────────────────────────────────────────────┐
-│                     API Gateway (Next.js 14 · Vercel)                       │
-│  ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌─────────────┐             │
-│  │ Auth 中间件 │ │ Rate Limit │ │ WS Hub     │ │ 响应缓存     │             │
-│  │ JWT/zkLogin│ │ Redis 计数  │ │ Socket.io  │ │ Redis GET   │             │
-│  └─────┬──────┘ └─────┬──────┘ └─────┬──────┘ └──────┬──────┘             │
-│        └──────────────┼──────────────┼───────────────┘                     │
-│                       │              │                                      │
-│  ┌────────────────────▼──────────────▼──────────────────────────────┐      │
-│  │              HTTP REST 内部调用 → Decision Engine                 │      │
-│  │              超时 5s / 重试 2 次 / 断路器 5 次失败熔断               │      │
-│  └────────────────────┬─────────────────────────────────────────────┘      │
-└───────────────────────┼─────────────────────────────────────────────────────┘
-                        │ HTTP REST (内网)
-┌───────────────────────▼─────────────────────────────────────────────────────┐
+└──────────────┬───────────────────────────────┬────────────────────────────────┘
+               │ HTTPS                         │ WSS（实时）
+               ▼                               ▼
+┌──────────────────────────────┐   ┌────────────────────────────────────────────┐
+│ HTTP API Gateway             │   │ WebSocket Hub                             │
+│ Next.js 14 · Vercel         │   │ Cloudflare Workers + Durable Objects      │
+│ Auth / Rate / 缓存 / REST 代理 │   │ WS 升级、订阅、Redis 消费、客户端推送     │
+└──────────────┬───────────────┘   └──────────────────────┬───────────────────┘
+               │                                         │
+               │ HTTP REST（内部）                        │ Redis SUB（与下方
+               │ 超时 5s / 重试 2 / 断路器                  │  同一 Redis 集群）
+               ▼                                         │
+┌────────────────────────────────────────────────────────┴────────────────────┐
 │                   Decision Engine (Python · Render)                          │
 │                                                                             │
 │  ┌──────────────────────────────────────────────────────────────────────┐   │
@@ -66,12 +62,15 @@
 数据层:
 ┌──────────────────────────────────────────────────────────────┐
 │  PostgreSQL (Supabase)         │  Redis Cloud                │
-│  · 用户 / 熊猫 / 交易历史       │  · Pub/Sub 市场数据广播      │
-│  · 经验数据 (5 子系统)          │  · 响应缓存 (TTL 60s)       │
-│  · 市场数据缓存                 │  · Rate Limit 计数器        │
-│  · Merkle Root 记录            │  · Actor 状态缓存            │
+│  · 用户 / 熊猫 / 交易历史       │  · Pub/Sub：DE 发布事件       │
+│  · 经验数据 (5 子系统)          │  · WS Hub（CF）订阅同一集群   │
+│  · 市场数据缓存                 │  · 响应缓存 (TTL 60s)       │
+│  · Merkle Root 记录            │  · Rate Limit（HTTP 侧）     │
+│                                │  · Actor 状态缓存            │
 └──────────────────────────────────────────────────────────────┘
 ```
+
+详细契约与 DO 存储边界见 **`docs/websocket-hub-design.md`**。
 
 ---
 
@@ -79,16 +78,16 @@
 
 ### 2.1 职责
 
-API Gateway 是面向前端的唯一入口，负责以下职责：
+API Gateway 是面向前端的 **HTTP 业务入口**（认证、REST 代理、缓存与限流）。**WebSocket 长连接**不在此部署，由 **Cloudflare Workers + Durable Objects** 承担（见「2.3」与 `docs/websocket-hub-design.md`）。
 
 | 职责 | 说明 |
 |------|------|
 | 用户认证 | JWT 签发/验证、Sui Wallet 签名验证、zkLogin 验证 |
-| 请求路由 | 前端请求 → Decision Engine 内部 HTTP 转发 |
+| 请求路由 | 前端 HTTP 请求 → Decision Engine 内部转发 |
 | 响应缓存 | Redis 缓存高频读取数据（熊猫状态、排行榜、市场列表） |
-| Rate Limiting | 每用户 60 req/min，WebSocket 消息 10 msg/s |
-| WebSocket Hub | 管理所有实时连接，中转 Decision Engine 事件 |
+| Rate Limiting | HTTP：每用户 60 req/min（计数在 Redis） |
 | 静态数据服务 | 成就列表、市场列表、天赋描述等缓存数据 |
+| WebSocket Hub（Cloudflare） | WS 升级、房间/订阅、消费 Redis、向浏览器推送；**不属于** Vercel 进程 |
 
 #### API 路由设计
 
@@ -121,7 +120,8 @@ API Gateway 是面向前端的唯一入口，负责以下职责：
   GET  /list                # 成就列表（静态缓存）
   GET  /user/:id            # 用户成就
 
-/ws                         # WebSocket 连接入口
+# WebSocket：不在 Vercel。入口为 Cloudflare Workers（URL = NEXT_PUBLIC_WS_URL），
+# 路径与鉴权见 docs/api-specification.md 与 docs/websocket-hub-design.md
 ```
 
 ### 2.2 认证流程
@@ -194,13 +194,15 @@ API Gateway 是面向前端的唯一入口，负责以下职责：
 # Nonce: 5 分钟有效 (Redis TTL)
 ```
 
-### 2.3 WebSocket 管理
+### 2.3 WebSocket 管理（Cloudflare Workers + Durable Objects）
+
+> 实现细节与 DO 存储边界以 **`docs/websocket-hub-design.md`** 为准；本节保留产品级行为（连接池、事件类型、背压）。
 
 #### 连接管理
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                 WebSocket Hub                        │
+│           WebSocket Hub（CF Worker + DO）            │
 │                                                      │
 │  连接池:                                             │
 │  ┌──────────────────────────────────────────┐       │
@@ -216,10 +218,15 @@ API Gateway 是面向前端的唯一入口，负责以下职责：
 └─────────────────────────────────────────────────────┘
 ```
 
+#### Durable Object 状态（摘要）
+
+- **可存**：连接 id、订阅频道、心跳/Alarm 元数据、**有界**待发队列、短 TTL 展示快照（从 DE HTTP 拉取）。  
+- **不可存**：权威业务数据、完整交易历史、Merkle/胜率等（仍在 PostgreSQL；Redis 仍为 Pub/Sub + 缓存，非主库）。
+
 #### 事件路由
 
 ```
-Decision Engine                    API Gateway                前端
+Decision Engine              WebSocket Hub (CF)              前端
      │                                 │                        │
      │  Redis Pub/Sub                  │                        │
      │  channel: panda:{id}            │                        │
@@ -269,7 +276,7 @@ class WSBackpressure:
 
 1. **简单性**：Next.js API Routes 原生支持 fetch，无需额外依赖
 2. **调试友好**：HTTP 请求可直接用 curl/Postman 测试
-3. **Vercel 兼容**：Vercel Serverless Functions 不支持长连接，gRPC 需要额外适配
+3. **Vercel 边界**：Vercel Serverless **不承载** WebSocket 长连接；实时通道由 **Cloudflare Workers + DO** 实现（见 2.3）。Gateway 与 DE 之间仍用 HTTP REST。
 4. **延迟可接受**：内部 REST 调用延迟 ~10ms，决策管线本身 <50ms，总计 <100ms 完全满足需求
 5. **未来可替换**：如果延迟成为瓶颈，可在 Render 内部用 gRPC，Gateway 层保持 REST
 

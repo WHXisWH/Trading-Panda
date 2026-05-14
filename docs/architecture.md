@@ -1,7 +1,7 @@
 # TradingPanda — Architecture
 
 > This document describes the confirmed, deployed technical architecture.
-> Last updated: 2026-05-10
+> Last updated: 2026-05-13
 
 ---
 
@@ -9,17 +9,18 @@
 
 ```
 Browser
-  │  HTTPS / WSS
-  ▼
-┌─────────────────────────────────────────────────────┐
-│  Frontend — Next.js 14 App Router                   │
-│  Deployment: Vercel                                 │
-│  Also acts as API Gateway (Next.js API Routes)      │
-└────────────────────┬────────────────────────────────┘
-                     │  HTTP (BACKEND_URL env)
-                     ▼
-┌─────────────────────────────────────────────────────┐
-│  Decision Engine — Python 3.11 · FastAPI            │
+  │  HTTPS                          WSS (realtime)
+  │     │                                  │
+  ▼     ▼                                  ▼
+┌─────────────────────────┐    ┌─────────────────────────────────────┐
+│  Next.js 14 App Router  │    │  WebSocket Hub                      │
+│  Vercel                 │    │  Cloudflare Workers + Durable Obj.  │
+│  REST API Gateway       │    │  Subscribes Redis → pushes clients  │
+└────────────┬────────────┘    └──────────────────┬──────────────────┘
+             │  HTTP (BACKEND_URL env)           │  Redis SUB (same cluster as DE)
+             ▼                                   │
+┌─────────────────────────────────────────────────────────────────────┐
+│  Decision Engine — Python 3.11 · FastAPI                            │
 │  Deployment: Render (Web Service)                   │
 │  Port: $PORT (default 8000)                         │
 │                                                     │
@@ -53,6 +54,8 @@ Browser
 │  Package: 0x9b26dfdddef52c980dea0989a22c751ee4c4551d9e39708ab9503990cc7b9710 │
 └─────────────────────────────────────────────────────┘
 ```
+
+**Realtime path:** Python on Render **publishes** to Redis; the Cloudflare Hub **subscribes** and forwards over WSS. Contract and payload definitions: `docs/websocket-hub-design.md`, `docs/api-specification.md` (WebSocket section).
 
 ---
 
@@ -249,7 +252,7 @@ Tables are created automatically on backend startup via `Base.metadata.create_al
 | `zustand` | ^4.5.4 | Auth store (JWT), panda store |
 | `lightweight-charts` | ^4.2.0 | K-line chart (pending data integration) |
 | `@rive-app/react-canvas` | ^4.0.0 | Panda animation (pending asset) |
-| `socket.io-client` | ^4.7.5 | WebSocket real-time events (pending) |
+| Browser `WebSocket` API | (built-in) | Real-time events via `NEXT_PUBLIC_WS_URL` → Cloudflare Workers + DO (pending) |
 
 ---
 

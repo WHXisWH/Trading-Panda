@@ -4,12 +4,6 @@
   "installCommand": "npm install",
   "framework": "nextjs",
   "rootDirectory": "frontend",
-  "rewrites": [
-    {
-      "source": "/api/ws/:path*",
-      "destination": "/api/ws/:path*"
-    }
-  ],
   "headers": [
     {
       "source": "/api/(.*)",

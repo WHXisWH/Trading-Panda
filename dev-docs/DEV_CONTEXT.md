@@ -2,7 +2,7 @@
 
 > 本文档以「忒修斯之船」方式持续维护：只换木板、不换整船。部署事实变更时同步更新对应段落；任何改动必须在本文末尾「§9 变更日志」追加一行。
 >
-> **最后同步**：2026-05-13（合约本地实现与测试）
+> **最后同步**：2026-05-13（WebSocket Hub 设计：Cloudflare Workers + DO）
 
 ---
 
@@ -62,6 +62,7 @@ TradingPanda 是 Sui 链上的 **AI 交易宠物养成系统**，目标是 Sui O
 | 胜率 | 链下 trades 表计算，不上链 | （PRD C11） |
 | 执行阈值 | >0.65 执行 / 0.40-0.65 观望 / <0.40 忽视 | （PRD C12） |
 | 策略残影 | ghost_weight 衰减，旧策略归档不删除 | （PRD C7） |
+| 实时推送 | WebSocket Hub = **Cloudflare Workers + Durable Objects**；消费与 Render 上 DE **同一 Redis** Pub/Sub；DO 仅存连接/订阅/有界队列等短时状态 | Vercel 无长连接；权威数据仍在 PostgreSQL |
 
 ---
 
@@ -70,8 +71,12 @@ TradingPanda 是 Sui 链上的 **AI 交易宠物养成系统**，目标是 Sui O
 ```
 frontend/   → Vercel
             Next.js 14 App Router + TypeScript
-            同时承担 API Gateway（Next.js API Routes）
+            HTTP API Gateway（Next.js API Routes）；**不承载 WebSocket**
             域名：[待 Vercel 部署后填入]
+
+websocket/  → Cloudflare Workers + Durable Objects（规划中，仓库内设计见 docs/websocket-hub-design.md）
+            浏览器 WSS 入口；订阅 $REDIS_URL 上由 Python 发布的频道
+            公网基址：由 NEXT_PUBLIC_WS_URL（完整 wss://…）暴露给前端
 
 backend/    → Render (Web Service)
             Python 3.11 + FastAPI + uvicorn
@@ -84,7 +89,7 @@ Database    → Supabase（PostgreSQL 15+）或 Render PostgreSQL
 
 Cache       → Redis Cloud
             连接串：$REDIS_URL
-            用途：Pub/Sub 市场数据广播 + 响应缓存（TTL 60s）+ Rate Limit 计数
+            用途：Pub/Sub（DE 发布市场/熊猫事件；**WS Hub 订阅同一集群**）+ 响应缓存（TTL 60s）+ HTTP Rate Limit 计数
 
 Blockchain  → Sui Testnet
             Package ID：0x9b26dfdddef52c980dea0989a22c751ee4c4551d9e39708ab9503990cc7b9710
@@ -103,6 +108,7 @@ Blockchain  → Sui Testnet
 | 变量名 | 说明 |
 |--------|------|
 | `NEXT_PUBLIC_BACKEND_URL` | Python 决策引擎 URL（如 https://xxx.onrender.com） |
+| `NEXT_PUBLIC_WS_URL` | WebSocket Hub 完整基址（`wss://…`，Cloudflare Workers；与 Vercel 域名无关） |
 | `NEXT_PUBLIC_SUI_NETWORK` | testnet / mainnet |
 | `NEXT_PUBLIC_PACKAGE_ID` | Move 合约 Package ID |
 | `NEXT_PUBLIC_REGISTRY_ID` | PandaRegistry Shared Object ID |
@@ -147,9 +153,12 @@ POST /api/pandas/[id]/calm-bamboo    # 使用冷静竹（重置情绪）
 GET  /api/leaderboard                # 排行榜（Redis 缓存 TTL 60s）
 GET  /api/achievements               # 成就列表
 POST /api/checkin                    # 每日签到
-
-WS   /api/ws/[pandaId]              # WebSocket：实时推送决策/情绪/交易事件
 ```
+
+### WebSocket Hub（Cloudflare Workers + DO，非 Next.js 路由）
+
+- 连接基址：`NEXT_PUBLIC_WS_URL`（完整 `wss://…`），path/query 与事件类型见 `docs/api-specification.md` 第四章与 `docs/websocket-hub-design.md`。
+- ~~`WS /api/ws/...`（Vercel）~~ — **已废弃为架构选项**（Serverless 无法常驻 WS）。
 
 ### Python Backend 内部接口（Next.js → 内部调用）
 
@@ -220,3 +229,4 @@ Package ID：**0x9b26dfdddef52c980dea0989a22c751ee4c4551d9e39708ab9503990cc7b971
 | 2026-05-10 | **联调骨架完成**：后端新增 `/auth/login`、`/auth/me`、`GET/POST /pandas`、`GET /pandas/{id}`、`GET /pandas/{id}/strategy`、`POST /engine/strategy/parse` 等接口；完成全部18张表的 ORM models；`main.py` lifespan 启动时 `create_all` 建表；前端完成 `.env.local`（含部署地址）、`useAuth` 钱包签名登录 Hook、Mint页（buildMintTx → on-chain → 注册后端）、Dashboard（性格/情绪/经验展示 + 策略提交）、全部 Next.js API 代理路由；`npx tsc` 零报错。 | 前后端可联调：填写 DATABASE_URL 启动 Python backend → Next.js frontend 即可走通「连接钱包→登录→铸造→查看熊猫→提交策略」完整流程 |
 | 2026-05-13 | **合约本地实现与测试**：按 `docs/contract-design.md` 补齐 `panda`、`panda_registry`、`strategy`、`experience`、`trust_proof`、`achievement`、`market`、`deepbook_adapter`，新增 `checkin.move`；补充 `contracts/tests/core_tests.move` 覆盖策略残影、经验摘要、Merkle Root、成就、签到、防交易中转让等核心路径。 | 本地 `cd contracts && sui move build` 通过；`cd contracts && sui move test` 通过（11/11）。本次未重新 publish，Testnet Package/Object ID 暂不变 |
 | 2026-05-13 | **进度文档同步与 5% 市场税决策**：同步更新 `dev-docs/DEVELOPMENT_CONTEXT.md`，将 Sui Move 合约进度标为 70%、NFT 市场标为 20%，新增 C13：Panda 二级市场通过 Sui Kiosk + TransferPolicy 收取 5% 版税。 | 产品进度文档与开发事实对齐；下一步合约 v2 需补齐 5% 版税规则、市场路径测试并重新部署 Testnet |
+| 2026-05-13 | **文档：WebSocket Hub 选型（Cloudflare）**：新增 `docs/websocket-hub-design.md`；更新 `docs/architecture.md`、`docs/backend-design.md`、`docs/api-specification.md`、`docs/frontend-design.md`、`CLAUDE.md`；`frontend/.env.example` 增加 `NEXT_PUBLIC_WS_URL`；`vercel.json` 移除无效的 `/api/ws` rewrite；本文 §3–§5 与 §2.2 同步。 | 实时通道与 Vercel 解耦的设计事实已写入仓库；**Workers 代码与生产 URL 仍待实现** |

@@ -2132,6 +2132,8 @@ const queryClient = new QueryClient({
 
 ## 五、WebSocket 集成
 
+实时通道部署在 **Cloudflare Workers + Durable Objects**，不经过 Vercel（Serverless 无长连接）。连接基址使用环境变量 **`NEXT_PUBLIC_WS_URL`**（完整 `wss://…`）；JWT 仍由 Next.js 签发，握手时附带 `token`。契约见 `docs/api-specification.md` 第四章与 `docs/websocket-hub-design.md`。
+
 ### 5.1 连接管理
 
 ```typescript

@@ -28,12 +28,16 @@
 
 ```
 用户浏览器
-    │ HTTPS/WSS
-    ▼
-frontend/   ← Next.js 14，部署在 Vercel
-    │ Internal HTTP (BACKEND_URL env)
-    ▼
-backend/    ← Python FastAPI，部署在 Render
+    │ HTTPS                    WSS（实时）
+    │   │                         │
+    ▼   ▼                         ▼
+frontend/   ← Next.js 14，Vercel（仅 HTTP API Gateway）
+    │ Internal HTTP
+    │                         Cloudflare Workers + Durable Objects
+    │                         （WebSocket Hub，独立部署，规划中）
+    │                              │ Redis SUB（与 backend 同集群）
+    ▼                              │
+backend/    ← Python FastAPI，Render ◄┘（DE 发布 Redis → Hub 推浏览器）
     │
     ├── PostgreSQL (Supabase 或 Render PostgreSQL)
     ├── Redis Cloud (Pub/Sub + 缓存)
@@ -50,7 +54,8 @@ contracts/  ← Sui Move，部署在 Sui Testnet
 |------|------|
 | `docs/PRD.md` | 产品需求（统一版，含18项冲突修正） |
 | `docs/agent-design.md` | 8步决策引擎设计 |
-| `docs/backend-design.md` | Python 服务架构 |
+| `docs/backend-design.md` | Python 服务与边缘层架构 |
+| `docs/websocket-hub-design.md` | WebSocket Hub（Cloudflare Workers + DO）契约与存储边界 |
 | `docs/frontend-design.md` | Next.js 页面设计 |
 | `docs/database-schema.md` | PostgreSQL 表设计 |
 | `docs/api-specification.md` | REST + WS + RPC 接口契约 |
@@ -67,7 +72,7 @@ contracts/  ← Sui Move，部署在 Sui Testnet
 - @mysten/dapp-kit (Sui 钱包)、@mysten/zklogin
 - Zustand (状态管理)、@tanstack/react-query (数据请求)
 - Tailwind CSS、Radix UI、Rive (熊猫动画)、lightweight-charts (K线)
-- Socket.io-client (WebSocket 实时推送)
+- 浏览器原生 WebSocket（`NEXT_PUBLIC_WS_URL`）→ Cloudflare Workers + Durable Objects 实时推送
 
 ### Backend (Render)
 - Python 3.11 + FastAPI + uvicorn
