@@ -19,7 +19,7 @@
                                       ▼
                            ┌──────────────────────┐
                            │   Redis Pub/Sub 广播   │
-                           │  channel: market:{asset} │
+                           │  channel: market:tick:{pair} │
                            └──────────┬──────────────┘
                                       │ subscribe
                     ┌─────────────────┼─────────────────┐
@@ -180,7 +180,7 @@ class PandaActorManager:
         # 订阅资产频道
         max_assets = 1 + actor.personality.focus // 25  # focus→最大资产数
         for asset in actor.subscribed_assets[:max_assets]:
-            await self.redis.subscribe(f"market:{asset}", actor.event_queue)
+            await self.redis.subscribe(f"market:tick:{asset}", actor.event_queue)
         
         # 启动事件消费循环
         self.tasks[panda_id] = asyncio.create_task(
@@ -198,7 +198,7 @@ class PandaActorManager:
         
         # 取消订阅
         for asset in actor.subscribed_assets:
-            await self.redis.unsubscribe(f"market:{asset}")
+            await self.redis.unsubscribe(f"market:tick:{asset}")
         
         # 同步经验到 Walrus（防止休眠期数据丢失）
         await self._sync_experience_to_walrus(actor)
@@ -261,9 +261,9 @@ class MarketDataProducer:
             for asset in assets:
                 raw_data = await self._fetch_market_data(asset)
                 event = self._build_event(asset, raw_data)
-                # 广播到 Redis 频道
+                # 广播到 Redis 频道（命名见 docs/redis-architecture.md §5）
                 await self.redis.publish(
-                    f"market:{asset}",
+                    f"market:tick:{asset}",
                     event.to_json()
                 )
             await asyncio.sleep(interval_sec)

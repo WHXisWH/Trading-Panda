@@ -1,6 +1,6 @@
 # TradingPanda 后端设计文档
 
-> 版本 1.1 · 2026-05-13
+> 版本 1.2 · 2026-05-15
 > 基于：product-design.md / technical-feasibility-study.md / cost-model.md
 > 架构：三边缘组件 — **Next.js HTTP Gateway（Vercel）** + **WebSocket Hub（Cloudflare Workers + DO）** + **Python Decision Engine（Render）**
 
@@ -61,16 +61,16 @@
 
 数据层:
 ┌──────────────────────────────────────────────────────────────┐
-│  PostgreSQL (Supabase)         │  Redis Cloud                │
+│  PostgreSQL (Supabase)         │  Upstash Redis（推荐）        │
 │  · 用户 / 熊猫 / 交易历史       │  · Pub/Sub：DE 发布事件       │
-│  · 经验数据 (5 子系统)          │  · WS Hub（CF）订阅同一集群   │
+│  · 经验数据 (5 子系统)          │  · WS Hub（CF）REST 订阅同一库 │
 │  · 市场数据缓存                 │  · 响应缓存 (TTL 60s)       │
 │  · Merkle Root 记录            │  · Rate Limit（HTTP 侧）     │
-│                                │  · Actor 状态缓存            │
+│                                │  · Actor 状态缓存 · Nonce 等  │
 └──────────────────────────────────────────────────────────────┘
 ```
 
-详细契约与 DO 存储边界见 **`docs/websocket-hub-design.md`**。
+详细契约与 DO 存储边界见 **`docs/websocket-hub-design.md`**（DO 实例名：`user:{user_id}`，§3.3；禁止用 `panda_id` 作 DO id）。
 
 ---
 
@@ -196,7 +196,7 @@ API Gateway 是面向前端的 **HTTP 业务入口**（认证、REST 代理、�
 
 ### 2.3 WebSocket 管理（Cloudflare Workers + Durable Objects）
 
-> 实现细节与 DO 存储边界以 **`docs/websocket-hub-design.md`** 为准；本节保留产品级行为（连接池、事件类型、背压）。
+> 实现细节与 DO 路由命名以 **`docs/websocket-hub-design.md` §3.3** 为准（`idFromName(\`user:${userId}\`)`）；本节保留产品级行为（连接池、事件类型、背压）。
 
 #### 连接管理
 
@@ -229,7 +229,7 @@ API Gateway 是面向前端的 **HTTP 业务入口**（认证、REST 代理、�
 Decision Engine              WebSocket Hub (CF)              前端
      │                                 │                        │
      │  Redis Pub/Sub                  │                        │
-     │  channel: panda:{id}            │                        │
+     │  channel: panda:{id}:decision   │                        │
      │────────────────────────────────>│                        │
      │                                 │  WebSocket push        │
      │                                 │  event: panda.decision │
@@ -888,7 +888,7 @@ class EmotionStateMachine:
 
 ```python
 # 每次情绪跳转时，通过 Redis Pub/Sub 发布事件
-# channel: panda:{panda_id}:emotion
+# channel: panda:{panda_id}:emotion（决策链见 trades.decision_details；Redis 全表见 docs/redis-architecture.md §5）
 # payload: {
 #     "from": "focused",
 #     "to": "excited",
@@ -2014,10 +2014,10 @@ async def startup():
          ┌──────────┼──────────────────┐
          │          │                   │
     ┌────▼─────┐  ┌▼──────────┐  ┌─────▼──────┐
-    │ Supabase │  │Redis Cloud│  │  Walrus    │
+    │ Supabase │  │Upstash Redis│  │  Walrus    │
     │ ──────── │  │ ────────  │  │  ──────    │
     │PostgreSQL│  │ Pub/Sub   │  │ 去中心化   │
-    │          │  │ 缓存      │  │ Blob 存储  │
+    │          │  │ REST+TCP  │  │ Blob 存储  │
     │ Region:  │  │           │  │            │
     │ US West  │  │ Region:   │  │ Testnet    │
     │          │  │ US West   │  │            │
@@ -2040,10 +2040,10 @@ JWT_EXPIRY=86400                    # 24 小时
 DECISION_ENGINE_URL=https://tradingpanda-engine.onrender.com
 DECISION_ENGINE_API_KEY=<内部通信密钥>
 
-# Redis
-REDIS_URL=redis://<user>:<pass>@<host>:6379
+# Redis（若 Next 直连缓存/限流；否则可省略，由 DE 独占）
+REDIS_URL=rediss://default:<password>@<host>:6379
 
-# Sui
+# Upstash REST 仅配置在 Cloudflare Worker（WS Hub），勿提交到 Vercel
 SUI_RPC_URL=https://fullnode.testnet.sui.io:443
 SUI_WS_URL=wss://fullnode.testnet.sui.io:443
 PACKAGE_ID=0x<合约包 ID>
@@ -2054,8 +2054,8 @@ PACKAGE_ID=0x<合约包 ID>
 # 数据库
 DATABASE_URL=postgresql://<user>:<pass>@<host>:5432/tradingpanda
 
-# Redis
-REDIS_URL=redis://<user>:<pass>@<host>:6379
+# Redis（Upstash 推荐；Python 使用 TLS TCP）
+REDIS_URL=rediss://default:<password>@<host>:6379
 
 # LLM
 DEEPSEEK_API_KEY=<DeepSeek V3 API 密钥>
@@ -2086,7 +2086,8 @@ MERKLE_BATCH_SIZE=50
 | SUI_ADMIN_PRIVATE_KEY | Render Environment Variables | 不轮换 (testnet) |
 | DECISION_ENGINE_API_KEY | 双方环境变量 | 90 天 |
 | DATABASE_URL | Render Environment Variables (自动) | 自动 |
-| REDIS_URL | 双方环境变量 | 按需 |
+| REDIS_URL | Render / Vercel（若 Next 直连缓存） | 按需；`rediss://` |
+| UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN | **仅** Cloudflare Worker（WS Hub） | 按需 |
 
 ### 10.3 扩容策略
 
@@ -2095,7 +2096,7 @@ MERKLE_BATCH_SIZE=50
 ```
 Render: 1 实例 (1 vCPU, 512MB) — $7/mo
 Supabase: Free tier (500MB, 50K rows)
-Redis Cloud: Free tier (30MB)
+Upstash Redis: Free tier（约 10k cmd/天，以官网为准）
 ```
 
 #### 增长阶段 (100-1000 只熊猫)
@@ -2106,7 +2107,7 @@ Render: 1 实例 (2 vCPU, 2GB) — $25/mo
   - 超过 200 时，启动第二个实例 + Redis 分片路由
 
 Supabase: Pro ($25/mo, 8GB, 无限行)
-Redis Cloud: $7/mo (256MB)
+Upstash Redis: Pay-as-you-go（约 $3–15/月，视 cmd 量）
 ```
 
 #### 规模化阶段 (>1000 只熊猫)
@@ -2191,7 +2192,7 @@ class MetricsMiddleware:
 | Vercel (前端+API Gateway) | ✅ | $0/mo | $20/mo (Pro) | $20/mo |
 | Render (Decision Engine) | — | $7/mo (Starter) | $25/mo (Standard) | $85/mo (Pro×2) |
 | Supabase (PostgreSQL) | ✅ | $0/mo | $25/mo (Pro) | $25/mo |
-| Redis Cloud | ✅ | $0/mo | $7/mo | $30/mo |
+| Upstash Redis | ✅ Free | ~$0/mo | ~$3–15/mo | ~$15–30/mo |
 | **基础设施小计** | | **$7/mo** | **$77/mo** | **$160/mo** |
 
 ### 运营成本 (引用 cost-model.md)

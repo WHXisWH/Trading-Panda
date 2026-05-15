@@ -147,7 +147,7 @@ If `DEEPSEEK_API_KEY` is not set, the backend returns a default mock strategy (b
 ## 4. Simulation Loop (Per Tick)
 
 ```
-Redis channel: market:{asset}
+Redis channel: market:tick:{pair}   （频道契约见 docs/redis-architecture.md §5）
        │
        │  MarketEvent { price, volume, timestamp, indicators }
        ▼

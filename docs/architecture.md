@@ -1,7 +1,7 @@
 # TradingPanda — Architecture
 
 > This document describes the confirmed, deployed technical architecture.
-> Last updated: 2026-05-13
+> Last updated: 2026-05-15
 
 ---
 
@@ -34,9 +34,9 @@ Browser
          │                      │
          ▼                      ▼
 ┌──────────────────┐   ┌────────────────────┐
-│  PostgreSQL       │   │  Redis Cloud        │
-│  (Supabase or     │   │  Pub/Sub: market    │
-│   Render PG)      │   │  data broadcast     │
+│  PostgreSQL       │   │  Upstash Redis      │
+│  (Supabase or     │   │  Pub/Sub + cache    │
+│   Render PG)      │   │  (TCP DE / REST CF) │
 │  18 tables        │   │  Cache TTL 60s      │
 │  asyncpg driver   │   │  Rate limit counter │
 └──────────────────┘   └────────────────────┘
@@ -55,7 +55,7 @@ Browser
 └─────────────────────────────────────────────────────┘
 ```
 
-**Realtime path:** Python on Render **publishes** to Redis; the Cloudflare Hub **subscribes** and forwards over WSS. Contract and payload definitions: `docs/websocket-hub-design.md`, `docs/api-specification.md` (WebSocket section).
+**Realtime path:** Python on Render **publishes** to **Upstash** Redis; the Cloudflare Hub **subscribes** (REST/SDK) and forwards over WSS. Contracts: `docs/redis-architecture.md`, `docs/websocket-hub-design.md`, `docs/api-specification.md` (WebSocket section).
 
 ---
 
@@ -133,7 +133,7 @@ FastAPI process (single)
 │   └── GET  /engine/actors/{id}/state
 │
 └── asyncio Task per PandaActor (up to MAX_ACTORS = 100)
-    └── subscribes to Redis channel: market:{asset}
+    └── subscribes to Redis channel: market:tick:{pair}
     └── on each tick: runs 8-step DecisionPipeline
 ```
 
@@ -280,7 +280,7 @@ Note: signature verification is skipped in MVP (wallet_address trusted). Product
 | Variable | Required | Description |
 |---|---|---|
 | `DATABASE_URL` | Yes | `postgresql+asyncpg://user:pass@host:5432/db` |
-| `REDIS_URL` | For simulation | `redis://default:pass@host:6379` |
+| `REDIS_URL` | For simulation | Upstash 等：**`rediss://`** TLS；见 `docs/redis-architecture.md` |
 | `DEEPSEEK_API_KEY` | For strategy parse | DeepSeek V3 API key |
 | `JWT_SECRET` | Yes | 32+ byte random string |
 | `PACKAGE_ID` | Yes | Deployed Move package ID |

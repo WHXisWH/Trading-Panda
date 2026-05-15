@@ -2,7 +2,7 @@
 
 > 本文档以「忒修斯之船」方式持续维护：只换木板、不换整船。部署事实变更时同步更新对应段落；任何改动必须在本文末尾「§9 变更日志」追加一行。
 >
-> **最后同步**：2026-05-13（WebSocket Hub 设计：Cloudflare Workers + DO）
+> **最后同步**：2026-05-15（Redis：Upstash 推荐方案与频道契约）
 
 ---
 
@@ -62,7 +62,7 @@ TradingPanda 是 Sui 链上的 **AI 交易宠物养成系统**，目标是 Sui O
 | 胜率 | 链下 trades 表计算，不上链 | （PRD C11） |
 | 执行阈值 | >0.65 执行 / 0.40-0.65 观望 / <0.40 忽视 | （PRD C12） |
 | 策略残影 | ghost_weight 衰减，旧策略归档不删除 | （PRD C7） |
-| 实时推送 | WebSocket Hub = **Cloudflare Workers + Durable Objects**；消费与 Render 上 DE **同一 Redis** Pub/Sub；DO 仅存连接/订阅/有界队列等短时状态 | Vercel 无长连接；权威数据仍在 PostgreSQL |
+| 实时推送 | WebSocket Hub = **Cloudflare Workers + Durable Objects**；与 Render 上 DE 共用 **同一 Upstash Redis**（Python `rediss://` PUBLISH；Worker **REST** 订阅）；DO 仅存连接/订阅/有界队列等短时状态 | Vercel 无长连接；**不得在 Worker 内嵌 Redis**；权威数据仍在 PostgreSQL |
 
 ---
 
@@ -75,7 +75,7 @@ frontend/   → Vercel
             域名：[待 Vercel 部署后填入]
 
 websocket/  → Cloudflare Workers + Durable Objects（规划中，仓库内设计见 docs/websocket-hub-design.md）
-            浏览器 WSS 入口；订阅 $REDIS_URL 上由 Python 发布的频道
+            浏览器 WSS 入口；经 **Upstash REST**（`UPSTASH_REDIS_REST_*`）订阅与 Python **同一逻辑库**的 Pub/Sub
             公网基址：由 NEXT_PUBLIC_WS_URL（完整 wss://…）暴露给前端
 
 backend/    → Render (Web Service)
@@ -87,9 +87,10 @@ Database    → Supabase（PostgreSQL 15+）或 Render PostgreSQL
             连接池：PgBouncer Transaction 模式（端口 6543）
             连接串：$DATABASE_URL
 
-Cache       → Redis Cloud
-            连接串：$REDIS_URL
-            用途：Pub/Sub（DE 发布市场/熊猫事件；**WS Hub 订阅同一集群**）+ 响应缓存（TTL 60s）+ HTTP Rate Limit 计数
+Cache       → **Upstash Redis**（推荐；MVP 可与 Redis Cloud 互换直至迁移完成）
+            连接串：`$REDIS_URL`（Render / 本地 Python 使用 **`rediss://`** TLS，见 backend/.env.example）
+            Worker 侧：`UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN`（仅 CF，勿提交到 Vercel）
+            用途：Pub/Sub（DE 发布；WS Hub 订阅）+ 响应缓存（TTL 60s）+ HTTP Rate Limit + Nonce 等（频道见 `docs/redis-architecture.md` §5）
 
 Blockchain  → Sui Testnet
             Package ID：0x9b26dfdddef52c980dea0989a22c751ee4c4551d9e39708ab9503990cc7b9710
@@ -121,7 +122,7 @@ Blockchain  → Sui Testnet
 | 变量名 | 说明 |
 |--------|------|
 | `DATABASE_URL` | `postgresql+asyncpg://user:pass@host:5432/db` |
-| `REDIS_URL` | `redis://default:pass@host:6379` |
+| `REDIS_URL` | **`rediss://`** Upstash（或兼容托管商）TLS 端点；`redis-py` / 异步客户端直连 |
 | `DEEPSEEK_API_KEY` | DeepSeek V3 API Key |
 | `SUI_RPC_URL` | Sui 全节点 RPC（`https://fullnode.testnet.sui.io:443`） |
 | `SUI_PRIVATE_KEY` | 后端签名钱包私钥（Merkle Root 上链用） |
@@ -131,6 +132,13 @@ Blockchain  → Sui Testnet
 | `INTERNAL_SECRET` | 与 frontend 共享的内部调用密钥 |
 | `PORT` | Render 自动注入，uvicorn 监听此端口 |
 | `MAX_ACTORS` | 最大并发 PandaActor 数（默认 100） |
+
+### Cloudflare WebSocket Hub（`.dev.vars` / Workers Secrets，不提交）
+
+| 变量名 | 说明 |
+|--------|------|
+| `UPSTASH_REDIS_REST_URL` | Upstash REST API 基址（与 `REDIS_URL` 指向同一数据库） |
+| `UPSTASH_REDIS_REST_TOKEN` | Upstash REST Token（Hub 使用 `@upstash/redis` 等 SDK） |
 
 ---
 
@@ -231,3 +239,5 @@ Package ID：**0x9b26dfdddef52c980dea0989a22c751ee4c4551d9e39708ab9503990cc7b971
 | 2026-05-13 | **进度文档同步与 5% 市场税决策**：同步更新 `dev-docs/DEVELOPMENT_CONTEXT.md`，将 Sui Move 合约进度标为 70%、NFT 市场标为 20%，新增 C13：Panda 二级市场通过 Sui Kiosk + TransferPolicy 收取 5% 版税。 | 产品进度文档与开发事实对齐；下一步合约 v2 需补齐 5% 版税规则、市场路径测试并重新部署 Testnet |
 | 2026-05-13 | **文档：WebSocket Hub 选型（Cloudflare）**：新增 `docs/websocket-hub-design.md`；更新 `docs/architecture.md`、`docs/backend-design.md`、`docs/api-specification.md`、`docs/frontend-design.md`、`CLAUDE.md`；`frontend/.env.example` 增加 `NEXT_PUBLIC_WS_URL`；`vercel.json` 移除无效的 `/api/ws` rewrite；本文 §3–§5 与 §2.2 同步。 | 实时通道与 Vercel 解耦的设计事实已写入仓库；**Workers 代码与生产 URL 仍待实现** |
 | 2026-05-13 | **Git**：将上述文档与配置变更提交并推送至 `origin/main`（commit `c08b34b`）。 | 远程仓库与本地一致，协作者可拉取最新架构说明 |
+| 2026-05-15 | **WebSocket Hub DO 命名规则写死**：`docs/websocket-hub-design.md` 新增 §3.3（`idFromName(\`user:${userId}\`)`、禁止 `panda_id` 作 DO id、订阅与 Redis 转发关系）；`backend-design.md` 增加交叉引用。 | 实现 CF Hub 时避免与 Render 上 `PandaActor` 分片维度混淆 |
+| 2026-05-15 | **Redis 架构调研落地**：新增 `docs/redis-architecture.md`（Upstash 推荐、DE/CF 双端、Pub/Sub 频道 §5、禁止 Worker 内嵌 Redis）；同步 `docs/websocket-hub-design.md`、`docs/backend-design.md`、`docs/architecture.md`、`docs/agent-design.md`、`docs/business-flow.md`、`docs/PRD.md`、`CLAUDE.md`、`backend/.env.example`；本文 §3–§4、§2.2。 | 托管与消息流以仓库内文档为准；**Upstash 账号与生产 Token 仍待配置** |
