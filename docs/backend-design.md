@@ -1,8 +1,8 @@
 # TradingPanda 后端设计文档
 
-> 版本 1.2 · 2026-05-15
+> 版本 1.3 · 2026-05-16
 > 基于：product-design.md / technical-feasibility-study.md / cost-model.md
-> 架构：三边缘组件 — **Next.js HTTP Gateway（Vercel）** + **WebSocket Hub（Cloudflare Workers + DO）** + **Python Decision Engine（Render）**
+> 架构：**Next.js Gateway（Vercel）** + **WebSocket Hub（CF）** + **Market Monitor（Render，DeepBook v3）** + **Decision Engine（Render）**
 
 ---
 
@@ -30,8 +30,8 @@
 │  ┌──────────────────────────────────────────────────────────────────────┐   │
 │  │                     ActorManager                                     │   │
 │  │  ┌─────────┐ ┌─────────┐ ┌─────────┐        最多 100 个 Actor      │   │
-│  │  │PandaActor│ │PandaActor│ │PandaActor│  ←── Redis Pub/Sub 广播     │   │
-│  │  │ #001     │ │ #002     │ │ #003     │       市场数据              │   │
+│  │  │PandaActor│ │PandaActor│ │PandaActor│  ←── SUBSCRIBE market:tick:* │   │
+│  │  │ #001     │ │ #002     │ │ #003     │   (由 market-monitor 发布)   │   │
 │  │  └────┬─────┘ └────┬─────┘ └────┬─────┘                             │   │
 │  └───────┼────────────┼────────────┼────────────────────────────────────┘   │
 │          │            │            │                                         │
@@ -70,7 +70,7 @@
 └──────────────────────────────────────────────────────────────┘
 ```
 
-详细契约与 DO 存储边界见 **`docs/websocket-hub-design.md`**（DO 实例名：`user:{user_id}`，§3.3；禁止用 `panda_id` 作 DO id）。
+行情服务见 **`docs/market-monitor-design.md`**（独立进程）。WebSocket / DO 见 **`docs/websocket-hub-design.md`**（`user:{user_id}`，§3.3）。
 
 ---
 
@@ -364,11 +364,12 @@ decision_engine/
 │   ├── coordinator.py          # Agent Coordinator (LLM 异步)
 │   └── triggers.py             # 触发条件判断
 │
+├── market/
+│   ├── consumer.py             # Redis SUBSCRIBE market:tick:* → ActorManager
+│   └── schemas.py              # MarketEvent 反序列化（与 monitor 契约一致）
+│
 ├── deepbook/
-│   ├── data_feed.py            # DeepBook 数据源
-│   ├── kline_builder.py        # K 线重建
-│   ├── indicators.py           # 技术指标计算
-│   └── simulator.py            # 模拟执行服务
+│   └── simulator.py            # MVP 链下模拟成交（非行情采集）
 │
 ├── llm/
 │   ├── client.py               # DeepSeek V3 API 封装
@@ -384,9 +385,8 @@ decision_engine/
 │   ├── sync_worker.py          # Walrus 同步 Worker
 │   └── restore.py              # Walrus 恢复流程
 │
-├── market/
-│   ├── data_feed.py            # 市场数据接入
-│   ├── broadcaster.py          # Redis Pub/Sub 广播
+├── engine/
+│   ├── broadcaster.py          # Redis PUBLISH panda:* 事件
 │   └── cache.py                # 市场数据缓存
 │
 ├── db/
@@ -564,18 +564,17 @@ class ActorManager:
                 await actor.hibernate()
 ```
 
-#### 市场数据广播
+#### 市场数据消费（方案 B：独立 market-monitor）
+
+行情采集已迁至 **`market-monitor/`**（见 `docs/market-monitor-design.md`）。Decision Engine 仅消费 Redis：
 
 ```
-┌──────────────┐     Redis Pub/Sub      ┌────────────────┐
-│ MarketData   │     channel:           │ ActorManager   │
-│ Feed         │     market:tick:{pair} │                │
-│              │─────────────────────>>│ subscriber     │
-│ (DeepBook /  │                        │                │
-│  外部数据源)  │                        │  broadcast to  │
-│              │                        │  all active    │
-│              │                        │  PandaActors   │
-└──────────────┘                        └────────────────┘
+┌─────────────────────┐     Redis Pub/Sub       ┌─────────────────────────┐
+│ market-monitor/     │     market:tick:{pair}  │ Decision Engine         │
+│ DeepBook v3 →       │────────────────────────>│ MarketDataConsumer      │
+│ K线 + 指标 → PUBLISH │                         │ → ActorManager.broadcast│
+└─────────────────────┘                         │   → PandaActor._tick    │
+                                                └─────────────────────────┘
 ```
 
 ### 3.3 8 步决策管线
@@ -1086,22 +1085,25 @@ def _is_key_moment(self, trade: TradeResult, emotion: str) -> bool:
 
 ## 四、DeepBook 集成层
 
-### 4.1 数据源服务
+> **行情采集**在 **`market-monitor/`**（DeepBook **v3**、`0xdee9::deepbook::*`）。本节仅保留 DE 侧**模拟执行**与契约引用；完整设计见 **`docs/market-monitor-design.md`**。
 
-#### Sui RPC 事件查询
+### 4.1 数据源服务（已迁至 market-monitor）
+
+#### Sui RPC 事件查询（实现位于 `market-monitor/feed/`）
 
 ```python
-# 伪代码：DeepBook 事件订阅
+# 伪代码：DeepBook v3 事件轮询（独立服务，非 DE 进程内）
 class DeepBookDataFeed:
-    """从 DeepBook 链上事件构建市场数据"""
+    """从 DeepBook v3 链上事件构建市场数据并 PUBLISH Redis"""
 
     SUI_RPC_URL = "https://fullnode.testnet.sui.io:443"
 
-    # 监听的事件类型
+    # DeepBook v3（勿使用 clob_v2）
     EVENT_TYPES = [
-        "0xdee9::clob_v2::OrderFilled",     # 成交事件
-        "0xdee9::clob_v2::OrderPlaced",     # 挂单事件
-        "0xdee9::clob_v2::OrderCanceled",   # 撤单事件
+        "0xdee9::deepbook::OrderFilled",
+        "0xdee9::deepbook::OrderPlaced",
+        "0xdee9::deepbook::OrderCancelled",
+        "0xdee9::deepbook::SwapEvent",
     ]
 
     async def subscribe_events(self, pool_id: str):

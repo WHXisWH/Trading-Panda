@@ -37,11 +37,13 @@ frontend/   ← Next.js 14，Vercel（仅 HTTP API Gateway）
     │                         （WebSocket Hub，独立部署，规划中）
     │                              │ Upstash：CF 侧 REST 订阅，与 DE 同库
     ▼                              │
-backend/    ← Python FastAPI，Render ◄┘（DE 经 `rediss://` PUBLISH → Hub 推浏览器）
+backend/    ← Python FastAPI，Render（SUBSCRIBE 行情 + PUBLISH panda 事件）
+    │
+market-monitor/ ← 独立 Render 服务（DeepBook v3 → PUBLISH market:tick:*）
     │
     ├── PostgreSQL (Supabase 或 Render PostgreSQL)
-    ├── Upstash Redis（Pub/Sub + 缓存；Python TCP / CF REST，见 docs/redis-architecture.md）
-    └── Sui Testnet (合约调用)
+    ├── Upstash Redis（Pub/Sub + 缓存；见 docs/redis-architecture.md）
+    └── Sui Testnet (合约 + DeepBook 只读 RPC)
 
 contracts/  ← Sui Move，部署在 Sui Testnet
 ```
@@ -56,6 +58,7 @@ contracts/  ← Sui Move，部署在 Sui Testnet
 | `docs/agent-design.md` | 8步决策引擎设计 |
 | `docs/backend-design.md` | Python 服务与边缘层架构 |
 | `docs/redis-architecture.md` | Redis 部署（Upstash）、Pub/Sub 频道、DE/CF 双端接入 |
+| `docs/market-monitor-design.md` | 独立市场监听（DeepBook v3）、`market:tick:*` 契约 |
 | `docs/websocket-hub-design.md` | WebSocket Hub（Cloudflare Workers + DO）契约与存储边界 |
 | `docs/frontend-design.md` | Next.js 页面设计 |
 | `docs/database-schema.md` | PostgreSQL 表设计 |

@@ -1,5 +1,29 @@
 services:
   - type: web
+    name: trading-panda-market-monitor
+    runtime: python
+    rootDir: market-monitor
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: REDIS_URL
+        sync: false
+      - key: SUI_NETWORK
+        value: testnet
+      - key: SUI_RPC_URL
+        value: https://fullnode.testnet.sui.io:443
+      - key: DEEPBOOK_PACKAGE_ID
+        value: "0xdee9"
+      - key: DEEPBOOK_POOL_IDS
+        sync: false
+      - key: POLL_INTERVAL_SEC
+        value: "2"
+      - key: KLINE_INTERVAL_SEC
+        value: "60"
+
+  - type: web
     name: trading-panda-backend
     runtime: python
     rootDir: backend

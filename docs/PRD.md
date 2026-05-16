@@ -411,8 +411,8 @@ Step 8: 情绪扭曲      S_final = S_social × emotion_coefficient
 
 | 层 | 用途 | 实现 |
 |----|------|------|
-| 数据源 | 链上订单簿事件 → 构建 K 线 + 深度图 | DeepBook Indexer API 拉取历史事件 |
-| 模拟执行 | testnet 挂单/撮合 → 真实 DEX 体验 | 限价单提交 + 状态轮询 |
+| 数据源 | 链上订单簿事件 → K 线 + 指标 → Redis | **独立 `market-monitor/`**；DeepBook **v3** + Sui RPC 只读（见 `docs/market-monitor-design.md`） |
+| 模拟执行 | MVP 链下模拟；可选 testnet 挂单 | `backend` 内 `deepbook/simulator`；非行情采集 |
 
 ---
 

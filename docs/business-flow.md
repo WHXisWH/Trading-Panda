@@ -147,11 +147,11 @@ If `DEEPSEEK_API_KEY` is not set, the backend returns a default mock strategy (b
 ## 4. Simulation Loop (Per Tick)
 
 ```
-Redis channel: market:tick:{pair}   （频道契约见 docs/redis-architecture.md §5）
+DeepBook v3 (Sui RPC) → market-monitor/ → Redis market:tick:{pair}
        │
-       │  MarketEvent { price, volume, timestamp, indicators }
+       │  MarketEvent { price, volume, timestamp, rsi, ma20, candle, … }
        ▼
-PandaActor._tick(market_data)
+Decision Engine: MarketDataConsumer → PandaActor._tick(market_data)
        │
        ▼
 DecisionPipeline.run(personality, strategy, emotion, experience, market_data)

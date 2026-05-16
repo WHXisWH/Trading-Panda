@@ -33,7 +33,7 @@
                     │
                     └──► Render FastAPI（Decision Engine）
                               │
-                              └──► Upstash Redis **PUBLISH**（TCP，`redis-py`）
+                              └──► Upstash（**market-monitor** PUBLISH `market:tick:*`；DE PUBLISH `panda:*`）
 ```
 
 **原则**：PostgreSQL 与链上仍为权威数据；**Upstash Redis** 为消息总线 + 缓存（见 `docs/redis-architecture.md`）；DO 仅存连接与推送相关的**短时、小体量**状态（见下文）。
@@ -143,7 +143,8 @@ CF:      DO(user:U) 已订阅该频道 ──WSS──► 用户 U 的浏览器
 |----|------|------|
 | HTTP API Gateway | Vercel · Next.js | REST、鉴权、转发 FastAPI、静态与 SSR |
 | WebSocket Hub | Cloudflare Workers + DO | 长连接、订阅、推送 |
-| Decision Engine | Render · FastAPI | 决策、Actor、**发布** Redis 事件 |
+| Market Monitor | Render · FastAPI | DeepBook v3 行情、**PUBLISH** `market:tick:*` |
+| Decision Engine | Render · FastAPI | 决策、Actor、**PUBLISH** `panda:*`；**SUBSCRIBE** 行情 |
 
 ---
 
@@ -153,5 +154,6 @@ CF:      DO(user:U) 已订阅该频道 ──WSS──► 用户 U 的浏览器
 |------|-----------------------------------|
 | WebSocket Hub / CF | `…/research/websocket-cloudflare-feasibility.md` |
 | Redis 部署与消息流 | `…/research/redis-architecture-research.md` |
+| DeepBook 独立监听（方案 B） | `…/research/deepbook-integration-research.md` |
 
 **仓库内契约**：`docs/redis-architecture.md`（Redis）+ 本文（Hub/DO）+ `docs/api-specification.md`（WS 事件）。

@@ -1,7 +1,7 @@
 # TradingPanda — Architecture
 
 > This document describes the confirmed, deployed technical architecture.
-> Last updated: 2026-05-15
+> Last updated: 2026-05-16
 
 ---
 
@@ -28,10 +28,11 @@ Browser
 │  │ HTTP API    │   │ Actor System                  │ │
 │  │ /auth/*     │   │ asyncio tasks, one per Panda  │ │
 │  │ /pandas/*   │   │ max 100 concurrent (MAX_ACTORS)│ │
-│  │ /engine/*   │   │ market data via Redis Pub/Sub │ │
+│  │ /engine/*   │   │ SUBSCRIBE market:tick:* (消费)  │ │
 │  └─────────────┘   └──────────────────────────────┘ │
 └────────┬──────────────────────┬──────────────────────┘
          │                      │
+         │                      │  SUBSCRIBE / PUBLISH
          ▼                      ▼
 ┌──────────────────┐   ┌────────────────────┐
 │  PostgreSQL       │   │  Upstash Redis      │
@@ -39,7 +40,16 @@ Browser
 │   Render PG)      │   │  (TCP DE / REST CF) │
 │  18 tables        │   │  Cache TTL 60s      │
 │  asyncpg driver   │   │  Rate limit counter │
-└──────────────────┘   └────────────────────┘
+└──────────────────┘   └──────────┬─────────┘
+                                  ▲
+                                  │ PUBLISH market:tick:*
+┌─────────────────────────────────┴─────────────────────────────────┐
+│  Market Monitor — Python 3.11 · Render (独立 Web Service)          │
+│  DeepBook v3 · Sui RPC 轮询 · K 线 + 指标 · 见 market-monitor-design │
+└───────────────────────────────┬───────────────────────────────────┘
+                                │ 只读事件
+                                ▼
+                    DeepBook v3 + Sui Fullnode (Testnet)
          │
          ▼ (every 50 trades, and before NFT transfer)
 ┌─────────────────────────────────────────────────────┐
@@ -55,7 +65,7 @@ Browser
 └─────────────────────────────────────────────────────┘
 ```
 
-**Realtime path:** Python on Render **publishes** to **Upstash** Redis; the Cloudflare Hub **subscribes** (REST/SDK) and forwards over WSS. Contracts: `docs/redis-architecture.md`, `docs/websocket-hub-design.md`, `docs/api-specification.md` (WebSocket section).
+**Realtime path:** **market-monitor** PUBLISH `market:tick:*` → DE **SUBSCRIBE** → PandaActor；DE PUBLISH `panda:*` → Cloudflare Hub → WSS. Contracts: `docs/market-monitor-design.md`, `docs/redis-architecture.md`, `docs/websocket-hub-design.md`, `docs/api-specification.md` (WebSocket section).
 
 ---
 
@@ -133,7 +143,7 @@ FastAPI process (single)
 │   └── GET  /engine/actors/{id}/state
 │
 └── asyncio Task per PandaActor (up to MAX_ACTORS = 100)
-    └── subscribes to Redis channel: market:tick:{pair}
+    └── receives market ticks via DE `MarketDataConsumer` (Redis `market:tick:{pair}` from **market-monitor**)
     └── on each tick: runs 8-step DecisionPipeline
 ```
 

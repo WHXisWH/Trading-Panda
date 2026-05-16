@@ -40,6 +40,7 @@ TradingPanda is an **AI trading pet system on Sui**. You mint a Panda NFT whose 
 ### Architecture & Business Flow
 
 - **[docs/architecture.md](docs/architecture.md)** — service topology, contract modules, data stores, API surface
+- **[docs/market-monitor-design.md](docs/market-monitor-design.md)** — standalone DeepBook v3 market listener (scheme B)
 - **[docs/redis-architecture.md](docs/redis-architecture.md)** — Redis (Upstash) hosting, Pub/Sub channels, Python + Cloudflare access
 - **[docs/websocket-hub-design.md](docs/websocket-hub-design.md)** — WebSocket Hub on Cloudflare Workers + Durable Objects
 - **[docs/business-flow.md](docs/business-flow.md)** — mint flow, strategy flow, 8-step decision pipeline, emotion machine, Merkle Root submission
@@ -175,6 +176,7 @@ TradingPanda 是 **Sui 链上的 AI 交易宠物养成系统**。你铸造一只
 ### 架构与业务流
 
 - **[docs/architecture.md](docs/architecture.md)** — 服务拓扑、合约模块、数据存储、API 接口
+- **[docs/market-monitor-design.md](docs/market-monitor-design.md)** — 独立 DeepBook v3 行情监听（方案 B）
 - **[docs/redis-architecture.md](docs/redis-architecture.md)** — Redis（Upstash）托管、Pub/Sub 频道、Python 与 Cloudflare 双端接入
 - **[docs/websocket-hub-design.md](docs/websocket-hub-design.md)** — Cloudflare Workers + Durable Objects WebSocket Hub
 - **[docs/business-flow.md](docs/business-flow.md)** — 铸造流程、策略流程、8步决策管线、情绪状态机、Merkle Root 提交

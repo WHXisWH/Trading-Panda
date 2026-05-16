@@ -1,7 +1,7 @@
 # TradingPanda 产品与进度上下文
 
 > 本文档以「忒修斯之船」方式持续维护，记录产品目标、当前状态、里程碑进展和下一步行动项。
-> 最后更新：2026-05-15（Redis：Upstash 推荐方案写入 `docs/redis-architecture.md`）
+> 最后更新：2026-05-16（Market Monitor 独立服务 · 方案 B）
 
 **与 `dev-docs/DEV_CONTEXT.md` 的关系**：DEV_CONTEXT.md 写「部署事实」（环境变量、端口、API路径、数据库结构），本文写「产品与进度事实」；**两份文档都由 §9 变更日志承接时间轴**，任何合并级改动必须在 `DEV_CONTEXT.md` §9 追加一行，保证「谁改了什么」可查。
 
@@ -91,6 +91,7 @@ TradingPanda 是 Sui 链上的 **AI 交易宠物养成系统**，目标是 **Sui
 | C12 | 执行阈值 | >0.65 执行 / 0.40-0.65 观望 / <0.40 忽视 | 2026-05-08 | PRD 勘误 |
 | C13 | Panda 二级市场收益 | MVP 统一通过 Sui Kiosk + TransferPolicy 收取 5% 版税 | 2026-05-13 | Sui 标准市场兼容、用户体验较好；普通钱包转账不视作市场交易，前端不提供绕过路径 |
 | C14 | 实时推送层 | WebSocket Hub 采用 **Cloudflare Workers + Durable Objects**；与 Python DE 共用 **同一 Upstash Redis**（DE：`rediss://` + `redis-py`；Hub：**REST** `@upstash/redis`）；PostgreSQL 仍为权威存储 | 2026-05-13 | Vercel 无长连接；DO 仅存连接/订阅/有界队列等短时状态（见 `docs/websocket-hub-design.md`）；**不得在 Worker 内嵌 Redis**（见 `docs/redis-architecture.md`） |
+| C15 | DeepBook 行情采集 | **方案 B**：独立 **`market-monitor/`** 服务；DeepBook **v3**（`0xdee9::deepbook::*`）；`PUBLISH market:tick:{pair}`；DE 仅订阅 | 2026-05-16 | 与调研 `deepbook-integration-research.md` 一致；MVP 只读链上数据，无需 gas |
 
 ---
 
@@ -98,15 +99,16 @@ TradingPanda 是 Sui 链上的 **AI 交易宠物养成系统**，目标是 **Sui
 
 按顺序执行，每项完成后更新 §2.1 进度并追加 §9 变更日志：
 
-1. **合约 v2 与市场税** — 将 Panda 市场路径固定为 Kiosk + TransferPolicy 5% 版税，补测试后重新部署 Testnet
-2. **数据库 Schema** — 写 Alembic 首个迁移文件（18张表）
-3. **钱包登录** — Next.js API route + JWT 签发
-4. **策略解析** — DeepSeek V3 接入，`/engine/strategy/parse` 端点
-5. **决策引擎核心** — `DecisionPipeline` 8步实现 + 单元测试
-6. **情绪状态机** — 完善 transitions + 经 **CF Hub** 的 WebSocket 广播（Redis 发布侧在 Python）
-7. **Dashboard MVP** — K线图 + 决策链 + `NEXT_PUBLIC_WS_URL` 接入
-8. **铸造前端** — MintPage + 链上 mint() 调用
-9. **Merkle Root Worker** — 50笔触发 + 链上提交
+1. **market-monitor MVP** — DeepBook v3 轮询 + `market:tick:*` + `/health`（见 `docs/market-monitor-design.md` §8 Phase 1）
+2. **合约 v2 与市场税** — 将 Panda 市场路径固定为 Kiosk + TransferPolicy 5% 版税，补测试后重新部署 Testnet
+3. **数据库 Schema** — 写 Alembic 首个迁移文件（18张表）
+4. **钱包登录** — Next.js API route + JWT 签发
+5. **策略解析** — DeepSeek V3 接入，`/engine/strategy/parse` 端点
+6. **决策引擎核心** — `DecisionPipeline` 8步 + `MarketDataConsumer` 订阅 Redis
+7. **情绪状态机** — 完善 transitions + 经 **CF Hub** 的 WebSocket 广播
+8. **Dashboard MVP** — K线图 + 决策链 + `NEXT_PUBLIC_WS_URL` 接入
+9. **铸造前端** — MintPage + 链上 mint() 调用
+10. **Merkle Root Worker** — 50笔触发 + 链上提交
 
 ---
 
@@ -130,3 +132,4 @@ TradingPanda 是 Sui 链上的 **AI 交易宠物养成系统**，目标是 **Sui
 | 2026-05-13 | **合约本地实现与市场税设计同步**：Sui Move 核心模块本地实现完成并通过 `sui move test` 11/11；产品进度更新为合约 70%、Kiosk 市场 20%；新增 C13 决策：Panda 二级市场通过 Sui Kiosk + TransferPolicy 收取 5% 版税。 | 合约进入重新部署前准备阶段；下一步优先补齐 5% 版税规则、市场路径测试与 Testnet 重新发布 |
 | 2026-05-13 | **WebSocket Hub 设计写入文档**：新增 C14（Cloudflare Workers + Durable Objects + 与 DE 共用 Redis）；里程碑「WebSocket 实时推送」与优先级队列 6–7 同步为 CF 方案；对齐 `docs/websocket-hub-design.md` 与 `dev-docs/DEV_CONTEXT.md`。 | 架构与调研结论一致；Workers 工程与生产 `NEXT_PUBLIC_WS_URL` 仍为待办 |
 | 2026-05-15 | **Redis 架构调研写入仓库**：新增 `docs/redis-architecture.md`（Upstash 推荐、Pub/Sub 频道、DE/CF 双端）；更新 C14 表述与多份工程文档。 | MVP 托管与消息流路径明确；Upstash 与 Worker 集成仍为待办 |
+| 2026-05-16 | **DeepBook 监听方案 B 写入文档**：新增 `docs/market-monitor-design.md`、C15；行情从 DE 拆至 `market-monitor/`；DeepBook v3 事件与 Redis 契约同步。 | 独立监听服务为架构目标；实现与 Testnet Pool ID 配置待办 |

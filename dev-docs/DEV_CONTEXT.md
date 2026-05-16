@@ -2,7 +2,7 @@
 
 > 本文档以「忒修斯之船」方式持续维护：只换木板、不换整船。部署事实变更时同步更新对应段落；任何改动必须在本文末尾「§9 变更日志」追加一行。
 >
-> **最后同步**：2026-05-15（Redis：Upstash 推荐方案与频道契约）
+> **最后同步**：2026-05-16（Market Monitor 独立服务 · 方案 B）
 
 ---
 
@@ -62,7 +62,8 @@ TradingPanda 是 Sui 链上的 **AI 交易宠物养成系统**，目标是 Sui O
 | 胜率 | 链下 trades 表计算，不上链 | （PRD C11） |
 | 执行阈值 | >0.65 执行 / 0.40-0.65 观望 / <0.40 忽视 | （PRD C12） |
 | 策略残影 | ghost_weight 衰减，旧策略归档不删除 | （PRD C7） |
-| 实时推送 | WebSocket Hub = **Cloudflare Workers + Durable Objects**；与 Render 上 DE 共用 **同一 Upstash Redis**（Python `rediss://` PUBLISH；Worker **REST** 订阅）；DO 仅存连接/订阅/有界队列等短时状态 | Vercel 无长连接；**不得在 Worker 内嵌 Redis**；权威数据仍在 PostgreSQL |
+| 行情采集 | **独立 `market-monitor/`**（Render）；DeepBook **v3** + Sui RPC 只读 → `PUBLISH market:tick:{pair}`；DE **仅 SUBSCRIBE** | 与决策进程解耦；见 `docs/market-monitor-design.md` |
+| 实时推送 | WebSocket Hub = **Cloudflare Workers + Durable Objects**；与 Render 上 DE 共用 **同一 Upstash Redis**（DE `rediss://` 发 `panda:*`；Worker **REST** 订阅）；DO 仅存连接/订阅/有界队列等短时状态 | Vercel 无长连接；权威数据仍在 PostgreSQL |
 
 ---
 
@@ -74,9 +75,12 @@ frontend/   → Vercel
             HTTP API Gateway（Next.js API Routes）；**不承载 WebSocket**
             域名：[待 Vercel 部署后填入]
 
-websocket/  → Cloudflare Workers + Durable Objects（规划中，仓库内设计见 docs/websocket-hub-design.md）
-            浏览器 WSS 入口；经 **Upstash REST**（`UPSTASH_REDIS_REST_*`）订阅与 Python **同一逻辑库**的 Pub/Sub
-            公网基址：由 NEXT_PUBLIC_WS_URL（完整 wss://…）暴露给前端
+market-monitor/ → Render (Web Service，规划中)
+            DeepBook v3 行情；`REDIS_URL` 与 backend 同库；`GET /health`
+            设计见 docs/market-monitor-design.md
+
+websocket/  → Cloudflare Workers + Durable Objects（规划中，docs/websocket-hub-design.md）
+            浏览器 WSS；`NEXT_PUBLIC_WS_URL`
 
 backend/    → Render (Web Service)
             Python 3.11 + FastAPI + uvicorn
@@ -132,6 +136,19 @@ Blockchain  → Sui Testnet
 | `INTERNAL_SECRET` | 与 frontend 共享的内部调用密钥 |
 | `PORT` | Render 自动注入，uvicorn 监听此端口 |
 | `MAX_ACTORS` | 最大并发 PandaActor 数（默认 100） |
+
+### market-monitor/.env（不提交，参考 market-monitor/.env.example）
+
+| 变量名 | 说明 |
+|--------|------|
+| `REDIS_URL` | 与 backend 相同 Upstash 实例（`rediss://`） |
+| `SUI_NETWORK` | `testnet` / `mainnet` |
+| `SUI_RPC_URL` | Sui Fullnode（默认 testnet） |
+| `DEEPBOOK_PACKAGE_ID` | 默认 `0xdee9` |
+| `DEEPBOOK_POOL_IDS` | 逗号分隔 Pool 对象 ID（部署前用 PoolCreated 查询） |
+| `POLL_INTERVAL_SEC` | 事件轮询间隔，建议 ≥ 2 |
+| `KLINE_INTERVAL_SEC` | K 线周期秒数，默认 60 |
+| `PORT` | Render 注入 |
 
 ### Cloudflare WebSocket Hub（`.dev.vars` / Workers Secrets，不提交）
 
@@ -241,3 +258,4 @@ Package ID：**0x9b26dfdddef52c980dea0989a22c751ee4c4551d9e39708ab9503990cc7b971
 | 2026-05-13 | **Git**：将上述文档与配置变更提交并推送至 `origin/main`（commit `c08b34b`）。 | 远程仓库与本地一致，协作者可拉取最新架构说明 |
 | 2026-05-15 | **WebSocket Hub DO 命名规则写死**：`docs/websocket-hub-design.md` 新增 §3.3（`idFromName(\`user:${userId}\`)`、禁止 `panda_id` 作 DO id、订阅与 Redis 转发关系）；`backend-design.md` 增加交叉引用。 | 实现 CF Hub 时避免与 Render 上 `PandaActor` 分片维度混淆 |
 | 2026-05-15 | **Redis 架构调研落地**：新增 `docs/redis-architecture.md`（Upstash 推荐、DE/CF 双端、Pub/Sub 频道 §5、禁止 Worker 内嵌 Redis）；同步 `docs/websocket-hub-design.md`、`docs/backend-design.md`、`docs/architecture.md`、`docs/agent-design.md`、`docs/business-flow.md`、`docs/PRD.md`、`CLAUDE.md`、`backend/.env.example`；本文 §3–§4、§2.2。 | 托管与消息流以仓库内文档为准；**Upstash 账号与生产 Token 仍待配置** |
+| 2026-05-16 | **DeepBook 监听方案 B（独立 market-monitor）**：新增 `docs/market-monitor-design.md`、`market-monitor/.env.example`；DeepBook **v3** 事件类型；行情 `PUBLISH` 迁至 monitor，DE 仅 `MarketDataConsumer`；更新 `redis-architecture.md`、`architecture.md`、`backend-design.md`、`agent-design.md`、`business-flow.md`、`render.yaml`、本文 §2.2/§3/§4。 | 架构锁定独立监听服务；**market-monitor 代码与 Pool ID 仍待实现/配置** |

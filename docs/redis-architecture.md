@@ -1,7 +1,7 @@
 # Redis 架构与部署（推荐方案）
 
 > 汇总仓库内工程约束与 **2026-05-15** 调研结论（Obsidian：`research/redis-architecture-research.md`）。  
-> **最后更新**：2026-05-15
+> **最后更新**：2026-05-16
 
 ---
 
@@ -12,7 +12,7 @@
 | Redis 是否独立 | **是** — 独立基础设施，不嵌入 DE、不嵌入 CF Worker |
 | 能否在 Cloudflare Workers 内跑原生 Redis | **否** — Workers 无持久 TCP listen、无 OS 级进程、128MB 隔离、无状态模型，与 Redis 服务器模型根本冲突 |
 | **MVP 推荐托管** | **Upstash Redis（Valkey 兼容）** — Serverless、REST + TCP 双端、与 CF/Python 均兼容 |
-| 推荐消息流 | **Python DE → Redis Pub/Sub → CF Worker（订阅/转发）→ Durable Objects → 浏览器 WSS** |
+| 推荐消息流 | **market-monitor → Redis → DE / Hub**；**DE → Redis `panda:*` → Hub → WSS** |
 | MVP 增量成本（Redis 本身） | **$0/月**（Upstash 免费层约 10k cmd/天，配额以官网为准） |
 
 ---
@@ -21,8 +21,8 @@
 
 | # | 用途 | 典型数据结构 | 说明 |
 |---|------|----------------|------|
-| 1 | **Pub/Sub 总线** | Channel 消息 | DE → Hub → 前端；**最不可替代** |
-| 2 | **市场数据广播** | Channel | `market:tick:{pair}`；Feed 发布，Actor / Hub 按需订阅 |
+| 1 | **Pub/Sub 总线** | Channel 消息 | DE 发 `panda:*` → Hub → 前端；**最不可替代** |
+| 2 | **市场数据广播** | Channel | `market:tick:{pair}`；**market-monitor** 发布，DE / Hub 订阅 |
 | 3 | **响应缓存** | String + TTL | 熊猫快照、排行榜、市场列表 |
 | 4 | **Nonce / 短时认证态** | String + TTL（如 5min） | 登录 challenge 等 |
 | 5 | **策略解析缓存** | String + TTL（如 24h） | 解析后 JSON |
@@ -45,18 +45,14 @@
 ## 4. 推荐消息流（MVP）
 
 ```
+DeepBook v3 ──Sui RPC──► market-monitor/ (Render)
+                              │ PUBLISH market:tick:*
+                              ▼
 ┌──────────────────────────────────────────────────────────────────┐
 │  Decision Engine (Render · Python / FastAPI)                      │
-│                                                                   │
-│  ┌──────────┐    ┌──────────────┐    ┌───────────────────┐        │
-│  │ Market   │───►│ PandaActor   │───►│ Broadcaster       │        │
-│  │ Data Feed│    │ (8-step pipe)│    │ (redis-py PUBLISH) │       │
-│  └──────────┘    └──────────────┘    └────────┬──────────┘        │
-│                                                │                  │
-│  ┌──────────────┐                              │                  │
-│  │ Scheduler    │  Walrus Sync / Merkle        │                  │
-│  │ (APScheduler)│  → Redis PUBLISH             │                  │
-│  └──────────────┘                              │                  │
+│  MarketDataConsumer ──SUBSCRIBE──► broadcast_market_tick()        │
+│  PandaActor (8-step) ──► PUBLISH panda:{id}:*                     │
+│  Scheduler: Walrus / Merkle → Redis (walrus:*)                      │
 └────────────────────────────────────────────────┼──────────────────┘
                                                  │
                                                  ▼
@@ -110,7 +106,10 @@
 | `panda:{id}:emotion` | 情绪状态机 | WS Hub | 情绪迁移 |
 | `panda:{id}:experience` | 经验引擎 | WS Hub | 经验变更 |
 | `panda:{id}:diary` | Agent / 日记任务 | WS Hub | 日记生成 |
-| `market:tick:{pair}` | MarketDataFeed | PandaActor、WS Hub | 行情 tick；`pair` 如 `SUI-USDC` |
+| `market:tick:{pair}` | **market-monitor**（独立服务） | PandaActor（经 DE `MarketDataConsumer`）、可选 WS Hub | 完整 `MarketEvent`（含 OHLCV + 指标）；`pair` 如 `SUI-USDC` |
+| `market:fill:{pair}` | market-monitor（可选） | 调试 / 高频图表 | 单笔成交归一化 |
+| `market:candles:1m:{pair}` | market-monitor（可选） | WS Hub | 仅 K 线 OHLCV |
+| `market:heartbeat` | market-monitor | 运维 / DE 降级判断 | 存活与各 pool 最后事件时间 |
 | `walrus:synced` | Walrus 同步 Worker | WS Hub | 备份/链上同步通知 |
 
 **与 WebSocket 事件名的关系**：Redis payload 仍遵循 `docs/api-specification.md` §4.3 的 `event` + `payload` 外壳；**频道名**与 **WS `event` 字符串**不必相同，但 Hub 转发时应保持 body 契约一致。
@@ -145,7 +144,7 @@
 |--------|------|
 | P0 | 创建 Upstash 数据库；Render 配置 `REDIS_URL`（`rediss://`） |
 | P0 | Worker 项目配置 `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` |
-| P0 | DE：`PUBLISH` 使用 §5 频道名；Hub：订阅并转发至 DO |
+| P0 | market-monitor：`PUBLISH` `market:tick:*`；DE：仅 `SUBSCRIBE` 市场频道 + `PUBLISH` `panda:*` |
 | P1 | 验证 Upstash 与 Workers 订阅 API 组合在当前 runtime 下的行为 |
 
 ---
@@ -155,4 +154,4 @@
 个人调研笔记（不随 Git 版本管理）：  
 `/Users/Murphywuwu/Documents/Obsidian Vault/Artifact-Registry/sui-ai-trading-pet/research/redis-architecture-research.md`
 
-**契约优先级**：以 **本文 + `docs/websocket-hub-design.md` + `docs/api-specification.md`** 为准；Obsidian 为来源补充。
+**契约优先级**：以 **本文 + `docs/market-monitor-design.md` + `docs/websocket-hub-design.md` + `docs/api-specification.md`** 为准；Obsidian 为来源补充。

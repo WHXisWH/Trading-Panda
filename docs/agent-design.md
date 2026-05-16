@@ -12,16 +12,17 @@
 
 ```
                            ┌─────────────────────────────┐
-                           │      市场数据事件源            │
-                           │  DeepBook / CSV / WebSocket  │
+                           │  market-monitor/ (Render)   │
+                           │  DeepBook v3 · Sui RPC 轮询  │
+                           │  K线 + 指标 → MarketEvent     │
                            └──────────┬──────────────────┘
-                                      │ MarketEvent
+                                      │ PUBLISH
                                       ▼
                            ┌──────────────────────┐
-                           │   Redis Pub/Sub 广播   │
-                           │  channel: market:tick:{pair} │
+                           │   Redis Pub/Sub        │
+                           │  market:tick:{pair}    │
                            └──────────┬──────────────┘
-                                      │ subscribe
+                                      │ SUBSCRIBE (DE)
                     ┌─────────────────┼─────────────────┐
                     ▼                 ▼                  ▼
           ┌─────────────┐   ┌─────────────┐   ┌─────────────┐
@@ -248,36 +249,22 @@ class MarketEvent:
     market_regime: str      # "bull" / "bear" / "ranging"
     funding_rate: float     # 资金费率
     orderbook_imbalance: float  # 订单簿不平衡度
+    pair: str               # 如 "SUI-USDC"（Redis channel 后缀）
+```
 
-class MarketDataProducer:
-    """市场数据生产者：从数据源拉取并广播事件"""
-    
-    def __init__(self, redis_client):
-        self.redis = redis_client
-    
-    async def start(self, assets: List[str], interval_sec: int = 60):
-        """周期性拉取市场数据并广播到 Redis"""
-        while True:
-            for asset in assets:
-                raw_data = await self._fetch_market_data(asset)
-                event = self._build_event(asset, raw_data)
-                # 广播到 Redis 频道（命名见 docs/redis-architecture.md §5）
-                await self.redis.publish(
-                    f"market:tick:{asset}",
-                    event.to_json()
-                )
-            await asyncio.sleep(interval_sec)
-    
-    async def _fetch_market_data(self, asset: str) -> dict:
-        """从 DeepBook / CSV / API 拉取原始数据"""
-        # DeepBook testnet 接口
-        # 或 CSV 回放模式
-        pass
-    
-    def _build_event(self, asset: str, raw: dict) -> MarketEvent:
-        """原始数据 → 标准化 MarketEvent"""
-        # 计算技术指标（RSI / MA / MACD / 波动率等）
-        pass
+**生产者 / 消费者分工（方案 B）**
+
+- **生产**：`market-monitor/` 轮询 DeepBook v3 → 计算指标 → `PUBLISH market:tick:{pair}`（见 `docs/market-monitor-design.md`）。
+- **消费**：Decision Engine 内 `MarketDataConsumer`：
+
+```python
+class MarketDataConsumer:
+    async def start(self):
+        pubsub = self.redis.pubsub()
+        await pubsub.psubscribe("market:tick:*")
+        async for message in pubsub.listen():
+            event = MarketEvent.from_json(message["data"])
+            await self.actor_manager.broadcast_market_tick(event)
 ```
 
 ### 2.4 Actor 状态管理
