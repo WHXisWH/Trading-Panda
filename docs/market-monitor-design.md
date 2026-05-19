@@ -68,7 +68,7 @@ market-monitor/
 └── tests/
 ```
 
-实现状态：**目录与契约以本文为准；代码随 Phase 1 落地**（见 §8）。
+实现状态：**`market-monitor/` 已实现**（DeepBook HTTP 轮询、指标、`market:tick:*`、`/health`）。
 
 ---
 
