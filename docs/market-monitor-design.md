@@ -3,7 +3,7 @@
 > **架构决策（已锁定）**：DeepBook 行情采集、K 线重建、技术指标计算从 Decision Engine **拆分为独立进程** `market-monitor/`。  
 > 数据源：**DeepBook v3**（Sui 链上 CLOB，经 Sui Fullnode RPC / 事件轮询，无官方公有 REST API）。  
 > 下游：经 **Upstash Redis Pub/Sub** 向 Decision Engine、WebSocket Hub 广播。  
-> **最后更新**：2026-05-16
+> **最后更新**：2026-05-19
 
 ---
 
@@ -46,6 +46,8 @@ DeepBook v3（Sui Testnet/Mainnet）
 ```
 
 **Decision Engine 不再**内嵌 `data_feed.py` 轮询 Sui；仅 **订阅 Redis** 并 `broadcast_market_tick()`。
+
+**下游接入**：WebSocket Hub **只**通过 Upstash 订阅 `market:*` / 消费 DE 的 `panda:*`，**不**对本服务发起 HTTP/WebSocket（见 `docs/websocket-hub-design.md` §3.4）。本服务 **不**实现面向 Hub 的推送 API。
 
 ---
 

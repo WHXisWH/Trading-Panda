@@ -1,7 +1,7 @@
 # WebSocket Hub — Cloudflare Workers + Durable Objects
 
 > 将「实时推送层」从 Vercel（无长连接）迁出，由 **Cloudflare Workers + Durable Objects（DO）** 承载；与既有 **Python Decision Engine（Render）+ Redis Pub/Sub** 对齐。  
-> **最后更新**：2026-05-15
+> **最后更新**：2026-05-19
 
 ---
 
@@ -109,6 +109,54 @@ CF:      DO(user:U) 已订阅该频道 ──WSS──► 用户 U 的浏览器
 ```
 
 **与 Postgres 的分工**：完整八步决策链写入 `trades.decision_details`；WSS 只推 `trade.executed` / `simulation.tick` 等摘要事件（见 `api-specification.md` §4.3），**不**逐步推送 S1–S8。
+
+### 3.4 行情数据：经 Upstash 订阅，禁止直连 market-monitor
+
+**决策（MVP 锁定）**：WebSocket Hub **不**通过 HTTP/WebSocket 直连 Render 上的 `market-monitor/`；与 Decision Engine 一样，作为 **Upstash Redis 的订阅方** 消费行情。
+
+#### 推荐数据流
+
+```
+DeepBook v3
+    ▼
+market-monitor/  ──PUBLISH market:tick:{pair}──►  Upstash Redis
+                                                      │
+                        ┌─────────────────────────────┼─────────────────────────────┐
+                        ▼                             ▼                             ▼
+                 Decision Engine              WebSocket Hub (CF)              （未来消费者）
+                 SUBSCRIBE（必须）            SUBSCRIBE（按需）                 告警/回放等
+                 → PandaActor 决策            → WSS 推浏览器
+                 PUBLISH panda:*  ──────────► 同上 Hub 订阅 panda:*
+```
+
+Hub 与 DE 是 **同级消费者**，都连 **同一 Upstash 实例**，不是 `Hub ← monitor` 的链式转发。
+
+#### Hub 应订哪些频道
+
+| 频道 | 是否必须 | 用途 |
+|------|----------|------|
+| `panda:{id}:decision` / `emotion` / `experience` / `diary` | **必须** | 交易、情绪、经验、日记等用户可见实时事件（DE 发布） |
+| `market:tick:{pair}` 或 `market:candles:1m:{pair}` | **可选** | 纯 K 线/行情图；payload 为 monitor 的 `MarketEvent` |
+| `simulation.tick`（经 DE 组包后的事件名） | 视产品 | 含熊猫权益/盈亏的模拟盘 tick — **由 DE 在决策后发布**（通常走 `panda:*` 或约定 channel），Hub **不要**指望从 monitor 拿到熊猫状态 |
+
+前端「熊猫这一拍」应优先消费 **DE 发出的 `panda:*` / `simulation.tick`**；全市场图表再按需订 `market:*`。
+
+#### 为何禁止 Hub 直连 market-monitor
+
+| 直连 monitor | 经 Upstash（采用） |
+|--------------|-------------------|
+| monitor 需维护 Hub 连接、鉴权、按用户过滤 | monitor 只 `PUBLISH`，无推送职责 |
+| DE 与 Hub 各走一路，易双轨不一致 | 单一行情总线，DE/Hub/调试工具同源 |
+| Render↔CF 跨云长连接，运维复杂 | Hub 用 Upstash REST/Connector，与订 `panda:*` 同一套 |
+| monitor 重启同时打断 DE 与 Hub | 监听与决策进程已解耦（方案 B） |
+
+#### 明确不采用的模式
+
+- **不**部署独立的 `redis-pubsub` 桥接服务（已自仓库移除）。
+- **不**让 Hub 成为 monitor 的 WebSocket 客户端（无 `wss://market-monitor/...`）。
+- Upstash 短时不可用时：Hub 重连 + 客户端 REST 拉快照；权威状态仍以 **PostgreSQL** 为准。
+
+实现细节与频道全表见 `docs/redis-architecture.md` §5、`docs/market-monitor-design.md` §2。
 
 ---
 

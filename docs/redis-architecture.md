@@ -1,7 +1,7 @@
 # Redis 架构与部署（推荐方案）
 
 > 汇总仓库内工程约束与 **2026-05-15** 调研结论（Obsidian：`research/redis-architecture-research.md`）。  
-> **最后更新**：2026-05-16
+> **最后更新**：2026-05-19
 
 ---
 
@@ -29,6 +29,8 @@
 | 6 | **限流计数** | INCR + TTL | HTTP / WSS 侧计数 |
 
 用途 1–2 对 Redis 依赖最深；3–6 理论上可迁到别处，但会增复杂度 — **MVP 采用方案 A：同一 Upstash 实例承担六类**（见调研 §二）。
+
+**无额外 Pub/Sub 桥接进程**：Render 上仅 `market-monitor` 与 `backend`（DE）作为 Redis 客户端；CF Hub 经 Upstash REST/Connector 订阅。Hub **不** HTTP/WS 直连 `market-monitor`（理由见 `docs/websocket-hub-design.md` §3.4）。
 
 ---
 
@@ -144,7 +146,8 @@ DeepBook v3 ──Sui RPC──► market-monitor/ (Render)
 |--------|------|
 | P0 | 创建 Upstash 数据库；Render 配置 `REDIS_URL`（`rediss://`） |
 | P0 | Worker 项目配置 `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` |
-| P0 | market-monitor：`PUBLISH` `market:tick:*`；DE：仅 `SUBSCRIBE` 市场频道 + `PUBLISH` `panda:*` |
+| P0 | market-monitor：`PUBLISH` `market:tick:*`；DE：`SUBSCRIBE` 市场频道 + `PUBLISH` `panda:*` |
+| P0 | CF Hub：Upstash 订阅 `panda:*`（必须）；按需订阅 `market:*`（见 `websocket-hub-design.md` §3.4） |
 | P1 | 验证 Upstash 与 Workers 订阅 API 组合在当前 runtime 下的行为 |
 
 ---
