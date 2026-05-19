@@ -2,7 +2,7 @@
 
 > 本文档以「忒修斯之船」方式持续维护：只换木板、不换整船。部署事实变更时同步更新对应段落；任何改动必须在本文末尾「§9 变更日志」追加一行。
 >
-> **最后同步**：2026-05-19（移除 redis-pubsub；DE/Hub 直连 Upstash）
+> **最后同步**：2026-05-19（DeepBook Server API · 无应用层 Sui RPC 行情）
 
 ---
 
@@ -62,7 +62,7 @@ TradingPanda 是 Sui 链上的 **AI 交易宠物养成系统**，目标是 Sui O
 | 胜率 | 链下 trades 表计算，不上链 | （PRD C11） |
 | 执行阈值 | >0.65 执行 / 0.40-0.65 观望 / <0.40 忽视 | （PRD C12） |
 | 策略残影 | ghost_weight 衰减，旧策略归档不删除 | （PRD C7） |
-| 行情采集 | **独立 `market-monitor/`**（Render）；DeepBook **v3** + Sui RPC 只读 → `PUBLISH market:tick:{pair}`；DE **仅 SUBSCRIBE** | 与决策进程解耦；见 `docs/market-monitor-design.md` |
+| 行情采集 | **独立 `market-monitor/`**（Render）；**DeepBook Server HTTP API**（Indexer+Server 背后链上数据）→ `PUBLISH market:tick:{pair}`；DE **仅 SUBSCRIBE**；**应用不直连 Sui RPC** | 见 `docs/market-monitor-design.md`、`docs/deepbook-v3-server-local-deployment.md` §4 |
 | 实时推送 | WebSocket Hub = **Cloudflare Workers + Durable Objects**；与 Render 上 DE 共用 **同一 Upstash Redis**（DE `rediss://` 发 `panda:*`；Worker **REST** 订阅）；DO 仅存连接/订阅/有界队列等短时状态 | Vercel 无长连接；权威数据仍在 PostgreSQL |
 
 ---
@@ -143,12 +143,9 @@ Blockchain  → Sui Testnet
 | 变量名 | 说明 |
 |--------|------|
 | `REDIS_URL` | 与 backend 相同 Upstash 实例（`rediss://`） |
-| `SUI_NETWORK` | `testnet` / `mainnet` |
-| `SUI_RPC_URL` | Sui Fullnode（默认 testnet） |
-| `DEEPBOOK_PACKAGE_ID` | 默认 `0xdee9` |
-| `DEEPBOOK_POOL_IDS` | 逗号分隔 Pool 对象 ID（部署前用 PoolCreated 查询） |
-| `POLL_INTERVAL_SEC` | 事件轮询间隔，建议 ≥ 2 |
-| `KLINE_INTERVAL_SEC` | K 线周期秒数，默认 60 |
+| `DEEPBOOK_SERVER_URL` | DeepBook Server 基址（如 `http://localhost:9008`）；**MVP 行情唯一入口** |
+| `DEEPBOOK_POOLS` | 可选；留空则从 `GET /get_pools` 拉取 |
+| `POLL_INTERVAL_SEC` | API 轮询间隔，建议 ≥ 2 |
 | `PORT` | Render 注入 |
 
 ### Cloudflare WebSocket Hub（`.dev.vars` / Workers Secrets，不提交）
@@ -263,3 +260,5 @@ Package ID：**0x9b26dfdddef52c980dea0989a22c751ee4c4551d9e39708ab9503990cc7b971
 | 2026-05-19 | **DeepBook v3 Server 本地部署指南**：新增 `docs/deepbook-v3-server-local-deployment.md`（1130行），覆盖从源码 & Docker 两种部署方式，包含 PostgreSQL 配置、Sui RPC 配置、Indexer 运行、Server 启动、30+ API 端点使用示例、编译 troubleshooting、docker-compose 示例。 | 开发者可按照指南在本地完整部署 DeepBook v3 Server + Indexer；用于 market-monitor 的数据库访问和 API 测试 |
 | 2026-05-19 | **Redis Pub/Sub 桥接服务**：新增 `redis-pubsub/`（FastAPI：`PSUBSCRIBE`、`POST /api/publish`、`WS /ws`、`GET /health`）；`render.yaml` 增加 `trading-panda-redis-pubsub`；`docs/redis-architecture.md` §2.1；本文 §3/§4。 | 独立 Pub/Sub 扇出与内部发布 API 可本地 `uvicorn` + pytest；**Render 部署与 Upstash 联调仍待配置** |
 | 2026-05-19 | **最终移除 redis-pubsub**：删除 `redis-pubsub/` 目录；`render.yaml` 去掉 `trading-panda-redis-pubsub`；DE/Hub/monitor 均直连 Upstash。 | 架构收敛：无中间 Pub/Sub 桥；见 `docs/redis-architecture.md` §2.1 |
+| 2026-05-19 | **DeepBook MVP 数据路径**：`docs/deepbook-v3-server-local-deployment.md` §4 锁定 Indexer+Server API；`market-monitor` 不直连 Sui RPC；同步 `docs/market-monitor-design.md` §4。 | 行情经 DeepBook Server HTTP；链上 RPC 仅 Indexer/Server 内部 |
+| 2026-05-19 | **DeepBook v3 部署文档更新**：`docs/deepbook-v3-server-local-deployment.md` 新增 §4 架构决策（Indexer vs Sui RPC 对比表、分阶段过渡路径、技术指标数据需求）、§5 数据保留策略（MVP 30天/正式 6个月、存储空间估算、cron 清理脚本 + Python 清理脚本）；更新 §6 PostgreSQL 配置（推荐 Docker 替代 Homebrew）、§8 编译指南（强调 release 模式必要性）、§9 Indexer 运行（新增 `--start-checkpoint` 加速首次同步）、§16 FAQ 新增 4 条（Q4 release 编译失败、Q11 API 端点路径纠正、Q12 Homebrew 兼容性）。全文 1255 行。 | 部署指南更完善，覆盖实际部署经验教训；开发者可避免 Homebrew/调试编译/API 路径等常见陷阱 |

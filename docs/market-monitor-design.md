@@ -1,9 +1,9 @@
 # Market Monitor — 独立市场监听服务（方案 B）
 
 > **架构决策（已锁定）**：DeepBook 行情采集、K 线重建、技术指标计算从 Decision Engine **拆分为独立进程** `market-monitor/`。  
-> 数据源：**DeepBook v3**（Sui 链上 CLOB，经 Sui Fullnode RPC / 事件轮询，无官方公有 REST API）。  
+> 数据源：**DeepBook v3 Server HTTP API**（本地或托管 Indexer + Server）；**MVP 不**在应用内直接调用 Sui JSON-RPC。  
 > 下游：经 **Upstash Redis Pub/Sub** 向 Decision Engine、WebSocket Hub 广播。  
-> **最后更新**：2026-05-19
+> **最后更新**：2026-05-19（DeepBook Server API 路径，见 `docs/deepbook-v3-server-local-deployment.md` §4）
 
 ---
 
@@ -12,7 +12,7 @@
 | 耦合在 DE 内（方案 A） | 独立 `market-monitor`（方案 B，当前） |
 |------------------------|-------------------------------------|
 | DE 重启 = 行情断流 | 监听可单独重启，DE 仍可用缓存/最后一拍 |
-| RPC 抖动拖慢 Actor 事件循环 | Sui I/O 与决策计算分进程隔离 |
+| DeepBook API 抖动拖慢 Actor | 行情 I/O 与决策计算分进程隔离 |
 | 无法按交易对单独扩容 | 可按 Pool 分 Task / 多实例 shard |
 | 测试决策要起整套 DeepBook 采集 | DE 测试可 mock Redis 消息 |
 
@@ -24,14 +24,13 @@
 ## 2. 服务拓扑
 
 ```
-DeepBook v3（Sui Testnet/Mainnet）
-        │  suix_queryEvents / suix_subscribeEvent（只读，MVP 无需 gas）
+DeepBook Server (:9008)  ← Indexer + PostgreSQL + Server 内部 Sui RPC
+        │  GET /get_pools, /trades, /ohclv, /orderbook …（HTTP only）
         ▼
 ┌───────────────────────────────────────────┐
 │  market-monitor/  （Python · Render）      │
-│  · DeepBook v3 事件轮询（主）              │
-│  · KlineBuilder → OHLCV                   │
-│  · TechnicalIndicators → MarketEvent        │
+│  · 轮询 Server API                        │
+│  · TechnicalIndicators → MarketEvent      │
 │  · PUBLISH → Upstash Redis                │
 │  GET /health                              │
 └───────────────────┬───────────────────────┘
@@ -56,13 +55,11 @@ DeepBook v3（Sui Testnet/Mainnet）
 ```
 market-monitor/
 ├── main.py              # 启动轮询 + /health
-├── config.py            # SUI_NETWORK, POOL_IDS, REDIS_URL, 轮询间隔
+├── config.py            # DEEPBOOK_SERVER_URL, REDIS_URL, 轮询间隔
 ├── feed/
-│   ├── deepbook_feed.py # DeepBook v3 OrderFilled 等
-│   ├── event_poller.py
-│   └── orderbook.py     # 可选：订单簿快照 → orderbook_imbalance
+│   ├── deepbook_client.py  # httpx → DeepBook Server REST
+│   └── orderbook.py        # GET orderbook / level2 → orderbook_imbalance
 ├── pipeline/
-│   ├── kline_builder.py
 │   ├── indicators.py
 │   └── market_state.py  # bull / bear / ranging
 ├── broadcast/
@@ -75,31 +72,36 @@ market-monitor/
 
 ---
 
-## 4. DeepBook v3 要点（替代 v2 `clob_v2`）
+## 4. DeepBook 数据接入（MVP）
 
-| 项目 | 值 |
-|------|-----|
-| Package | `0xdee9` |
-| 模块 | `deepbook`（非 `clob_v2`） |
-| 成交事件 | `0xdee9::deepbook::OrderFilled` |
-| 其他 | `OrderPlaced`, `OrderCancelled`, `SwapEvent`, `PoolCreated` |
+### 4.1 基础设施
 
-```python
-# 事件类型（实现须与此一致）
-EVENT_TYPES_V3 = [
-    "0xdee9::deepbook::OrderFilled",
-    "0xdee9::deepbook::OrderPlaced",
-    "0xdee9::deepbook::OrderCancelled",
-    "0xdee9::deepbook::SwapEvent",
-    "0xdee9::deepbook::PoolCreated",
-]
-```
+本地/联调按 **`docs/deepbook-v3-server-local-deployment.md`** 启动：
 
-**价格/数量**：链上整数 ÷ `1e9`（以实现解析字段名为准，如 `price`、`base_asset_qty`）。
+1. PostgreSQL  
+2. **deepbook-indexer**（建议保留约 1 个月数据）  
+3. **deepbook-server**（默认 `http://localhost:9008`）
 
-**MVP 数据路径**：`httpx` + Sui JSON-RPC（`suix_queryEvents`），**不**依赖 DeepBook 自托管 Indexer Server；**不**在 MVP 链上下真实单（只读）。
+### 4.2 `market-monitor` 只调 Server API
 
-**Pool ID**：测试网/主网不同，通过 `PoolCreated` 事件或环境变量 `DEEPBOOK_POOL_IDS` 配置。
+| 用途 | HTTP 端点（示例） |
+|------|-------------------|
+| 池列表 | `GET /get_pools` |
+| 实时订单簿 | `GET /orderbook/{pool}` 或 `GET /get_level2_ticks_from_mid` |
+| 成交 | `GET /trades/{pool}` |
+| K 线 | `GET /ohclv/{pool}?period=1m&limit=…` |
+
+环境变量（规划）：
+
+| 变量 | 说明 |
+|------|------|
+| `DEEPBOOK_SERVER_URL` | 如 `http://localhost:9008` |
+| `DEEPBOOK_POOLS` | 可选；默认从 `/get_pools` 拉取 |
+| `POLL_INTERVAL_SEC` | 轮询间隔，建议 ≥ 2 |
+
+**明确不做**：在 `market-monitor` 内配置 `SUI_RPC_URL` 用于 `suix_queryEvents` / 自算 K 线。
+
+**模拟盘**：仍只读行情，不在链上下真实单（与 PRD C5 一致）。
 
 ---
 
@@ -199,12 +201,9 @@ class MarketDataConsumer:
 | 变量 | 说明 |
 |------|------|
 | `REDIS_URL` | `rediss://…`（Upstash，与 DE 相同逻辑库） |
-| `SUI_NETWORK` | `testnet` / `mainnet` |
-| `SUI_RPC_URL` | 默认 `https://fullnode.testnet.sui.io:443` |
-| `DEEPBOOK_PACKAGE_ID` | 默认 `0xdee9` |
-| `DEEPBOOK_POOL_IDS` | JSON 或逗号分隔 Pool 对象 ID |
-| `POLL_INTERVAL_SEC` | 事件轮询间隔，建议 ≥ 2（公共 RPC 限流） |
-| `KLINE_INTERVAL_SEC` | K 线周期，默认 `60` |
+| `DEEPBOOK_SERVER_URL` | DeepBook Server 基址（如 `https://…` 或本地 `http://localhost:9008`） |
+| `DEEPBOOK_POOLS` | 可选；留空则从 `/get_pools` 拉取 |
+| `POLL_INTERVAL_SEC` | Server API 轮询间隔，建议 ≥ 2 |
 | `PORT` | Render 注入，`/health` |
 
 **Render**：`render.yaml` 中 **`trading-panda-market-monitor`** 与 **`trading-panda-backend`** 并列；共享 `REDIS_URL`，**不**共享进程。
@@ -214,7 +213,7 @@ class MarketDataConsumer:
 ## 9. 健康检查与降级
 
 - `GET /health` → `{ "status": "ok", "pools": { "SUI-USDC": { "last_event_ts": … } } }`
-- RPC 连续失败 → 指数退避 + 可选 `market:heartbeat` 发 `degraded` / `down`
+- DeepBook Server 不可达 → 指数退避 + 可选 `market:heartbeat` 发 `degraded` / `down`
 - 无新成交 → 沿用上一根 K 线，payload 带 `"stale": true`（DE 可打日志，不阻断 HOLD）
 
 ---

@@ -10,18 +10,12 @@ services:
     envVars:
       - key: REDIS_URL
         sync: false
-      - key: SUI_NETWORK
-        value: testnet
-      - key: SUI_RPC_URL
-        value: https://fullnode.testnet.sui.io:443
-      - key: DEEPBOOK_PACKAGE_ID
-        value: "0xdee9"
-      - key: DEEPBOOK_POOL_IDS
+      - key: DEEPBOOK_SERVER_URL
+        sync: false
+      - key: DEEPBOOK_POOLS
         sync: false
       - key: POLL_INTERVAL_SEC
         value: "2"
-      - key: KLINE_INTERVAL_SEC
-        value: "60"
 
   - type: web
     name: trading-panda-backend
