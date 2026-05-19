@@ -152,9 +152,12 @@ Hub 与 DE 是 **同级消费者**，都连 **同一 Upstash 实例**，不是 `
 
 #### 明确不采用的模式
 
-- **不**部署独立的 `redis-pubsub` 桥接服务（已自仓库移除）。
+- **不**在 **DE（backend）进程内**嵌 Pub/Sub 桥接 — DE 与 Hub 均**直连 Upstash**（无独立 `redis-pubsub` 服务）。
 - **不**让 Hub 成为 monitor 的 WebSocket 客户端（无 `wss://market-monitor/...`）。
-- Upstash 短时不可用时：Hub 重连 + 客户端 REST 拉快照；权威状态仍以 **PostgreSQL** 为准。
+
+Hub 通过 **`@upstash/redis`**（REST 长轮询 / Connector）订阅 `panda:*` 与可选 `market:*`，与 DE 读同一 Upstash 逻辑库。
+
+Upstash 短时不可用时：Hub 重连 + 客户端 REST 拉快照；权威状态仍以 **PostgreSQL** 为准。
 
 实现细节与频道全表见 `docs/redis-architecture.md` §5、`docs/market-monitor-design.md` §2。
 
@@ -190,9 +193,10 @@ Hub 与 DE 是 **同级消费者**，都连 **同一 Upstash 实例**，不是 `
 | 层 | 部署 | 职责 |
 |----|------|------|
 | HTTP API Gateway | Vercel · Next.js | REST、鉴权、转发 FastAPI、静态与 SSR |
-| WebSocket Hub | Cloudflare Workers + DO | 长连接、订阅、推送 |
+| WebSocket Hub | Cloudflare Workers + DO | 长连接；**直连 Upstash** 订阅并推送 |
 | Market Monitor | Render · FastAPI | DeepBook v3 行情、**PUBLISH** `market:tick:*` |
-| Decision Engine | Render · FastAPI | 决策、Actor、**PUBLISH** `panda:*`；**SUBSCRIBE** 行情 |
+| Decision Engine | Render · FastAPI | 决策、Actor；**直连 Upstash** `SUBSCRIBE` 行情 + `PUBLISH` `panda:*` |
+| Upstash Redis | 托管（非 Render） | Pub/Sub 总线 + 缓存 |
 
 ---
 
