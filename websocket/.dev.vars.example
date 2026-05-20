@@ -1,0 +1,4 @@
+# Copy to .dev.vars for `wrangler dev` (never commit .dev.vars)
+JWT_SECRET=dev-jwt-secret-change-in-production-32bytes-xxxx
+UPSTASH_REDIS_REST_URL=https://your-instance.upstash.io
+UPSTASH_REDIS_REST_TOKEN=your-upstash-rest-token
