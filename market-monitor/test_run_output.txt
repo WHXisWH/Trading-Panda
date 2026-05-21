@@ -1,0 +1,57 @@
+=== TradingPanda market-monitor integration run ===
+Date (UTC): 2026-05-20
+Workspace: /Users/Murphywuwu/Documents/Trading-Panda/market-monitor
+
+--- pip install ---
+requirements.txt installed (exit 0)
+
+--- pytest (PYTHONPATH=. pytest -v) ---
+8 passed in 0.19s
+
+tests/test_deepbook_client.py::test_parse_pools_list PASSED
+tests/test_deepbook_client.py::test_parse_candles PASSED
+tests/test_indicators.py::test_compute_indicators_uptrend PASSED
+tests/test_indicators.py::test_insufficient_candles PASSED
+tests/test_market_state.py::test_ranging_low_trend PASSED
+tests/test_orderbook.py::test_balanced_book PASSED
+tests/test_orderbook.py::test_bid_heavy PASSED
+tests/test_schemas.py::test_pool_pair_asset PASSED
+
+Result: PASS
+
+--- DeepBook + Redis probe (_integration_probe.py) ---
+{
+  "deepbook_server_url": "http://152.53.166.128:9008",
+  "redis_url_set": true,
+  "deepbook_ping": true,
+  "pools": [],
+  "pools_count": 0,
+  "ohlcv_skipped": "no pools",
+  "redis_connected": true
+}
+
+Raw GET /get_pools: HTTP 200, body []
+
+deepbook reachable: YES (GET / → 200)
+pools list: [] (server returned empty array; not a parser issue)
+ohlcv: SKIPPED (no pools to query)
+redis connected: YES (Upstash rediss ping OK)
+
+--- uvicorn + /health ---
+Command: PYTHONPATH=. uvicorn main:app --port 8001 --host 127.0.0.1
+curl http://127.0.0.1:8001/health (after startup):
+
+{"status":"ok","deepbook_server":"http://152.53.166.128:9008","deepbook_reachable":true,"redis_connected":true,"pools":{}}
+
+--- SUMMARY ---
+| Check              | Result                                      |
+|--------------------|---------------------------------------------|
+| pytest             | PASS (8/8)                                  |
+| deepbook reachable | true                                        |
+| pools list         | [] (empty — monitor has no pools to poll)   |
+| redis connected    | true                                        |
+| /health JSON       | status=ok, deepbook_reachable=true, pools={} |
+
+Note: With DEEPBOOK_POOLS empty, monitor relies on /get_pools; server currently
+returns no pools, so OHLCV probe and health.pools stay empty until pools exist
+on the DeepBook server or DEEPBOOK_POOLS is set explicitly (e.g. SUI_USDC).

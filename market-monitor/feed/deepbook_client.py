@@ -1,10 +1,16 @@
 import logging
 from dataclasses import dataclass
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 
 logger = logging.getLogger(__name__)
+
+
+def encode_pool_for_path(pool: str) -> str:
+    """Encode pool_name for URL path (e.g. DEEP/SUI → DEEP%2FSUI)."""
+    return quote(pool.strip(), safe="")
 
 
 @dataclass(frozen=True)
@@ -18,9 +24,17 @@ class Candle:
 
 
 class DeepBookClient:
-    def __init__(self, base_url: str, timeout: float = 15.0) -> None:
+    def __init__(
+        self,
+        base_url: str,
+        timeout: float = 15.0,
+        orderbook_depth: int = 10,
+        orderbook_level: int = 2,
+    ) -> None:
         self._base = base_url.rstrip("/")
         self._timeout = timeout
+        self._orderbook_depth = orderbook_depth
+        self._orderbook_level = orderbook_level
 
     async def ping(self) -> bool:
         try:
@@ -37,12 +51,19 @@ class DeepBookClient:
             data = r.json()
         return _parse_pool_list(data)
 
+    async def fetch_pool_directory(self) -> dict[str, str]:
+        async with httpx.AsyncClient(timeout=self._timeout) as client:
+            r = await client.get(f"{self._base}/get_pools")
+            r.raise_for_status()
+            data = r.json()
+        return parse_pool_directory(data)
+
     async def get_ohlcv(
         self, pool: str, period: str = "1m", limit: int = 60
     ) -> list[Candle]:
         async with httpx.AsyncClient(timeout=self._timeout) as client:
             r = await client.get(
-                f"{self._base}/ohclv/{pool}",
+                f"{self._base}/ohclv/{encode_pool_for_path(pool)}",
                 params={"period": period, "limit": limit},
             )
             r.raise_for_status()
@@ -50,8 +71,13 @@ class DeepBookClient:
         return _parse_candles(data)
 
     async def get_orderbook(self, pool: str) -> dict[str, Any]:
+        path_pool = encode_pool_for_path(pool)
+        params = {"depth": self._orderbook_depth, "level": self._orderbook_level}
         async with httpx.AsyncClient(timeout=self._timeout) as client:
-            r = await client.get(f"{self._base}/orderbook/{pool}")
+            r = await client.get(
+                f"{self._base}/orderbook/{path_pool}",
+                params=params,
+            )
             r.raise_for_status()
             data = r.json()
         if isinstance(data, dict):
@@ -61,7 +87,7 @@ class DeepBookClient:
     async def get_trades(self, pool: str, limit: int = 5) -> list[dict[str, Any]]:
         async with httpx.AsyncClient(timeout=self._timeout) as client:
             r = await client.get(
-                f"{self._base}/trades/{pool}",
+                f"{self._base}/trades/{encode_pool_for_path(pool)}",
                 params={"limit": limit},
             )
             r.raise_for_status()
@@ -72,13 +98,52 @@ class DeepBookClient:
 
 
 def _parse_pool_list(data: Any) -> list[str]:
-    if isinstance(data, list):
-        return [str(p) for p in data if p]
+    """Extract pool_name (or pool_id) from DeepBook /get_pools JSON."""
+    names: list[str] = []
+    rows = data
     if isinstance(data, dict):
-        pools = data.get("pools") or data.get("data")
-        if isinstance(pools, list):
-            return [str(p) for p in pools if p]
-    return []
+        rows = data.get("pools") or data.get("data") or []
+    if not isinstance(rows, list):
+        return []
+
+    for item in rows:
+        if isinstance(item, dict):
+            name = item.get("pool_name") or item.get("name")
+            pool_id = item.get("pool_id")
+            if name:
+                names.append(str(name).strip())
+            elif pool_id:
+                names.append(str(pool_id).strip())
+        elif isinstance(item, str):
+            key = item.strip()
+            if key and not key.startswith(("http://", "https://")):
+                names.append(key)
+    return names
+
+
+def parse_pool_directory(data: Any) -> dict[str, str]:
+    """Map pool_name → pool_id (hex) from /get_pools response."""
+    out: dict[str, str] = {}
+    rows = data
+    if isinstance(data, dict):
+        rows = data.get("pools") or data.get("data") or []
+    if not isinstance(rows, list):
+        return out
+
+    for item in rows:
+        if not isinstance(item, dict):
+            continue
+        pool_id = item.get("pool_id")
+        pool_name = item.get("pool_name") or item.get("name")
+        if not pool_id or not pool_name:
+            continue
+        pid = str(pool_id).strip()
+        name = str(pool_name).strip()
+        out[name] = pid
+        alt = name.replace("/", "_")
+        if alt != name:
+            out[alt] = pid
+    return out
 
 
 def _parse_candles(data: Any) -> list[Candle]:
