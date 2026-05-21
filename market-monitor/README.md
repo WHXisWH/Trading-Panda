@@ -4,7 +4,7 @@
 
 - 设计：`docs/market-monitor-design.md`
 - 部署：**VPS 与 PG 同机推荐**；`render.yaml` 可作过渡
-- Redis：`market:tick:{pair}`；历史 K 线 REST：`GET /candles/{pool}`
+- Redis：`market:tick:{pair}`；历史 K 线 REST：`GET /candles/{pool:path}` 或 `GET /candles?pool=`
 
 ## 前置条件
 
@@ -81,7 +81,6 @@ market-monitor/
 | `USE_SUI_RPC_FOR_POOLS` | 默认 `true` |
 | `USE_HTTP_GET_POOLS_FALLBACK` | Sui 无结果时是否再调 `GET /get_pools`，默认 `true` |
 | `REDIS_URL` | `redis://` 或 `rediss://`（Upstash 用控制台 Python 连接串） |
-| `DEEPBOOK_DATABASE_URL` | DeepBook Indexer 库（**方案甲必填**） |
 | `PRICE_SCALE` / `QTY_SCALE` | 链上整数价量缩放，默认 `1e9` |
 | `USE_OHLCV_FALLBACK` | `true` 时回退 `GET /ohclv`（无 PG 时） |
 | `ORDERBOOK_DEPTH` | `/orderbook` 深度档数，默认 `10` |
@@ -92,127 +91,291 @@ market-monitor/
 | `CANDLE_PERIOD` | K 线周期，默认 `1m` |
 | `OHLCV_LIMIT` | 返回 K 线根数上限，默认 `60` |
 
-## 测试
+## 测试与验收
 
-### 手动联调（DeepBook + Redis）
+按 **步骤 0 → 6** 顺序执行。全部通过即可认为 **market-monitor 正常工作**（能读 PG 聚 K 线、拉盘口、发 Redis tick、提供 REST 历史 K 线）。
 
-用于验证：**从 DeepBook Server 拉行情**、**向 Redis 发布 `market:tick:*`**。单元测试 `pytest` 不覆盖此路径，需本机或联调环境手动跑通。
+> **池名约定**：DeepBook Server 使用 `DEEP/SUI`（斜杠）。本服务 REST 用 **`/candles/DEEP/SUI`** 或 **`/candles?pool=DEEP/SUI`**；DeepBook 盘口 API 仍须 **`DEEP%2FSUI`** 编码。  
+> **Redis 频道**：`pair = pool_to_pair(pool)`，仅把下划线换成横杠，如 `SUI/DBUSDC` → `SUI/DBUSDC`，`SUI_USDC` → `SUI-USDC`。
 
-#### 0. 前置
+---
 
-| 组件 | 要求 |
-|------|------|
-| **DeepBook** | Indexer + PostgreSQL + Server 已启动，`DEEPBOOK_SERVER_URL` 可访问（如 `http://localhost:9008`） |
-| **Redis** | `REDIS_URL` 为 **`redis://` / `rediss://` 的 TCP 连接串**（Upstash：**Redis → Connect → Python**）；**不要**把 `UPSTASH_REDIS_REST_*` 当成 `REDIS_URL` |
-
-自检 DeepBook（池名换成 `get_pools` 里真实项）：
+### 步骤 0 — 推荐 `.env`（MVP / testnet）
 
 ```bash
-curl -sS "http://localhost:9008/get_pools"
-curl -sS "http://localhost:9008/orderbook/DEEP%2FSUI?depth=10&level=2"
+DEEPBOOK_DATABASE_URL=postgresql://…@<host>:5433/deepbook
+DEEPBOOK_SERVER_URL=http://<host>:9008
+REDIS_URL=rediss://default:…@….upstash.io:6379
+DEEPBOOK_POOLS=DEEP/SUI,SUI/DBUSDC
+POLL_INTERVAL_SEC=15
+FILLS_POLL_LOOKBACK_SEC=259200
+FILLS_LOOKBACK_SEC=2592000
 ```
 
-**K 线来自 PG `order_fills`**（设 `DEEPBOOK_DATABASE_URL`），不是 `/ohclv`。验收：
+| 检查项 | 说明 |
+|--------|------|
+| `DEEPBOOK_DATABASE_URL` | **必填**（方案甲）；无则无法从 `order_fills` 聚 K 线 |
+| `DEEPBOOK_POOLS` | 建议只写有成交的池；`NO_MARKET/SUI` 等无 fill 会一直报错 |
+| 勿用 `/ohclv` 验收 | DeepBook `GET /ohclv/...` 常返回 `{"candles":[]}`，与 monitor 无关 |
+
+**外部依赖自检**（在启动 monitor 前）：
 
 ```bash
-curl -sS "http://localhost:8001/candles/DEEP/SUI?limit=20"
-# 或：curl -sS "http://localhost:8001/candles?pool=DEEP/SUI&limit=20"
-curl -sS http://localhost:8001/health   # DEEP/SUI 的 last_publish_ts 非 null
+# Server 可达 + 池列表
+curl -sS "http://<DEEPBOOK_HOST>:9008/get_pools" | python3 -m json.tool
+
+# 盘口（注意 URL 编码斜杠）
+curl -sS "http://<DEEPBOOK_HOST>:9008/orderbook/DEEP%2FSUI?depth=10&level=2" | python3 -m json.tool
+# 期望：HTTP 200，JSON 含非空 "bids" 或 "asks"
 ```
 
-#### 1. 配置
+---
 
-```bash
-cd market-monitor
-cp .env.example .env
-```
-
-在 `.env` 中至少填写 `DEEPBOOK_SERVER_URL`、`REDIS_URL`。可选：
-
-- **`DEEPBOOK_POOLS`** — 逗号分隔，固定池列表，便于排错（最高优先级）。
-- 若只想用 HTTP 枚举池、暂不关心 Sui：**`USE_SUI_RPC_FOR_POOLS=false`** + **`USE_HTTP_GET_POOLS_FALLBACK=true`**。
-
-#### 2. 启动服务
+### 步骤 1 — 单元测试（无外部依赖）
 
 ```bash
 cd market-monitor
 pip install -r requirements.txt
+PYTHONPATH=. pytest -q
+```
+
+**期望**：`29 passed`（或更多），无 FAILED。不连接真实 PG / Redis / DeepBook。
+
+---
+
+### 步骤 2 — 启动服务
+
+```bash
+cd market-monitor
+cp .env.example .env   # 首次
+# 编辑 .env 后：
 PYTHONPATH=. uvicorn main:app --host 0.0.0.0 --port 8001
 ```
 
-#### 3. 验证 DeepBook 连通与轮询 — `GET /health`
+**期望日志**（示例）：
+
+```text
+INFO:feed.fills_client:order_fills schema pool=pool_id id=None
+INFO:main:Market monitor started pg=True deepbook=http://…:9008 poll=15.0s
+INFO:     Application startup complete.
+```
+
+启动后等待 **≥1 个 `POLL_INTERVAL_SEC`**（默认 15s），再执行步骤 3–6。
+
+---
+
+### 步骤 3 — `GET /health`
 
 ```bash
 curl -sS http://localhost:8001/health | python3 -m json.tool
 ```
 
-| 字段 | 含义 |
-|------|------|
-| `deepbook_reachable` | 能否访问 DeepBook Server |
-| `redis_connected` | 是否已连接 Redis；`false` 时不会发布 tick |
-| `pools` | 各池 `last_event_ts` / `last_publish_ts`；有值说明已拉到过 OHLCV 并跑过发布逻辑 |
-| `status` | 理想为 `ok`；DeepBook 不可达等可能为 `degraded` |
+#### 期望（正常）
 
-可与 DeepBook 对照：
+| 字段 | 期望值 | 含义 |
+|------|--------|------|
+| `status` | `"ok"` | PG 或 DeepBook 至少一侧可用，且 Redis 已连接 |
+| `ohlcv_source` | `"order_fills"` | 使用 PG 聚合（未开 `USE_OHLCV_FALLBACK`） |
+| `deepbook_reachable` | `true` | 能 ping DeepBook Server |
+| `deepbook_database_configured` | `true` | 已配置 `DEEPBOOK_DATABASE_URL` |
+| `pg_ok` | `true` | 能连上 PG 且存在 `order_fills` 表 |
+| `redis_connected` | `true` | 已连接 Upstash；`false` 则**不会**发布 tick |
+| `poll_interval_sec` | `15`（或你的配置） | 主循环间隔 |
+| `fills_poll_lookback_sec` | `259200` 等 | tick 读 PG 深度 |
+| `pools` | 每个配置的池一条 | 见下表 |
+
+**`pools` 内单池期望（以 `DEEP/SUI` 为例，运行约 15–30s 后）**：
+
+| 字段 | 期望 | 说明 |
+|------|------|------|
+| `pool` | `"DEEP/SUI"` | 与 `DEEPBOOK_POOLS` 一致 |
+| `last_event_ts` | 数字（Unix 秒） | 最后一根 K 线桶时间 |
+| `last_publish_ts` | 数字（Unix 秒） | 最近一次 `PUBLISH market:tick:*` |
+| `error` | `null` | 非空见下方「错误码」 |
+
+**示例片段**（字段随环境略有不同）：
+
+```json
+{
+  "status": "ok",
+  "ohlcv_source": "order_fills",
+  "poll_interval_sec": 15,
+  "fills_poll_lookback_sec": 259200,
+  "fills_lookback_sec": 2592000,
+  "deepbook_reachable": true,
+  "pg_ok": true,
+  "redis_connected": true,
+  "pools": {
+    "DEEP/SUI": {
+      "pool": "DEEP/SUI",
+      "last_event_ts": 1779360000,
+      "last_publish_ts": 1779361027.9,
+      "error": null
+    },
+    "SUI/DBUSDC": {
+      "pool": "SUI/DBUSDC",
+      "last_event_ts": 1779356400,
+      "last_publish_ts": 1779361031.8,
+      "error": null
+    }
+  }
+}
+```
+
+#### `pools[].error` 常见取值
+
+| `error` | 含义 | 处理 |
+|---------|------|------|
+| `null` | 正常 | — |
+| `no_fills_ever: …` | PG 中该池无任何成交 | 换池或等 Indexer 同步 |
+| `no_fills_in_poll_window: …` | 回溯窗口内无成交 | 增大 `FILLS_POLL_LOOKBACK_SEC` 或等成交 |
+| `insufficient_candles: need >=2 bars, got 1` | 成交太少 | 换活跃池或拉长回溯 |
+| `pool_unresolved: …` | 池名无法映射 `pool_id` | 检查 `get_pools` / `DEEPBOOK_POOLS` |
+
+#### 异常 HTTP / 字段
+
+| 情况 | 说明 |
+|------|------|
+| `{"status":"starting"}` | 刚启动，lifespan 未就绪；几秒后重试 |
+| `status: "degraded"` | `redis_connected: false` 或 PG/DeepBook 均不可用 |
+| `last_publish_ts` 长期 `null` | 见上表 `error`；或尚未等满一轮轮询 |
+
+---
+
+### 步骤 4 — `GET /candles`（历史 K 线 REST）
+
+池名含 `/` 时，**任选一种** URL（不要用单段 `DEEP%2FSUI` 路径访问本服务，可能路由 404）：
 
 ```bash
-curl -sS "http://localhost:9008/ohclv/<池名>?period=1m&limit=3"
+# 方式 A：路径（推荐）
+curl -sS "http://localhost:8001/candles/DEEP/SUI?interval=1m&limit=20" | python3 -m json.tool
+
+# 方式 B：查询参数（BFF / 浏览器友好）
+curl -sS "http://localhost:8001/candles?pool=DEEP/SUI&interval=1m&limit=20" | python3 -m json.tool
 ```
 
-#### 4. 验证 Redis 发布
+#### 期望 HTTP 200
 
-| 频道 | 说明 |
+```json
+{
+  "pool": "DEEP/SUI",
+  "pair": "DEEP/SUI",
+  "interval": "1m",
+  "candles": [
+    {
+      "t": 1779356400,
+      "o": 31.37,
+      "h": 31.52,
+      "l": 31.37,
+      "c": 31.52,
+      "v": 0.02
+    }
+  ]
+}
+```
+
+| 字段 | 期望 |
 |------|------|
-| `market:tick:{pair}` | 行情 tick；`pair` 为 **`BASE-QUOTE`**（横杠），如池 `SUI_USDC` → **`market:tick:SUI-USDC`** |
-| `market:heartbeat` | 心跳（默认约每 30s） |
+| `candles` | **非空数组**；`limit=20` 时长度 ≤ 20 |
+| 每根 `t` | Unix **秒**（整数） |
+| `o/h/l/c/v` | 浮点数；价格为缩放后的浮点（`PRICE_SCALE`） |
 
-**方式 A — `redis-cli`**
+对 **`SUI/DBUSDC`** 再执行一次，同样应 **200 + 非空 `candles`**。
+
+#### 期望 HTTP 错误（便于区分）
+
+| 请求 | HTTP | `detail` 示例 | 原因 |
+|------|------|---------------|------|
+| `GET /candles/DEEP/SUI`（旧进程未重启） | 404 | `"Not Found"` | 路由未更新；需重启 uvicorn |
+| `GET /candles/NO_MARKET/SUI`（无成交池） | 404 | `"no candle data for pool='NO_MARKET/SUI'"` | PG 无数据，属数据问题非路由 |
+| 服务未就绪 | 503 | `"monitor not ready"` | 启动失败或正在 starting |
+
+---
+
+### 步骤 5 — Redis `market:tick:*`
+
+先订阅（终端 A）：
 
 ```bash
-redis-cli -u "$REDIS_URL"
+# 需本机可访问 REDIS_URL（Upstash 用 rediss://）
+redis-cli -u "$REDIS_URL" PSUBSCRIBE 'market:*'
 ```
 
-进入后：
-
-```
-PSUBSCRIBE market:*
-```
-
-或只盯单一交易对：`SUBSCRIBE market:tick:SUI-USDC`
-
-**方式 B — 临时 Python 监听**（需已 `pip install redis`，且 shell 中已 `export REDIS_URL`）
+或使用 Python（`export REDIS_URL=…` 后）：
 
 ```bash
 cd market-monitor
 PYTHONPATH=. python3 -c "
-import asyncio, os, redis.asyncio as r
+import asyncio, os, json, redis.asyncio as r
 async def main():
     c = r.from_url(os.environ['REDIS_URL'], decode_responses=True)
     p = c.pubsub()
     await p.psubscribe('market:*')
     async for msg in p.listen():
         if msg['type'] == 'pmessage':
-            print(msg['channel'], msg['data'][:240])
+            ch, raw = msg['channel'], msg['data']
+            d = json.loads(raw)
+            print(ch, 'price=', d.get('price'), 'regime=', d.get('market_regime'), 'stale=', d.get('stale'))
 asyncio.run(main())
 "
 ```
 
-#### 5. 常见现象
+终端 B 保持 monitor 运行，等待 **15–60 秒**。
 
-1. **`redis_connected: false`**：`REDIS_URL` 未填或 TLS/网络错误；日志会有 “ticks will not be published”。
-2. **收不到 `market:tick:*`**：多为 **OHLCV 为空**（Indexer 未同步、周期或池名错误）。
-3. **订错频道**：须用横杠 pair（`SUI-USDC`），不是下划线池名。
-4. **tick 很稀**：同一根 K 线会去重/节流 stale；可观察 `market:heartbeat` 是否在更新。
+#### 期望
 
-#### 6. 最小验收
+| 频道 | 期望 |
+|------|------|
+| `market:tick:DEEP/SUI` | 周期性出现（有 K 线后；stale 时可能隔 `~2×POLL_INTERVAL_SEC` 才一条） |
+| `market:tick:SUI/DBUSDC` | 同上 |
+| `market:heartbeat` | 约每 **30s** 一条（`publish_heartbeat_sec`） |
 
-1. `get_pools` 与至少一条 `ohlcv` 在外部 `curl` 下正常、非空。
-2. `/health` 中 `deepbook_reachable` 与 `redis_connected` 为 `true`，且 `pools` 内至少一池出现 `last_publish_ts`。
-3. `PSUBSCRIBE market:*` 能收到 **`market:tick:*`**（及可选 **`market:heartbeat`**）。
+**单条 `market:tick` JSON 应包含**（节选）：
+
+```json
+{
+  "asset": "DEEP",
+  "pair": "DEEP/SUI",
+  "price": 30.99,
+  "prev_price": 31.52,
+  "rsi": 45.12,
+  "ma20": 31.1,
+  "market_regime": "ranging",
+  "orderbook_imbalance": 0.15,
+  "candle": {
+    "open": 30.99,
+    "high": 30.99,
+    "low": 30.99,
+    "close": 30.99,
+    "volume": 0.01,
+    "interval": "1m"
+  },
+  "stale": true
+}
+```
+
+| 字段 | 说明 |
+|------|------|
+| `stale: true` | testnet 久无新成交时常见；表示沿用上一根 K 线，**仍属正常** |
+| 无消息 | 查 `/health` 的 `redis_connected` 与各池 `error` |
 
 ---
 
-### 单元测试（pytest）
+### 步骤 6 — 最小验收清单
+
+在本地或 VPS 上勾选：
+
+- [ ] `pytest -q` 全部通过  
+- [ ] `GET /health` → `status=ok`，`pg_ok=true`，`redis_connected=true`  
+- [ ] `DEEP/SUI`、`SUI/DBUSDC` 的 `last_publish_ts` **非 null**，`error` **null**  
+- [ ] `GET /candles/DEEP/SUI?limit=20` → **200**，`candles` 非空  
+- [ ] `PSUBSCRIBE market:*` 能收到 **`market:tick:DEEP/SUI`**（及 heartbeat）  
+
+以上五项同时满足 → **服务可认为正常工作**，可接 Decision Engine 与前端 BFF。
+
+---
+
+### 单元测试说明（pytest）
 
 ```bash
 cd market-monitor
@@ -298,4 +461,4 @@ DeepBook 返回池名多为下划线（`SUI_USDC`），Redis 频道为 `market:t
 | `main.py` `/health` | 需 FastAPI TestClient + lifespan |
 | 真实 DeepBook Server | 本地起 Server 后按 `README.md` **「手动联调（DeepBook + Redis）」** 验证，或后续补 E2E |
 
-当前 **14** 个测试覆盖 **Sui 池解析、HTTP 解析、指标、盘口、市场状态、命名** 等 MVP 核心纯逻辑。
+另含 `test_fills_lookback.py`、`test_candles_route.py` 等。当前约 **30** 项，覆盖 **Sui 池解析、HTTP 解析、PG 回溯窗口、指标、盘口、路由** 等逻辑。
