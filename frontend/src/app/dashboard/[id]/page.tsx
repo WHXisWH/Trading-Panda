@@ -1,19 +1,19 @@
 "use client";
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { PageContainer } from "@/components/layout/PageContainer";
-import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
+import { PandaSidebar } from "@/components/panda/PandaSidebar";
+import { CandlestickChart } from "@/components/trading/CandlestickChart";
+import { AccountPanel } from "@/components/trading/AccountPanel";
+import { StrategyInput } from "@/components/trading/StrategyInput";
+import { DecisionPanel } from "@/components/trading/DecisionPanel";
+import { SimulationControls } from "@/components/trading/SimulationControls";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { PersonalityRadar } from "@/components/panda/PersonalityRadar";
-import { EmotionIndicator } from "@/components/panda/EmotionIndicator";
-import { TalentBadge } from "@/components/panda/TalentBadge";
-import { ExperienceBar } from "@/components/panda/ExperienceBar";
-import { PandaAvatar } from "@/components/panda/PandaAvatar";
-import { type PersonalityKey } from "@/lib/personality";
+import { MOCK_DECISIONS } from "@/lib/mockData";
+import Link from "next/link";
 
 interface PandaAPI {
   id: string;
@@ -37,7 +37,6 @@ interface StrategyAPI {
   raw_text: string;
   philosophy: string;
   proficiency: number;
-  created_at: string;
 }
 
 export default function DashboardPage({ params }: { params: { id: string } }) {
@@ -45,6 +44,7 @@ export default function DashboardPage({ params }: { params: { id: string } }) {
   const qc = useQueryClient();
   const [strategyText, setStrategyText] = useState("");
   const [simRunning, setSimRunning] = useState(false);
+  const [simSpeed, setSimSpeed] = useState("1×");
 
   const { data: panda, isLoading } = useQuery<PandaAPI>({
     queryKey: ["panda", params.id, jwt],
@@ -57,6 +57,15 @@ export default function DashboardPage({ params }: { params: { id: string } }) {
         return r.json();
       }),
     refetchInterval: simRunning ? 3000 : false,
+  });
+
+  const { data: allPandas } = useQuery<{ id: string }[]>({
+    queryKey: ["pandas", jwt],
+    enabled: !!jwt,
+    queryFn: () =>
+      fetch("/api/pandas", { headers: { Authorization: `Bearer ${jwt}` } }).then(
+        (r) => r.json()
+      ),
   });
 
   const { data: strategy } = useQuery<StrategyAPI | null>({
@@ -79,7 +88,7 @@ export default function DashboardPage({ params }: { params: { id: string } }) {
         body: JSON.stringify({ rawText: text }),
       }).then((r) => r.json()),
     onSuccess: () => {
-      toast.success("策略已解析并保存");
+      toast.success("策略已喂给熊猫");
       qc.invalidateQueries({ queryKey: ["strategy", params.id] });
       setStrategyText("");
     },
@@ -94,7 +103,7 @@ export default function DashboardPage({ params }: { params: { id: string } }) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${jwt}`,
       },
-      body: action === "start" ? JSON.stringify({ speed: "1x" }) : "{}",
+      body: action === "start" ? JSON.stringify({ speed: simSpeed }) : "{}",
     });
     if (res.ok) {
       setSimRunning(!simRunning);
@@ -112,132 +121,80 @@ export default function DashboardPage({ params }: { params: { id: string } }) {
 
   if (isLoading || !panda) {
     return (
-      <PageContainer className="py-10">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Skeleton className="h-64" />
-          <Skeleton className="h-64" />
-          <Skeleton className="h-64" />
+      <PageContainer className="py-6">
+        <div className="flex gap-4">
+          <Skeleton className="h-96 w-[260px]" />
+          <Skeleton className="h-96 flex-1" />
+          <Skeleton className="h-96 w-[200px]" />
         </div>
       </PageContainer>
     );
   }
 
-  const personalityScores: Record<PersonalityKey, number> = {
-    boldness: panda.boldness,
-    patience: panda.patience,
-    intuition: panda.intuition,
-    focus: panda.focus,
-    contrarian: panda.contrarian,
-  };
-
   return (
-    <PageContainer className="space-y-6 py-8">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="space-y-0.5">
-          <h1 className="font-serif text-2xl font-bold text-bamboo-900">模拟盘</h1>
-          <p className="text-xs text-ink-500 font-mono">
-            {panda.sui_object_id?.slice(0, 20)}…
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge>Gen {panda.generation}</Badge>
-          <TalentBadge talentId={panda.talent} />
-          {simRunning && (
-            <Badge color="#4a7c59">
-              <span className="h-1.5 w-1.5 rounded-full bg-current animate-pulse" />
-              模拟中
-            </Badge>
-          )}
-        </div>
-      </div>
+    <PageContainer className="py-4">
+      <div className="flex flex-col gap-4 lg:flex-row">
+        <PandaSidebar
+          pandaId={panda.id}
+          boldness={panda.boldness}
+          patience={panda.patience}
+          intuition={panda.intuition}
+          focus={panda.focus}
+          contrarian={panda.contrarian}
+          talent={panda.talent}
+          experienceLevel={panda.experience_level}
+          emotionState={panda.emotion_state}
+          pandas={allPandas ?? []}
+        />
 
-      {/* Main 3-column grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Column 1: Panda avatar + emotion + experience */}
-        <Card variant="ink" className="flex flex-col items-center gap-5 py-8">
-          <PandaAvatar emotionState={panda.emotion_state} size="xl" />
-          <EmotionIndicator state={panda.emotion_state} showDesc />
-          <div className="w-full px-2">
-            <ExperienceBar level={panda.experience_level} progress={(panda.experience_level % 10) * 10} />
-          </div>
-          <Button
-            size="sm"
-            variant={simRunning ? "danger" : "primary"}
-            className="w-full"
-            onClick={toggleSim}
-          >
-            {simRunning ? "⏸ 停止模拟" : "▶ 启动模拟"}
-          </Button>
-        </Card>
+        <main className="min-w-0 flex-1 space-y-4">
+          <CandlestickChart />
 
-        {/* Column 2: Personality radar */}
-        <Card variant="bordered" className="flex flex-col gap-4">
-          <h2 className="font-semibold text-bamboo-900">性格五轴</h2>
-          <PersonalityRadar scores={personalityScores} />
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-ink-500">
-            {Object.entries(personalityScores).map(([key, val]) => (
-              <div key={key} className="flex justify-between">
-                <span>
-                  {key === "boldness" && "大胆"}
-                  {key === "patience" && "耐心"}
-                  {key === "intuition" && "直觉"}
-                  {key === "focus" && "专注"}
-                  {key === "contrarian" && "逆向"}
-                </span>
-                <span className="font-mono font-medium text-bamboo-900">{val}</span>
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        {/* Column 3: Strategy */}
-        <Card variant="bordered" className="flex flex-col gap-4">
-          <h2 className="font-semibold text-bamboo-900">策略</h2>
-
-          {strategy ? (
-            <div className="space-y-2">
-              <Badge color="#4a7c59">{strategy.philosophy}</Badge>
-              <p className="text-sm text-ink-500 italic leading-relaxed">
-                &ldquo;{strategy.raw_text}&rdquo;
-              </p>
-              <p className="text-xs text-ink-500">
-                熟练度 {Math.round(strategy.proficiency * 100)}%
-              </p>
-            </div>
-          ) : (
-            <p className="text-sm text-ink-500">尚未喂策略</p>
-          )}
-
-          <div className="mt-auto space-y-2">
-            <p className="text-xs text-ink-500">用自然语言描述新策略</p>
-            <textarea
-              className="w-full rounded-lg border border-ink-100 p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-bamboo-500 bg-white"
-              rows={4}
-              placeholder={"例如：RSI < 30 时买入，设 5% 止损，仓位不超过 10%"}
+          <div className="grid gap-4 md:grid-cols-2">
+            <AccountPanel isProfit />
+            <StrategyInput
               value={strategyText}
-              onChange={(e) => setStrategyText(e.target.value)}
-            />
-            <Button
-              size="sm"
-              className="w-full"
+              onChange={setStrategyText}
+              onSubmit={() => submitStrategy.mutate(strategyText)}
               loading={submitStrategy.isPending}
-              disabled={!strategyText.trim()}
-              onClick={() => submitStrategy.mutate(strategyText)}
-            >
-              提交策略
-            </Button>
+              hasStrategy={!!strategy}
+              matchScore={strategy ? Math.round(strategy.proficiency * 100) : undefined}
+            />
           </div>
-        </Card>
-      </div>
 
-      {/* K-line placeholder */}
-      <Card variant="bordered" className="space-y-3">
-        <h2 className="font-semibold text-bamboo-900">交易记录 / K 线图</h2>
-        <div className="flex h-48 items-center justify-center rounded-lg bg-ink-100 text-ink-500 text-sm">
-          模拟运行中数据将在此处展示（WebSocket 接入后显示实时 K 线）
-        </div>
-      </Card>
+          {strategy && (
+            <p className="rounded-lg bg-paper-card px-3 py-2 text-[12px] italic text-ink-500">
+              当前策略：{strategy.raw_text.slice(0, 80)}
+              {strategy.raw_text.length > 80 ? "…" : ""}
+            </p>
+          )}
+
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-paper-card px-4 py-3">
+            <SimulationControls active={simSpeed} onChange={setSimSpeed} />
+            <button
+              type="button"
+              onClick={toggleSim}
+              className={`rounded-lg px-4 py-2 text-sm font-medium text-white ${
+                simRunning ? "bg-vermillion" : "bg-bamboo-500"
+              }`}
+            >
+              {simRunning ? "⏸ 停止模拟" : "▶ 启动模拟"}
+            </button>
+            <span className="text-[11px] text-ink-500">
+              交易池: Cetus BTC/SUI ·{" "}
+              <Link href={`/pools?panda=${panda.id}`} className="text-bamboo-500 hover:underline">
+                更改
+              </Link>
+              {" · "}
+              <Link href={`/trading/${panda.id}`} className="text-bamboo-500 hover:underline">
+                交易界面
+              </Link>
+            </span>
+          </div>
+        </main>
+
+        <DecisionPanel decisions={MOCK_DECISIONS} />
+      </div>
     </PageContainer>
   );
 }
