@@ -286,7 +286,9 @@ class TestBattleCases:
     def rsi_strategy(self):
         """共同策略：RSI<30 买入, 仓位 5%, 止损 8%"""
         return Strategy(
-            signal_rules=[{"indicator": "RSI", "condition": "< 30", "weight": 1.0}],
+            signal_rules=[
+                {"indicator": "RSI", "condition": "< 30", "threshold": 30, "action": "BUY"},
+            ],
             position_sizing={"max_position_pct": 0.05},
             risk_management={"stop_loss_pct": 0.08, "max_drawdown_pct": 0.15},
         )
@@ -345,7 +347,9 @@ class TestBattleCases:
         """案例四：阿稳用趋势策略 → 匹配度低"""
         trend_strategy = Strategy(
             philosophy="trend_following",
-            signal_rules=[{"indicator": "MACD", "condition": "golden_cross", "weight": 0.8}],
+            signal_rules=[
+                {"indicator": "MACD", "condition": "golden_cross", "action": "BUY"},
+            ],
             position_sizing={"max_position_pct": 0.10},  # 激进仓位
             risk_management={"stop_loss_pct": 0.05},
         )

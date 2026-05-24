@@ -1,6 +1,6 @@
 # TradingPanda 后端设计文档
 
-> 版本 1.3 · 2026-05-16
+> 版本 1.4 · 2026-05-20
 > 基于：product-design.md / technical-feasibility-study.md / cost-model.md
 > 架构：**Next.js Gateway（Vercel）** + **WebSocket Hub（CF）** + **Market Monitor（Render，DeepBook v3）** + **Decision Engine（Render）**
 
@@ -103,7 +103,8 @@ API Gateway 是面向前端的 **HTTP 业务入口**（认证、REST 代理、�
   GET  /:id                 # 熊猫详情（性格+状态+情绪）
   GET  /:id/history         # 交易历史（分页）
   GET  /:id/experience      # 经验数据摘要
-  POST /:id/strategy        # 喂策略（→ Decision Engine）
+  POST /:id/strategy        # 喂策略：parsed 直传（积木）或 raw_text+LLM
+  POST /:id/strategy/validate  # 校验 signal_rules，不存库
   POST /:id/start           # 开始模拟交易（→ Decision Engine）
   POST /:id/stop            # 停止模拟交易（→ Decision Engine）
   POST /:id/ask             # 向熊猫提问（→ Agent Coordinator）
@@ -583,7 +584,7 @@ class ActorManager:
 
 | 步骤 | 名称 | 输入 | 输出 | 延迟 |
 |------|------|------|------|------|
-| Step 1 | 策略信号匹配 | `market_data`, `strategy.signal_rules` | `raw_signal: float [0,1]` | <5ms |
+| Step 1 | 策略信号匹配 | `market_data`, `strategy.signal_rules[]` | `signed_vote`, `direction`, `S_raw=|vote|` | <5ms |
 | Step 2 | 策略熟练度噪声 | `raw_signal`, `proficiency`, `boldness` | `noisy_signal: float` | <1ms |
 | Step 3 | 性格过滤 | `noisy_signal`, `personality` | `filtered_signal: float` | <1ms |
 | Step 4 | 环境适配 | `filtered_signal`, `env_level`, `market_state` | `adapted_signal: float` | <5ms |
@@ -1978,6 +1979,36 @@ scheduler.add_job(
 async def startup():
     scheduler.start()
 ```
+
+---
+
+## 三、K 线与实时推送（方案甲）
+
+> **MVP**：K 线聚合在 **`market-monitor`**（读 DeepBook PG `order_fills`）→ Redis `market:tick:*` → **DE + CF Hub**。  
+> **无**独立 K-line WSS。方案乙见 **`docs/kline-websocket-service.md`**。
+
+### 3.1 数据流
+
+```
+order_fills (DeepBook PG, VPS :5433)
+    ↓ market-monitor 增量聚合 + 指标
+Redis market:tick:{pair}
+    ├──► Decision Engine → PandaActor
+    └──► WebSocket Hub → 浏览器（market.tick + candle）
+
+DE PUBLISH panda:* → Hub → 浏览器（同一 WSS）
+```
+
+### 3.2 前端接入
+
+| 类型 | 路径 |
+|------|------|
+| 历史 K 线 | REST `GET /candles/{pool}`（monitor 或 Next BFF） |
+| 实时 K 线 + 熊猫 | 单 Hub WSS：`subscribe.market` + `subscribe.simulation` |
+
+### 3.3 方案乙（可选）
+
+独立 **`:9009` K-line WSS** — 仅当 Hub Redis 流量或逐笔延迟不满足需求时启用；见 `docs/kline-websocket-service.md`。
 
 ---
 

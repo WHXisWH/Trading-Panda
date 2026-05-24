@@ -378,7 +378,43 @@ async def _process_market_event(self, actor: PandaActor, event: MarketEvent):
 - `strategy_proficiency: int` — 策略熟练度 (0-100)
 
 **输出参数**：
-- `S_raw: float` — 原始信号强度 (0.0 ~ 1.0)
+- `S_raw: float` — 原始信号强度 (0.0 ~ 1.0)，来自 `|signed_vote|`
+- `direction: int` — `+1` 买 / `-1` 卖 / `0` 无方向（`signed_vote === 0`）
+
+**MVP 支持的 `signal_rules` 指标**（与 `RuleEngine` 一致）：
+
+| indicator | condition 示例 | 依赖 market 字段 |
+|-----------|----------------|------------------|
+| `RSI` | `< 30` / `> 70` | `rsi` |
+| `MA20` | `cross_above` / `cross_below` | `price`, `ma20`, `prev_price`, `prev_ma20` |
+| `MACD` | `golden_cross` / `death_cross` | `macd_signal` |
+| `PRICE` | `> 60000` / `< 50000` | `price` |
+
+无法编译的规则在服务端校验阶段拒绝；运行时静默跳过会导致分母变小，**禁止**未校验入库。
+
+**多规则投票（Step 1 核心）**：
+
+```
+对每个已编译规则，评估 predicate(market)：
+  buy_hits  = 命中且 action=BUY 的条数
+  sell_hits = 命中且 action=SELL 的条数
+  total     = 已编译规则总条数（非命中数）
+
+signed_vote = (buy_hits - sell_hits) / total
+direction   = sign(signed_vote)  // 0 表示无方向
+S_raw       = |signed_vote|
+
+例：4 条规则，1 买命中 → signed_vote = +0.25
+例：4 条规则，1 买 1 卖同时命中 → signed_vote = 0
+```
+
+`signal_rules[].weight` 在 API/DB 中可存，**MVP 引擎不参与计分**；v2 可改为加权投票。
+
+**策略作用域**：
+
+- 每只 `PandaActor` 仅 **`active_strategy` 一份**（换策 deactivate 旧记录）。
+- **一份策略内** `signal_rules` 为 **数组**（多条买/卖规则）。
+- 历史策略通过 **策略残影**（Step 4，`ghost_weight` 衰减）干扰，**非**并列第二主策略。
 
 **完整计算公式**：
 
@@ -443,54 +479,27 @@ def _step1_raw_signal(self, actor: PandaActor, market: dict) -> float:
 
 ```python
 class RuleEngine:
-    """策略 JSON → 可执行的信号匹配逻辑"""
-    
-    def __init__(self, strategy: "Strategy"):
-        self.strategy = strategy
-        self._compiled_rules = self._compile_rules(strategy.signal_rules)
-    
-    def _compile_rules(self, rules: list) -> list:
-        """预编译规则为可执行的条件函数"""
-        compiled = []
-        for rule in rules:
-            indicator = rule.get("indicator", "").upper()
-            condition = str(rule.get("condition", "")).lower()
-            threshold = float(rule.get("threshold", 0))
-            
-            if indicator == "RSI":
-                if any(kw in condition for kw in ("below", "less", "低于", "<")):
-                    compiled.append(lambda m, t=threshold: m.get("rsi", 50) < t)
-                elif any(kw in condition for kw in ("above", "greater", "高于", ">")):
-                    compiled.append(lambda m, t=threshold: m.get("rsi", 50) > t)
-            
-            elif indicator in ("MA", "MA20"):
-                if condition in ("cross_above", "上穿"):
-                    compiled.append(
-                        lambda m: (m.get("price", 0) > m.get("ma20", 0)
-                                   and m.get("prev_price", 0) <= m.get("prev_ma20", 0))
-                    )
-                elif condition in ("cross_below", "下穿"):
-                    compiled.append(
-                        lambda m: (m.get("price", 0) < m.get("ma20", 0)
-                                   and m.get("prev_price", 0) >= m.get("prev_ma20", 0))
-                    )
-            
-            elif indicator == "MACD":
-                if condition in ("golden_cross", "金叉"):
-                    compiled.append(lambda m: m.get("macd_signal") == "golden_cross")
-                elif condition in ("death_cross", "死叉"):
-                    compiled.append(lambda m: m.get("macd_signal") == "death_cross")
-        
-        return compiled
-    
+    """Compile signal_rules → predicates; vote buy vs sell."""
+
+    MVP_INDICATORS = ("RSI", "MA", "MA20", "MACD", "PRICE")
+
     def match_signals(self, market: dict) -> float:
-        """匹配所有信号规则，返回信号强度 0-1"""
-        if not self._compiled_rules:
+        """Signed vote in [-1, 1]. Positive = BUY bias."""
+        buy_hits = sell_hits = 0.0
+        total = len(self._compiled) or 1
+        for action, fn in self._compiled:
+            if not fn(market):
+                continue
+            if action == "SELL":
+                sell_hits += 1.0
+            else:
+                buy_hits += 1.0
+        if buy_hits == 0 and sell_hits == 0:
             return 0.0
-        
-        hits = sum(1 for rule_fn in self._compiled_rules if rule_fn(market))
-        return hits / len(self._compiled_rules)
+        return (buy_hits - sell_hits) / total
 ```
+
+实现见 `backend/app/engine/rule_engine.py`。前端 Step 1 须展示 `buy_hits`, `sell_hits`, `total`, `matched_rule_indexes`。
 
 ---
 

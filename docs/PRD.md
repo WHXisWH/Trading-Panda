@@ -145,26 +145,67 @@ TradingPanda 是 Sui 链上的 **AI 交易宠物养成系统**。每只熊猫是
 | 镜像思维 | 1% | 逆向操作胜率加成 |
 | 老熊记忆 | 3% | 模式记忆容量 ×2 |
 
-### 3.2 喂策略 — 教熊猫交易
+### 3.2 喂策略 — 教熊猫交易（猎手 · 混合输入）
+
+**MVP 主路径**：Dashboard **规则积木编辑器**（指标 + 条件 + 买/卖）组装四层 JSON，**直接提交、默认不调 LLM**。  
+**进阶路径**：可选自然语言文本 → DeepSeek V3 解析 → 结果灌入积木可编辑 → 再提交。
 
 ```
-用户输入自然语言策略
-→ DeepSeek V3 解析为四层结构化规则
-→ 熊猫显示「学习中...」动画
-→ 策略熟练度从 0 开始，逐笔交易提升
-→ 展示策略匹配度评分（性格×策略契合度）
-→ 策略哈希存链上 (dynamic_field)
-→ 完整策略存 PostgreSQL + Walrus 备份
+路径 A（默认 · 积木）：
+  用户选哲学 + 添加 signal_rules 行 + 仓位/风控滑块
+  → 前端校验（RuleEngine 试编译）
+  → POST /api/panda/:id/strategy { parsed }
+  → 存库、激活、算 strategy_hash、触发残影
+
+路径 B（可选 · 文本）：
+  用户输入自然语言（10–2000 字）
+  → POST … { raw_text, parse_with_llm: true }
+  → DeepSeek V3 解析为四层 JSON
+  → 前端 StrategyPreview / 积木可改后再存
+
+共通：
+  → 熊猫「学习中…」动画
+  → 策略熟练度从 0 起（除非与新策略哈希相近）
+  → 性格×策略匹配度
+  → strategy_hash 写链上 dynamic_field
+  → 完整策略 PostgreSQL + Walrus 备份
 ```
 
 **策略四层**：
 
 ```
-哲学层 Philosophy    → 趋势跟踪 / 逆向抄底 / 直觉驱动
-仓位层 Position      → fixed(5%) / kelley / grid(10, 3%)
-信号层 Signal Rules  → RSI < 30 → BUY / MACD 死叉 → SELL
-风控层 Risk Mgmt     → stopLoss=8% / maxDrawdown=15%
+哲学层 Philosophy    → 趋势跟踪 / 逆向抄底 / 直觉驱动 / 网格 / custom
+仓位层 Position      → fixed(5%) / kelly / grid；max_position_pct 1%–25%
+信号层 Signal Rules  → 多条规则数组（见下）；MVP 引擎支持 RSI / MA20 / MACD / PRICE
+风控层 Risk Mgmt     → stop_loss_pct / take_profit_pct / max_drawdown_pct
 ```
+
+**信号层（猎手积木）**：
+
+| 字段 | 说明 |
+|------|------|
+| `indicator` | `RSI` \| `MA20` \| `MACD` \| `PRICE`（与 `RuleEngine` 一致） |
+| `condition` | 如 `"< 30"`、`cross_above`、`death_cross` |
+| `threshold` | 数值型条件必填（RSI/PRICE）；交叉类可省略 |
+| `action` | `BUY` \| `SELL` |
+| `weight` | **预留**，MVP 引擎未参与计分，前端不展示 |
+
+约束：至少 **1** 条、最多 **8** 条可编译规则；仅 `parsed` 提交时服务端生成 `raw_text` 摘要供历史展示。
+
+**单策略 vs 多规则**：
+
+- 每只熊猫 **同时仅 1 份** `active_strategy`（换策 deactivate 旧策略）。
+- **一份策略内可有多条** `signal_rules`（如 RSI 买 + RSI 卖 + MACD 死叉卖）。
+- 换策后 **旧策略不以第二主脑并行**，而以 **策略残影**（Step 4 融合，权重衰减）干扰新策略。
+
+**Step 1 多规则计分（投票制）**：
+
+```
+signed = (买入命中条数 - 卖出命中条数) / 已编译规则总条数
+方向 = sign(signed)；强度 = |signed|
+```
+
+同 tick 买卖各命中 1 条且共 4 条规则 → `signed = 0`（观望/无方向）。规则越多、命中越少 → 原始信号越弱。前端决策链 Step 1 须展示命中明细。
 
 **策略熟练度渐进式生效**：
 

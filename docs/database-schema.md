@@ -194,9 +194,9 @@ CREATE TABLE strategies (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     panda_id        UUID NOT NULL REFERENCES pandas(id) ON DELETE CASCADE,
 
-    raw_text        TEXT NOT NULL,                  -- 用户输入的自然语言策略
-    parsed_json     JSONB NOT NULL,                 -- DeepSeek V3 解析后的四层结构
-                                                    -- {philosophy, position_sizing, signal_rules, risk_management}
+    raw_text        TEXT NOT NULL,                  -- 用户原文或积木自动摘要（展示/历史）
+    parsed_json     JSONB NOT NULL,                 -- 四层结构（积木直传或 LLM 解析）
+                                                    -- signal_rules[]: {indicator, condition, threshold?, action}
     strategy_hash   TEXT NOT NULL,                   -- SHA256 哈希（同步到链上 dynamic_field）
     philosophy      TEXT NOT NULL                    -- 哲学层：trend_following / contrarian / intuition_driven
                     CHECK (philosophy IN ('trend_following','contrarian','intuition_driven','grid','custom')),
@@ -208,7 +208,7 @@ CREATE TABLE strategies (
 );
 
 COMMENT ON TABLE strategies IS '用户教给熊猫的交易策略';
-COMMENT ON COLUMN strategies.parsed_json IS 'LLM 解析的四层结构：哲学层/仓位层/信号层/风控层';
+COMMENT ON COLUMN strategies.parsed_json IS '四层 JSON：哲学/仓位/signal_rules[]/风控；权威执行来源';
 COMMENT ON COLUMN strategies.strategy_hash IS 'SHA256(parsed_json) 用于链上验证';
 COMMENT ON COLUMN strategies.proficiency IS '策略熟练度：0-20 偏差±30%, 20-50 ±15%, 50-80 ±5%, 80-100 完美执行';
 
@@ -951,3 +951,19 @@ CREATE TRIGGER trg_pandas_updated_at
     BEFORE UPDATE ON pandas
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 ```
+
+## 附录 A：order_fills 与 K 线数据说明
+
+### A.1 order_fills 作为 K 线唯一数据源
+
+> **2026-05-20 架构更新**：K 线数据不再依赖 DeepBook Server 的 `/ohclv` 端点和物化视图。
+
+| 变化 | 说明 |
+|------|------|
+| ohclv_1m / ohclv_1d 表 | **不再需要** — K 线由 WebSocket 服务实时从 order_fills 聚合 |
+| K 线数据源 | `order_fills` 表是 K 线数据的唯一来源 |
+| 查询方式 | K 线 WebSocket 服务通过 `last_id` 游标增量轮询 order_fills |
+| 数据流向 | **Indexer** 写入 `order_fills` → **market-monitor** 聚合 → Redis `market:tick` → Hub/DE；历史 K 线 REST `GET /candles`（方案甲）。可选：独立 K-line WSS（方案乙） |
+| 数据保留 | order_fills 保留全部历史，K 线服务根据数据保留策略自行截取时间范围 |
+
+详细设计见 **`docs/kline-websocket-service.md`**。

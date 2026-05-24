@@ -109,38 +109,37 @@ Frontend                          Sui Testnet                    Backend
 ## 3. Strategy Flow
 
 ```
-User                    Frontend              Backend (Python)        DeepSeek V3
+User                    Frontend              Backend (Python)        DeepSeek V3 (optional)
   │                        │                       │                      │
-  │  type: "当RSI<30时      │                       │                      │
-  │   买入，5%止损"          │                       │                      │
-  │──► submit strategy ────►│                       │                      │
+  │  Path A: 积木编辑器      │                       │                      │
+  │  哲学+多条 signal_rules  │                       │                      │
+  │──► [教给熊猫] ──────────►│                       │                      │
+  │                         │──POST …/strategy ────►│                      │
+  │                         │   { parsed }          │ RuleEngine 试编译     │
+  │                         │                       │ INSERT strategy       │
+  │                         │                       │ (无 LLM)              │
   │                         │                       │                      │
-  │                         │──POST /engine/strategy/parse ──────────────►│
-  │                         │   { panda_id, raw_text }                     │
+  │  Path B: 自然语言（可选）  │                       │                      │
+  │──► submit text ────────►│                       │                      │
+  │                         │──POST …/strategy ────►│──parse (若需) ──────►│
+  │                         │   { raw_text,         │◄── 4-layer JSON ─────│
+  │                         │     parse_with_llm }  │                      │
+  │                         │                       │ 灌入 Builder 可改      │
+  │                         │                       │ 再以 parsed 存库       │
   │                         │                       │                      │
-  │                         │                       │◄── 4-layer JSON ─────│
-  │                         │                       │  {                   │
-  │                         │                       │    philosophy:        │
-  │                         │                       │     "trend_following",│
-  │                         │                       │    position_sizing:   │
-  │                         │                       │     {type:"fixed",    │
-  │                         │                       │      value: 0.1},     │
-  │                         │                       │    signal_rules: […], │
-  │                         │                       │    risk_management:   │
-  │                         │                       │     {stop_loss: 5%}   │
-  │                         │                       │  }                   │
+  │                         │                       │  deactivate old       │
+  │                         │                       │  ghost_weight=0.40    │
+  │                         │                       │  strategy_hash=SHA256 │
+  │                         │◄── { strategy_id, parsed, … } ───────────────│
   │                         │                       │                      │
-  │                         │                       │  deactivate old strategy
-  │                         │                       │  INSERT new strategy │
-  │                         │                       │  INSERT strategy_history (activated)
-  │                         │                       │  strategy_hash = SHA-256(parsed_json)
-  │                         │                       │  (background: write hash to panda dynamic_field)
-  │                         │                       │                      │
-  │                         │◄── { strategy_id, parsed, philosophy } ──────│
-  │◄── "策略已解析并保存" ───│                       │                      │
+  │  可选：提交前校验         │──POST …/validate ───►│  compiled_count,      │
+  │                         │   { parsed }          │  preview_signal       │
+  │                         │◄── warnings ──────────│                      │
 ```
 
-If `DEEPSEEK_API_KEY` is not set, the backend returns a default mock strategy (balanced philosophy, RSI<30 buy, 5% stop loss).
+**单策略多规则**：请求体 `parsed.signal_rules` 为数组；Actor 仅 `active_strategy` 一份。旧策略以残影（Step 4）干扰，非第二主策略。
+
+若 `DEEPSEEK_API_KEY` 未配置且走 Path B，后端可返回 mock 四层 JSON；Path A（`parsed` 直传）不依赖 LLM。
 
 ---
 

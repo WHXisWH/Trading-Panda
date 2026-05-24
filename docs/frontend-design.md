@@ -1,8 +1,11 @@
 # TradingPanda 前端设计文档
 
-> 版本: 1.0 | 日期: 2026-05-08
-> Sui Overflow 2026 黑客松 — AI 交易宠物养成系统
-> 基于: design-plan.md v2.0 / mint-page.md / dashboard.md / market.md / user-journey.md
+> 版本: 1.1 | 日期: 2026-05-22  
+> Sui Overflow 2026 黑客松 — AI 交易宠物养成系统  
+> **UI 设计稿唯一来源（Obsidian）**：`Artifact-Registry/sui-ai-trading-pet/design/design-spec/`  
+>   - `design-tokens.md` · `mint-page-spec.md` · `dashboard-spec.md`  
+>   - `trading-interface-spec.md` · `market-page-spec.md` · `pool-selection-spec.md`  
+> 工程对齐：`docs/PRD.md` · `docs/api-specification.md`（策略积木/API 见 PRD §3.2）
 
 ---
 
@@ -97,6 +100,11 @@ src/
 │   ├── dashboard/
 │   │   └── [id]/
 │   │       └── page.tsx              # 模拟盘（按熊猫 ID 路由）
+│   ├── trading/
+│   │   └── [id]/
+│   │       └── page.tsx              # 交易界面（订单簿 + 表单，可选）
+│   ├── pools/
+│   │   └── page.tsx                  # 交易池多选（DeepBook / Cetus 等）
 │   ├── market/
 │   │   └── page.tsx                  # NFT 市场
 │   ├── leaderboard/
@@ -120,13 +128,28 @@ src/
 │   │   ├── CandlestickChart.tsx      # K 线图（Lightweight Charts）
 │   │   ├── AccountPanel.tsx          # 账户面板（余额/持仓/盈亏）
 │   │   ├── DecisionPanel.tsx         # 决策链面板（8 步可视化）
+│   │   ├── DecisionChain.tsx         # 右侧决策摘要 + 历史（Dashboard）
+│   │   ├── PandaSidebar.tsx          # Dashboard 左侧 180px 栏
 │   │   ├── DecisionStep.tsx          # 决策链单步
-│   │   ├── StrategyInput.tsx         # 策略输入框
-│   │   ├── StrategyPreview.tsx       # 策略解析结果展示
-│   │   ├── TradeHistory.tsx          # 交易历史列表
-│   │   ├── TradeHistoryItem.tsx      # 交易历史单条
-│   │   ├── SimulationControls.tsx    # 模拟速度控制
-│   │   └── TradeMarker.tsx           # K 线图交易标记
+│   │   ├── StrategyBuilder.tsx       # 猎手规则积木（主路径）
+│   │   ├── StrategyRuleRow.tsx
+│   │   ├── StrategyTemplates.tsx
+│   │   ├── StrategyTextInput.tsx     # 自然语言（进阶）
+│   │   ├── StrategyPreview.tsx
+│   │   ├── TradeHistory.tsx
+│   │   ├── TradeHistoryItem.tsx
+│   │   ├── SimulationControls.tsx    # 模拟速度 [1×][10×][100×][跳到结果]
+│   │   ├── SpeedControl.tsx
+│   │   ├── TradeMarker.tsx
+│   │   ├── OrderBook.tsx             # 交易页 · 订单簿 + 深度
+│   │   ├── OrderBookDepth.tsx
+│   │   ├── TradeForm.tsx             # 交易页 · 买卖表单
+│   │   └── PositionList.tsx          # 交易页 · 持仓列表
+│   │
+│   ├── pools/                          # 交易池选择
+│   │   ├── PoolListItem.tsx
+│   │   ├── PoolConfirmBar.tsx
+│   │   └── PoolListSkeleton.tsx
 │   │
 │   ├── market/                       # 市场相关组件
 │   │   ├── MarketGrid.tsx            # 市场卡片网格
@@ -206,7 +229,7 @@ src/
 │   ├── http.ts                       # Axios/fetch 基础客户端（baseURL、拦截器、JWT 注入）
 │   ├── auth.service.ts               # connectWallet, zkLogin, refreshToken, submitSurvey
 │   ├── panda.service.ts              # mintPanda, getPanda, getMyPandas, renamePanda
-│   ├── strategy.service.ts           # parseStrategy, getStrategy, getStrategyHistory
+│   ├── strategy.service.ts           # feedStrategy, validateStrategy, parseStrategyText, getStrategy
 │   ├── simulation.service.ts         # startSimulation, stopSimulation, getStatus, getHistory
 │   ├── trading.service.ts            # getTrades, getTradeDecision
 │   ├── experience.service.ts         # getExperience, getPatterns, getMastery, getMistakes
@@ -343,6 +366,8 @@ export function usePandaData(pandaId: string) {
 
 ## 二、Design System
 
+> **规范优先级**：Obsidian `design-tokens.md` 中的像素值与命名为主；本节 CSS 变量为工程落地超集（含纹理、稀有度等扩展 Token）。冲突时以 Obsidian 为准。
+
 ### 2.1 Design Tokens
 
 所有 Design Token 以 CSS Custom Properties 定义，写入 `src/styles/tokens.css` 并在 `globals.css` 中引入。
@@ -355,33 +380,38 @@ export function usePandaData(pandaId: string) {
   /* 设计理念：宣纸为底、浓墨为骨、竹青为魂、朱砂为印 */
 
   /* 背景 — 宣纸层次 */
-  --color-bg-primary: #f5f0e6;          /* 主背景 - 生宣纸 */
-  --color-bg-card: #ede8dc;             /* 卡片/面板 - 熟宣纸 */
+  --color-bg-primary: #f5f0e6;          /* 生宣纸 */
+  --color-bg-card: #ede8dc;             /* 熟宣纸 */
+  --color-bg-white: #ffffff;            /* 卡片白底（市场卡片、池列表项） */
   --color-bg-input: #e8e2d4;            /* 输入框 - 毛边纸 */
-  --color-bg-hover: #e2dccf;            /* 悬停 - 按压宣纸 */
-  --color-bg-overlay: rgba(245, 240, 230, 0.85); /* 遮罩层 - 薄宣 */
+  --color-bg-hover: #e2dccf;
+  --color-bg-overlay: rgba(245, 240, 230, 0.85); /* = --color-overlay */
   --color-bg-ink-wash: rgba(30, 30, 28, 0.04);   /* 淡墨晕染层 */
 
   /* 强调色 — 竹青绿 */
   --color-accent: #2d5a3d;              /* 主强调 - 竹青 */
   --color-accent-hover: #1e4a2e;        /* 强调色 hover - 深竹 */
   --color-accent-glow: rgba(45, 90, 61, 0.3);    /* 天赋发光 - 竹光 */
-  --color-accent-muted: rgba(45, 90, 61, 0.08);  /* 强调色淡背景 */
-  --color-accent-light: #3a7a52;        /* 翠竹 - 次级强调 */
+  --color-accent-muted: rgba(45, 90, 61, 0.08);
+  --color-accent-light: #f0f8f0;        /* 选中行 / 池项已选背景（Obsidian） */
 
-  /* 文字 — 墨色五彩 */
-  --color-text-primary: #1a1a18;        /* 主文字 - 浓墨 */
-  --color-text-secondary: #5a5a52;      /* 次要文字 - 淡墨 */
-  --color-text-muted: #9a9a8e;          /* 占位符 - 枯墨 */
+  /* 文字 */
+  --color-text-primary: #1a1a1a;        /* 浓墨 */
+  --color-text-secondary: #888888;
+  --color-text-tertiary: #999999;
+  --color-text-placeholder: #bbbbbb;
+  --color-text-muted: #9a9a8e;          /* 兼容别名 */
+  --color-text-inverse: #ffffff;
 
   /* 语义色 — 国画色谱 */
   --color-success: #2d5a3d;             /* 盈利 - 竹青（与强调色统一）*/
   --color-success-bg: rgba(45, 90, 61, 0.08);
   --color-danger: #c23a3a;              /* 亏损 - 朱砂红 */
   --color-danger-bg: rgba(194, 58, 58, 0.06);
-  --color-warning: #b8860b;             /* 警告 - 赭石 */
-  --color-warning-bg: rgba(184, 134, 11, 0.06);
-  --color-info: #4a6d8c;               /* 信息 - 花青 */
+  --color-warning: #e8b84b;             /* 藤黄 · 稀有天赋 */
+  --color-warning-bg: rgba(232, 184, 75, 0.12);
+  --color-excited: #d4727a;           /* 胭脂 · 兴奋情绪 */
+  --color-info: #4a6d8c;
 
   /* 熊猫色 */
   --color-panda-fur: #1a1a1a;           /* 熊猫黑 - 浓墨 */
@@ -389,9 +419,11 @@ export function usePandaData(pandaId: string) {
   --color-panda-eye: #2d5a3d;           /* 熊猫眼 = 竹青 */
 
   /* 边框 — 墨线 */
-  --color-border: #d4cbb8;              /* 默认边框 - 淡墨线 */
-  --color-border-hover: #bfb5a0;        /* 悬停边框 - 中墨线 */
-  --color-border-accent: #2d5a3d;       /* 强调边框 - 竹青 */
+  --color-border: #d4cfc4;              /* 淡墨线 */
+  --color-border-light: #ede8dc;
+  --color-border-hover: #bfb5a0;
+  --color-border-accent: #2d5a3d;
+  --color-overlay: rgba(245, 240, 230, 0.85);
 
   /* 印章 & 点缀 */
   --color-seal: #c23a3a;                /* 印章朱红 - 用于 logo、徽章、重要标记 */
@@ -407,44 +439,55 @@ export function usePandaData(pandaId: string) {
   --texture-rice-paper: url('/textures/rice-paper.webp'); /* 宣纸纹理叠加层 */
 
   /* ========== 字体 — 书法 + 现代 ========== */
-  --font-heading: "ZCOOL XiaoWei", "Noto Serif SC", serif;       /* 标题 - 小薇体/思源宋 */
-  --font-display: "ZCOOL QingKe HuangYou", "Noto Sans SC", sans-serif; /* 数字 - 庆科黄油体 */
-  --font-body: "Noto Sans SC", "Inter", -apple-system, sans-serif; /* 正文 - 思源黑 */
+  --font-heading: "ZCOOL XiaoWei", "Noto Serif SC", serif;
+  --font-body: "Noto Sans SC", "Inter", -apple-system, sans-serif;
+  --font-display: "Noto Sans SC", "Inter", sans-serif;  /* 价格数字 · Obsidian */
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
-  /* 字号 */
-  --text-xs: 0.75rem;      /* 12px */
-  --text-sm: 0.875rem;     /* 14px */
-  --text-base: 1rem;       /* 16px */
-  --text-lg: 1.125rem;     /* 18px */
-  --text-xl: 1.25rem;      /* 20px */
-  --text-2xl: 1.5rem;      /* 24px */
-  --text-3xl: 1.875rem;    /* 30px */
-  --text-4xl: 2.25rem;     /* 36px */
-  --text-display: 3rem;    /* 48px - 用于 Landing 大标题 */
+  /* 字号层级（Obsidian） */
+  --text-h1: 22px;
+  --text-h2: 18px;
+  --text-h3: 15px;
+  --text-body: 13px;
+  --text-small: 11px;
+  --text-tiny: 10px;
+  --text-price: 20px;
+  --text-price-lg: 28px;
+  /* Tailwind 兼容 rem 刻度保留 */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-display: 3rem;
 
-  /* ========== 间距 ========== */
-  --spacing-xs: 4px;       /* 紧密元素间距 */
-  --spacing-sm: 8px;       /* 标签与值间距 */
-  --spacing-md: 16px;      /* 组件内间距、卡片 padding */
-  --spacing-lg: 24px;      /* 组件间间距 */
-  --spacing-xl: 32px;      /* 页面区块间距 */
-  --spacing-2xl: 48px;     /* 导航栏高度 */
-  --spacing-3xl: 64px;     /* 大段间距 */
-  --spacing-4xl: 96px;     /* Landing 区块间距 */
+  /* ========== 间距（Obsidian） ========== */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+  --spacing-2xl: 32px;
+  --spacing-3xl: 48px;
 
   /* ========== 圆角 ========== */
-  --radius-sm: 6px;        /* 按钮、输入框、标签 */
-  --radius-md: 12px;       /* 卡片、面板 */
-  --radius-lg: 16px;       /* 模态框 */
-  --radius-full: 9999px;   /* 熊猫头像圆形裁切 */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
 
   /* ========== 阴影 ========== */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);       /* 水墨浅影 */
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);      /* 宣纸层叠 */
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.15);      /* 深层叠 */
-  --shadow-glow: 0 0 20px rgba(45, 90, 61, 0.2);    /* 竹青光晕 */
-  --shadow-glow-strong: 0 0 40px rgba(45, 90, 61, 0.35); /* 天赋竹光 */
-  --shadow-ink: 0 2px 8px rgba(26, 26, 24, 0.06);   /* 墨渍阴影 */
+  --shadow-sm: 0 1px 3px rgba(26, 26, 26, 0.08);
+  --shadow-md: 0 4px 12px rgba(26, 26, 26, 0.10);
+  --shadow-lg: 0 8px 24px rgba(26, 26, 26, 0.12);
+  --shadow-glow: 0 0 20px rgba(45, 90, 61, 0.20);
+  --shadow-glow-rare: 0 0 40px rgba(232, 184, 75, 0.35);
+  --shadow-glow-strong: var(--shadow-glow-rare);
+  --shadow-ink: 0 2px 8px rgba(26, 26, 24, 0.06);
 
   /* ========== 过渡 ========== */
   --duration-fast: 150ms;
@@ -462,12 +505,41 @@ export function usePandaData(pandaId: string) {
   --z-modal: 50;
   --z-toast: 60;
 
-  /* ========== 布局 ========== */
-  --navbar-height: 48px;
+  /* ========== 布局（Obsidian） ========== */
+  --navbar-height: 44px;
   --page-max-width: 1440px;
-  --sidebar-width: 260px;
+  --page-mint-max-width: 800px;
+  --sidebar-width: 180px;              /* Dashboard 左侧 PandaSidebar */
+  --sidebar-width-wide: 260px;         /* 宽侧栏场景 */
+  --decision-panel-width: 170px;       /* Dashboard 右侧决策链 */
+  --trading-positions-width: 220px;
+  --trading-orderbook-width: 320px;
+  --trading-form-width: 224px;
+  --modal-width-lg: 800px;
+  --modal-width-sm: 400px;
+  --panda-avatar-dashboard: 80px;
+  --panda-avatar-mint: 120px;
+  --panda-avatar-card: 80px;
+  --market-card-width: 183px;
+  --market-card-height: 210px;
+  --pool-list-item-height: 72px;
+  --confirm-bar-height: 50px;
 }
 ```
+
+### 2.1.1 熊猫情绪色（Rive / SVG 联动）
+
+| 情绪 | 身体/脸颊 | 特效 |
+|------|-----------|------|
+| 专注 Focused | 标准黑白 `#1A1A1A` / `#F5F5F0` | 无 |
+| 兴奋 Excited | 脸颊 `#D4727A` | 小星星 ✨ |
+| 贪婪 Greedy | 光泽 `#E8B84B` | 金币粒子 |
+| 谨慎 Cautious | 蓝灰冷调 | 头顶 ❓ |
+| 恐慌 Panicking | 灰 `#CCCCCC` | 汗滴 💦 |
+| 麻木 Numb | 低饱和褪色 | 灰色气泡 |
+| 冷静 Calm | 银白光泽 | 柔和光晕 |
+
+**产品约束**：Dashboard 不对用户暴露情绪数值系数，仅表情/颜色/姿态（PRD C4）。
 
 ### 2.2 基础组件库
 
@@ -900,9 +972,28 @@ const [answers, setAnswers] = useState<OnboardingSurvey>({
 
 ### 3.2 Mint Page（铸造页）
 
+> 设计稿：`design-spec/mint-page-spec.md` · mockup `mint-page.png`
+
 #### 页面职责
 
-用户铸造 AI 交易熊猫 NFT 的核心页面。从连接钱包 → 铸造 → 性格揭晓 → 天赋揭晓 → 进入模拟盘。
+用户铸造 AI 交易熊猫 NFT。布局为 **居中单列，内容区最大宽度 800px**，Navbar 高 44px。
+
+#### 页面布局（Obsidian）
+
+```
+┌────────────────────────────────────────┐
+│  Navbar (全宽 max 800px, h=44px)        │
+├────────────────────────────────────────┤
+│           🐼 熊猫圆形头像 120×120         │
+│       "铸造你的 AI 交易熊猫" (h1)        │
+│     "连接 Sui Wallet，铸造独一无二..."    │
+│         [🐼 铸造熊猫]  Gas ~0.03 SUI   │
+│    ┌────── 性格五轴 Recharts 雷达 ──┐    │
+│    └──────────────────────────────┘    │
+│         🎋 天赋标签（稀有=金色光晕）      │
+│  [🎮 进入模拟盘]    [再养一只]           │
+└────────────────────────────────────────┘
+```
 
 #### SEO
 
@@ -913,16 +1004,31 @@ export const metadata: Metadata = {
 };
 ```
 
-#### 6 页面状态
+#### 页面状态
 
-| 状态 | 代码枚举 | 触发条件 | 视觉 |
-|------|---------|---------|------|
-| idle | `IDLE` | 钱包已连接，未开始铸造 | 熊猫剪影 + 引导文案 + Mint 按钮 |
-| connecting | `CONNECTING` | 点击连接钱包 | 钱包弹窗等待中 |
-| minting | `MINTING` | 点击 Mint + 钱包确认 | 按钮 loading + 熊猫剪影微动 |
-| revealing | `REVEALING` | 链上 Mint 完成 | 破壳动画 → 雷达图填充 → 天赋揭晓 |
-| success | `SUCCESS` | 揭晓完成 | 完整熊猫 + 雷达图 + 天赋 + 「进入模拟盘」按钮 |
-| error | `ERROR` | Gas 不足 / 合约报错 | 错误提示 + 重试按钮 |
+| 状态 | 代码枚举 | 触发 | 视觉（Obsidian） |
+|------|---------|------|------------------|
+| idle | `IDLE` | 钱包已连接 | 熊猫剪影呼吸动画 opacity 0.8↔1.0 + 标题 + 按钮 |
+| connecting | `CONNECTING` | 未连接钱包 | 按钮文案「🔗 连接钱包」 |
+| confirming | `CONFIRMING` | 点击铸造，等钱包 | 按钮 loading「交易确认中...」 |
+| minting | `MINTING` | 钱包已签，链上 pending | loading + 剪影微动 |
+| revealing | `REVEALING` | Mint 成功 | 破壳 2s → 雷达 500ms/轴 → 天赋 delay 1s |
+| success / done | `SUCCESS` | 揭晓完成 | 完整展示 +「🎮 进入模拟盘」→ `/dashboard/[id]` |
+| error | `ERROR` | 拒绝 / gas 不足 | 错误提示 + 重试 |
+
+#### 组件规格（Obsidian）
+
+**PandaAvatar（Mint）**：120×120 圆形；铸造前 CSS 渐变剪影；铸造中 spinner；铸造后 Rive 破壳 → 展示。
+
+**MintButton**：默认「🐼 铸造熊猫」`--color-accent` 白字；铸造中 disabled + loading；成功后隐藏。
+
+**PersonalityRadar**：Recharts；填充 `rgba(45,90,61,0.2)`；描边 `--color-accent`；500ms/轴顺时针。
+
+**TalentBadge**：无天赋隐藏；普通=竹青底白字；稀有=`--color-warning` + `--shadow-glow-rare`；spring-up 动画。
+
+#### 6 页面状态（实现映射）
+
+> 工程代码可将 `done` 映射为 `success`。
 
 #### 组件树
 
@@ -1082,9 +1188,52 @@ const TALENT_MAP: Record<number, { name: string; probability: number; descriptio
 
 ### 3.3 Dashboard（模拟交易主界面）
 
+> 设计稿：`design-spec/dashboard-spec.md` · mockup `dashboard.png`
+
 #### 页面职责
 
-TradingPanda 的核心页面。用户在此观察熊猫自动交易、查看盈亏、理解决策过程、修改策略。
+TradingPanda 核心页：观察熊猫自动交易、K 线、账户、**右侧决策链**、策略积木、模拟速度、当前交易池。
+
+#### 页面布局（Obsidian · 三栏）
+
+```
+┌──────────┬────────────────────────────┬──────────┐
+│ 左侧边栏  │        主内容区             │ 决策链   │
+│ 180px    │        flex (~430px+)       │ 170px    │
+│          │  BTC/USD  $59,500  +2.3%   │ 最近决策  │
+│ 🐼 阿暴  │  [15m][1h][4h][1d]        │ score    │
+│ 幼年·15% │  ┌─── K 线 + 交易标记 ──┐  │ 📊展开8步 │
+│ 五轴文本  │  └──────────────────────┘  │ 历史决策  │
+│ 🎋 天赋  │  ┌── 成交量 sub-chart ──┐  │ 🐼 自语   │
+│ 冷静竹   │  └──────────────────────┘  │          │
+│ 🐾切换   │  ┌─账户──┬─策略积木────┐  │          │
+│          │  │余额持仓│ StrategyBuilder│          │
+│          │  └──────┴───────────────┘  │          │
+│          │  ⏱ [1×][10×][100×][跳到结果]         │
+│          │  交易池: Cetus BTC/SUI → /pools      │
+└──────────┴────────────────────────────┴──────────┘
+```
+
+**与旧版差异**：决策链在 **右侧固定 170px**（非页面底部全宽）；左侧 **180px** PandaSidebar（非 260px）；账户与策略 **主区底部并排**。
+
+#### 组件规格（Obsidian）
+
+| 组件 | 规格 |
+|------|------|
+| **PandaSidebar** | w=180px, bg=`--color-bg-card`；头像 80×80 圆；阶段「幼年 · 熟练度 15%」；经验条 140×8px；五轴 **文本**或 compact 雷达；冷静竹「今日剩余 N 次」；底部「🐾 我的熊猫 ▼」 |
+| **ChartPanel** | lightweight-charts；时间框激活项竹青底；涨 `--color-success` / 跌 `--color-danger`；成交量灰色柱；买卖标记 绿▲/红▼ |
+| **AccountPanel** | 余额 / 持仓 / 入场价 `@ $58,820` / 盈亏着色 / 仓位 % |
+| **DecisionChain** | w=170px；最近决策卡片；「📊 决策详情 (展开 ▼)」8 步；底部引用块熊猫自语；历史灰色卡片倒序 |
+| **SpeedControl** | [1×][10×][100×][跳到结果]；激活 `--color-accent`；快进不调 LLM |
+| **StrategyBuilder** | 见 §3.3 策略积木（PRD §3.2）；主按钮「🐼 教给熊猫」；匹配度「67/100」竹青字 |
+
+#### 关键交互（Obsidian）
+
+1. Rive 实时反映情绪，**不展示情绪数值**
+2. 决策链 **默认折叠**，仅最近一笔摘要
+3. K 线 BUY 绿▲ / SELL 红▼
+4. 多熊猫侧边栏下拉切换
+5. 交易池文案可点击跳转 `/pools`
 
 #### SEO
 
@@ -1106,72 +1255,18 @@ interface DashboardParams {
 }
 ```
 
-#### 页面布局（ASCII）
+#### 页面布局（实现参考 · 宽屏）
 
 ```
 ┌────────────────────────────────────────────────────────────────────┐
-│  Navbar                                                            │
-│  [Logo TradingPanda]  [熊猫名 ▾]  [情绪emoji]        [钱包 0xab..] │ h=48px
-├──────────────────┬──────────────────────────┬──────────────────────┤
-│                  │                          │                      │
-│  PandaStatusZone │   ChartZone              │  AccountZone         │
-│  w=260px         │   flex: 1                │  w=260px             │
-│                  │                          │                      │
-│  ┌────────────┐  │  ┌──────────────────────┐│  ┌────────────────┐  │
-│  │PandaAvatar │  │  │                      ││  │ 余额           │  │
-│  │ 226×301    │  │  │  CandlestickChart    ││  │ $10,032.50     │  │
-│  │            │  │  │  (Lightweight Charts) ││  │                │  │
-│  └────────────┘  │  │  实时 K 线 + 交易标记 ││  │ 持仓           │  │
-│  ┌────────────┐  │  │  时间切换：15m/1h/4h/1d│  │ 0.045 BTC     │  │
-│  │EmotionInd  │  │  │                      ││  │ @ $59,500      │  │
-│  │😐 "观察中" │  │  └──────────────────────┘│  │                │  │
-│  └────────────┘  │                          │  │ 盈亏           │  │
-│  ┌────────────┐  │                          │  │ +$32.50        │  │
-│  │Personality │  │                          │  │ (+0.33%)       │  │
-│  │   Radar    │  │                          │  │                │  │
-│  │  (compact) │  │                          │  │ ──────────     │  │
-│  └────────────┘  │                          │  │ 策略熟练度     │  │
-│  ┌────────────┐  │                          │  │ ████░░ 45%     │  │
-│  │ExperienceBar│ │                          │  │                │  │
-│  │ Lv.12 ███░ │  │                          │  │ Nautilus ✅    │  │
-│  └────────────┘  │                          │  └────────────────┘  │
-│                  │                          │                      │
-├──────────────────┴──────────────────────────┴──────────────────────┤
-│                                                                    │
-│  DecisionPanel                                                     │
-│  ┌────────────────────────────────────────────────────────────────┐│
-│  │ [折叠] RSI=28 → 买入 @ $59,500  (score: 0.71)      [展开 ▼] ││
-│  │                                                                ││
-│  │ [展开时]                                                       ││
-│  │ Step 1: 策略信号    RSI=28 < 30         → 1.00               ││
-│  │ Step 2: 熟练度噪声  proficiency=45%     → +8% → 1.08        ││
-│  │ Step 3: 性格过滤    boldness=72         → 阈值 0.58, ×0.89   ││
-│  │ Step 4: 环境感知    Lv.1 高波动         → ×0.85              ││
-│  │ Step 5: 情绪修正    focused             → ×1.0               ││
-│  │ Step 6: 天赋加成    竹笋嗅觉            → ×1.0 (未触发)      ││
-│  │ Step 7: 经验修正    exp=12              → ×0.95              ││
-│  │ Step 8: 最终执行分  0.71 > 0.58         → ✅ 执行买入         ││
-│  └────────────────────────────────────────────────────────────────┘│
-│                                                                    │
-├────────────────────────────────────────────────────────────────────┤
-│  BottomZone                                                        │
-│  ┌──────────────────────────────┬─────────────────────────────────┐│
-│  │ StrategyInput                │  SimulationControls             ││
-│  │ ┌──────────────────────────┐ │  速度: [1x] [10x] [100x] [⚡]  ││
-│  │ │ 当 RSI < 30 时买入...    │ │  状态: ▶ 运行中               ││
-│  │ └──────────────────────────┘ │  [暂停] [停止]                 ││
-│  │ 📊 匹配度: 67/100           │                                 ││
-│  │ ⚠️ 未设置止损               │  🎋 冷静竹 (今日剩余 1 次)      ││
-│  └──────────────────────────────┴─────────────────────────────────┘│
-│                                                                    │
-├────────────────────────────────────────────────────────────────────┤
-│  TradeHistory (虚拟列表)                                           │
-│  ┌────────────────────────────────────────────────────────────────┐│
-│  │ #127  BUY  0.045 BTC @ $59,500  → SELL @ $60,200  +$31.50 ✅ ││
-│  │ #126  BUY  0.050 BTC @ $58,800  → SELL @ $58,300  -$25.00 ❌ ││
-│  │ #125  HOLD  RSI=42 → 不满足入场条件  score: 0.38             ││
-│  │ ...（点击展开查看完整决策链）                                  ││
-│  └────────────────────────────────────────────────────────────────┘│
+│  Navbar  h=44px  [Logo] [熊猫名▾] [情绪]              [钱包]      │
+├──────────┬─────────────────────────────────────┬───────────────────┤
+│ Panda    │  ChartHeader + CandlestickChart      │ DecisionChain     │
+│ Sidebar  │  Volume sub-chart                    │ 170px             │
+│ 180px    │  AccountPanel | StrategyBuilder      │                   │
+│          │  SpeedControl + PoolLabel            │                   │
+└──────────┴─────────────────────────────────────┴───────────────────┘
+│  TradeHistory（可选：主区下方或抽屉）                                │
 └────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -1179,65 +1274,46 @@ interface DashboardParams {
 
 ```
 DashboardPage
-├── Navbar
+├── Navbar (h=44px)
 │   ├── Logo
-│   ├── PandaSelector（多熊猫下拉切换）
-│   ├── EmotionIndicator（当前情绪 emoji + 文字）
+│   ├── PandaSelector
+│   ├── EmotionIndicator（emoji only，无数值）
 │   └── WalletButton
 │
-├── DashboardContent (grid: 3 columns)
+├── DashboardContent (grid: 180px | 1fr | 170px)
 │   │
-│   ├── PandaStatusZone (col-1, w=260px)
-│   │   ├── PandaAvatar（Rive 动画）
-│   │   ├── EmotionIndicator（熊猫自语气泡）
-│   │   ├── PersonalityRadar (compact, size=180)
-│   │   └── ExperienceBar
+│   ├── PandaSidebar (180px)
+│   │   ├── PandaAvatar 80×80（Rive）
+│   │   ├── 名字 + 阶段/熟练度
+│   │   ├── ExperienceBar 140×8
+│   │   ├── PersonalitySummary（五轴文本或 compact radar）
+│   │   ├── TalentBadge
+│   │   ├── CalmBambooButton
+│   │   └── PandaSelector footer
 │   │
-│   ├── ChartZone (col-2, flex=1)
-│   │   ├── ChartHeader
-│   │   │   ├── 交易对标签 "BTC/USD"
-│   │   │   ├── 当前价格
-│   │   │   └── TimeframeTabs [15m | 1h | 4h | 1d]
-│   │   └── CandlestickChart
-│   │       ├── K 线主图
-│   │       ├── TradeMarkers（BUY/SELL 标记）
-│   │       └── IndicatorOverlay（RSI / MA20）
+│   ├── MainColumn (flex-1)
+│   │   ├── ChartPanel
+│   │   │   ├── ChartHeader（交易对、--text-price-lg、24h %）
+│   │   │   ├── TimeframeTabs [15m|1h|4h|1d]
+│   │   │   ├── CandlestickChart + TradeMarkers
+│   │   │   └── VolumeChart
+│   │   ├── BottomSplit (grid 2 cols)
+│   │   │   ├── AccountPanel
+│   │   │   └── StrategySection
+│   │   │       ├── StrategyBuilder（主）
+│   │   │       ├── StrategyTextInput（折叠）
+│   │   │       ├── StrategyPreview
+│   │   │       └── StrategyValidateHint
+│   │   ├── SpeedControl
+│   │   └── PoolLabel → Link `/pools`
 │   │
-│   └── AccountZone (col-3, w=260px)
-│       └── AccountPanel
-│           ├── 余额
-│           ├── 持仓
-│           ├── 浮动盈亏
-│           ├── 策略熟练度进度条
-│           └── Nautilus TEE 验证标记
+│   └── DecisionChain (170px)
+│       ├── LatestDecisionCard
+│       ├── DecisionSteps（折叠 8 步 + Step1 规则命中）
+│       ├── PandaMonologue
+│       └── DecisionHistoryList
 │
-├── DecisionPanel
-│   ├── DecisionSummary（折叠态：最近一条摘要）
-│   └── DecisionSteps（展开态：8 步完整链路）
-│       ├── DecisionStep × 8
-│       └── FinalScore（最终执行分 + 结果）
-│
-├── BottomZone (grid: 2 columns)
-│   ├── StrategySection
-│   │   ├── StrategyInput（文本域）
-│   │   ├── StrategyPreview（解析结果 4 层 JSON 可视化）
-│   │   │   ├── 哲学层
-│   │   │   ├── 入场/出场规则层
-│   │   │   ├── 仓位管理层
-│   │   │   └── 风险控制层
-│   │   └── StrategyWarning（危险策略警告）
-│   │
-│   └── ControlsSection
-│       ├── SimulationControls
-│       │   ├── SpeedSelector [1x | 10x | 100x | instant]
-│       │   └── PlayPauseStop buttons
-│       └── ItemsPanel
-│           └── CalmBambooButton（冷静竹道具）
-│
-└── TradeHistory（虚拟列表，@tanstack/react-virtual）
-    └── TradeHistoryItem × N
-        ├── 交易概要（方向/数量/价格/盈亏）
-        └── 可展开的决策链
+└── TradeHistory（virtual list，可选位置见响应式）
 ```
 
 #### 状态管理
@@ -1333,18 +1409,33 @@ const tradeHistoryQuery = useQuery({
   refetchInterval: 30_000,  // 每 30 秒刷新
 });
 
-// 策略解析（mutation）
-const parseStrategyMutation = useMutation({
-  mutationFn: (text: string) => parseStrategy(text),
+// 策略提交（mutation）
+const feedStrategyMutation = useMutation({
+  mutationFn: (parsed: ParsedStrategy) => feedStrategy(pandaId, { parsed }),
   onSuccess: (result) => {
     simulationStore.setStrategy(result);
   },
 });
+
+// 可选：自然语言解析后再灌入 Builder
+const parseStrategyMutation = useMutation({
+  mutationFn: (text: string) => feedStrategy(pandaId, { raw_text: text, parse_with_llm: true }),
+  onSuccess: (result) => {
+    strategyBuilderStore.hydrateFromParsed(result.parsed);
+  },
+});
 ```
 
-#### WebSocket 订阅
+#### WebSocket 订阅（方案甲 · 单连接）
 
-Dashboard 页面通过 WebSocket 接收以下实时事件：
+| 步骤 | 说明 |
+|------|------|
+| REST | `GET /api/market/candles?pool=…&interval=1m&limit=100`（BFF → monitor） |
+| WSS | `NEXT_PUBLIC_WS_URL` → Hub |
+| `subscribe.market` | 收 `market.tick`（含 `candle`）更新 K 线 |
+| `subscribe.simulation` | 收熊猫决策/情绪/成交 |
+
+Dashboard 通过 **Hub** 接收以下实时事件（K 线 + 熊猫 **同一 WebSocket**）：
 
 ```typescript
 // 连接到模拟盘 WebSocket
@@ -1461,26 +1552,100 @@ interface DecisionStep {
 
 决策链 8 步可视化：每步渲染为一个水平条，展示 name → inputLabel → modifier → 进度条（outputScore）。
 
+**Step 1 扩展（猎手）**：展示 `signal_rules` 命中明细——买/卖各几条、已编译总条数、`(buy_hits - sell_hits) / total` 投票结果；命中的规则行高亮。
+
 动画：展开时从上到下 stagger 进入，每步间隔 50ms。
 
-#### 策略输入组件（StrategyInput）
+#### 策略积木组件（StrategyBuilder · 主路径）
 
 ```typescript
-interface StrategyInputProps {
+type SupportedIndicator = 'RSI' | 'MA20' | 'MACD' | 'PRICE';
+
+interface SignalRuleRow {
+  id: string;                          // 前端行 id
+  indicator: SupportedIndicator;
+  condition: string;                   // 由条件下拉生成，如 "< 30", "cross_above"
+  threshold?: number;                  // RSI/PRICE 必填；MA/MACD 交叉类隐藏
+  action: 'BUY' | 'SELL';
+}
+
+interface StrategyBuilderProps {
+  philosophy: PhilosophyType;
+  rules: SignalRuleRow[];
+  positionPct: number;                 // 0.01–0.25
+  stopLossPct: number;
+  maxDrawdownPct: number;
+  onPhilosophyChange: (p: PhilosophyType) => void;
+  onRulesChange: (rules: SignalRuleRow[]) => void;
+  onSubmit: (parsed: ParsedStrategy) => void;
+  onValidate: () => void;              // POST …/strategy/validate
+  loading: boolean;
+  matchScore: number | null;
+  warnings: string[];
+  errors: Array<{ ruleIndex?: number; message: string }>;
+}
+```
+
+**单行字段（StrategyRuleRow）**：
+
+| 列 | 控件 | 校验 |
+|----|------|------|
+| 指标 | 下拉 RSI / MA20 / MACD / PRICE | 必填 |
+| 条件 | 随指标变（低于/高于/上穿/下穿/金叉/死叉） | 必填 |
+| 阈值 | 数字；交叉类隐藏 | RSI 0–100；PRICE > 0 |
+| 动作 | 买入 / 卖出 | 必填 |
+| 预览 | 只读人话，如「RSI 低于 30 → 买入」 | — |
+
+**约束**：至少 1 条、最多 8 条；提交前客户端 + `validate` 端点试编译；无效行红框。
+
+**预设模板（StrategyTemplates）**：
+
+| 模板 | 规则 |
+|------|------|
+| RSI 抄底逃顶 | RSI&lt;30 BUY + RSI&gt;70 SELL |
+| 均线趋势 | MA20 上穿 BUY + 下穿 SELL |
+| MACD 趋势 | 金叉 BUY + 死叉 SELL |
+| 极简抄底 | 仅 RSI&lt;30 BUY |
+
+首次选模板 **覆盖** 列表；已有规则时 **追加**（产品默认）。
+
+**软警告（黄条，可提交）**：仅 BUY 无 SELL；仅 SELL（MVP 只做多）；哲学与规则风格不一致。
+
+#### 策略文本输入（StrategyTextInput · 进阶）
+
+```typescript
+interface StrategyTextInputProps {
   value: string;
   onChange: (value: string) => void;
-  onSubmit: () => void;
-  loading: boolean;          // 解析中
-  matchScore: number | null; // 匹配度
-  warnings: string[];        // 策略警告
+  onParse: () => void;                 // raw_text + parse_with_llm → 结果写入 Builder
+  loading: boolean;
+  collapsed?: boolean;                 // 默认折叠
 }
 ```
 
 特性：
-- 文本域 + placeholder 闪烁引导
-- 提交后调用 LLM 解析，显示 4 层 JSON 可视化
-- 策略含危险行为时显示黄色警告条
-- 下方展示 3 个示例策略卡片（可一键填入）
+- 可选折叠；解析成功后 **灌入 StrategyBuilder** 可编辑，再 `parsed` 提交
+- 解析走 LLM，受 5 次/分钟限流
+- 保留 3 个示例策略卡片（一键填入文本框）
+
+#### 提交数据流
+
+```typescript
+// 主路径：不调 LLM
+const parsed: ParsedStrategy = {
+  philosophy,
+  position_sizing: { type: 'fixed', value: positionPct, scale_in: false },
+  signal_rules: rules.map(({ indicator, condition, threshold, action }) => ({
+    indicator, condition, threshold, action,
+  })),
+  risk_management: {
+    stop_loss_pct: stopLossPct,
+    max_drawdown_pct: maxDrawdownPct,
+    take_profit_pct: takeProfitPct,
+  },
+};
+await feedStrategy(pandaId, { parsed });
+```
 
 #### 模拟速度控制（SimulationControls）
 
@@ -1523,7 +1688,93 @@ interface TradeRecord {
 
 ---
 
-### 3.4 Market（NFT 市场）
+### 3.4 Trading Interface（交易界面）
+
+> 设计稿：`design-spec/trading-interface-spec.md` · mockup `trading-interface.png`  
+> 路由：`/trading/[id]` · **MVP 可选**：模拟盘以 Dashboard 为主；本页用于订单簿/深度展示与 Pro 向交互原型。
+
+#### 页面布局（三栏）
+
+```
+┌──────────┬────────────────────────┬───────────┐
+│ 持仓列表  │   订单簿 + 深度 320px   │ 交易表单  │
+│ 220px    │   价格 + Spread        │ 224px     │
+│ 📦 持仓   │   Ask/Bid 表格 + 深度图 │ 买|卖 限价/市价 │
+│ 总盈亏    │   最新成交列表          │ 25%-100%  │
+│ 策略摘要   │                        │ 📋 交易历史 │
+└──────────┴────────────────────────┴───────────┘
+```
+
+#### 组件规格
+
+| 组件 | 规格 |
+|------|------|
+| **PositionList** | 220px；每项：资产 Long、数量、盈亏 `$` + 🟢/🔴、盈亏%、入场价；盈利底 `--color-accent-light` / 亏损 `#FFF0F0` |
+| **OrderBook** | 自定义表；Bid 绿 / Ask 红；深度图 50% 透明；Spread 居中灰线；Hub/`market.tick` 或 orderbook REST 刷新 |
+| **TradeForm** | Buy=`--color-accent` / Sell=`--color-danger`；限价/市价切换；快速 [25%][50%][75%][100%]；提交按钮文案随方向 |
+| **TradeHistory** | 时间+操作+数量+价格+盈亏；底部「查看更多 →」 |
+
+#### 关键交互
+
+1. Buy/Sell 切换联动表单色与按钮文案  
+2. 市价隐藏价格输入  
+3. 深度图 hover 显示价位与深度  
+4. 订单簿行 hover 高亮  
+
+**MVP 说明**：熊猫自主交易在 Dashboard 模拟；本页 **用户手动下单为可选/后续**，当前可实现为只读订单簿 + 持仓展示。
+
+---
+
+### 3.5 Pool Selection（交易池选择）
+
+> 设计稿：`design-spec/pool-selection-spec.md` · mockup `pool-selection.png`  
+> 路由：`/pools` · 确认后写回熊猫 `subscribed_pools` 并返回 Dashboard。
+
+#### 页面布局
+
+```
+居中 h1「选择交易池」+ 副标题「可多选」
+┌─────────────────────────────────────────────┐
+│ ☑ Cetus BTC/SUI    流动性 $2.1M   +5.3% 🟢  │
+│ ☐ DeepBook SUI/USDC  🏷️推荐      -1.2% 🔴  │
+│ ...（列表项 h=72px, gap=10px）               │
+└─────────────────────────────────────────────┘
+固定底栏 h=50px：已选 N 个 [清空] [✅ 确认选择]
+```
+
+#### PoolListItem
+
+| 状态 | 样式 |
+|------|------|
+| 未选 | bg `#FFFFFF`, border `--color-border`, radius `--radius-lg` |
+| 已选 | bg `--color-accent-light`, border `--color-accent` 2px |
+
+行结构：Checkbox + 池名 + 描述 | 流动性 + 24h 量 | 价格 + 24h 涨跌 | 费率 / 🏷️推荐（DeepBook 池）
+
+#### 状态
+
+| 状态 | UI |
+|------|-----|
+| loading | 5 行骨架屏 |
+| empty | 「暂无可用交易池」 |
+| selected=0 | 确认按钮 disabled 灰字 |
+| selected≥1 | 确认按钮竹青可用 |
+
+#### 关键交互
+
+1. 点击行或 Checkbox 切换选中  
+2. 底部计数实时更新  
+3. 清空一键取消  
+4. 确认 → 保存 → `/dashboard/[id]` 或 `/trading/[id]`  
+5. DeepBook SUI/USDC 显示推荐标签（与 market-monitor 数据源一致）
+
+**数据源（工程）**：MVP 列表可来自 monitor `/health` 池目录 + 静态费率；Cetus 池 Phase 2 接 `market:tick:cetus`（见 `docs/cetus-integration-research.md`）。
+
+---
+
+### 3.6 Market（NFT 市场）
+
+> 设计稿：`design-spec/market-page-spec.md` · mockup `market-page.png`
 
 #### 页面职责
 
@@ -1538,6 +1789,24 @@ export const metadata: Metadata = {
 };
 ```
 
+#### 页面布局（Obsidian）
+
+```
+Navbar
+🔍 SearchBar 600px          SortDropdown [最新上架 ▼]
+FilterBar：天赋 Badge | 经验 Checkbox | 价格 Slider | 性格 Slider×5
+Grid 4×N  卡片 183×210  gap 24px
+Pagination 居中
+```
+
+#### 弹窗规格（Obsidian）
+
+| 弹窗 | 宽度 | 说明 |
+|------|------|------|
+| MarketDetailModal | 800px (`--modal-width-lg`) | scale-in 200ms；overlay `--color-overlay` |
+| PurchaseConfirmModal | 400px | 价格+版税+Gas+风险提示 |
+| ListPandaModal | 600px | 价格、版税 2–5%、留言 200 字 |
+
 #### 组件树
 
 ```
@@ -1550,18 +1819,17 @@ MarketPage
 │   └── Button "上架我的熊猫"
 │
 ├── MarketToolbar
-│   ├── MarketFilters
-│   │   ├── TalentFilter（天赋多选下拉）
-│   │   ├── PersonalitySliders（性格五轴区间）
-│   │   ├── LevelRange（等级区间）
-│   │   ├── PriceRange（价格区间）
-│   │   └── Button "重置筛选"
-│   └── MarketSort
-│       └── Select [最新上架 | 价格低→高 | 价格高→低 | 胜率 | 等级]
+│   ├── SearchBar（w=600px, bg white, placeholder「搜索熊猫名 / NFT ID...」, 清除 ✕）
+│   ├── SortDropdown [最新上架 | 价格低→高 | 价格高→低 | 经验高→低 | 胜率高→低]
+│   └── FilterBar（bg `--color-bg-card`）
+│       ├── TalentFilter Badges [全部][竹林禅心][黑白视界]…
+│       ├── LevelCheckboxes [幼年][成长][成熟]
+│       ├── PriceRange Slider 0–10 SUI
+│       └── PersonalityMinSliders ×5
 │
-├── MarketGrid (CSS Grid, 4 cols desktop)
-│   └── PandaCard × N
-│       ├── PandaAvatar（缩略 120×160）
+├── MarketGrid (4 cols desktop, gap 24px)
+│   └── PandaCard 183×210
+│       ├── PandaAvatar（80×80 圆，卡片内居中）
 │       ├── 熊猫名（--font-heading）
 │       ├── 性格摘要（胆识90 耐性15 直觉70）
 │       ├── TalentBadge（talent≠0 时竹青发光）
@@ -1570,7 +1838,9 @@ MarketPage
 │       ├── Button "购买" / Badge "交易中" / Badge "我的"
 │       └── onClick → 打开 MarketDetailModal
 │
-├── LoadMoreButton / InfiniteScroll
+├── Pagination（居中，当前页 `--color-accent`）
+│
+├── LoadMoreButton / InfiniteScroll（可选，与分页二选一）
 │
 ├── MarketDetailModal（弹窗）
 │   ├── ModalHeader（熊猫名 + 关闭按钮）
@@ -1603,7 +1873,20 @@ MarketPage
     └── Button "确认上架"
 ```
 
-#### PandaCard 组件
+#### PandaCard 组件（Obsidian）
+
+| 属性 | 值 |
+|------|-----|
+| 尺寸 | **183×210px** |
+| 背景 | `#FFFFFF` |
+| 边框 | 默认 `--color-border`；稀有天赋 `--color-warning` 2px + `--shadow-glow-rare` |
+| 熊猫名 | `--text-h3`, `--font-heading` |
+| 性格 | 最高两轴小字 |
+| 价格 | `--text-price` bold |
+| 购买按钮 | accent；稀有 `--color-warning` |
+| 时间 | 「⏰ 3小时前」 |
+
+**卡片变体**：默认 | 稀有天赋发光 | 交易中遮罩「🔒 交易中」 | 自己上架「🏷️ 我的」 | 已售出灰遮罩
 
 ```typescript
 interface PandaCardProps {
@@ -1615,32 +1898,27 @@ interface PandaCardProps {
   experienceLevel: number;
   totalTrades: number;
   winRate: number;
-  price: number;            // SUI
+  price: number;
+  listedAt: number;
+  variant: 'default' | 'rare' | 'trading' | 'owned' | 'sold';
   isTrading: boolean;
   isOwner: boolean;
   onClick: () => void;
 }
 ```
 
-卡片布局：
+卡片布局（183×210）：
 
 ```
-┌────────────────────┐
-│  ┌──────────────┐  │
-│  │ PandaAvatar  │  │  120×160, center
-│  │  (缩略图)    │  │
-│  └──────────────┘  │
-│  阿暴               │  --font-heading, --text-sm
-│  胆识90 耐性15      │  --font-body, --text-xs, --color-text-secondary
-│  直觉70 专注40      │
-│  逆向25             │
-│  🎋 竹笋嗅觉 (4%)   │  talent≠0: --color-accent + glow
-│  ─────────────────  │
-│  Lv.35 · 127 笔     │  --color-text-secondary
-│  胜率 62.4%          │  --color-success
-│  ─────────────────  │
-│  5 SUI    [购买]     │  price: --font-display; button: primary
-└────────────────────┘
+┌──────────────────┐
+│   PandaAvatar    │  80×80 圆
+│  阿暴            │
+│  胆识90 耐性15   │  最高两轴
+│  🎋 竹笋嗅觉     │  稀有=金边
+│  Lv.35 · 胜率62% │
+│  5 SUI  [购买]   │
+│  ⏰ 3小时前       │
+└──────────────────┘
 ```
 
 #### 状态管理
@@ -1728,7 +2006,7 @@ const listMutation = useMutation({
 
 ---
 
-### 3.5 Leaderboard（排行榜）
+### 3.7 Leaderboard（排行榜）
 
 #### 页面职责
 
@@ -1816,7 +2094,7 @@ const myRankQuery = useQuery({
 
 ---
 
-### 3.6 Achievement（成就系统）
+### 3.8 Achievement（成就系统）
 
 #### 页面职责
 
@@ -1892,7 +2170,7 @@ const achievementsQuery = useQuery({
 
 ---
 
-### 3.7 Profile（个人中心）
+### 3.9 Profile（个人中心）
 
 #### 页面职责
 
@@ -2577,25 +2855,40 @@ screens: {
 
 | 断点 | 布局变化 |
 |------|---------|
-| >=768px | 居中单列，PandaAvatar 226×301，Radar 280×280 |
-| <768px | 居中单列，PandaAvatar 160×213，Radar 200×200，按钮全宽 |
+| >=768px | 居中单列 max-width 800px；头像 **120×120**；Radar 默认 280 |
+| <768px | 全宽；头像 96×96；按钮 fullWidth |
 
 #### Dashboard
 
 | 断点 | 布局变化 |
 |------|---------|
-| >=1024px | 三列布局：PandaZone(260) + Chart(flex) + Account(260) |
-| 768-1023px | 两行：上行 Chart 全宽 + Account 侧边；下行 PandaZone 折叠为顶栏 |
-| <768px | 全单列：PandaZone 水平条 → Chart 全宽 → Account 折叠 → DecisionPanel |
+| >=1280px | Obsidian 三栏：180px \| flex \| 170px |
+| 1024–1279px | 隐藏决策链为右侧抽屉；主栏 + 180px 侧栏 |
+| 768–1023px | 侧栏折叠为顶栏条；Chart 全宽；Account+Strategy 堆叠 |
+| <768px | 单列：侧栏条 → Chart → 策略 → 决策链 Accordion |
+
+#### Trading Interface
+
+| 断点 | 布局变化 |
+|------|---------|
+| >=1280px | 220 \| 320+ \| 224 三栏 |
+| <1280px | 持仓折叠；订单簿 + 表单上下堆叠 |
+
+#### Pool Selection
+
+| 断点 | 布局变化 |
+|------|---------|
+| >=768px | 列表 max-width 720px 居中；底栏 fixed |
+| <768px | 列表全宽；确认栏 sticky bottom |
 
 #### Market
 
 | 断点 | 布局变化 |
 |------|---------|
-| >=1440px | 四列卡片网格 |
-| 1024-1439px | 三列卡片网格 |
-| 768-1023px | 两列卡片网格 |
-| <768px | 单列卡片，筛选面板改为底部抽屉 |
+| >=1440px | **4 列**卡片 grid，gap 24px |
+| 1024–1439px | 3 列 |
+| 768–1023px | 2 列 |
+| <768px | 1 列；FilterBar → 底部 Drawer |
 
 #### Leaderboard
 
@@ -2900,12 +3193,28 @@ export interface TradeRecord {
   decisionLog: DecisionLog;
 }
 
+export interface SignalRule {
+  indicator: 'RSI' | 'MA20' | 'MACD' | 'PRICE';
+  condition: string;
+  threshold?: number;
+  action: 'BUY' | 'SELL';
+  weight?: number;                     // 预留，MVP 前端不展示
+}
+
 export interface ParsedStrategy {
   philosophy: string;
-  entry: { indicator: string; condition: string; threshold: number };
-  exit: { indicator: string; condition: string; threshold: number } | null;
-  position: { type: 'fixed' | 'kelly' | 'volatility'; size: number };
-  risk: { stopLoss: number | null; takeProfit: number | null };
+  position_sizing: {
+    type?: 'fixed' | 'kelly' | 'grid';
+    value?: number;
+    max_position_pct?: number;
+    scale_in?: boolean;
+  };
+  signal_rules: SignalRule[];          // 1–8 条，对齐 API / RuleEngine
+  risk_management: {
+    stop_loss_pct: number;
+    take_profit_pct?: number;
+    max_drawdown_pct: number;
+  };
 }
 ```
 
@@ -2930,6 +3239,14 @@ export interface DecisionStep {
   modifier: number;
   outputScore: number;
   highlight: boolean;
+  /** Step 1 专用：规则命中明细 */
+  ruleHits?: {
+    buyHits: number;
+    sellHits: number;
+    totalCompiled: number;
+    matchedRuleIndexes: number[];
+    signedVote: number;
+  };
 }
 ```
 
@@ -2992,7 +3309,50 @@ export interface Achievement {
 }
 ```
 
-### types/api.ts
+### E.12 K 线数据（方案甲 · 经 Hub + REST）
+
+> **MVP**：实时 K 线来自 Hub 转发的 **`market.tick`**（Redis `market:tick`）；历史来自 REST。  
+> **方案乙**（独立 `:9009` WSS）见 `docs/kline-websocket-service.md`。
+
+#### 历史 K 线（REST）
+
+```
+GET {MONITOR_OR_BFF}/candles/{pool}?interval=1m&limit=100
+```
+
+响应：`{ candles: [{ t, o, h, l, c, v }, ...] }`（字段名以实现为准）。
+
+#### 实时 K 线（WebSocket · 同一 Hub）
+
+连接 `NEXT_PUBLIC_WS_URL`，发送 `subscribe.market` 后接收：
+
+```typescript
+interface MarketTickEvent {
+  event: 'market.tick';  // 以 api-spec 为准
+  payload: MarketEvent;  // 含 candle: { open, high, low, close, volume, interval }
+}
+```
+
+用 `payload.candle` 更新 `lightweight-charts` 最后一根 bar。
+
+#### Hub 命令（与 `websocket/README.md` 一致）
+
+```typescript
+// 连接成功后
+send({ command: 'subscribe.market', payload: { assets: ['SUI'], interval: '1m' } });
+```
+
+#### React 模式（示意）
+
+```typescript
+// 1. useQuery 拉 REST 历史 → setChartData
+// 2. useWebSocket(Hub) on 'market.tick' → updateLastCandle(payload.candle)
+// 3. 同一 socket on 'decision_made' | 'emotion_changed' → 熊猫 UI
+```
+
+重连：Hub 统一退避；重连后重发 `subscribe.market` + `subscribe.simulation`，并 **重新 REST** 拉一段历史以防 Pub/Sub 空洞。
+
+方案乙独立 WSS 示例见 **`docs/kline-websocket-service.md`** §四。
 
 ```typescript
 export interface ApiResponse<T> {

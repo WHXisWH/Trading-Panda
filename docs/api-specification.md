@@ -19,7 +19,8 @@
 | GET | `/api/panda/my` | 获取我的所有熊猫 | JWT |
 | PUT | `/api/panda/:id/name` | 给熊猫命名 | JWT |
 | GET | `/api/panda/:id/personality` | 获取性格雷达图数据 | JWT |
-| POST | `/api/panda/:id/strategy` | 喂策略 | JWT |
+| POST | `/api/panda/:id/strategy` | 喂策略（`parsed` 直传或 `raw_text`+LLM） | JWT |
+| POST | `/api/panda/:id/strategy/validate` | 校验策略（不存库，积木预览） | JWT |
 | GET | `/api/panda/:id/strategy` | 获取当前策略 | JWT |
 | GET | `/api/panda/:id/strategy/history` | 策略变更历史 | JWT |
 | GET | `/api/panda/:id/strategy/match` | 策略-性格匹配度 | JWT |
@@ -818,7 +819,8 @@ interface PandaPersonalityResponse {
 
 #### `POST /api/panda/:id/strategy`
 
-喂策略：用户输入自然语言策略，经 LLM（DeepSeek V3）解析为结构化四层策略。
+喂策略（猎手）：支持 **结构化 JSON 直传**（积木编辑器，默认）或 **自然语言 + LLM 解析**（进阶）。  
+`parsed` 与 `raw_text` 至少提供其一；**同时提供时以 `parsed` 为准**，跳过 LLM。
 
 **请求参数（Path + Body）**：
 
@@ -827,8 +829,37 @@ interface StrategyFeedParams {
   id: string;                    // 熊猫 UUID
 }
 
+interface SignalRule {
+  indicator: 'RSI' | 'MA20' | 'MACD' | 'PRICE';
+  condition: string;             // 如 "< 30", "cross_above", "death_cross"
+  threshold?: number;            // RSI/PRICE 等数值条件
+  action: 'BUY' | 'SELL';
+  weight?: number;               // 预留；MVP RuleEngine 不参与计分
+}
+
+interface ParsedStrategyLayers {
+  philosophy: 'trend_following' | 'contrarian' | 'intuition_driven' | 'grid' | 'custom';
+  position_sizing: {
+    type?: 'fixed' | 'kelly' | 'grid';
+    value?: number;              // 单笔仓位占比 0.01–0.25
+    max_position_pct?: number;
+    scale_in?: boolean;
+  };
+  signal_rules: SignalRule[];    // 1–8 条，至少 1 条须被 RuleEngine 编译成功
+  risk_management: {
+    stop_loss_pct: number;
+    take_profit_pct?: number;
+    max_drawdown_pct: number;
+  };
+}
+
 interface StrategyFeedRequest {
-  raw_text: string;              // 用户输入的自然语言策略（10-2000 字符）
+  /** 自然语言（10-2000 字符）；仅文本且 parse_with_llm=true 时调 LLM */
+  raw_text?: string;
+  /** 积木 / 高级用户直传；有则优先，不调 LLM */
+  parsed?: ParsedStrategyLayers;
+  /** 默认：仅有 raw_text 时为 true；有 parsed 时为 false */
+  parse_with_llm?: boolean;
 }
 ```
 
@@ -846,11 +877,7 @@ interface StrategyFeedResponse {
         max_position_pct: number;  // 最大单笔仓位占比
         scale_in: boolean;         // 是否分批建仓
       };
-      signal_rules: Array<{
-        indicator: string;         // 指标名（如 RSI, MA_CROSS, VOLUME）
-        condition: string;         // 条件（如 "< 30", "cross_above"）
-        weight: number;            // 权重 0-1
-      }>;
+      signal_rules: Array<SignalRule>;
       risk_management: {
         stop_loss_pct: number;     // 止损百分比
         take_profit_pct: number;   // 止盈百分比
@@ -869,11 +896,32 @@ interface StrategyFeedResponse {
 }
 ```
 
-**请求示例**：
+**请求示例（路径 A · 积木直传，推荐）**：
 
 ```json
 {
-  "raw_text": "当RSI低于30时买入，高于70时卖出。仓位不超过总资金的20%。止损5%，止盈15%。趋势跟踪为主。"
+  "parsed": {
+    "philosophy": "trend_following",
+    "position_sizing": { "type": "fixed", "value": 0.1, "scale_in": false },
+    "signal_rules": [
+      { "indicator": "RSI", "condition": "< 30", "threshold": 30, "action": "BUY" },
+      { "indicator": "RSI", "condition": "> 70", "threshold": 70, "action": "SELL" }
+    ],
+    "risk_management": {
+      "stop_loss_pct": 0.05,
+      "take_profit_pct": 0.15,
+      "max_drawdown_pct": 0.20
+    }
+  }
+}
+```
+
+**请求示例（路径 B · 自然语言）**：
+
+```json
+{
+  "raw_text": "当RSI低于30时买入，高于70时卖出。仓位不超过总资金的20%。止损5%，止盈15%。趋势跟踪为主。",
+  "parse_with_llm": true
 }
 ```
 
@@ -892,8 +940,8 @@ interface StrategyFeedResponse {
         "scale_in": false
       },
       "signal_rules": [
-        { "indicator": "RSI", "condition": "< 30", "weight": 0.6 },
-        { "indicator": "RSI", "condition": "> 70", "weight": 0.6 }
+        { "indicator": "RSI", "condition": "< 30", "threshold": 30, "action": "BUY" },
+        { "indicator": "RSI", "condition": "> 70", "threshold": 70, "action": "SELL" }
       ],
       "risk_management": {
         "stop_loss_pct": 0.05,
@@ -919,18 +967,70 @@ interface StrategyFeedResponse {
 |--------|-----------|------|
 | `STRATEGY_TEXT_TOO_SHORT` | 400 | 策略文本过短（< 10 字符） |
 | `STRATEGY_TEXT_TOO_LONG` | 400 | 策略文本过长（> 2000 字符） |
+| `STRATEGY_BODY_EMPTY` | 400 | `raw_text` 与 `parsed` 均未提供 |
+| `STRATEGY_NO_VALID_RULES` | 422 | `signal_rules` 为空或无一可编译 |
+| `STRATEGY_RULE_INVALID` | 422 | 部分规则无法编译（见 `invalid_rules[]`） |
 | `STRATEGY_PARSE_FAILED` | 422 | LLM 无法解析为有效策略 |
-| `STRATEGY_RATE_LIMIT` | 429 | 策略解析频率超限（5次/分钟） |
-| `PANDA_IS_TRADING` | 409 | 熊猫正在交易中，无法更换策略 |
+| `STRATEGY_RATE_LIMIT` | 429 | **LLM 解析**频率超限（5次/分钟）；纯 `parsed` 提交不计 |
+| `PANDA_IS_TRADING` | 409 | 熊猫正在训练中，无法更换策略 |
 | `PANDA_NOT_OWNER` | 403 | 非该熊猫的主人 |
 
+**`STRATEGY_RULE_INVALID` 响应示例**：
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "STRATEGY_RULE_INVALID",
+    "message": "部分规则无法被规则引擎编译",
+    "invalid_rules": [
+      { "index": 2, "reason": "unsupported_indicator", "indicator": "VOLUME" }
+    ]
+  }
+}
+```
+
 **业务逻辑**：
-- 调用 Internal RPC `/internal/strategy/parse` 将自然语言策略送 DeepSeek V3 解析
-- 解析结果存入 `strategies` 表，旧策略标记 `is_active = false`
-- 创建策略残影记录（`strategy_history`），初始 `ghost_weight = 0.40`
-- 计算策略-性格匹配度（哲学层与性格五轴的适配评分）
-- 更新链上 `strategy_hash` dynamic field
-- 新策略熟练度重置为 0（除非新旧策略哈希相近则保留部分熟练度）
+- **`parsed` 存在**：Pydantic 校验 → `RuleEngine` 试编译每条规则 → 至少 1 条有效 → 存库；**不调用** DeepSeek
+- **仅 `raw_text`**：调用 Internal RPC `/internal/strategy/parse`（DeepSeek V3）→ 再校验编译
+- 若无用户 `raw_text`，服务端生成摘要写入 `strategies.raw_text`（如 `RSI<30→BUY; RSI>70→SELL; 仓位10%`）
+- 解析/校验结果存入 `strategies` 表，旧策略 `is_active = false`
+- 创建策略残影（`strategy_history`），新策略激活时前策略 `ghost_weight = 0.40`
+- 计算策略-性格匹配度（哲学 + 规则风格；积木路径可用规则表，不必 LLM）
+- `strategy_hash = SHA256(parsed_json)`；更新链上 dynamic_field
+- 新策略熟练度重置为 0（除非新旧哈希相近保留部分熟练度）
+
+---
+
+#### `POST /api/panda/:id/strategy/validate`
+
+校验策略 **不存库**（积木实时预览、提交前干跑）。
+
+**请求 Body**：与 `StrategyFeedRequest` 相同（通常只传 `parsed`）。
+
+**成功响应**：
+
+```typescript
+interface StrategyValidateResponse {
+  success: true;
+  data: {
+    valid: boolean;
+    compiled_count: number;
+    invalid_rules: Array<{ index: number; reason: string; indicator?: string }>;
+    preview_signal?: {
+      /** 使用最新 market tick 或请求体 optional market_snapshot 干跑 Step 1 */
+      signed_score: number;
+      buy_hits: number;
+      sell_hits: number;
+      total_rules: number;
+      matched_rule_indexes: number[];
+    };
+    warnings: string[];   // 如「仅有 BUY 无 SELL」「哲学与规则风格不一致」
+  };
+}
+```
+
+**错误码**：与 feed 相同的 `STRATEGY_*` 校验错误（422）。
 
 ---
 
@@ -960,11 +1060,7 @@ interface StrategyGetResponse {
         max_position_pct: number;
         scale_in: boolean;
       };
-      signal_rules: Array<{
-        indicator: string;
-        condition: string;
-        weight: number;
-      }>;
+      signal_rules: Array<SignalRule>;
       risk_management: {
         stop_loss_pct: number;
         take_profit_pct: number;
@@ -992,8 +1088,8 @@ interface StrategyGetResponse {
       "philosophy": "trend_following",
       "position_sizing": { "max_position_pct": 0.20, "scale_in": false },
       "signal_rules": [
-        { "indicator": "RSI", "condition": "< 30", "weight": 0.6 },
-        { "indicator": "RSI", "condition": "> 70", "weight": 0.6 }
+        { "indicator": "RSI", "condition": "< 30", "threshold": 30, "action": "BUY" },
+        { "indicator": "RSI", "condition": "> 70", "threshold": 70, "action": "SELL" }
       ],
       "risk_management": { "stop_loss_pct": 0.05, "take_profit_pct": 0.15, "max_drawdown_pct": 0.20 }
     },
@@ -3589,7 +3685,7 @@ API Gateway（Next.js / Vercel）与 Decision Engine（Python / Render）之间�
 
 #### `POST /internal/strategy/parse`
 
-将用户自然语言策略文本送 DeepSeek V3 解析为结构化策略。
+将用户自然语言策略文本送 DeepSeek V3 解析为结构化策略（**仅 Path B**；Path A 由 BFF 直接校验 `parsed`，可不调用本接口）。
 
 **请求参数（Body）**：
 
@@ -3620,11 +3716,7 @@ interface InternalStrategyParseResponse {
         max_position_pct: number;
         scale_in: boolean;
       };
-      signal_rules: Array<{
-        indicator: string;
-        condition: string;
-        weight: number;
-      }>;
+      signal_rules: Array<SignalRule>;
       risk_management: {
         stop_loss_pct: number;
         take_profit_pct: number;
@@ -3659,8 +3751,8 @@ interface InternalStrategyParseResponse {
       "philosophy": "trend_following",
       "position_sizing": { "max_position_pct": 0.20, "scale_in": false },
       "signal_rules": [
-        { "indicator": "RSI", "condition": "< 30", "weight": 0.6 },
-        { "indicator": "RSI", "condition": "> 70", "weight": 0.6 }
+        { "indicator": "RSI", "condition": "< 30", "threshold": 30, "action": "BUY" },
+        { "indicator": "RSI", "condition": "> 70", "threshold": 70, "action": "SELL" }
       ],
       "risk_management": { "stop_loss_pct": 0.05, "take_profit_pct": 0.15, "max_drawdown_pct": 0.20 }
     },
@@ -4054,7 +4146,8 @@ interface PaginationMeta {
 | 接口类别 | 限制 | 窗口 | 说明 |
 |----------|------|------|------|
 | 普通接口 | 60 req | 1 min / user | 默认限流 |
-| 策略解析 (`POST /api/panda/:id/strategy`) | 5 req | 1 min / user | 调用 LLM，成本高 |
+| 策略 **LLM 解析**（`POST …/strategy` 且 `parse_with_llm=true`） | 5 req | 1 min / user | 仅文本解析计次；`parsed` 直传不限 |
+| 策略校验 (`POST …/strategy/validate`) | 30 req | 1 min / user | 不存库、不调 LLM |
 | 铸造 (`POST /api/panda/mint`) | 3 req | 1 min / user | 链上操作 |
 | 市场操作 (`POST /api/market/*`) | 10 req | 1 min / user | 链上操作 |
 | WebSocket 消息 | 30 msg | 1 min / connection | 客户端消息限流 |

@@ -1,7 +1,7 @@
 # TradingPanda — Architecture
 
 > This document describes the confirmed, deployed technical architecture.
-> Last updated: 2026-05-16
+> Last updated: 2026-05-20（方案甲：单 WSS + REST 历史 K 线）
 
 ---
 
@@ -9,14 +9,13 @@
 
 ```
 Browser
-  │  HTTPS                          WSS (realtime)
-  │     │                                  │
-  ▼     ▼                                  ▼
-┌─────────────────────────┐    ┌─────────────────────────────────────┐
-│  Next.js 14 App Router  │    │  WebSocket Hub                      │
-│  Vercel                 │    │  Cloudflare Workers + Durable Obj.  │
-│  REST API Gateway       │    │  Subscribes Redis → pushes clients  │
-└────────────┬────────────┘    └──────────────────┬──────────────────┘
+  │  HTTPS (REST: history candles, auth)
+  │  WSS (single: market.tick + panda events)
+  ▼     ▼
+┌─────────────────────────┐    ┌──────────────────────────────────┐
+│  Next.js 14 · Vercel    │    │  WebSocket Hub · CF Workers + DO │
+│  REST API Gateway       │    │  SUBSCRIBE market:tick:* + panda:*│
+└────────────┬────────────┘    └──────────────────┬───────────────┘
              │  HTTP (BACKEND_URL env)           │  Redis SUB (same cluster as DE)
              ▼                                   │
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -44,12 +43,15 @@ Browser
                                   ▲
                                   │ PUBLISH market:tick:*
 ┌─────────────────────────────────┴─────────────────────────────────┐
-│  Market Monitor — Python 3.11 · Render (独立 Web Service)          │
-│  DeepBook v3 · Sui RPC 轮询 · K 线 + 指标 · 见 market-monitor-design │
-└───────────────────────────────┬───────────────────────────────────┘
-                                │ 只读事件
-                                ▼
-                    DeepBook v3 + Sui Fullnode (Testnet)
+│  Market Monitor — Python · VPS 推荐（读 PG order_fills，聚 K 线 + 指标） │
+│  PUBLISH market:tick:* · GET /candles（规划）· 见 market-monitor-design │
+└───────────────┬───────────────────────────────┬───────────────────┘
+                │ PG order_fills                │ HTTP orderbook
+                ▼                               ▼
+        DeepBook Indexer + PG (:5433)    DeepBook Server (:9008)
+                │
+                ▼
+        Sui Fullnode (Testnet)
          │
          ▼ (every 50 trades, and before NFT transfer)
 ┌─────────────────────────────────────────────────────┐
@@ -65,7 +67,14 @@ Browser
 └─────────────────────────────────────────────────────┘
 ```
 
-**Realtime path:** **market-monitor** PUBLISH `market:tick:*` → DE **SUBSCRIBE** → PandaActor；DE PUBLISH `panda:*` → Cloudflare Hub → WSS. Contracts: `docs/market-monitor-design.md`, `docs/redis-architecture.md`, `docs/websocket-hub-design.md`, `docs/api-specification.md` (WebSocket section).
+**Realtime paths (Plan A):**
+- **Market + charts:** Indexer → `order_fills` → market-monitor → Redis `market:tick:*` → DE **and** CF Hub → single browser WSS.
+- **Panda:** DE PUBLISH `panda:*` → Hub → same WSS.
+- **History candles:** REST `GET /candles/{pool}` (monitor or Next BFF) before WSS subscribe.
+
+Optional Plan B: separate K-line WSS `:9009` — see `docs/kline-websocket-service.md`.
+
+Contracts: `docs/market-monitor-design.md`, `docs/websocket-hub-design.md`, `docs/redis-architecture.md`, `docs/api-specification.md`.
 
 ---
 
@@ -137,7 +146,9 @@ FastAPI process (single)
 │   ├── POST /pandas              — register panda after on-chain mint
 │   ├── GET  /pandas/{id}         — single panda + active strategy
 │   ├── GET  /pandas/{id}/strategy
-│   ├── POST /engine/strategy/parse  — DeepSeek parse → store in DB
+│   ├── POST /engine/strategy/parse   — 自然语言 → LLM → 四层 JSON（可选路径）
+│   ├── POST /engine/strategy/feed    — parsed 直传或 parse 后存库（与 BFF 对齐）
+│   ├── POST /engine/strategy/validate — RuleEngine 试编译 + Step 1 预览
 │   ├── POST /engine/actors/{id}/start
 │   ├── POST /engine/actors/{id}/stop
 │   └── GET  /engine/actors/{id}/state
@@ -153,7 +164,7 @@ Each step runs under 50ms total:
 
 | Step | Name | Description |
 |---|---|---|
-| S1 | Strategy signal | Parse signal from active strategy rules (RSI, MACD, etc.) |
+| S1 | Strategy signal | Vote across `signal_rules[]` (RSI/MA20/MACD/PRICE); signed = (buy−sell)/total |
 | S2 | Proficiency noise | Add Gaussian noise inversely proportional to proficiency level |
 | S3 | Experience correction | Apply pattern memory and cycle wisdom corrections |
 | S4 | Signal fusion | Weighted merge of strategy signal + experience corrections |
@@ -248,7 +259,8 @@ Tables are created automatically on backend startup via `Base.metadata.create_al
 | `/api/auth/wallet-login` | POST | `POST /auth/login` |
 | `/api/pandas` | GET, POST | `GET/POST /pandas` |
 | `/api/pandas/[id]` | GET | `GET /pandas/{id}` |
-| `/api/pandas/[id]/strategy` | GET, POST | `GET /pandas/{id}/strategy` / `POST /engine/strategy/parse` |
+| `/api/pandas/[id]/strategy` | GET, POST | `GET /pandas/{id}/strategy` / `POST /engine/strategy/feed`（`parsed` 或 `raw_text`） |
+| `/api/pandas/[id]/strategy/validate` | POST | `POST /engine/strategy/validate` |
 | `/api/pandas/[id]/simulation/start` | POST | `POST /engine/actors/{id}/start` |
 | `/api/pandas/[id]/simulation/stop` | POST | `POST /engine/actors/{id}/stop` |
 
