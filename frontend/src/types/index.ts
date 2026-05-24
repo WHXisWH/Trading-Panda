@@ -1,97 +1,78 @@
-// ─── Panda ────────────────────────────────────────────────────────────────────
+/**
+ * Shared types — re-export modules for `@/types` imports.
+ * Wire/API shapes use snake_case in strategy.ts & PandaDetailApi; app models use camelCase.
+ */
 
-export type EmotionState =
-  | "focused"
-  | "excited"
-  | "greedy"
-  | "cautious"
-  | "panicking"
-  | "numb";
+export type {
+  ApiErrorCode,
+  ApiErrorBody,
+  ApiResult,
+  ErrorResponse,
+  PaginationMeta,
+  SuccessResponse,
+} from "./api";
 
-export type GrowthStage = "cub" | "growing" | "mature";
+export { isApiError } from "./api";
 
-export interface PandaPersonality {
-  boldness: number;    // 0–100 胆识
-  patience: number;    // 0–100 耐性 (also drives emotion_stability)
-  intuition: number;   // 0–100 直觉
-  focus: number;       // 0–100 专注
-  contrarian: number;  // 0–100 逆向性
-  talent: number;      // 0–6  天赋 (0 = none)
-}
+export type {
+  EmotionState,
+  GrowthStage,
+  MintResult,
+  Panda,
+  PandaDetailApi,
+  PandaPersonality,
+  PandaTalent,
+  WalrusSyncStatus,
+} from "./panda";
 
-export interface Panda {
-  id: string;
-  suiObjectId: string;
-  name: string;
-  personality: PandaPersonality;
-  experienceLevel: number;       // 0–100
-  growthStage: GrowthStage;
-  emotionState: EmotionState;
-  isTrading: boolean;
-  activeStrategyId: string | null;
-  walrusBlobId: string | null;
-  createdAt: string;
-}
+export type {
+  DecisionLog,
+  DecisionStep,
+  DecisionZone,
+  SimulationSpeed,
+  SimulationState,
+  SimulationStatus,
+  StepRuleHits,
+  Trade,
+  TradeAction,
+  TradeRecordApi,
+  Asset,
+} from "./trading";
 
-// ─── Strategy ────────────────────────────────────────────────────────────────
+export type {
+  ParsedStrategyLayers,
+  Philosophy,
+  PositionSizingLayers,
+  RiskManagementLayers,
+  SignalAction,
+  SignalRule,
+  SignalRuleRow,
+  StrategyFeedData,
+  StrategyFeedRequest,
+  StrategyFeedResponse,
+  StrategyRecord,
+  StrategyShadowInfo,
+  StrategyValidateData,
+  StrategyValidatePreviewSignal,
+  StrategyValidateResponse,
+  SupportedIndicator,
+} from "./strategy";
 
-export type Philosophy =
-  | "trend_following"
-  | "contrarian"
-  | "intuition_driven"
-  | "grid"
-  | "custom";
+/** @deprecated Use ParsedStrategyLayers — kept for incremental migration */
+export type ParsedStrategy = import("./strategy").ParsedStrategyLayers;
 
-export interface ParsedStrategy {
-  philosophy: Philosophy;
-  positionSizing: Record<string, unknown>;
-  signalRules: Array<{ condition: string; action: "BUY" | "SELL" }>;
-  riskManagement: { stopLoss: number; maxDrawdown: number };
-}
-
+/** @deprecated Use StrategyRecord fields — legacy store shape */
 export interface Strategy {
   id: string;
   pandaId: string;
   rawText: string;
-  parsedJson: ParsedStrategy;
+  parsedJson: import("./strategy").ParsedStrategyLayers;
   strategyHash: string;
-  philosophy: Philosophy;
-  proficiency: number;   // 0–100
+  philosophy: import("./strategy").Philosophy;
+  proficiency: number;
   isActive: boolean;
   createdAt: string;
 }
-
-// ─── Trading ─────────────────────────────────────────────────────────────────
-
-export type Asset = "BTC" | "ETH" | "SUI";
-export type TradeAction = "BUY" | "SELL" | "HOLD";
-
-export interface DecisionStep {
-  step: number;
-  name: string;
-  inputScore: number;
-  outputScore: number;
-  detail: string;
-}
-
-export interface Trade {
-  id: string;
-  pandaId: string;
-  asset: Asset;
-  action: TradeAction;
-  price: number;
-  quantity: number;
-  finalScore: number;       // Step 8 output
-  emotionAtTrade: EmotionState;
-  proficiencyAtTrade: number;
-  pnlPct: number | null;
-  decisionDetails: {
-    steps: DecisionStep[];
-  };
-  createdAt: string;
-}
-
-// ─── User ────────────────────────────────────────────────────────────────────
 
 export type ExperienceLevel = "beginner" | "intermediate" | "advanced" | "expert";
 
@@ -100,7 +81,7 @@ export interface OnboardingSurvey {
   style: string[];
   maxLoss: number;
   indicators: string[];
-  pandaAutonomy: number;  // 1–5
+  pandaAutonomy: number;
 }
 
 export interface User {
@@ -113,30 +94,15 @@ export interface User {
   createdAt: string;
 }
 
-// ─── Simulation ───────────────────────────────────────────────────────────────
-
-export type SimulationSpeed = "1x" | "10x" | "100x" | "instant";
-export type SimulationStatus = "running" | "completed" | "stopped";
-
-export interface SimulationState {
-  id: string;
-  pandaId: string;
-  status: SimulationStatus;
-  speed: SimulationSpeed;
-  equity: number;
-  totalTrades: number;
-  winRate: number | null;
-  maxDrawdown: number | null;
-}
-
-// ─── WebSocket events ────────────────────────────────────────────────────────
-
 export type WSEventType =
   | "TRADE_EXECUTED"
   | "EMOTION_CHANGED"
   | "DECISION_MADE"
   | "DIARY_ENTRY"
-  | "MERKLE_ROOT_SUBMITTED";
+  | "MERKLE_ROOT_SUBMITTED"
+  | "decision"
+  | "emotion"
+  | "market.tick";
 
 export interface WSEvent {
   type: WSEventType;
