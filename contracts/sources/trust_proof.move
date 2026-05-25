@@ -37,6 +37,20 @@ module trading_panda::trust_proof {
     }
 
     const KEY_INDEX: vector<u8> = b"trust_proofs";
+    const E_ALREADY_INITIALIZED: u64 = 42;
+
+    /// Trust proof index at mint (batch proofs added on submit).
+    public(package) fun init_on_mint(panda: &mut Panda) {
+        assert!(!dynamic_field::exists(panda::uid(panda), KEY_INDEX), E_ALREADY_INITIALIZED);
+        dynamic_field::add(panda::uid_mut(panda), KEY_INDEX, TrustProofIndex {
+            count: 0,
+            total_verified_trades: 0,
+        });
+    }
+
+    public fun has_proof_index(panda: &Panda): bool {
+        dynamic_field::exists(panda::uid(panda), KEY_INDEX)
+    }
 
     public entry fun submit_merkle_root(
         panda: &mut Panda,

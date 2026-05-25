@@ -13,24 +13,9 @@ import { DecisionPanel } from "@/components/trading/DecisionPanel";
 import { SimulationControls } from "@/components/trading/SimulationControls";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { MOCK_DECISIONS } from "@/lib/mockData";
+import { fetchMyPandas, fetchPandaDetail } from "@/services/panda.service";
+import type { PandaDetailApi } from "@/types/panda";
 import Link from "next/link";
-
-interface PandaAPI {
-  id: string;
-  sui_object_id: string;
-  boldness: number;
-  patience: number;
-  intuition: number;
-  focus: number;
-  contrarian: number;
-  talent: number;
-  generation: number;
-  experience_level: number;
-  is_trading: boolean;
-  emotion_state: string;
-  emotion_stability: number;
-  active_strategy_id: string | null;
-}
 
 interface StrategyAPI {
   id: string;
@@ -46,26 +31,17 @@ export default function DashboardPage({ params }: { params: { id: string } }) {
   const [simRunning, setSimRunning] = useState(false);
   const [simSpeed, setSimSpeed] = useState("1×");
 
-  const { data: panda, isLoading } = useQuery<PandaAPI>({
+  const { data: panda, isLoading } = useQuery<PandaDetailApi>({
     queryKey: ["panda", params.id, jwt],
     enabled: !!jwt,
-    queryFn: () =>
-      fetch(`/api/pandas/${params.id}`, {
-        headers: { Authorization: `Bearer ${jwt}` },
-      }).then((r) => {
-        if (!r.ok) throw new Error("加载失败");
-        return r.json();
-      }),
+    queryFn: () => fetchPandaDetail(jwt!, params.id),
     refetchInterval: simRunning ? 3000 : false,
   });
 
-  const { data: allPandas } = useQuery<{ id: string }[]>({
-    queryKey: ["pandas", jwt],
+  const { data: allPandas } = useQuery({
+    queryKey: ["panda", "my", jwt],
     enabled: !!jwt,
-    queryFn: () =>
-      fetch("/api/pandas", { headers: { Authorization: `Bearer ${jwt}` } }).then(
-        (r) => r.json()
-      ),
+    queryFn: () => fetchMyPandas(jwt!),
   });
 
   const { data: strategy } = useQuery<StrategyAPI | null>({
@@ -136,15 +112,19 @@ export default function DashboardPage({ params }: { params: { id: string } }) {
       <div className="dashboard-layout">
         <PandaSidebar
           pandaId={panda.id}
-          boldness={panda.boldness}
-          patience={panda.patience}
-          intuition={panda.intuition}
-          focus={panda.focus}
-          contrarian={panda.contrarian}
-          talent={panda.talent}
+          name={panda.name ?? undefined}
+          boldness={panda.personality.boldness}
+          patience={panda.personality.patience}
+          intuition={panda.personality.intuition}
+          focus={panda.personality.focus}
+          contrarian={panda.personality.contrarian}
+          talent={panda.talent?.id ?? 0}
           experienceLevel={panda.experience_level}
           emotionState={panda.emotion_state}
-          pandas={allPandas ?? []}
+          pandas={(allPandas ?? []).map((p) => ({
+            id: p.id,
+            name: p.name ?? undefined,
+          }))}
         />
 
         <main className="min-w-0 flex-1 space-y-4">

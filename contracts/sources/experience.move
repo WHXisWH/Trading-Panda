@@ -28,6 +28,23 @@ module trading_panda::experience {
     }
 
     const KEY: vector<u8> = b"experience";
+    const E_ALREADY_INITIALIZED: u64 = 31;
+
+    /// Empty experience digest at mint (gas includes dynamic_field init per PRD C17).
+    public(package) fun init_on_mint(panda: &mut Panda, timestamp_ms: u64) {
+        assert!(!dynamic_field::exists(panda::uid(panda), KEY), E_ALREADY_INITIALIZED);
+        dynamic_field::add(panda::uid_mut(panda), KEY, ExperienceDigest {
+            level: 0,
+            total_trades: 0,
+            win_rate: 0,
+            walrus_blob_id: std::string::utf8(b""),
+            last_updated: timestamp_ms,
+        });
+    }
+
+    public fun has_experience_index(panda: &Panda): bool {
+        dynamic_field::exists(panda::uid(panda), KEY)
+    }
 
     public entry fun update_milestone(
         panda: &mut Panda,

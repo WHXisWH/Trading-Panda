@@ -5,6 +5,7 @@ import { WalletProvider, SuiClientProvider } from "@mysten/dapp-kit";
 import { getFullnodeUrl } from "@mysten/sui/client";
 import { Toaster } from "sonner";
 import { useState } from "react";
+import { OnboardingGuard } from "@/components/auth/OnboardingGuard";
 import { WalletAuthSync } from "@/components/auth/WalletAuthSync";
 import { walletSupportsPersonalMessageLogin } from "@/lib/sui/walletCompat";
 
@@ -53,7 +54,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           stashedWallet={{ name: "TradingPanda", network: SUI_NETWORK }}
         >
           <WalletAuthSync />
-          {children}
+          <OnboardingGuard>{children}</OnboardingGuard>
           <Toaster position="bottom-right" richColors />
         </WalletProvider>
       </SuiClientProvider>

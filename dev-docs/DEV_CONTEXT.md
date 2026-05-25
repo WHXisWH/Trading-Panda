@@ -2,7 +2,7 @@
 
 > 本文档以「忒修斯之船」方式持续维护：只换木板、不换整船。部署事实变更时同步更新对应段落；任何改动必须在本文末尾「§9 变更日志」追加一行。
 >
-> **最后同步**：2026-05-25（Sprint 0.5 UI 壳）
+> **最后同步**：2026-05-25（Testnet 合约 publish）
 
 ---
 
@@ -36,9 +36,9 @@ TradingPanda 是 Sui 链上的 **AI 交易宠物养成系统**，目标是 Sui O
 | 里程碑 | 状态 | 进度 | 备注 |
 |--------|------|------|------|
 | 骨架搭建 | ✅ 完成 | 100% | frontend/backend/contracts 目录结构、CLAUDE.md、DEV_CONTEXT.md |
-| Sui Move 合约 | 🟡 本地实现完成 | 70% | 核心模块按 `docs/contract-design.md` 实现并通过本地 `sui move test`；待重新部署 Testnet 与 Kiosk/版税深化 |
+| Sui Move 合约 | 🟡 Testnet 已 publish | 80% | `sui client publish` 至 Testnet（Package `0x5950…1465`）；`mint::mint` + DF 初始化；UpgradeCap 在 `0xa459…7bf3`；Kiosk/版税深化待做 |
 | PostgreSQL Schema | 🟡 Sprint 0.2 核心表 | 35% | Alembic `001_initial_core`：`users`+5 业务表；其余 12 表待后续迁移 |
-| 铸造流程（Mint） | ⏸️ 待开始 | 0% | 合约 + 前端 UI + 后端事件监听 |
+| 铸造流程（Mint） | 🟡 Epic 1.3–1.5 完成 | 75% | 问卷→mint→DB 注册→Dashboard；Epic 1.2 合约复核待办 |
 | 策略解析 | ⏸️ 待开始 | 0% | DeepSeek V3（可选路径）+ **积木 `parsed` 直传** + `validate` 试编译 |
 | 8步决策引擎 | 🟡 MVP 实现 | 75% | `decision_pipeline` 八步公式 + `RuleEngine` + `PandaActor` + Redis `market:tick:*` 订阅；Agent/Merkle 链上提交待完善 |
 | 情绪状态机 | 🟡 MVP 实现 | 80% | 7 状态转移 + Step 8 情绪扭曲；已接入 Actor |
@@ -99,12 +99,13 @@ Cache       → **Upstash Redis**（推荐；MVP 可与 Redis Cloud 互换直至
             Worker 侧：`UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN`（仅 CF，勿提交到 Vercel）
             用途：Pub/Sub（DE 发布；WS Hub 订阅）+ 响应缓存（TTL 60s）+ HTTP Rate Limit + Nonce 等（频道见 `docs/redis-architecture.md` §5）
 
-Blockchain  → Sui Testnet
-            Package ID：0x9b26dfdddef52c980dea0989a22c751ee4c4551d9e39708ab9503990cc7b9710
-            PandaRegistry Object ID：0xbc1b3fe71a33501e48c785b2dde2073524d019512915533fd3893d0b65c93541
-            AchievementRegistry Object ID：0xc82e707ff49754797556d22542d1d855e4324dc85be9a2393542522be738c3a7
-            AdminCap Object ID：0x3dc249213d4e255a546c4e20e96ea593ca4759a8c7210e5dadb17d0bf4dd05ff
-            UpgradeCap Object ID：0x42543e8c050577dc62c32003087121530359cdcaf30a87e9c7f7b763d12f7308
+Blockchain  → Sui Testnet（**本项目首次正式 publish**，钱包 `0xa459…7bf3`）
+            Package ID：0x595087bb3e5f6c5011585797e4eb4db513b55d39ce84f984bb357e9375c11465
+            PandaRegistry Object ID：0x5cbf822c3fe346d7001125ff0ad52d675611148b2c4734d1e200ebf23d53baa5
+            AchievementRegistry Object ID：0x53c879bc3560a54548219f0a1f44dff471792c585a7b666829cfa08e722c8f8b
+            AdminCap Object ID：0xf6ff3f496b7471353dc2ea3c7732cd822f596cdb62d27bdb0362171862b60a00
+            UpgradeCap Object ID：0x40d481fc083c49ea5d1f48d25a60096ec07a49197370e9efe7a1cda3cd8e381e
+            Publish Tx：HM2XXX4MHQzskM6TLgxmoYAsJJarRJfiAKUuWrjaZiQ3
 ```
 
 ---
@@ -182,7 +183,10 @@ GET  /api/auth/me                    # 当前用户
 POST /api/auth/wallet-login          # 遗留别名（→ `/auth/login`）
 # zkLogin OAuth 回调页：`/auth/zklogin-callback`（hash 内 id_token）
 
-GET  /api/pandas                     # 当前用户的熊猫列表
+POST /api/panda/mint                 # 链上 mint 后注册 DB（`sui_object_id` + `sui_tx_digest`）
+GET  /api/panda/my                   # 我的熊猫（代理 → backend `/pandas`）
+GET  /api/panda/[id]                 # 单只熊猫详情（代理 → `/pandas/:id`）
+GET  /api/pandas                     # 当前用户的熊猫列表（legacy，同 `/api/panda/my`）
 GET  /api/pandas/[id]                # 单只熊猫详情
 POST /api/pandas/[id]/strategy       # 喂策略（转发 → Python backend）
 POST /api/pandas/[id]/simulation/start  # 启动模拟
@@ -241,7 +245,7 @@ PostgreSQL 完整表定义见 `docs/database-schema.md`。Alembic 迁移位于 `
 | checkin | `contracts/sources/checkin.move` | 本地实现：管理员发放签到奖励、防重复领取 |
 | deepbook_adapter | `contracts/sources/deepbook_adapter.move` | MVP 实现：链下订单簿快照辅助计算与模拟成交；真实 DeepBook 依赖待接入 |
 
-Package ID：**0x9b26dfdddef52c980dea0989a22c751ee4c4551d9e39708ab9503990cc7b9710**
+Package ID：**0x595087bb3e5f6c5011585797e4eb4db513b55d39ce84f984bb357e9375c11465**（见 §3 链上对象 ID）
 
 ---
 
@@ -308,3 +312,9 @@ Package ID：**0x9b26dfdddef52c980dea0989a22c751ee4c4551d9e39708ab9503990cc7b971
 | 2026-05-25 | **Navbar 登录态**：修复 zkLogin 后 `WalletAuthSync` 误 `clearAuth`（无钱包不应清 JWT）；已登录隐藏 Google/连接钱包，显示「已登录·地址」与「退出」 | Google / 钱包登录后导航栏可见会话；「我的」仅依赖 JWT |
 | 2026-05-25 | **Sprint 0.5 UI 壳（Obsidian tokens）**：`src/styles/tokens.css`（Navbar 44px、`sidebar` 180px、`decision` 170px）；`WalletButton` · `AppShell` · 根 `layout` 壳；`PageContainer` `variant=mint`；Dashboard `dashboard-layout` + `PandaSidebar`/`DecisionPanel` 宽度对齐；`npm run type-check` · `build` 绿 | Sprint 0.5 Done；UI 与 Obsidian 三栏规格对齐 |
 | 2026-05-25 | **Sprint 0.4 实时与行情**：Hub 本地 `ws://127.0.0.1:8787/ws`（用户已启）；`subscribe.market` 支持 `pairs`（如 `DEEP/SUI`）对齐 monitor `market:tick`；BFF `GET /api/market/candles` → monitor；前端 `useWebSocket`·`useMarketWs`·`useSimulationWs` + `types/ws.ts`；`npm run type-check` / websocket vitest 17 / monitor pytest 30 绿 | Dashboard 用 `useMarketWs({ pairs:['DEEP/SUI'], pool:'DEEP/SUI' })` 联调；monitor 仍须 `REDIS_URL`+`DEEPBOOK_DATABASE_URL` 才有 tick |
+| 2026-05-25 | **Epic 1.1 Mint 契约**：`POST /api/panda/mint`（BFF→`POST /panda/mint`）；请求 `{ sui_object_id, sui_tx_digest, name? }`；响应嵌套 `personality`/`talent`（api-spec）；`mint_event_parser.py` 解析 `PandaMinted`/`MintEvent`；`parseMintEvent.ts` + `panda.service.ts`；`/mint` 页改调新 API；`tests/test_mint_event_parser.py`·`test_panda_schemas.py` 8 项绿 | 钱包签 mint tx 后后端 RPC 验事件并 `INSERT pandas`；`GET /api/panda/:id|my` BFF 已代理 legacy `/pandas` |
+| 2026-05-25 | **Mint Object ID 修复（方案 2）**：`useMintPanda` 在 `digest` 后 `waitForTransaction`（`showObjectChanges`+`showEvents`）；`resolvePandaObjectIdFromDigest` 从 `PandaMinted` / `::panda::Panda` created 解析 | 修复 dapp-kit 仅返回 base64 effects 导致「未找到 Object ID」 |
+| 2026-05-25 | **Epic 1.3–1.5 Mint 闭环**：`GET /panda/my`·`/{id}`（success 信封·growth_stage·trades 统计）；`POST /auth/onboarding-survey`；前端 `/onboarding` 5 步·`OnboardingGuard`·`useMintPanda`·mint 错误态；Dashboard 接 `fetchPandaDetail`；`dev-docs/EPIC1_MINT_E2E.md` | Testnet 手测：登录→问卷→铸造→Dashboard；Package ID 未变 |
+| 2026-05-25 | **Testnet 重新 publish（本项目首次）**：清除 `Published.toml` 旧 testnet 条目后 `sui client publish`（deployer `0xa459…7bf3`，tx `HM2XXX4MHQzskM6TLgxmoYAsJJarRJfiAKUuWrjaZiQ3`）。Package=`0x595087bb3e5f6c5011585797e4eb4db513b55d39ce84f984bb357e9375c11465`，PandaRegistry=`0x5cbf822c3fe346d7001125ff0ad52d675611148b2c4734d1e200ebf23d53baa5`，AchievementRegistry=`0x53c879bc3560a54548219f0a1f44dff471792c585a7b666829cfa08e722c8f8b`，AdminCap=`0xf6ff3f496b7471353dc2ea3c7732cd822f596cdb62d27bdb0362171862b60a00`，UpgradeCap=`0x40d481fc083c49ea5d1f48d25a60096ec07a49197370e9efe7a1cda3cd8e381e`；已更新前后端 `.env*`、`Published.toml`、`contracts/DEPLOY.md`、§3 | 文档旧 ID `0x9b26…` 作废；`mint::mint` 已上链；UpgradeCap 在本钱包 |
+| 2026-05-25 | **Mint 前端入口修正**：`mintPanda.ts` 调用 `::mint::mint`（非 `::panda::mint`）；与 Testnet Package `0x595087…` 上 `mint.move` 一致 | 修复 Slush「No function was found with function name mint」 |
+| 2026-05-25 | **Epic 1.2 合约（Sui Testnet）**：`contracts/sources/mint.move` 入口 `mint`/`mint_panda`（`sui::random` 五轴+天赋 + 铸造时初始化 experience/strategy_shadows/trust_proofs/achievements 四类 dynamic_field）；`panda::mint_panda_body`/`finish_mint` 拆分；`tests/mint_tests.move` 2 项；`sui move test` **13/13**；链上 Package `0x9b26…9710` 与 §3 一致（RPC 已验）；`frontend/.../mintPanda.ts` 改为 `::mint::mint`；Testnet upgrade 因本机 Sui CLI protocol 117<124 未执行，**UpgradeCap** `0x4254…308` 不变 | 本地合约 Epic 1.2 Done；生产铸造需升级后 `mint::mint` 才含 DF 初始化；旧 `panda::mint` 在 v1 链上仍可用至升级 |

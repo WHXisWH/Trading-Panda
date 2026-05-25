@@ -53,6 +53,20 @@ module trading_panda::achievement {
     }
 
     const KEY_INDEX: vector<u8> = b"achievements";
+    const E_ALREADY_INITIALIZED: u64 = 52;
+
+    /// Achievement unlock index at mint.
+    public(package) fun init_on_mint(panda: &mut Panda) {
+        assert!(!dynamic_field::exists(panda::uid(panda), KEY_INDEX), E_ALREADY_INITIALIZED);
+        dynamic_field::add(panda::uid_mut(panda), KEY_INDEX, AchievementIndex {
+            unlocked_count: 0,
+            unlocked_ids: vector[],
+        });
+    }
+
+    public fun has_achievement_index(panda: &Panda): bool {
+        dynamic_field::exists(panda::uid(panda), KEY_INDEX)
+    }
 
     fun init(ctx: &mut TxContext) {
         sui::transfer::share_object(AchievementRegistry {

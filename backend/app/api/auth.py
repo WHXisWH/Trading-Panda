@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import get_current_user
 from app.config import settings
 from app.db.database import get_db
 from app.db.models import Panda, User
@@ -23,6 +24,8 @@ from app.schemas.auth import (
     AuthUserData,
     WalletLoginRequest,
 )
+from app.schemas.onboarding import OnboardingSurveyRequest
+from app.services.onboarding_survey import build_survey_response, survey_to_json
 from app.schemas.common import error, success
 from app.schemas.errors import ApiError, ApiErrorCode
 from app.services.auth_tokens import (
@@ -205,6 +208,29 @@ async def auth_refresh(body: AuthRefreshRequest, db: AsyncSession = Depends(get_
         refresh_token=refresh,
         expires_in=expires_in,
     )
+    return JSONResponse(content=success(data.model_dump()))
+
+
+@router.post("/onboarding-survey")
+async def submit_onboarding_survey(
+    body: OnboardingSurveyRequest,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    if user.onboarding_survey is not None:
+        return JSONResponse(
+            status_code=409,
+            content=error(
+                ApiErrorCode.SURVEY_ALREADY_SUBMITTED.value,
+                "Onboarding survey already submitted",
+            ),
+        )
+
+    data = build_survey_response(body)
+    user.onboarding_survey = survey_to_json(body)
+    user.experience_level = data.experience_level
+    await db.commit()
+    await db.refresh(user)
     return JSONResponse(content=success(data.model_dump()))
 
 

@@ -37,6 +37,22 @@ export interface PandaTalent {
 }
 
 /** GET /api/panda/:id — wire format */
+/** GET /api/panda/my list item */
+export interface PandaSummaryApi {
+  id: string;
+  sui_object_id: string;
+  name: string | null;
+  personality: PandaPersonality;
+  talent: Pick<PandaTalent, "id" | "name">;
+  experience_level: number;
+  growth_stage: GrowthStage;
+  emotion_state: EmotionState;
+  is_trading: boolean;
+  total_trades: number;
+  win_rate: number | null;
+  created_at: string;
+}
+
 export interface PandaDetailApi {
   id: string;
   sui_object_id: string;
@@ -80,6 +96,25 @@ export interface Panda {
   createdAt: string;
 }
 
+/** POST /api/panda/mint — request (register after wallet-signed mint) */
+export interface PandaMintRequest {
+  sui_object_id: string;
+  sui_tx_digest: string;
+  name?: string;
+}
+
+/** POST /api/panda/mint — response data */
+export interface PandaMintResponseData {
+  id: string;
+  sui_object_id: string;
+  sui_tx_digest: string;
+  name: string | null;
+  personality: PandaPersonality;
+  talent: PandaTalent;
+  generation: number;
+  created_at: string;
+}
+
 export interface MintResult {
   pandaId: string;
   suiObjectId: string;
@@ -88,4 +123,17 @@ export interface MintResult {
   talent: number;
   talentName: string;
   txDigest: string;
+}
+
+/** Map API mint response → UI MintResult */
+export function mintResultFromApi(data: PandaMintResponseData): MintResult {
+  return {
+    pandaId: data.id,
+    suiObjectId: data.sui_object_id,
+    name: data.name ?? "",
+    personality: data.personality,
+    talent: data.talent.id,
+    talentName: data.talent.name,
+    txDigest: data.sui_tx_digest,
+  };
 }

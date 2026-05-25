@@ -7,8 +7,8 @@ module trading_panda::panda {
     use sui::clock::{Self, Clock};
 
     const E_TRADING_IN_PROGRESS: u64 = 0;
-    const E_MINT_DISABLED: u64 = 0;
-    const E_MAX_SUPPLY_REACHED: u64 = 1;
+    const E_MINT_DISABLED: u64 = 1;
+    const E_MAX_SUPPLY_REACHED: u64 = 2;
 
     public struct Panda has key, store {
         id: UID,
@@ -75,32 +75,13 @@ module trading_panda::panda {
         transfer::transfer(AdminCap { id: object::new(ctx) }, tx_context::sender(ctx));
     }
 
-    /// Mint a new Panda NFT with random personality.
-    public entry fun mint(
+    /// Build Panda + emit events; caller (`mint` module) attaches dynamic_fields then `finish_mint`.
+    public(package) fun mint_panda_body(
         registry: &mut trading_panda::panda_registry::PandaRegistry,
         r: &Random,
         clock: &Clock,
-        ctx: &mut TxContext
-    ) {
-        mint_internal(registry, r, clock, ctx)
-    }
-
-    /// Design-doc alias kept alongside `mint` for callers that use the spec name.
-    public entry fun mint_panda(
-        registry: &mut trading_panda::panda_registry::PandaRegistry,
-        r: &Random,
-        clock: &Clock,
-        ctx: &mut TxContext
-    ) {
-        mint_internal(registry, r, clock, ctx)
-    }
-
-    fun mint_internal(
-        registry: &mut trading_panda::panda_registry::PandaRegistry,
-        r: &Random,
-        clock: &Clock,
-        ctx: &mut TxContext
-    ) {
+        ctx: &mut TxContext,
+    ): (Panda, u64) {
         assert!(trading_panda::panda_registry::mint_enabled(registry), E_MINT_DISABLED);
         let total = trading_panda::panda_registry::total_minted(registry);
         assert!(total < trading_panda::panda_registry::max_supply(registry), E_MAX_SUPPLY_REACHED);
@@ -139,8 +120,16 @@ module trading_panda::panda {
         event::emit(MintEvent { panda_id: panda_addr, minter, boldness, patience, intuition, focus, contrarian, talent, generation, total_minted: total + 1 });
         event::emit(PandaMinted { panda_id: object::id(&panda), owner: minter, boldness, patience, intuition, focus, contrarian, talent, generation, timestamp: now_ms });
 
+        (panda, now_ms)
+    }
+
+    public(package) fun finish_mint(
+        registry: &mut trading_panda::panda_registry::PandaRegistry,
+        panda: Panda,
+        ctx: &mut TxContext,
+    ) {
         trading_panda::panda_registry::increment_minted(registry);
-        transfer::transfer(panda, minter);
+        transfer::transfer(panda, tx_context::sender(ctx));
     }
 
     public entry fun lock_trading(panda: &mut Panda, _admin: &AdminCap, clock: &Clock) {

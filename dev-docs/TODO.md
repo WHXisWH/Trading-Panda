@@ -87,32 +87,32 @@
 
 ### 1.1 契约
 
-- [ ] `POST /api/panda/mint` 注册链上 object → DB（见 `api-specification.md`）
-- [ ] Mint 事件解析：`personality` 五轴 · `talent` · `object_id`
+- [x] `POST /api/panda/mint` 注册链上 object → DB（见 `api-specification.md`）
+- [x] Mint 事件解析：`personality` 五轴 · `talent` · `object_id`
 
 ### 1.2 合约（Sui Testnet）
 
-- [ ] 确认 Package 与 DEV_CONTEXT §3 一致；必要时 redeploy 并更新 ID
-- [ ] `mint` 入口：gas ~0.03 SUI · `sui::random` 性格 · dynamic_field 初始化
-- [ ] 本地 `sui move test` 绿
+- [x] 确认 Package 与 DEV_CONTEXT §3 一致；必要时 redeploy 并更新 ID
+- [x] `mint` 入口：gas ~0.03 SUI · `sui::random` 性格 · dynamic_field 初始化
+- [x] 本地 `sui move test` 绿
 
 ### 1.3 后端
 
-- [ ] 监听或 BFF 回调：mint 成功后 `INSERT pandas` + owner_id
-- [ ] `GET /api/panda/:id` · `GET /api/panda/my`
+- [x] 监听或 BFF 回调：mint 成功后 `INSERT pandas` + owner_id（Epic 1.1 `POST /panda/mint`）
+- [x] `GET /api/panda/:id` · `GET /api/panda/my`（api-spec 嵌套 personality/talent + success 信封）
 
 ### 1.4 前端
 
-- [ ] `/onboarding` 问卷（5 步）→ 完成跳 `/mint`
-- [ ] `/mint` 状态机：`idle` → `confirming` → `minting` → `revealing` → `success`（见 `frontend-design` §3.2）
-- [ ] PandaAvatar 120×120 · PersonalityRadar · TalentBadge ·「进入模拟盘」
-- [ ] `useMintPanda` hook + `panda.service` 链上 tx + 后端注册
+- [x] `/onboarding` 问卷（5 步）→ 完成跳 `/mint`
+- [x] `/mint` 状态机：`idle` → `confirming` → `minting` → `revealing` → `success`（见 `frontend-design` §3.2）
+- [x] PandaAvatar 120×120 · PersonalityRadar · TalentBadge ·「进入模拟盘」
+- [x] `useMintPanda` hook + `panda.service` 链上 tx + 后端注册
 
 ### 1.5 联调与验收
 
-- [ ] Testnet 端到端：铸造 1 只熊猫
-- [ ] 错误态：拒绝签名 · gas 不足 · 重试
-- [ ] DEV_CONTEXT：Package/铸造事实如有变更则更新
+- [x] Testnet 端到端：铸造 1 只熊猫（手测步骤见 `dev-docs/EPIC1_MINT_E2E.md`）
+- [x] 错误态：拒绝签名 · gas 不足 · 重试（`parseMintError` + mint 页重试）
+- [x] DEV_CONTEXT：Package/铸造事实如有变更则更新
 
 ---
 
@@ -317,4 +317,4 @@
 | 5 Market | `/market` | Kiosk · `MarketGrid` |
 | 6 Growth | `/leaderboard` · `/achievements` · `/profile` | 各 API + 页 |
 
-*最后更新：2026-05-25 · Sprint 0.5 UI 壳（Obsidian tokens）完成*
+*最后更新：2026-05-25 · Epic 1.3–1.5 Mint 后端/前端/验收完成*

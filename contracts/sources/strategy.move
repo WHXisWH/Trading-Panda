@@ -48,6 +48,20 @@ module trading_panda::strategy {
 
     const KEY_CURRENT: vector<u8> = b"current_strategy";
     const KEY_SHADOWS: vector<u8> = b"strategy_shadows";
+    const E_ALREADY_INITIALIZED: u64 = 21;
+
+    /// Strategy shadow index at mint (current strategy added on first feed).
+    public(package) fun init_on_mint(panda: &mut Panda) {
+        assert!(!dynamic_field::exists(panda::uid(panda), KEY_SHADOWS), E_ALREADY_INITIALIZED);
+        dynamic_field::add(panda::uid_mut(panda), KEY_SHADOWS, StrategyShadowIndex {
+            count: 0,
+            total_switches: 0,
+        });
+    }
+
+    public fun has_shadow_index(panda: &Panda): bool {
+        dynamic_field::exists(panda::uid(panda), KEY_SHADOWS)
+    }
 
     public entry fun update_strategy(
         panda: &mut Panda,

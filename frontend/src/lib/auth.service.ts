@@ -68,3 +68,40 @@ export async function fetchAuthMe(): Promise<User> {
   const res = await apiClient.get<AuthMeResponse>("/api/auth/me");
   return authUserFromMe(res.data);
 }
+
+export interface OnboardingSurveySubmit {
+  trading_exp: "none" | "beginner" | "intermediate" | "advanced";
+  style: ("trend" | "swing" | "scalp" | "value" | "grid")[];
+  max_loss: 5 | 10 | 20 | 30;
+  indicators: ("ma" | "rsi" | "macd" | "bollinger" | "volume" | "none")[];
+  panda_autonomy: 1 | 2 | 3 | 4 | 5;
+}
+
+export interface OnboardingSurveyResult {
+  experience_level: string;
+  recommended_strategy_tags: string[];
+  ui_complexity: string;
+}
+
+export async function submitOnboardingSurvey(
+  jwt: string,
+  body: OnboardingSurveySubmit,
+): Promise<OnboardingSurveyResult> {
+  const res = await fetch("/api/auth/onboarding-survey", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${jwt}`,
+    },
+    body: JSON.stringify(body),
+  });
+  const json = (await res.json()) as {
+    success: boolean;
+    data?: OnboardingSurveyResult;
+    error?: { message: string };
+  };
+  if (!res.ok || !json.success || !json.data) {
+    throw new Error(json.error?.message ?? "问卷提交失败");
+  }
+  return json.data;
+}

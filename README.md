@@ -52,10 +52,10 @@ TradingPanda is an **AI trading pet system on Sui**. You mint a Panda NFT whose 
 | | |
 |---|---|
 | Network | Sui Testnet |
-| Package ID | `0x9b26dfdddef52c980dea0989a22c751ee4c4551d9e39708ab9503990cc7b9710` |
-| PandaRegistry | `0xbc1b3fe71a33501e48c785b2dde2073524d019512915533fd3893d0b65c93541` |
-| AchievementRegistry | `0xc82e707ff49754797556d22542d1d855e4324dc85be9a2393542522be738c3a7` |
-| AdminCap | `0x3dc249213d4e255a546c4e20e96ea593ca4759a8c7210e5dadb17d0bf4dd05ff` |
+| Package ID | `0x595087bb3e5f6c5011585797e4eb4db513b55d39ce84f984bb357e9375c11465` |
+| PandaRegistry | `0x5cbf822c3fe346d7001125ff0ad52d675611148b2c4734d1e200ebf23d53baa5` |
+| AchievementRegistry | `0x53c879bc3560a54548219f0a1f44dff471792c585a7b666829cfa08e722c8f8b` |
+| AdminCap | `0xf6ff3f496b7471353dc2ea3c7732cd822f596cdb62d27bdb0362171862b60a00` |
 
 ---
 
@@ -188,10 +188,10 @@ TradingPanda 是 **Sui 链上的 AI 交易宠物养成系统**。你铸造一只
 | | |
 |---|---|
 | 网络 | Sui Testnet |
-| Package ID | `0x9b26dfdddef52c980dea0989a22c751ee4c4551d9e39708ab9503990cc7b9710` |
-| PandaRegistry | `0xbc1b3fe71a33501e48c785b2dde2073524d019512915533fd3893d0b65c93541` |
-| AchievementRegistry | `0xc82e707ff49754797556d22542d1d855e4324dc85be9a2393542522be738c3a7` |
-| AdminCap | `0x3dc249213d4e255a546c4e20e96ea593ca4759a8c7210e5dadb17d0bf4dd05ff` |
+| Package ID | `0x595087bb3e5f6c5011585797e4eb4db513b55d39ce84f984bb357e9375c11465` |
+| PandaRegistry | `0x5cbf822c3fe346d7001125ff0ad52d675611148b2c4734d1e200ebf23d53baa5` |
+| AchievementRegistry | `0x53c879bc3560a54548219f0a1f44dff471792c585a7b666829cfa08e722c8f8b` |
+| AdminCap | `0xf6ff3f496b7471353dc2ea3c7732cd822f596cdb62d27bdb0362171862b60a00` |
 
 ---
 

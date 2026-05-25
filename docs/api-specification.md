@@ -420,7 +420,7 @@ interface AuthMeResponse {
 
 #### `POST /api/panda/mint`
 
-铸造熊猫 NFT。调用链上合约 `panda::mint`，由 `sui::random` 生成性格五轴和天赋。
+铸造熊猫 NFT。调用链上合约 `mint::mint`（含铸造时 dynamic_field 初始化），由 `sui::random` 生成性格五轴和天赋。
 
 **请求参数（Body）**：
 
@@ -505,7 +505,7 @@ interface PandaMintResponse {
 | `PANDA_NAME_INVALID` | 400 | 名称格式不合法 |
 
 **业务逻辑**：
-- 调用 Sui Move 合约 `panda::mint(r: &Random, registry: &mut PandaRegistry, ctx)`
+- 调用 Sui Move 合约 `mint::mint(registry, r, clock, ctx)`（含铸造时 dynamic_field 初始化）
 - 性格五轴和天赋由链上 `sui::random` 生成，不可预测
 - 天赋概率：85% 无天赋，15% 触发（6种等概率）
 - 铸造成功后在 PostgreSQL 创建镜像记录

@@ -72,6 +72,23 @@ export interface AuthMeData {
 
 export type AuthMeResponse = SuccessResponse<AuthMeData>;
 
+function mapOnboardingSurvey(
+  raw: AuthMeData["onboarding_survey"],
+): User["onboardingSurvey"] {
+  if (!raw || typeof raw !== "object") return null;
+  const s = raw as unknown as Record<string, unknown>;
+  if ("trading_exp" in s) {
+    return {
+      tradingExp: String(s.trading_exp),
+      style: Array.isArray(s.style) ? (s.style as string[]) : [],
+      maxLoss: Number(s.max_loss ?? 10),
+      indicators: Array.isArray(s.indicators) ? (s.indicators as string[]) : [],
+      pandaAutonomy: Number(s.panda_autonomy ?? 3),
+    };
+  }
+  return raw as unknown as User["onboardingSurvey"];
+}
+
 export function authUserFromMe(data: AuthMeData): User {
   return {
     id: data.id,
@@ -79,7 +96,7 @@ export function authUserFromMe(data: AuthMeData): User {
     displayName: data.display_name,
     avatarUrl: data.avatar_url,
     experienceLevel: data.experience_level,
-    onboardingSurvey: data.onboarding_survey,
+    onboardingSurvey: mapOnboardingSurvey(data.onboarding_survey),
     createdAt: data.created_at,
   };
 }
