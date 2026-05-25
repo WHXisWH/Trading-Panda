@@ -27,11 +27,15 @@ export function marketCandleChannel(pair: string, interval: string): string {
 
 export function channelsForMarketSubscribe(
   assets: string[],
+  pairs: string[],
   interval: string,
 ): string[] {
   const channels = new Set<string>();
-  for (const asset of assets) {
-    const pair = assetToPair(asset);
+  const tickPairs = [
+    ...assets.map((asset) => assetToPair(asset)),
+    ...pairs.map((pair) => pair.trim()).filter(Boolean),
+  ];
+  for (const pair of tickPairs) {
     channels.add(marketTickChannel(pair));
     if (interval === "1m") {
       channels.add(marketCandleChannel(pair, "1m"));
@@ -61,12 +65,28 @@ export function collectRedisChannels(
   if (subscriptions.market) {
     for (const ch of channelsForMarketSubscribe(
       subscriptions.market.assets,
+      subscriptions.market.pairs,
       subscriptions.market.interval,
     )) {
       channels.add(ch);
     }
   }
   return [...channels].sort();
+}
+
+function subscribedMarketChannelSet(
+  subscriptions: import("./types.js").SubscriptionState,
+): Set<string> {
+  if (!subscriptions.market) {
+    return new Set();
+  }
+  return new Set(
+    channelsForMarketSubscribe(
+      subscriptions.market.assets,
+      subscriptions.market.pairs,
+      subscriptions.market.interval,
+    ),
+  );
 }
 
 export function shouldForwardChannel(
@@ -78,7 +98,7 @@ export function shouldForwardChannel(
     return pandaId in subscriptions.pandas;
   }
   if (channel.startsWith("market:tick:") || channel.startsWith("market:candles:")) {
-    return subscriptions.market !== null;
+    return subscribedMarketChannelSet(subscriptions).has(channel);
   }
   return false;
 }

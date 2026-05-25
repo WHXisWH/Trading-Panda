@@ -55,7 +55,7 @@ export function PandaSidebar({
   const prof = experienceLevel % 100;
 
   return (
-    <aside className="flex w-full shrink-0 flex-col gap-4 rounded-xl bg-paper-card p-4 lg:w-[260px]">
+    <aside className="flex w-full shrink-0 flex-col gap-4 rounded-xl bg-paper-card p-4 lg:w-sidebar">
       <div className="flex flex-col items-center gap-3">
         <PandaAvatar
           panda={{

@@ -116,7 +116,10 @@ export default function MintPage() {
     : null;
 
   return (
-    <PageContainer className="flex min-h-[calc(100vh-var(--navbar-height))] flex-col items-center justify-center gap-8 py-12">
+    <PageContainer
+      variant="mint"
+      className="flex min-h-[calc(100dvh-var(--navbar-height))] flex-col items-center justify-center gap-8 py-12"
+    >
       <div className="text-center space-y-2 max-w-lg">
         <h1 className="font-serif text-[22px] font-bold md:text-3xl">
           铸造你的 AI 交易熊猫

@@ -3,69 +3,11 @@
 @import "@fontsource/noto-serif-sc/400.css";
 @import "@fontsource/noto-serif-sc/700.css";
 @import "@fontsource/inter/400.css";
+@import "../styles/tokens.css";
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* TradingPanda design tokens — 水墨中国风 */
-:root {
-  --color-bg-primary: #f5f0e6;
-  --color-bg-card: #ede8dc;
-  --color-bg-white: #ffffff;
-  --color-accent: #2d5a3d;
-  --color-accent-hover: #1e4a2e;
-  --color-accent-light: #f0f8f0;
-  --color-success: #2d5a3d;
-  --color-danger: #c23a3a;
-  --color-warning: #e8b84b;
-  --color-excited: #d4727a;
-
-  --color-text-primary: #1a1a1a;
-  --color-text-secondary: #888888;
-  --color-text-tertiary: #999999;
-  --color-text-placeholder: #bbbbbb;
-  --color-text-inverse: #ffffff;
-  --color-border: #d4cfc4;
-  --color-border-light: #ede8dc;
-  --color-overlay: rgba(245, 240, 230, 0.85);
-
-  --font-heading: "Noto Serif SC", "ZCOOL XiaoWei", serif;
-  --font-body: "Noto Sans SC", "Inter", sans-serif;
-  --font-mono: "JetBrains Mono", "Inter", monospace;
-
-  --text-h1: 22px;
-  --text-h2: 18px;
-  --text-h3: 15px;
-  --text-body: 13px;
-  --text-small: 11px;
-  --text-tiny: 10px;
-  --text-price: 20px;
-  --text-price-lg: 28px;
-
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 12px;
-  --spacing-lg: 16px;
-  --spacing-xl: 24px;
-  --spacing-2xl: 32px;
-  --spacing-3xl: 48px;
-
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-full: 9999px;
-
-  --shadow-sm: 0 1px 3px rgba(26, 26, 26, 0.08);
-  --shadow-md: 0 4px 12px rgba(26, 26, 26, 0.1);
-  --shadow-lg: 0 8px 24px rgba(26, 26, 26, 0.12);
-  --shadow-glow: 0 0 20px rgba(45, 90, 61, 0.2);
-  --shadow-glow-rare: 0 0 40px rgba(232, 184, 75, 0.35);
-
-  --navbar-height: 64px;
-  --sidebar-width: 260px;
-}
 
 @layer base {
   body {
@@ -127,6 +69,20 @@
     );
     opacity: 0.85;
     animation: breathe 3s ease-in-out infinite;
+  }
+
+  /* Dashboard 三栏：180px | flex | 170px（Obsidian） */
+  .dashboard-layout {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+  }
+
+  @media (min-width: 1024px) {
+    .dashboard-layout {
+      flex-direction: row;
+      align-items: flex-start;
+    }
   }
 }
 

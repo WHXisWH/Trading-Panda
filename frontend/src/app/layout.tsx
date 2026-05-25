@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "@mysten/dapp-kit/dist/index.css";
 import "./globals.css";
 import { Providers } from "./providers";
+import { AppShell } from "@/components/layout/AppShell";
 import { Navbar } from "@/components/layout/Navbar";
 
 export const metadata: Metadata = {
@@ -25,7 +26,7 @@ export default function RootLayout({
       <body>
         <Providers>
           <Navbar />
-          {children}
+          <AppShell>{children}</AppShell>
         </Providers>
       </body>
     </html>

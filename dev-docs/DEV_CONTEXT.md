@@ -2,7 +2,7 @@
 
 > 本文档以「忒修斯之船」方式持续维护：只换木板、不换整船。部署事实变更时同步更新对应段落；任何改动必须在本文末尾「§9 变更日志」追加一行。
 >
-> **最后同步**：2026-05-25（Sprint 0.3 BFF / Auth）
+> **最后同步**：2026-05-25（Sprint 0.5 UI 壳）
 
 ---
 
@@ -44,7 +44,7 @@ TradingPanda 是 Sui 链上的 **AI 交易宠物养成系统**，目标是 Sui O
 | 情绪状态机 | 🟡 MVP 实现 | 80% | 7 状态转移 + Step 8 情绪扭曲；已接入 Actor |
 | 经验引擎（5子系统） | ⏸️ 待开始 | 0% | PostgreSQL 读写 |
 | Merkle Root Worker | ⏸️ 待开始 | 0% | 每50笔 → 上链 |
-| 模拟盘前端 Dashboard | 🟡 UI 实现 | 60% | 三栏布局、K 线（lightweight-charts）、决策链/策略/池选择；WS 实时待接 |
+| 模拟盘前端 Dashboard | 🟡 UI 实现 | 70% | 三栏布局、K 线（lightweight-charts）、决策链/策略/池选择；`useMarketWs`/`useSimulationWs` 已封装，Dashboard 接线待 Epic 3 |
 | NFT 市场（Kiosk） | 🟡 UI 实现 | 40% | 市场网格/筛选/弹窗（mock）；Kiosk 交易待接 |
 | 排行榜/成就/签到 | ⏸️ 待开始 | 0% | |
 | 黑客松 MVP 验收 | ⏸️ 待开始 | 0% | 目标：2026年6月 |
@@ -116,7 +116,8 @@ Blockchain  → Sui Testnet
 | 变量名 | 说明 |
 |--------|------|
 | `NEXT_PUBLIC_BACKEND_URL` | Python 决策引擎 URL（如 https://xxx.onrender.com） |
-| `NEXT_PUBLIC_WS_URL` | **唯一** WSS 基址（Hub：`market.tick` + 熊猫事件） |
+| `NEXT_PUBLIC_WS_URL` | **唯一** WSS 基址（Hub：`market.tick` + 熊猫事件）；本地 `ws://127.0.0.1:8787/ws` |
+| `MARKET_MONITOR_URL` | BFF 代理历史 K 线（默认 `http://localhost:8001`） |
 | `NEXT_PUBLIC_SUI_NETWORK` | testnet / mainnet |
 | `NEXT_PUBLIC_PACKAGE_ID` | Move 合约 Package ID |
 | `NEXT_PUBLIC_REGISTRY_ID` | PandaRegistry Shared Object ID |
@@ -188,6 +189,7 @@ POST /api/pandas/[id]/simulation/start  # 启动模拟
 POST /api/pandas/[id]/simulation/stop   # 停止模拟
 POST /api/pandas/[id]/calm-bamboo    # 使用冷静竹（重置情绪）
 
+GET  /api/market/candles             # 历史 K 线（BFF → market-monitor GET /candles?pool=…）
 GET  /api/leaderboard                # 排行榜（Redis 缓存 TTL 60s）
 GET  /api/achievements               # 成就列表
 POST /api/checkin                    # 每日签到
@@ -304,3 +306,5 @@ Package ID：**0x9b26dfdddef52c980dea0989a22c751ee4c4551d9e39708ab9503990cc7b971
 | 2026-05-25 | **ZkLogin 钱包签名（flag 5）**：BFF `POST /api/auth/connect` 用 `@mysten/sui/verify` + `sui_verifyZkLoginSignature`（testnet fullnode）验签后带 `X-Internal-Key`+`X-BFF-Wallet-Verified` 调后端；`bff_auth.py`；移除 Navbar localhost 提示条 | Slush/zkLogin 账户「签名登录」不再 401；`frontend/.env` 须 `INTERNAL_SECRET` 与 backend 一致 |
 | 2026-05-25 | **钱包连接后自动登录**：`WalletAuthSync` 在连接且无 JWT 时自动 `loginWithWallet`；移除 Navbar「签名登录」；`walletLoginSession` 全局 in-flight 状态供 UI | 连接钱包 → 一次签名弹窗 → 登录成功；失败点「连接钱包」可 `resetWalletLoginState` 重试 |
 | 2026-05-25 | **Navbar 登录态**：修复 zkLogin 后 `WalletAuthSync` 误 `clearAuth`（无钱包不应清 JWT）；已登录隐藏 Google/连接钱包，显示「已登录·地址」与「退出」 | Google / 钱包登录后导航栏可见会话；「我的」仅依赖 JWT |
+| 2026-05-25 | **Sprint 0.5 UI 壳（Obsidian tokens）**：`src/styles/tokens.css`（Navbar 44px、`sidebar` 180px、`decision` 170px）；`WalletButton` · `AppShell` · 根 `layout` 壳；`PageContainer` `variant=mint`；Dashboard `dashboard-layout` + `PandaSidebar`/`DecisionPanel` 宽度对齐；`npm run type-check` · `build` 绿 | Sprint 0.5 Done；UI 与 Obsidian 三栏规格对齐 |
+| 2026-05-25 | **Sprint 0.4 实时与行情**：Hub 本地 `ws://127.0.0.1:8787/ws`（用户已启）；`subscribe.market` 支持 `pairs`（如 `DEEP/SUI`）对齐 monitor `market:tick`；BFF `GET /api/market/candles` → monitor；前端 `useWebSocket`·`useMarketWs`·`useSimulationWs` + `types/ws.ts`；`npm run type-check` / websocket vitest 17 / monitor pytest 30 绿 | Dashboard 用 `useMarketWs({ pairs:['DEEP/SUI'], pool:'DEEP/SUI' })` 联调；monitor 仍须 `REDIS_URL`+`DEEPBOOK_DATABASE_URL` 才有 tick |

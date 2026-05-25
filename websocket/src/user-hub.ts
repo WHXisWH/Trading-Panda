@@ -240,8 +240,15 @@ export class UserHub implements DurableObject {
     const assets = Array.isArray(assetsRaw)
       ? assetsRaw.map((a) => String(a))
       : [];
+    const pairsRaw = msg.payload.pairs;
+    const pairs = Array.isArray(pairsRaw)
+      ? pairsRaw.map((p) => String(p))
+      : [];
     const interval = String(msg.payload.interval ?? "1m");
-    this.state.subscriptions.market = { assets, interval };
+    if (assets.length === 0 && pairs.length === 0) {
+      throw new Error("assets or pairs required");
+    }
+    this.state.subscriptions.market = { assets, pairs, interval };
     await this.syncChannels();
   }
 

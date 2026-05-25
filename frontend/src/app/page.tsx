@@ -60,7 +60,7 @@ export default function LandingPage() {
           }}
         />
 
-        <PageContainer className="flex min-h-[calc(100vh-64px)] flex-col items-center justify-center text-center gap-8 py-24">
+        <PageContainer className="flex min-h-[calc(100dvh-var(--navbar-height))] flex-col items-center justify-center gap-8 py-24 text-center">
           {/* Panda mascot */}
           <div className="relative">
             <span className="text-[96px] leading-none animate-panda-breathe inline-block">

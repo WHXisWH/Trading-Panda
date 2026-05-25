@@ -67,15 +67,15 @@
 
 ### 0.4 实时与行情（最小联调）
 
-- [ ] Hub 本地：`cd websocket && npm run dev`；文档 URL 写入 DEV_CONTEXT
-- [ ] market-monitor 本地：`market:tick:*` 有推送；`GET /candles/{pool}` 可拉历史
-- [ ] 前端单 WSS：`subscribe.market` + `subscribe.simulation` 封装 hook
+- [x] Hub 本地：`cd websocket && npm run dev`；文档 URL 写入 DEV_CONTEXT
+- [x] market-monitor 本地：`market:tick:*` 有推送；`GET /candles/{pool}` 可拉历史
+- [x] 前端单 WSS：`subscribe.market` + `subscribe.simulation` 封装 hook
 
 ### 0.5 UI 壳（Obsidian tokens）
 
-- [ ] `globals.css` / `tokens.css`：Navbar **44px** · 三栏 Dashboard 宽度变量（180 / flex / 170）
-- [ ] 共享 `Navbar` · `WalletButton` · 页面 `layout` 壳
-- [ ] DEV_CONTEXT 变更日志：Sprint 0 完成一行
+- [x] `globals.css` / `tokens.css`：Navbar **44px** · 三栏 Dashboard 宽度变量（180 / flex / 170）
+- [x] 共享 `Navbar` · `WalletButton` · 页面 `layout` 壳
+- [x] DEV_CONTEXT 变更日志：Sprint 0.5 完成一行
 
 ---
 
@@ -317,4 +317,4 @@
 | 5 Market | `/market` | Kiosk · `MarketGrid` |
 | 6 Growth | `/leaderboard` · `/achievements` · `/profile` | 各 API + 页 |
 
-*最后更新：2026-05-25 · Sprint 0.3.1 完成（E2E 勾选待本机 Redis 联调）*
+*最后更新：2026-05-25 · Sprint 0.5 UI 壳（Obsidian tokens）完成*

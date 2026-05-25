@@ -32,7 +32,7 @@ export function DecisionPanel({
   return (
     <aside
       className={clsx(
-        "flex w-full shrink-0 flex-col gap-3 rounded-xl bg-paper-card p-4 lg:w-[200px]",
+        "flex w-full shrink-0 flex-col gap-3 rounded-xl bg-paper-card p-4 lg:w-decision",
         className
       )}
     >

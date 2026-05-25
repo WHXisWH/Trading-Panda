@@ -113,7 +113,7 @@ export default function DashboardPage({ params }: { params: { id: string } }) {
 
   if (!jwt) {
     return (
-      <PageContainer className="flex min-h-[calc(100vh-64px)] items-center justify-center">
+      <PageContainer className="flex min-h-[calc(100dvh-var(--navbar-height))] items-center justify-center">
         <p className="text-ink-500">请先连接钱包</p>
       </PageContainer>
     );
@@ -123,9 +123,9 @@ export default function DashboardPage({ params }: { params: { id: string } }) {
     return (
       <PageContainer className="py-6">
         <div className="flex gap-4">
-          <Skeleton className="h-96 w-[260px]" />
+          <Skeleton className="h-96 w-sidebar" />
           <Skeleton className="h-96 flex-1" />
-          <Skeleton className="h-96 w-[200px]" />
+          <Skeleton className="h-96 w-decision" />
         </div>
       </PageContainer>
     );
@@ -133,7 +133,7 @@ export default function DashboardPage({ params }: { params: { id: string } }) {
 
   return (
     <PageContainer className="py-4">
-      <div className="flex flex-col gap-4 lg:flex-row">
+      <div className="dashboard-layout">
         <PandaSidebar
           pandaId={panda.id}
           boldness={panda.boldness}

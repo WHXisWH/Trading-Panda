@@ -49,11 +49,20 @@ const config: Config = {
         mono: ["JetBrains Mono", "Inter", "monospace"],
       },
       spacing: {
-        navbar: "64px",
-        sidebar: "260px",
+        navbar: "var(--navbar-height)",
+        sidebar: "var(--sidebar-width)",
+        "sidebar-wide": "var(--sidebar-width-wide)",
+        decision: "var(--decision-panel-width)",
       },
       maxWidth: {
-        modal: "800px",
+        page: "var(--page-max-width)",
+        mint: "var(--page-mint-max-width)",
+        modal: "var(--modal-width-lg)",
+        "modal-sm": "var(--modal-width-sm)",
+      },
+      width: {
+        sidebar: "var(--sidebar-width)",
+        decision: "var(--decision-panel-width)",
       },
       borderRadius: {
         paper: "12px",

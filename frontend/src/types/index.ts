@@ -109,6 +109,18 @@ export interface User {
   createdAt: string;
 }
 
+export type {
+  CandlesResponse,
+  MarketInterval,
+  MarketTickCandle,
+  MarketTickPayload,
+  SubscribeMarketPayload,
+  SubscribeSimulationPayload,
+  WsClientMessage,
+  WsConnectionStatus,
+  WsServerEvent,
+} from "./ws";
+
 export type WSEventType =
   | "TRADE_EXECUTED"
   | "EMOTION_CHANGED"

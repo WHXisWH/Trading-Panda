@@ -22,9 +22,16 @@ export interface WsServerEvent<T = unknown> {
   request_id?: string;
 }
 
+export interface MarketSubscription {
+  assets: string[];
+  /** DeepBook pool/pair channel suffix, e.g. DEEP/SUI (from market-monitor) */
+  pairs: string[];
+  interval: string;
+}
+
 export interface SubscriptionState {
   pandas: Record<string, { simulationId?: string }>;
-  market: { assets: string[]; interval: string } | null;
+  market: MarketSubscription | null;
 }
 
 export interface StoredHubState {

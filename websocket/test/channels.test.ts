@@ -25,7 +25,7 @@ describe("channels", () => {
   it("collects channels from subscriptions", () => {
     const subs = emptySubscriptions();
     subs.pandas["pnd-1"] = { simulationId: "sim-1" };
-    subs.market = { assets: ["SUI"], interval: "1m" };
+    subs.market = { assets: ["SUI"], pairs: [], interval: "1m" };
     const channels = collectRedisChannels(subs);
     expect(channels).toContain("panda:pnd-1:emotion");
     expect(channels).toContain("market:tick:SUI-USDC");
@@ -42,12 +42,25 @@ describe("channels", () => {
     subs.pandas["pnd-1"] = {};
     expect(shouldForwardChannel("panda:pnd-1:decision", subs)).toBe(true);
     expect(shouldForwardChannel("panda:pnd-2:decision", subs)).toBe(false);
-    subs.market = { assets: ["BTC"], interval: "5m" };
+    subs.market = { assets: ["BTC"], pairs: [], interval: "5m" };
     expect(shouldForwardChannel("market:tick:BTC-USDC", subs)).toBe(true);
   });
 
   it("adds market tick only for non-1m intervals", () => {
-    const channels = channelsForMarketSubscribe(["ETH"], "5m");
+    const channels = channelsForMarketSubscribe(["ETH"], [], "5m");
     expect(channels).toEqual(["market:tick:ETH-USDC"]);
+  });
+
+  it("subscribes explicit DeepBook pairs", () => {
+    const channels = channelsForMarketSubscribe([], ["DEEP/SUI"], "1m");
+    expect(channels).toContain("market:tick:DEEP/SUI");
+    expect(channels).toContain("market:candles:1m:DEEP/SUI");
+  });
+
+  it("forwards only subscribed market channels", () => {
+    const subs = emptySubscriptions();
+    subs.market = { assets: [], pairs: ["DEEP/SUI"], interval: "1m" };
+    expect(shouldForwardChannel("market:tick:DEEP/SUI", subs)).toBe(true);
+    expect(shouldForwardChannel("market:tick:SUI-USDC", subs)).toBe(false);
   });
 });
