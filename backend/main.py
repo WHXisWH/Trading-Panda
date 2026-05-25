@@ -11,15 +11,18 @@ from app.config import settings
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Create all tables on startup (dev convenience; use alembic in production)
-    from app.db.database import engine, Base
-    if engine is not None:
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
+    # Schema: run `alembic upgrade head` (see backend/README.md § Database)
+    from app.db.database import get_engine
+    from app.engine.actor_manager import actor_manager
+
+    db_engine = get_engine()
+    await actor_manager.startup()
+
     yield
-    # Cleanup
-    if engine is not None:
-        await engine.dispose()
+
+    await actor_manager.shutdown()
+    if db_engine is not None:
+        await db_engine.dispose()
 
 
 app = FastAPI(
@@ -42,9 +45,29 @@ app.include_router(api_router)
 
 @app.get("/health")
 async def health():
-    from app.db.database import engine
-    db_status = "connected" if engine is not None else "not configured"
-    return {"status": "ok", "version": "0.1.0", "db": db_status}
+    from sqlalchemy import text
+
+    from app.db.database import get_engine
+
+    engine = get_engine()
+    from app.engine.actor_manager import actor_manager
+
+    if engine is None:
+        db_status = "not configured"
+    else:
+        try:
+            async with engine.connect() as conn:
+                await conn.execute(text("SELECT 1"))
+            db_status = "connected"
+        except Exception:
+            db_status = "error"
+    return {
+        "status": "ok",
+        "version": "0.1.0",
+        "db": db_status,
+        "redis": "configured" if settings.redis_url else "not configured",
+        "active_actors": actor_manager.active_count,
+    }
 
 
 if __name__ == "__main__":

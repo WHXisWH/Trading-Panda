@@ -28,24 +28,22 @@
 
 ```
 用户浏览器
-    │ HTTPS                    WSS（实时）
-    │   │                         │
-    ▼   ▼                         ▼
-frontend/   ← Next.js 14，Vercel（仅 HTTP API Gateway）
-    │ Internal HTTP
-    │                         Cloudflare Workers + Durable Objects
-    │                         （WebSocket Hub，独立部署，规划中）
-    │                              │ Upstash：CF 侧 REST 订阅，与 DE 同库
-    ▼                              │
-backend/    ← Python FastAPI，Render（SUBSCRIBE 行情 + PUBLISH panda 事件）
-    │
-market-monitor/ ← 独立 Render 服务（DeepBook v3 → PUBLISH market:tick:*）
-    │
-    ├── PostgreSQL (Supabase 或 Render PostgreSQL)
-    ├── Upstash Redis（Pub/Sub + 缓存；见 docs/redis-architecture.md）
-    └── Sui Testnet (合约 + DeepBook 只读 RPC)
+    │ HTTPS（REST 历史 K 线 + API）
+    │ WSS（单连接）──────────────► Cloudflare WebSocket Hub
+    │                              ├── market:tick:* → K 线/行情
+    │                              └── panda:* → 熊猫实时
+    ▼
+frontend/   ← Next.js 14，Vercel（NEXT_PUBLIC_WS_URL）
 
-contracts/  ← Sui Move，部署在 Sui Testnet
+backend/    ← Render（SUBSCRIBE market:tick:* + PUBLISH panda:*）
+market-monitor/ ← VPS 推荐（PG order_fills 聚 K 线 → PUBLISH market:tick:*）
+
+VPS DeepBook 栈（如 152.53.166.128:5433 PG, :9008 Server, Indexer, monitor）
+    ├── PostgreSQL (Supabase) — 业务库 pandas/trades
+    ├── Upstash Redis
+    └── Sui Testnet
+
+contracts/  ← Sui Testnet
 ```
 
 ---
@@ -59,7 +57,8 @@ contracts/  ← Sui Move，部署在 Sui Testnet
 | `docs/backend-design.md` | Python 服务与边缘层架构 |
 | `docs/redis-architecture.md` | Redis 部署（Upstash）、Pub/Sub 频道、DE/CF 双端接入 |
 | `docs/market-monitor-design.md` | 独立市场监听（DeepBook v3）、`market:tick:*` 契约 |
-| `docs/websocket-hub-design.md` | WebSocket Hub（Cloudflare Workers + DO）契约与存储边界 |
+| `docs/kline-websocket-service.md` | **方案乙** 可选独立 K 线 WSS |
+| `docs/websocket-hub-design.md` | WebSocket Hub；转发 `market:tick` + `panda:*`（方案甲） |
 | `docs/frontend-design.md` | Next.js 页面设计 |
 | `docs/database-schema.md` | PostgreSQL 表设计 |
 | `docs/api-specification.md` | REST + WS + RPC 接口契约 |
@@ -76,7 +75,7 @@ contracts/  ← Sui Move，部署在 Sui Testnet
 - @mysten/dapp-kit (Sui 钱包)、@mysten/zklogin
 - Zustand (状态管理)、@tanstack/react-query (数据请求)
 - Tailwind CSS、Radix UI、Rive (熊猫动画)、lightweight-charts (K线)
-- 浏览器原生 WebSocket（`NEXT_PUBLIC_WS_URL`）→ Cloudflare Workers + Durable Objects 实时推送
+- 浏览器单 WebSocket `NEXT_PUBLIC_WS_URL`（Hub：K 线 + 熊猫）；历史 K 线 REST
 
 ### Backend (Render)
 - Python 3.11 + FastAPI + uvicorn

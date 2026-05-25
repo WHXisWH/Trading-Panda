@@ -45,27 +45,31 @@ class EmotionStateMachine:
         state = ctx.current
 
         if event == "calm_bamboo":
-            return "focused"
+            return self._set_state(ctx, "focused")
 
         if event == "win":
             ctx.win_streak += 1
             ctx.loss_streak = 0
             ctx.idle_count = 0
-            return self._handle_win(ctx)
+            return self._set_state(ctx, self._handle_win(ctx))
 
         if event == "loss":
             ctx.loss_streak += 1
             ctx.win_streak = 0
-            return self._handle_loss(ctx, value)
+            return self._set_state(ctx, self._handle_loss(ctx, value))
 
         if event == "idle":
             ctx.idle_count += 1
-            return self._handle_idle(ctx)
+            return self._set_state(ctx, self._handle_idle(ctx))
 
         if event == "drawdown":
-            return self._handle_drawdown(ctx, value)
+            return self._set_state(ctx, self._handle_drawdown(ctx, value))
 
         return state
+
+    def _set_state(self, ctx: EmotionContext, new_state: EmotionState) -> EmotionState:
+        ctx.current = new_state
+        return new_state
 
     def _handle_win(self, ctx: EmotionContext) -> EmotionState:
         if ctx.current == "excited" and ctx.win_streak >= 5:

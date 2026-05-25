@@ -15,7 +15,7 @@ from app.integrations.deepseek import parse_strategy_text
 router = APIRouter()
 
 _MOCK_PARSED = {
-    "philosophy": "balanced",
+    "philosophy": "trend_following",
     "position_sizing": {"type": "fixed", "value": 0.1},
     "signal_rules": [{"indicator": "RSI", "condition": "<30", "action": "BUY"}],
     "risk_management": {"stop_loss_pct": 5, "max_drawdown_pct": 15},
@@ -53,32 +53,38 @@ async def parse_strategy(
         json.dumps(parsed, sort_keys=True).encode()
     ).hexdigest()
 
-    # Deactivate existing active strategies
+    old_result = await db.execute(
+        select(Strategy).where(
+            Strategy.panda_id == panda.id,
+            Strategy.is_active == True,
+        )
+    )
+    old_strategy = old_result.scalar_one_or_none()
+
     await db.execute(
         update(Strategy)
         .where(Strategy.panda_id == panda.id, Strategy.is_active == True)
         .values(is_active=False)
     )
 
-    # Create new active strategy
     strategy = Strategy(
         panda_id=panda.id,
         raw_text=body.raw_text,
         parsed_json=parsed,
         strategy_hash=strategy_hash,
-        philosophy=parsed.get("philosophy", "balanced"),
+        philosophy=parsed.get("philosophy", "trend_following"),
         is_active=True,
     )
     db.add(strategy)
     await db.flush()
 
-    # Record history
-    history = StrategyHistory(
-        panda_id=panda.id,
-        strategy_id=strategy.id,
-        event_type="activated",
-    )
-    db.add(history)
+    if old_strategy is not None:
+        ghost = StrategyHistory(
+            panda_id=panda.id,
+            strategy_hash=old_strategy.strategy_hash,
+            proficiency_at_switch=int(old_strategy.proficiency),
+        )
+        db.add(ghost)
     await db.commit()
     await db.refresh(strategy)
 

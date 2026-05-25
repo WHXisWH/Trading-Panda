@@ -10,12 +10,32 @@ services:
     envVars:
       - key: REDIS_URL
         sync: false
+      - key: DEEPBOOK_DATABASE_URL
+        sync: false
       - key: DEEPBOOK_SERVER_URL
         sync: false
       - key: DEEPBOOK_POOLS
         sync: false
+      - key: SUI_RPC_URL
+        value: https://fullnode.testnet.sui.io:443
+      - key: DEEPBOOK_PACKAGE_ID
+        value: "0xdee9"
+      - key: DEEPBOOK_POOL_MODULE
+        value: pool
+      - key: USE_SUI_RPC_FOR_POOLS
+        value: "true"
+      - key: USE_HTTP_GET_POOLS_FALLBACK
+        value: "true"
+      - key: POOL_RPC_LIMIT_PER_PAGE
+        value: "50"
+      - key: POOL_RPC_MAX_PAGES
+        value: "20"
       - key: POLL_INTERVAL_SEC
-        value: "2"
+        value: "15"
+      - key: FILLS_POLL_LOOKBACK_SEC
+        value: "259200"
+      - key: FILLS_LOOKBACK_SEC
+        value: "2592000"
 
   - type: web
     name: trading-panda-backend

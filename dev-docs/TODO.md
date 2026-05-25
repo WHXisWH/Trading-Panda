@@ -23,9 +23,9 @@
 
 ### 0.2 数据库与迁移
 
-- [ ] Alembic 初始化 + 首版 migration（`pandas` · `strategies` · `simulations` · `trades` · `strategy_history`）
-- [ ] 本地/Supabase 连接验证（`DATABASE_URL` + asyncpg）
-- [ ] 种子脚本或 README：测试用户 + 一只 mock panda（仅 dev）
+- [x] Alembic 初始化 + 首版 migration（`users` · `pandas` · `strategies` · `simulations` · `trades` · `strategy_history`）
+- [x] 本地/Supabase 连接验证（`DATABASE_URL` + asyncpg；`scripts/verify_db.py` + `/health` `db` 字段）
+- [x] 种子脚本或 README：测试用户 + 一只 mock panda（`scripts/seed_dev.py` · `backend/README.md` § Database）
 
 ### 0.3 BFF / Auth / 配置
 

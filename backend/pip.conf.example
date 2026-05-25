@@ -1,0 +1,18 @@
+# Copy to pip config if installs fail on Tsinghua mirror:
+#
+#   mkdir -p ~/.pip
+#   cp pip.conf.example ~/.pip/pip.conf
+#
+# Recommended index (official Tsinghua PyPI mirror):
+#   https://pypi.tuna.tsinghua.edu.cn/simple
+#
+# Avoid legacy path (often missing packages):
+#   https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
+
+[global]
+index-url = https://pypi.tuna.tsinghua.edu.cn/simple
+trusted-host = pypi.tuna.tsinghua.edu.cn
+
+# 若仍频繁缺包，可改用阿里云镜像：
+# index-url = https://mirrors.aliyun.com/pypi/simple/
+# trusted-host = mirrors.aliyun.com

@@ -9,11 +9,12 @@ Cloudflare Workers + Durable Objects 实时推送层，与 `docs/websocket-hub-d
                   │ JWT 校验 (HS256, 与 backend/frontend 共用 JWT_SECRET)
                   └──► UserHub DO (id = user:{user_id})
                          ├── WebSocket 连接池（单用户最多 3 条）
-                         ├── subscribe.simulation / subscribe.market
-                         └── @upstash/redis subscribe → 转发到浏览器
+                         ├── subscribe.simulation（必须）
+                         └── @upstash/redis subscribe panda:* → 转发到浏览器
 ```
 
-- **不**直连 `market-monitor`；行情与 `panda:*` 均来自 **Upstash Redis**
+- **不**直连 `market-monitor` HTTP；消费 Redis **`market:tick:*` + `panda:*`**（方案甲）
+- **`subscribe.market`**：转发 `market:tick` → 前端 K 线（与 DE 同源）
 - DO 命名：`user:{user_id}`（禁止用 `panda_id` 作 DO id）
 
 ## 本地开发
@@ -51,7 +52,7 @@ npm run deploy
 |---------|------|
 | `subscribe.simulation` | `payload: { panda_id, simulation_id }` |
 | `unsubscribe.simulation` | `payload: { panda_id }` |
-| `subscribe.market` | `payload: { assets: ['BTC','SUI'], interval: '1m' }` |
+| `subscribe.market` | Redis `market:tick:*` → WS `market.tick`（**MVP 前端 K 线**） |
 | `unsubscribe.market` | 取消行情订阅 |
 | `pong` | 响应服务端 `ping` |
 

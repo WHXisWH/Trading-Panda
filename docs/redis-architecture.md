@@ -23,7 +23,7 @@
 | # | 用途 | 典型数据结构 | 说明 |
 |---|------|----------------|------|
 | 1 | **Pub/Sub 总线** | Channel 消息 | DE 发 `panda:*` → Hub → 前端；**最不可替代** |
-| 2 | **市场数据广播** | Channel | `market:tick:{pair}`；**market-monitor** 发布，DE / Hub 订阅 |
+| 2 | **市场数据广播** | Channel | `market:tick:{pair}`；monitor 发布；**DE + Hub** 订阅；前端 K 线 **同源**（方案甲） |
 | 3 | **响应缓存** | String + TTL | 熊猫快照、排行榜、市场列表 |
 | 4 | **Nonce / 短时认证态** | String + TTL（如 5min） | 登录 challenge 等 |
 | 5 | **策略解析缓存** | String + TTL（如 24h） | 解析后 JSON |
@@ -139,9 +139,9 @@ DeepBook v3 ──Sui RPC──► market-monitor/ (Render)
 | `panda:{id}:emotion` | 情绪状态机 | WS Hub | 情绪迁移 |
 | `panda:{id}:experience` | 经验引擎 | WS Hub | 经验变更 |
 | `panda:{id}:diary` | Agent / 日记任务 | WS Hub | 日记生成 |
-| `market:tick:{pair}` | **market-monitor**（独立服务） | PandaActor（经 DE `MarketDataConsumer`）、可选 WS Hub | 完整 `MarketEvent`（含 OHLCV + 指标）；`pair` 如 `SUI-USDC` |
-| `market:fill:{pair}` | market-monitor（可选） | 调试 / 高频图表 | 单笔成交归一化 |
-| `market:candles:1m:{pair}` | market-monitor（可选） | WS Hub | 仅 K 线 OHLCV |
+| `market:tick:{pair}` | **market-monitor** | **DE**（必须）、**WS Hub**（必须） | 完整 `MarketEvent`（含 `candle` + 指标）；前端实时 K 线与 DE **同一拍** |
+| `market:fill:{pair}` | market-monitor（可选） | 调试 | 单笔成交归一化 |
+| `market:candles:1m:{pair}` | market-monitor（可选） | 调试 | 瘦 OHLCV；MVP 用 `market:tick` 即可 |
 | `market:heartbeat` | market-monitor | 运维 / DE 降级判断 | 存活与各 pool 最后事件时间 |
 | `walrus:synced` | Walrus 同步 Worker | WS Hub | 备份/链上同步通知 |
 

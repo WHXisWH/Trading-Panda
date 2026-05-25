@@ -37,7 +37,7 @@ TradingPanda 是 Sui 链上的 **AI 交易宠物养成系统**，目标是 Sui O
 |--------|------|------|------|
 | 骨架搭建 | ✅ 完成 | 100% | frontend/backend/contracts 目录结构、CLAUDE.md、DEV_CONTEXT.md |
 | Sui Move 合约 | 🟡 本地实现完成 | 70% | 核心模块按 `docs/contract-design.md` 实现并通过本地 `sui move test`；待重新部署 Testnet 与 Kiosk/版税深化 |
-| PostgreSQL Schema | ⏸️ 待开始 | 0% | 建表 SQL + Alembic 迁移待写 |
+| PostgreSQL Schema | 🟡 Sprint 0.2 核心表 | 35% | Alembic `001_initial_core`：`users`+5 业务表；其余 12 表待后续迁移 |
 | 铸造流程（Mint） | ⏸️ 待开始 | 0% | 合约 + 前端 UI + 后端事件监听 |
 | 策略解析 | ⏸️ 待开始 | 0% | DeepSeek V3（可选路径）+ **积木 `parsed` 直传** + `validate` 试编译 |
 | 8步决策引擎 | 🟡 MVP 实现 | 75% | `decision_pipeline` 八步公式 + `RuleEngine` + `PandaActor` + Redis `market:tick:*` 订阅；Agent/Merkle 链上提交待完善 |
@@ -215,7 +215,7 @@ PostgreSQL 完整表定义见 `docs/database-schema.md`。Alembic 迁移位于 `
 `emotions_log` · `merkle_roots` · `achievements` · `user_achievements` · `checkins` ·
 `market_data_cache` · `correlation_matrix` · `panda_diary`
 
-**当前迁移状态**：`backend/alembic/versions/` 为空，初始 Schema 待写。
+**当前迁移状态**：`backend/alembic/versions/001_initial_core_tables.py`（revision `001_initial_core`）已创建 6 张核心表；其余 ORM 表（经验/成就/情绪日志等）尚未迁移。本地：`alembic upgrade head` → `python scripts/verify_db.py` → `python scripts/seed_dev.py`。
 
 ---
 
@@ -291,3 +291,5 @@ Package ID：**0x9b26dfdddef52c980dea0989a22c751ee4c4551d9e39708ab9503990cc7b971
 | 2026-05-22 | **frontend-design.md v1.1**：同步 Obsidian `design-spec/` 六份规范（tokens、mint、dashboard、trading、market、pools）；Dashboard 改为 180+flex+170 三栏；新增 §3.4 Trading、§3.5 Pools；Market 卡片 183×210；Navbar **44px**（设计规范） | 工程 UI 与 Obsidian mockups 对齐；`/pools`、`/trading/[id]` 路由待实现 |
 | 2026-05-22 | **猎手策略规格（积木 + API）**：PRD §3.2 混合输入（`parsed` 直传默认 / `raw_text`+LLM 可选）、单策略多 `signal_rules`、Step 1 投票公式；`api-specification.md` 扩展 `POST …/strategy`、`POST …/validate`；`agent-design.md` Step 1 与 `rule_engine` 一致 | 文档已定稿；后端 `strategy.py` 与前端积木 **待实现** |
 | 2026-05-22 | **Sprint 0.1 契约与类型**：前端拆分 `types/{strategy,panda,trading,api}.ts`（`DecisionStep.rule_hits`、`ParsedStrategyLayers`、`StrategyFeedRequest`）；后端 `app/schemas/`（Pydantic + `ApiErrorCode`/`STRATEGY_*`/`PANDA_*`）；`rule_engine.rule_is_compilable`；`tests/test_schemas.py` 9 项通过；`npm run type-check` 绿 | Sprint 0.1 Done；Epic 2 策略 API 可接 schema；BFF 错误码透传待 0.3 |
+| 2026-05-25 | **Sprint 0.2 数据库与迁移**：Alembic 首版 `001_initial_core`（`users`·`pandas`·`strategies`·`strategy_history`·`simulations`·`trades`）；`strategy_history` 对齐残影表（`ghost_weight`/`strategy_hash`）；`Simulation` 字段对齐 `database-schema.md`（`initial_capital`/`total_trades`/`final_equity`）；移除启动时 `create_all`；`scripts/verify_db.py`·`scripts/seed_dev.py`；`/health` 真实 `SELECT 1`；`tests/test_db_schema.py` | 部署/本地须 `alembic upgrade head` 后再启 backend；经验/成就等 12 表仍待下一迁移 |
+| 2026-05-25 | **backend/README.md 本地指南**：新增 venv 分步（0–8 步）、Supabase Direct/Pooler `DATABASE_URL`、Alembic/`scripts` 用法、排障表与一条龙命令 | 新同学按 README 可在虚拟环境完成迁移+seed+`uvicorn`；联调章节 L1–L5 保留 |

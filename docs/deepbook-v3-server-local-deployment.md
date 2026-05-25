@@ -6,7 +6,7 @@
 > 服务器代码位置：`crates/server/`（Rust + Axum REST API）  
 > 索引器代码位置：`crates/indexer/`（Sui 链事件索引）
 >
-> **TradingPanda MVP（已锁定）**：`market-monitor` / Decision Engine **只调用 DeepBook Server HTTP API**（如 `http://localhost:9008`），**不**在应用代码中直接调用 Sui JSON-RPC。链上读取由 **Indexer + Server 内部**完成。
+> **TradingPanda MVP（已锁定）**：`market-monitor` **K 线 / 盘口 / 成交** 只经 **DeepBook Server HTTP API**（如 `http://localhost:9008`）；**交易池列表** 默认经 **Sui JSON-RPC** `suix_queryEvents` 解析链上 `PoolCreated`（可选回退 `GET /get_pools`）。Indexer + Server 内部仍负责其自身链上读取与 PostgreSQL 落库。
 
 ---
 
@@ -58,7 +58,8 @@
 ### 网络要求
 
 - **DeepBook Indexer / Server** 需要访问 Sui RPC（默认主网 `https://fullnode.mainnet.sui.io:443`），用于索引链上事件与 Server 内部实时查询。
-- **TradingPanda 应用进程**（`market-monitor`、`backend`）**不需要**配置 `SUI_RPC_URL` 来拉行情；只需能访问 **DeepBook Server**（如 `http://localhost:9008`）。
+- **`market-monitor`**：拉 **OHLCV 等行情** 只需 **DeepBook Server**；若未设置 `DEEPBOOK_POOLS` 且启用 Sui 池发现，则需可访问的 **`SUI_RPC_URL`**（默认 Testnet fullnode，与 `DEEPBOOK_PACKAGE_ID` 网络一致）。
+- **`backend`**：链上交互等按 `backend/.env.example` 配置 `SUI_RPC_URL`；**不**用该 RPC 替代 DeepBook K 线。
 - MVP **必须**同时运行 **Indexer + Server + PostgreSQL**（建议保留约 **1 个月**历史，见 §5）；仅启动 Server、不跑 Indexer **不符合** TradingPanda MVP 方案（见 §4、§15.2）。
 
 ### 磁盘空间
@@ -129,19 +130,41 @@ deepbookv3/
 2. **Server** 对外提供 REST API：历史类读 PostgreSQL；实时 orderbook 等由 **Server 内部**调 Sui RPC。
 3. **TradingPanda MVP 必须跑 Indexer**（建议同步并保留约 1 个月数据），否则 K 线、成交历史、`/get_pools` 等不可用或为空。
 
-### 3.2 TradingPanda 侧（MVP）
+### 3.2 TradingPanda 侧（MVP · 方案甲）
 
 ```
-DeepBook Server (localhost:9008)
-        │  HTTP only（无 Sui RPC）
-        ▼
-market-monitor/  ──轮询 API、算指标──►  PUBLISH market:tick:* ──► Upstash
+Sui Fullnode ──池列表──► market-monitor
+DeepBook PG (:5433) order_fills ──聚 K 线 + 指标──► market-monitor
+DeepBook Server (:9008) /orderbook ──盘口──► market-monitor
         │
-        ▼
-Decision Engine  ◄── SUBSCRIBE ──  PandaActor（8 步决策）
+        └── PUBLISH market:tick:* ──► Upstash
+                    ├──► Decision Engine（SUBSCRIBE）
+                    └──► WebSocket Hub（SUBSCRIBE → 前端 K 线）
+
+DE PUBLISH panda:* ──► Hub（前端熊猫事件）
+前端 REST GET /candles ──► 历史 K 线（monitor，规划中）
 ```
 
-TradingPanda **不**维护：Sui 事件轮询、K 线落库、链上 orderbook 解析；这些由 DeepBook 仓库负责。
+TradingPanda **不**依赖 `GET /ohclv`（Indexer 无 K 线处理器，`ohclv_*` 常为空）。
+
+### 3.3 VPS 生产拓扑（方案甲 · 已锁定）
+
+主机示例 **`152.53.166.128`**：
+
+| 服务 | 端口 | 说明 |
+|------|------|------|
+| PostgreSQL | **5433** | `order_fills`（Indexer 写入） |
+| DeepBook Server | **9008** | `/orderbook` 等 |
+| DeepBook Indexer | — | 写 PG |
+| **market-monitor** | **8001** 或 systemd | 读 PG + 发 Redis；与 PG **同机** |
+| ~~K-line WSS~~ | ~~9009~~ | **方案乙可选**，MVP 不部署 |
+
+```
+浏览器 ──单 WSS──► Cloudflare Hub（market:tick + panda:*）
+       ──REST───► 历史 K 线
+```
+
+方案乙独立 `:9009` 见 **`docs/kline-websocket-service.md`**。
 
 ---
 
@@ -151,26 +174,29 @@ TradingPanda **不**维护：Sui 事件轮询、K 线落库、链上 orderbook �
 
 | 角色 | MVP 是否直接调用 Sui RPC | 说明 |
 |------|-------------------------|------|
-| **TradingPanda**（`market-monitor`、`backend`） | **否** | 只调 DeepBook Server HTTP API |
+| **`market-monitor`（行情）** | **否** | OHLCV / 成交 / 盘口仅 **DeepBook Server HTTP** |
+| **`market-monitor`（池列表）** | **是（默认）** | 只读 `suix_queryEvents` 枚举 `PoolCreated`；可选 `GET /get_pools` 回退 |
+| **`backend`** | 按链上功能需要 | 与 DeepBook 行情路径独立 |
 | **DeepBook Indexer** | **是**（基础设施） | 同步链上事件进 PostgreSQL |
 | **DeepBook Server** | **是**（内部） | 对客户端透明；REST 统一出口 |
 
-**MVP 方案 = Indexer + Server + PostgreSQL**，不是「应用直连 Sui RPC」。
+**MVP 方案 = Indexer + Server + PostgreSQL**；应用层 **不**用 Sui RPC **替代** Indexer 重建 K 线。池枚举的轻量 Sui 调用见 `docs/market-monitor-design.md` §4。
 
 ### 4.2 方案对比（应用层视角）
 
 | 方案 | TradingPanda 代码复杂度 | 历史 K 线 / 成交 | 实时 orderbook | MVP 采用 |
 |------|----------------------|-----------------|----------------|----------|
-| 应用直连 Sui RPC（`suix_queryEvents` 等） | 高（自维护 K 线、事件解析） | 有限 | 可实时 | **否** |
+| 应用直连 Sui RPC **自建全量行情**（事件流算 OHLCV） | 高（自维护 K 线、事件解析） | 有限 | 可实时 | **否** |
 | **DeepBook Indexer + Server API** | 低（`httpx` 调 REST） | 完整（如 1 个月） | 有（Server 内部 RPC） | **是** |
 
 ### 4.3 TradingPanda 需要的 Server API（MVP）
 
-`market-monitor` 通过 `DEEPBOOK_SERVER_URL`（如 `http://localhost:9008`）调用，**不**配置链上 RPC：
+`market-monitor` 通过 `DEEPBOOK_SERVER_URL`（如 `http://localhost:9008`）拉 **行情**；池列表默认见 `docs/market-monitor-design.md`（Sui RPC + 可选 `GET /get_pools`）。
 
-| 用途 | 推荐端点（以本仓库 Server 为准） | 数据来自（Server 内部） |
-|------|----------------------------------|-------------------------|
-| 交易池列表 | `GET /get_pools` | PostgreSQL（Indexer） |
+| 用途 | 推荐端点 / 来源 | 数据来自 |
+|------|------------------|----------|
+| 交易池列表（默认） | `suix_queryEvents`（`market-monitor`） | Sui 链上 `PoolCreated` 事件类型 |
+| 交易池列表（回退 / 显式） | `GET /get_pools` 或 `DEEPBOOK_POOLS` | PostgreSQL（Indexer）或手工配置 |
 | 实时订单簿 / Level2 | `GET /orderbook/:pool_name` 或上游新增的 `GET /get_level2_ticks_from_mid` | Sui RPC（**Server 内部**） |
 | 成交历史 | `GET /trades/:pool_name` | PostgreSQL |
 | K 线 OHLCV | `GET /ohclv/:pool_name`（文档中亦可能写作 `/candles`，以实际路由为准） | PostgreSQL |
@@ -184,13 +210,13 @@ TradingPanda **不**维护：Sui 事件轮询、K 线落库、链上 orderbook �
 1. 启动 PostgreSQL  
 2. 启动 **Indexer**（建议 `--start-checkpoint` 从较近块高开始，保留策略见 §5）  
 3. 启动 **Server**（默认 `http://localhost:9008`）  
-4. 在 `market-monitor` 中配置 `DEEPBOOK_SERVER_URL`，轮询上述 API → 组装 `MarketEvent` → `PUBLISH` 到 Upstash  
+4. 在 `market-monitor` 中配置 `DEEPBOOK_SERVER_URL` +（默认）`SUI_RPC_URL` 与 `DEEPBOOK_PACKAGE_ID`（与网络一致），轮询上述 API → 组装 `MarketEvent` → `PUBLISH` 到 Upstash  
 
 **不需要（TradingPanda 应用代码）：**
 
-- 直接调用 Sui JSON-RPC（`suix_queryEvents`、`suix_subscribeEvent` 等）  
-- 自己维护 K 线聚合与 DeepBook 事件解析  
-- 为行情单独部署「应用层 → Sui」长连接  
+- 用 Sui JSON-RPC **替代** DeepBook Server 拉 **OHLCV** 或 **自维护 K 线聚合**  
+- 自己实现与 **Indexer 等价**的全量 DeepBook 事件入库  
+- 为行情单独部署「应用层 → Sui」**长连接**（monitor 仅 **短时 HTTP** 分页 `queryEvents`）  
 
 ### 4.5 技术指标与历史长度
 
@@ -439,12 +465,13 @@ postgres://postgres:***@localhost:5432/deepbook
 
 ---
 
-## 7. 配置 Sui RPC（仅 DeepBook Indexer / Server）
+## 7. 配置 Sui RPC（DeepBook Indexer / Server / market-monitor 池发现）
 
-> **TradingPanda 开发者可跳过本节**——除非你在本地编译运行 DeepBook 的 Indexer/Server。  
-> `market-monitor` 的 `.env` **不应**用 `SUI_RPC_URL` 拉行情；行情来自 `DEEPBOOK_SERVER_URL`。
+> **`market-monitor`**：当 **`USE_SUI_RPC_FOR_POOLS=true`**（默认）时需在 `.env` 配置 **`SUI_RPC_URL`**、**`DEEPBOOK_PACKAGE_ID`**（及可选 **`DEEPBOOK_POOL_MODULE`**），**仅用于** **`suix_queryEvents`** 列出 **`PoolCreated`**；**不以 `SUI_RPC_URL` 拉 OHLCV**——行情仍来自 **`DEEPBOOK_SERVER_URL`**。
+>
+> **`backend`** 的 **`SUI_RPC_URL`**（若配置）用于链上提交等业务，与 monitor 的发现逻辑独立。
 
-### 7.1 内置默认值
+### 7.1 内置默认值（DeepBook crate）
 
 Indexer 与 Server 进程默认使用 Sui 主网 RPC：
 
@@ -1038,7 +1065,7 @@ RPC_URL="https://fullnode.mainnet.sui.io:443" \
 ./target/release/deepbook-server
 ```
 
-**TradingPanda MVP 必须**：PostgreSQL + Indexer（约 1 个月数据）+ Server，并由 `market-monitor` **只调 HTTP API**（见 §4.3）。
+**TradingPanda MVP 必须**：PostgreSQL + Indexer（约 1 个月数据）+ Server；`market-monitor` **OHLCV/盘口仍只调 DeepBook HTTP**；在无 Indexer 时仍可用 **RPC 枚举到的池名** 探活 **实时 orderbook** 等少量端点，但 **不完整**——勿依赖其为 MVP（见 §3.2、§4）。
 
 ---
 
@@ -1267,3 +1294,41 @@ cargo run --release --package deepbook-indexer -- \
   --packages deepbook \
   --start-checkpoint <latest_checkpoint>
 ```
+
+### D. K 线数据获取方式
+
+> **2026-05-20 架构更新**：K 线数据不再依赖 DeepBook Server 的 `/ohclv` 端点。
+
+#### D.1 背景
+
+DeepBook Server 提供了 `/ohclv` REST 端点，但在实际测试中发现该端点**无数据返回**（该功能在 v3 中可能未实现或不可用）。因此 K 线数据需要从其他渠道获取。
+
+#### D.2 方案对比
+
+| 方案 | 数据源 | 实时性 | 实现复杂度 | 状态 |
+|------|--------|--------|-----------|------|
+| DeepBook Server `/ohclv` | DeepBook Indexer 写入的 ohclv 表 | 准实时（Indexer 延迟） | 低 | ❌ 无数据 |
+| PostgreSQL 物化视图 | 定时从 order_fills 聚合 | 低（定时刷新） | 中 | ❌ 实时性不足 |
+| **market-monitor + Hub（方案甲）** | **order_fills → Redis market:tick** | **高** | **中** | **✅ MVP 已采用** |
+| 独立 K-line WSS :9009（方案乙） | order_fills 直推浏览器 | 最高 | 中+ | 可选 |
+
+#### D.3 推荐方案（方案甲）
+
+**market-monitor** 与 DeepBook PG 同 VPS，读 `order_fills` 聚 K 线 → `PUBLISH market:tick:*` → **DE + CF Hub**；历史 K 线 **`GET /candles`**。
+
+```
+order_fills → market-monitor → Redis → Hub → 浏览器（单 WSS）
+```
+
+见 `docs/market-monitor-design.md` §7、`docs/websocket-hub-design.md` §3.4。
+
+#### D.4 方案乙与 REST 备选
+
+**方案乙**：独立 `:9009` WSS — 见 `docs/kline-websocket-service.md`。
+
+**不推荐**：仅 Next BFF 每次扫 `order_fills` 算 K 线（无 monitor 常驻），原因：
+- REST 轮询会产生大量重复请求
+- 无法实现实时增量更新
+- 每次请求都要扫描大量 order_fills 数据
+
+详细设计见 **`docs/kline-websocket-service.md`**。

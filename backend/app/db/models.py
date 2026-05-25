@@ -7,7 +7,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
-from app.db.database import Base
+from app.db.base import Base
 
 
 def _uuid():
@@ -63,6 +63,7 @@ class Panda(Base):
     strategies = relationship("Strategy", back_populates="panda")
     trades = relationship("Trade", back_populates="panda")
     simulations = relationship("Simulation", back_populates="panda")
+    strategy_ghosts = relationship("StrategyHistory", back_populates="panda")
     emotions_log = relationship("EmotionLog", back_populates="panda")
     merkle_roots = relationship("MerkleRoot", back_populates="panda")
     diary_entries = relationship("PandaDiary", back_populates="panda")
@@ -82,19 +83,21 @@ class Strategy(Base):
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
 
     panda = relationship("Panda", back_populates="strategies")
-    history = relationship("StrategyHistory", back_populates="strategy")
 
 
 class StrategyHistory(Base):
+    """策略残影 — 旧策略影响随 trades_since_switch 衰减（见 docs/database-schema.md §3.4）。"""
     __tablename__ = "strategy_history"
 
     id = Column(UUID(as_uuid=False), primary_key=True, default=_uuid)
     panda_id = Column(UUID(as_uuid=False), ForeignKey("pandas.id", ondelete="CASCADE"), nullable=False)
-    strategy_id = Column(UUID(as_uuid=False), ForeignKey("strategies.id"), nullable=False)
-    event_type = Column(String(30), nullable=False)  # activated | deactivated | proficiency_updated
-    created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
+    strategy_hash = Column(Text, nullable=False)
+    proficiency_at_switch = Column(SmallInteger, nullable=False)
+    ghost_weight = Column(Numeric(5, 4), nullable=False, default=1.0)
+    trades_since_switch = Column(Integer, nullable=False, default=0)
+    switched_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
 
-    strategy = relationship("Strategy", back_populates="history")
+    panda = relationship("Panda", back_populates="strategy_ghosts")
 
 
 class Simulation(Base):
@@ -102,16 +105,17 @@ class Simulation(Base):
 
     id = Column(UUID(as_uuid=False), primary_key=True, default=_uuid)
     panda_id = Column(UUID(as_uuid=False), ForeignKey("pandas.id", ondelete="CASCADE"), nullable=False)
-    strategy_id = Column(UUID(as_uuid=False), ForeignKey("strategies.id"), nullable=True)
-    status = Column(String(20), nullable=False, default="running")  # running | stopped | completed
+    strategy_id = Column(UUID(as_uuid=False), ForeignKey("strategies.id", ondelete="RESTRICT"), nullable=False)
+    status = Column(String(20), nullable=False, default="running")  # running | completed | stopped
     speed = Column(String(10), nullable=False, default="1x")
-    initial_equity = Column(Numeric(20, 2), nullable=False, default=10000)
-    current_equity = Column(Numeric(20, 2), nullable=False, default=10000)
-    trade_count = Column(Integer, nullable=False, default=0)
-    win_count = Column(Integer, nullable=False, default=0)
-    max_drawdown_pct = Column(Numeric(8, 4), nullable=True)
-    started_at = Column(DateTime(timezone=True), default=datetime.utcnow)
-    ended_at = Column(DateTime(timezone=True), nullable=True)
+    initial_capital = Column(Numeric(20, 2), nullable=False, default=10000)
+    final_equity = Column(Numeric(20, 2), nullable=True)
+    total_trades = Column(Integer, nullable=False, default=0)
+    win_rate = Column(Numeric(5, 4), nullable=True)
+    max_drawdown = Column(Numeric(5, 4), nullable=True)
+    data_source = Column(String(20), nullable=False, default="csv")
+    started_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
 
     panda = relationship("Panda", back_populates="simulations")
 

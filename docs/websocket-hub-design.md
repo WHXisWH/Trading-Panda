@@ -1,7 +1,7 @@
 # WebSocket Hub — Cloudflare Workers + Durable Objects
 
 > 将「实时推送层」从 Vercel（无长连接）迁出，由 **Cloudflare Workers + Durable Objects（DO）** 承载；与既有 **Python Decision Engine（Render）+ Redis Pub/Sub** 对齐。  
-> **最后更新**：2026-05-19
+> **最后更新**：2026-05-20
 
 ---
 
@@ -14,26 +14,32 @@
 | 成本与休眠 | 利用 WebSocket **Hibernation**，无消息时降低 CPU 计费 |
 | 水平扩展 | DO **按用户** 路由（见 §3.3）；用户量大时用 `hash(user_id) % N` 分片，**不按 panda_id 建 DO** |
 
+### 1.1 非目标（已锁定）
+
+| 排除项 | 负责方 |
+|--------|--------|
+| 查询 PostgreSQL、`order_fills` 聚合 | **market-monitor**（VPS + PG）→ `PUBLISH market:tick:*` |
+| 在 Worker/DO 内维护 K 线 bar 状态 | **不采用** |
+| HTTP/WebSocket **直连** market-monitor 进程 | **不采用** — 只经 **Upstash** 与 DE 同级消费 |
+
+**方案甲（MVP）**：前端 **单 WebSocket** `NEXT_PUBLIC_WS_URL`（本 Hub）+ **REST** 历史 K 线；Hub 订 **`market:tick:*` + `panda:*`**。独立 K-line `:9009` 为方案乙（可选）。
+
 ---
 
 ## 2. 拓扑（逻辑）
 
 ```
-浏览器 ──WSS──► Cloudflare Worker（升级 WS）
+浏览器 ──HTTPS──► Vercel（REST：历史 K 线、JWT；可代理 monitor GET /candles）
+浏览器 ──WSS────► Cloudflare Worker → UserHub DO（user:{user_id}）
                     │
-                    └──► Durable Object（id = user:{user_id}，见 §3.3）
-                              │
-                              │  消费 **Upstash Redis**（与 Render 上 DE **同一逻辑库**）
-                              │  Worker 用 REST/SDK；Python 用 TCP `rediss://`
-                              │  频道见 `docs/redis-architecture.md` §5
-                              ▼
-                    推送到该用户的 WebSocket（单用户最多 3 条连接）
+                    │  Upstash SUBSCRIBE：
+                    │    market:tick:*  → 转发 K 线/行情（subscribe.market）
+                    │    panda:*        → 转发熊猫事件（subscribe.simulation）
+                    ▼
+              单连接最多 3 条 socket
 
-浏览器 ──HTTPS──► Vercel Next.js（REST / JWT 签发 / 业务代理）
-                    │
-                    └──► Render FastAPI（Decision Engine）
-                              │
-                              └──► Upstash（**market-monitor** PUBLISH `market:tick:*`；DE PUBLISH `panda:*`）
+market-monitor（VPS，读 PG order_fills）──PUBLISH market:tick:*──┐
+Decision Engine ──SUBSCRIBE market:tick / PUBLISH panda:*────┤──► Upstash
 ```
 
 **原则**：PostgreSQL 与链上仍为权威数据；**Upstash Redis** 为消息总线 + 缓存（见 `docs/redis-architecture.md`）；DO 仅存连接与推送相关的**短时、小体量**状态（见下文）。
@@ -53,7 +59,7 @@
 - 维护**一个用户**在本分片内的 **WebSocket 句柄**（最多 3 条连接，见 `backend-design`）
 - 维护该用户的 **Redis 频道订阅表**（键为 `panda_id`，值为 channel 名列表）
 - 使用 **alarms** 做心跳检测与清理僵死连接
-- 通过 **Upstash** 提供的订阅能力（如 WebSocket Connector / SDK 演进中的等价 API）消费 Pub/Sub；**仅**向已订阅对应 `panda:{id}:*` / `market:tick:*` 的连接转发（频道表见 `docs/redis-architecture.md` §5）
+- 通过 **Upstash** 订阅 **`market:tick:*` + `panda:{id}:*`**，按用户订阅表转发（频道见 `docs/redis-architecture.md` §5）
 - 可选：**小队列**（有界）在客户端背压时暂存；满则按策略丢弃最旧（与 `backend-design` 背压一致）
 
 ### 3.3 DO 实例命名与路由（实现必须遵守）
@@ -123,23 +129,24 @@ market-monitor/  ──PUBLISH market:tick:{pair}──►  Upstash Redis
                                                       │
                         ┌─────────────────────────────┼─────────────────────────────┐
                         ▼                             ▼                             ▼
-                 Decision Engine              WebSocket Hub (CF)              （未来消费者）
-                 SUBSCRIBE（必须）            SUBSCRIBE（按需）                 告警/回放等
-                 → PandaActor 决策            → WSS 推浏览器
-                 PUBLISH panda:*  ──────────► 同上 Hub 订阅 panda:*
+                 Decision Engine              WebSocket Hub (CF)
+                 SUBSCRIBE market:tick（必须） SUBSCRIBE market:tick（必须）
+                 SUBSCRIBE → PandaActor         → WSS 推浏览器 K 线/行情
+                 PUBLISH panda:*  ──────────► SUBSCRIBE panda:* → WSS 推熊猫事件
 ```
 
-Hub 与 DE 是 **同级消费者**，都连 **同一 Upstash 实例**，不是 `Hub ← monitor` 的链式转发。
+Hub 与 DE **同级**消费 `market:tick`；**同一包** `MarketEvent` 保证图表与决策价格一致。
 
-#### Hub 应订哪些频道
+#### Hub 应订哪些频道（方案甲 · MVP）
 
 | 频道 | 是否必须 | 用途 |
 |------|----------|------|
-| `panda:{id}:decision` / `emotion` / `experience` / `diary` | **必须** | 交易、情绪、经验、日记等用户可见实时事件（DE 发布） |
-| `market:tick:{pair}` 或 `market:candles:1m:{pair}` | **可选** | 纯 K 线/行情图；payload 为 monitor 的 `MarketEvent` |
-| `simulation.tick`（经 DE 组包后的事件名） | 视产品 | 含熊猫权益/盈亏的模拟盘 tick — **由 DE 在决策后发布**（通常走 `panda:*` 或约定 channel），Hub **不要**指望从 monitor 拿到熊猫状态 |
+| `market:tick:{pair}` | **必须** | K 线实时更新（`MarketEvent.candle` + 价格）；`subscribe.market` 后转发 |
+| `panda:{id}:decision` / `emotion` / `experience` / `diary` | **必须** | 熊猫实时事件（DE 发布） |
+| `market:candles:*` | 不订 | 与 `market:tick` 重复；除非未来拆瘦 payload |
+| `simulation.tick` | 视产品 | 通常已含在 `panda:*` 或 DE 组包 channel |
 
-前端「熊猫这一拍」应优先消费 **DE 发出的 `panda:*` / `simulation.tick`**；全市场图表再按需订 `market:*`。
+前端：**仅** `NEXT_PUBLIC_WS_URL`；历史 K 线走 **REST**（见 `docs/market-monitor-design.md` §7）。
 
 #### 为何禁止 Hub 直连 market-monitor
 
@@ -155,7 +162,7 @@ Hub 与 DE 是 **同级消费者**，都连 **同一 Upstash 实例**，不是 `
 - **不**在 **DE（backend）进程内**嵌 Pub/Sub 桥接 — DE 与 Hub 均**直连 Upstash**（无独立 `redis-pubsub` 服务）。
 - **不**让 Hub 成为 monitor 的 WebSocket 客户端（无 `wss://market-monitor/...`）。
 
-Hub 通过 **`@upstash/redis`**（REST 长轮询 / Connector）订阅 `panda:*` 与可选 `market:*`，与 DE 读同一 Upstash 逻辑库。
+Hub 通过 **`@upstash/redis`** 订阅 **`panda:*` + `market:tick:*`（或 `market:*`）**，与 DE 读同一 Upstash 逻辑库；转发时 **不**改写 `MarketEvent` 语义（WS `event` 名见 api-spec）。
 
 Upstash 短时不可用时：Hub 重连 + 客户端 REST 拉快照；权威状态仍以 **PostgreSQL** 为准。
 
@@ -181,10 +188,17 @@ Upstash 短时不可用时：Hub 重连 + 客户端 REST 拉快照；权威状�
 
 ---
 
-## 6. 前端与环境变量
+## 6. 前端与环境变量（方案甲）
 
-- 浏览器连接：`{NEXT_PUBLIC_WS_URL}` 为完整 **`wss://…`** 基址，再拼接 path 与 query（与 `docs/api-specification.md` 同步）
-- JWT 仍由 Next.js API Route 签发；WS 握手携带 `?token=` 或与 `Sec-WebSocket-Protocol` 约定一致（实现时二选一并在 api-spec 中写死）
+| 变量 | 用途 |
+|------|------|
+| `NEXT_PUBLIC_WS_URL` | **唯一**浏览器 WSS 基址（Hub：`subscribe.market` + `subscribe.simulation`） |
+| `NEXT_PUBLIC_BACKEND_URL` 或 BFF | 代理 **`GET /candles/{pool}`** 拉历史 K 线（Pub/Sub 无历史） |
+
+- Hub：`NEXT_PUBLIC_WS_URL` + `/ws?token=…`（与 `docs/api-specification.md` 同步）
+- 收到 Redis `market:tick` → 转发 WS 事件（如 `market.tick`），payload 含 `candle`
+- JWT 由 Next 签发；Hub 握手 `?token=`（与 api-spec 写死一种）
+- ~~`NEXT_PUBLIC_KLINE_WS_URL`~~ — **方案乙** 可选，MVP 不用
 
 ---
 

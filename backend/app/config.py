@@ -1,6 +1,11 @@
 """Application configuration — loaded from environment variables."""
+from pathlib import Path
+
 from pydantic_settings import BaseSettings
 from typing import List
+
+_BACKEND_ROOT = Path(__file__).resolve().parents[1]
+_ENV_FILE = _BACKEND_ROOT / ".env"
 
 
 class Settings(BaseSettings):
@@ -40,7 +45,11 @@ class Settings(BaseSettings):
     debug: bool = False
     cors_origins: List[str] = ["http://localhost:3000"]
 
-    model_config = {"env_file": ".env", "case_sensitive": False, "extra": "ignore"}
+    model_config = {
+        "env_file": str(_ENV_FILE),
+        "case_sensitive": False,
+        "extra": "ignore",
+    }
 
 
 settings = Settings()  # type: ignore[call-arg]

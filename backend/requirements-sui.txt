@@ -1,0 +1,4 @@
+# Optional — 链上提交 / 签名验证（MVP 决策引擎可不装）
+# 0.50.x 已从 PyPI 撤回；需 Rust 工具链编译 pysui-fastcrypto
+-r requirements.txt
+pysui>=0.51.2,<0.100
