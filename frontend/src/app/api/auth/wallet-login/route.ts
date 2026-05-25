@@ -1,15 +1,13 @@
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { proxyBackend } from "@/lib/server/backendProxy";
 
-const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:8000";
-
+/** @deprecated Prefer POST /api/auth/connect — kept for backward compatibility */
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const res = await fetch(`${BACKEND_URL}/auth/login`, {
+  return proxyBackend(req, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    backendPath: "auth/login",
+    body,
+    forwardAuth: false,
   });
-  const data = await res.json();
-  return NextResponse.json(data, { status: res.status });
 }

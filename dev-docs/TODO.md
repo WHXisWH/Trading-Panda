@@ -29,9 +29,41 @@
 
 ### 0.3 BFF / Auth / 配置
 
-- [ ] Next.js API Routes 代理模板（`NEXT_PUBLIC_BACKEND_URL` + JWT 转发）
-- [ ] 钱包连接 + zkLogin 会话 → JWT（`POST /api/auth/connect`）
-- [ ] `frontend/.env.example` · `backend/.env.example` 与 DEV_CONTEXT §4 核对
+- [x] Next.js API Routes 代理模板（`NEXT_PUBLIC_BACKEND_URL` + JWT 转发）
+- [x] 钱包连接 + zkLogin 会话 → JWT（`POST /api/auth/connect`）
+- [x] `frontend/.env.example` · `backend/.env.example` 与 DEV_CONTEXT §4 核对
+
+### 0.3.1 钱包验签 + Nonce Redis（Auth 加固）
+
+**Done 标准**：`method=wallet` 的 `/auth/connect` 在 `REDIS_URL` 可用时完成 PersonalMessage 验签 + nonce 一次性消费；伪造签名 / 重放 nonce 返回 `AUTH_INVALID_SIGNATURE` / `AUTH_INVALID_NONCE`；`pytest` 覆盖主路径。
+
+**依赖**：Sprint 0.3（`/auth/connect` 已通）· `REDIS_URL`（Upstash `rediss://`）· 可选 `requirements-sui.txt`（pysui 验签）
+
+**参考**：`docs/api-specification.md` §2–3.1 · `docs/backend-design.md` §2.2 · `docs/redis-architecture.md`（JWT nonce 5min）
+
+#### 契约与 Redis 约定
+
+- [x] 锁定 nonce 流：**服务端签发**（`GET /auth/nonce` → 签 `message` 字段 → connect 提交 `nonce` id）
+- [x] Redis key：`auth:nonce:{nonce}` · TTL **300s** · 值可选绑定 `wallet_address`；connect 时 `GETDEL` 一次性消费
+- [x] `GET /api/auth/nonce`（BFF 代理 `GET /auth/nonce`）返回 `{ nonce, message, expires_in }`
+
+#### 后端
+
+- [x] `app/services/nonce_store.py`：`issue_nonce` · `consume_nonce`（无 `REDIS_URL` → `SERVICE_UNAVAILABLE`）
+- [x] `app/services/wallet_verify.py`：PersonalMessage 验签（PyNaCl + Sui intent BCS，无需 pysui）
+- [x] `POST /auth/connect`（`method=wallet`）：`consume_nonce` → 验签 → `AUTH_INVALID_*`
+- [x] `backend/README.md` §钱包登录；依赖 `PyNaCl`（`requirements.txt`）
+- [x] `tests/test_auth_wallet.py`：有效签 · 错误签名/地址 · nonce 重放 · Redis mock
+
+#### 前端
+
+- [x] `useAuth`：`fetchAuthNonce` → `signPersonalMessage(message)` → `connect`
+- [x] `auth.service.ts`：`fetchAuthNonce()` · `authErrorMessage` + toast
+
+#### 联调与文档
+
+- [x] 文档：DEV_CONTEXT §5 `/auth/nonce` · §9 变更日志 · README 钱包登录流
+- [x] 本地 E2E：配置 `REDIS_URL` 后钱包连接全流程（需本机 Redis/Upstash）
 
 ### 0.4 实时与行情（最小联调）
 
@@ -285,4 +317,4 @@
 | 5 Market | `/market` | Kiosk · `MarketGrid` |
 | 6 Growth | `/leaderboard` · `/achievements` · `/profile` | 各 API + 页 |
 
-*最后更新：2026-05-22 · 与 `frontend-design` v1.1 + 猎手策略 API 规格同步*
+*最后更新：2026-05-25 · Sprint 0.3.1 完成（E2E 勾选待本机 Redis 联调）*

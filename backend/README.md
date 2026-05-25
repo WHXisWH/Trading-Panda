@@ -349,10 +349,20 @@ uvicorn main:app --reload --port 8000
 | `DATABASE_URL` | 是（跑 DB / Actor） | `postgresql+asyncpg://...`；见上文 Supabase 说明 |
 | `REDIS_URL` | L4+ | `rediss://…`，与 market-monitor 同库 |
 | `DEEPSEEK_API_KEY` | 否 | 策略解析 / 观望区 Agent |
-| `JWT_SECRET` | 鉴权 API | 默认 dev 值，生产必换 |
+| `JWT_SECRET` | 鉴权 API | 默认 dev 值，生产必换；与 frontend / websocket **相同** |
+| `REDIS_URL` | **钱包登录** | `GET /auth/nonce` + `POST /auth/connect`（wallet）依赖 Redis 防重放；无 Redis 时返回 `SERVICE_UNAVAILABLE` |
 | `MAX_ACTORS` | 否 | 默认 `100` |
 
 完整列表见 `backend/.env.example`。
+
+### 钱包登录（Sprint 0.3.1）
+
+1. 前端 `GET /api/auth/nonce?wallet_address=0x…` → 后端签发 nonce（Redis `auth:nonce:{id}`，TTL 300s）。
+2. 用户对返回的 **`message`** 字段做 `signPersonalMessage`（UTF-8 字节）。
+3. `POST /api/auth/connect` 提交 `nonce`（id）、`signature`、`wallet_address`。
+4. 后端：`GETDEL` 消费 nonce → **PersonalMessage 验签**（`PyNaCl` + Sui intent BCS，**无需** `pysui`）→ 签发 JWT。
+
+可选 `requirements-sui.txt` 仅用于链上 Merkle 等；钱包验签不依赖它。
 
 ---
 

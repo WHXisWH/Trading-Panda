@@ -37,6 +37,8 @@ class Settings(BaseSettings):
     # Auth
     jwt_secret: str = "dev-jwt-secret-change-in-production-32bytes-xxxx"
     internal_secret: str = "dev-internal-secret-change-in-production"
+    google_client_id: str = ""  # optional; validates zkLogin id_token aud
+    auth_nonce_ttl_seconds: int = 300
 
     # Runtime
     port: int = 8000

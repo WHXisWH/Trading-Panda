@@ -1,11 +1,12 @@
 import type { NextRequest } from "next/server";
 import { proxyBackend } from "@/lib/server/backendProxy";
 
-export async function GET(req: NextRequest) {
-  return proxyBackend(req, { backendPath: "pandas" });
-}
-
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  return proxyBackend(req, { method: "POST", backendPath: "pandas", body });
+  return proxyBackend(req, {
+    method: "POST",
+    backendPath: "auth/refresh",
+    body,
+    forwardAuth: false,
+  });
 }

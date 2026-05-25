@@ -14,6 +14,7 @@ frontend/node_modules/
 frontend/.next/
 frontend/out/
 frontend/.turbo/
+frontend/tsconfig.tsbuildinfo
 
 # ── Python / Backend ─────────────────────────────────────────────────────────
 __pycache__/

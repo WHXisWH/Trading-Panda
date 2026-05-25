@@ -15,6 +15,21 @@ export type {
 export { isApiError } from "./api";
 
 export type {
+  AuthConnectData,
+  AuthConnectRequest,
+  AuthConnectResponse,
+  AuthMeData,
+  AuthMeResponse,
+  AuthMethod,
+  AuthNonceData,
+  AuthNonceResponse,
+  AuthRefreshData,
+  AuthRefreshResponse,
+} from "./auth";
+
+export { authUserFromConnect, authUserFromMe } from "./auth";
+
+export type {
   EmotionState,
   GrowthStage,
   MintResult,

@@ -1,7 +1,11 @@
-// POST /api/checkin — daily check-in
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { proxyBackend } from "@/lib/server/backendProxy";
 
-export async function POST(_req: NextRequest) {
-  // TODO: validate JWT, call backend, return reward
-  return NextResponse.json({ message: "TODO" }, { status: 501 });
+export async function POST(req: NextRequest) {
+  const body = await req.json().catch(() => ({}));
+  return proxyBackend(req, {
+    method: "POST",
+    backendPath: "checkin",
+    body,
+  });
 }

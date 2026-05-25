@@ -2,7 +2,7 @@
 
 > 本文档以「忒修斯之船」方式持续维护：只换木板、不换整船。部署事实变更时同步更新对应段落；任何改动必须在本文末尾「§9 变更日志」追加一行。
 >
-> **最后同步**：2026-05-22（Obsidian design-spec → frontend-design v1.1）
+> **最后同步**：2026-05-25（Sprint 0.3 BFF / Auth）
 
 ---
 
@@ -121,8 +121,9 @@ Blockchain  → Sui Testnet
 | `NEXT_PUBLIC_PACKAGE_ID` | Move 合约 Package ID |
 | `NEXT_PUBLIC_REGISTRY_ID` | PandaRegistry Shared Object ID |
 | `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | zkLogin Google OAuth Client ID |
-| `JWT_SECRET` | JWT 签发密钥（仅服务端，32字节随机hex） |
-| `INTERNAL_SECRET` | frontend→backend 内部调用鉴权（32字节随机hex） |
+| `BACKEND_URL` | BFF 代理用 Python 基址（本地 `http://localhost:8000`；可与 `NEXT_PUBLIC_BACKEND_URL` 相同） |
+| `JWT_SECRET` | JWT 签发密钥（与 backend / websocket **相同** HS256，≥32 字符） |
+| `INTERNAL_SECRET` | BFF→DE 内部路由鉴权（`X-Internal-Key`，与 backend 一致） |
 
 ### backend/.env（不提交，参考 backend/.env.example）
 
@@ -136,7 +137,9 @@ Blockchain  → Sui Testnet
 | `PACKAGE_ID` | Move 合约 Package ID |
 | `REGISTRY_ID` | PandaRegistry Shared Object ID |
 | `WALRUS_API_URL` | Walrus Publisher 节点 URL |
-| `INTERNAL_SECRET` | 与 frontend 共享的内部调用密钥 |
+| `JWT_SECRET` | 与 frontend / websocket Worker **相同**（HS256） |
+| `INTERNAL_SECRET` | 与 frontend 共享（BFF `X-Internal-Key`） |
+| `GOOGLE_CLIENT_ID` | 可选；校验 zkLogin `id_token` 的 `aud` |
 | `PORT` | Render 自动注入，uvicorn 监听此端口 |
 | `MAX_ACTORS` | 最大并发 PandaActor 数（默认 100） |
 
@@ -171,9 +174,12 @@ Blockchain  → Sui Testnet
 ### Next.js API Routes（前端内置 API Gateway）
 
 ```
-POST /api/auth/wallet-login          # Sui 钱包签名登录，签发 JWT
-POST /api/auth/zklogin               # zkLogin Google 验证
-POST /api/auth/refresh               # 刷新 JWT
+GET  /api/auth/nonce                 # 服务端签发登录 nonce（Redis TTL 300s；query `wallet_address` 可选绑定）
+POST /api/auth/connect               # 钱包 / zkLogin 统一连接（wallet：先 nonce 再 PersonalMessage 验签）
+POST /api/auth/refresh               # 刷新 Token
+GET  /api/auth/me                    # 当前用户
+POST /api/auth/wallet-login          # 遗留别名（→ `/auth/login`）
+# zkLogin OAuth 回调页：`/auth/zklogin-callback`（hash 内 id_token）
 
 GET  /api/pandas                     # 当前用户的熊猫列表
 GET  /api/pandas/[id]                # 单只熊猫详情
@@ -293,3 +299,7 @@ Package ID：**0x9b26dfdddef52c980dea0989a22c751ee4c4551d9e39708ab9503990cc7b971
 | 2026-05-22 | **Sprint 0.1 契约与类型**：前端拆分 `types/{strategy,panda,trading,api}.ts`（`DecisionStep.rule_hits`、`ParsedStrategyLayers`、`StrategyFeedRequest`）；后端 `app/schemas/`（Pydantic + `ApiErrorCode`/`STRATEGY_*`/`PANDA_*`）；`rule_engine.rule_is_compilable`；`tests/test_schemas.py` 9 项通过；`npm run type-check` 绿 | Sprint 0.1 Done；Epic 2 策略 API 可接 schema；BFF 错误码透传待 0.3 |
 | 2026-05-25 | **Sprint 0.2 数据库与迁移**：Alembic 首版 `001_initial_core`（`users`·`pandas`·`strategies`·`strategy_history`·`simulations`·`trades`）；`strategy_history` 对齐残影表（`ghost_weight`/`strategy_hash`）；`Simulation` 字段对齐 `database-schema.md`（`initial_capital`/`total_trades`/`final_equity`）；移除启动时 `create_all`；`scripts/verify_db.py`·`scripts/seed_dev.py`；`/health` 真实 `SELECT 1`；`tests/test_db_schema.py` | 部署/本地须 `alembic upgrade head` 后再启 backend；经验/成就等 12 表仍待下一迁移 |
 | 2026-05-25 | **backend/README.md 本地指南**：新增 venv 分步（0–8 步）、Supabase Direct/Pooler `DATABASE_URL`、Alembic/`scripts` 用法、排障表与一条龙命令 | 新同学按 README 可在虚拟环境完成迁移+seed+`uvicorn`；联调章节 L1–L5 保留 |
+| 2026-05-25 | **Sprint 0.3 BFF / Auth**：`frontend/src/lib/server/backendProxy.ts` 统一代理（`BACKEND_URL`/`NEXT_PUBLIC_BACKEND_URL`、JWT、`X-Internal-Key`）；`POST /api/auth/connect|refresh`、`GET /api/auth/me`；后端 `/auth/connect|refresh|me`（钱包+zkLogin Google tokeninfo）；`useAuth`·`useZkLogin`·`/auth/zklogin-callback`；`.env.example` 与 §4 对齐（`JWT_SECRET`/`GOOGLE_CLIENT_ID`） | 本地：`JWT_SECRET` 三端一致 → 连钱包或 Google 登录拿 token → Hub `?token=` |
+| 2026-05-25 | **Sprint 0.3.1 钱包验签 + Nonce Redis**：`GET /auth/nonce` 服务端签发；Redis `auth:nonce:*` TTL 300s 一次性消费；`wallet_verify.py`（PyNaCl + Sui PersonalMessage BCS，无需 pysui）；`useAuth` 先 nonce 再签名；`tests/test_auth_wallet.py` | 钱包登录 **必须** 配置 `REDIS_URL`；伪造签名/重放 nonce → `AUTH_INVALID_*` |
+| 2026-05-25 | **ZkLogin 钱包签名（flag 5）**：BFF `POST /api/auth/connect` 用 `@mysten/sui/verify` + `sui_verifyZkLoginSignature`（testnet fullnode）验签后带 `X-Internal-Key`+`X-BFF-Wallet-Verified` 调后端；`bff_auth.py`；移除 Navbar localhost 提示条 | Slush/zkLogin 账户「签名登录」不再 401；`frontend/.env` 须 `INTERNAL_SECRET` 与 backend 一致 |
+| 2026-05-25 | **钱包连接后自动登录**：`WalletAuthSync` 在连接且无 JWT 时自动 `loginWithWallet`；移除 Navbar「签名登录」；`walletLoginSession` 全局 in-flight 状态供 UI | 连接钱包 → 一次签名弹窗 → 登录成功；失败点「连接钱包」可 `resetWalletLoginState` 重试 |
