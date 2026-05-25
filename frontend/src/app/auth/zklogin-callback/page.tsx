@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { parseIdTokenFromCallbackHash } from "@/lib/sui/zkLogin";
 import { useZkLogin } from "@/hooks/useZkLogin";
+import { toast } from "sonner";
 
 export default function ZkLoginCallbackPage() {
   const router = useRouter();
@@ -18,7 +19,10 @@ export default function ZkLoginCallbackPage() {
       return;
     }
     completeWithIdToken(idToken)
-      .then(() => router.replace("/"))
+      .then(() => {
+        toast.success("登录成功");
+        router.replace("/");
+      })
       .catch(() => setMessage("登录失败，请返回首页重试"));
   }, [completeWithIdToken, router]);
 

@@ -26,7 +26,6 @@ export function WalletAuthSync() {
 
   useEffect(() => {
     if (!account) {
-      clearAuth();
       clearWalletLoginFailure();
       networkToastShown.current = false;
       return;
