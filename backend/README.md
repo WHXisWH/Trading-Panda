@@ -151,35 +151,118 @@ bash scripts/migrate.sh upgrade head
 
 ### 第 5 步：验证数据库与种子数据
 
+在 `alembic upgrade head` 之后、启动 `uvicorn` 之前执行（均在 `backend/` 目录）：
+
 ```bash
 python scripts/verify_db.py
 python scripts/seed_dev.py
 ```
 
-**`verify_db.py` 期望输出：**
+两个脚本的职责、写入内容与用法见下节 **[开发脚本说明](#开发脚本说明scripts)**。
+
+> 须在 `backend/` 下运行；`scripts/_bootstrap.py` 会把项目根加入 `sys.path`。若报 `No module named 'app'`，说明当前目录不是 `backend/`。
+
+---
+
+## 开发脚本说明（scripts/）
+
+`backend/scripts/` 下有两个**仅用于本地开发**的辅助脚本，读取 `backend/.env` 中的 `DATABASE_URL`（与 FastAPI、Alembic 相同）。**不要在生产环境执行 `seed_dev.py`。**
+
+| 脚本 | 是否写库 | 典型时机 |
+|------|----------|----------|
+| `verify_db.py` | 否（只读检查） | 迁移后、排查连接/缺表 |
+| `seed_dev.py` | 是（插入 dev fixture） | 验证通过后、需要联调 Actor 前 |
+
+```bash
+cd backend
+source .venv/bin/activate
+python scripts/verify_db.py   # 先验收
+python scripts/seed_dev.py    # 再灌测试数据（可选但推荐）
+```
+
+---
+
+### `scripts/verify_db.py` — 数据库连通与 Schema 验收
+
+**作用**：用一条命令确认「能连上 PostgreSQL」且「Sprint 0.2 迁移已真正落表」，避免带着错误的 `DATABASE_URL` 或漏跑迁移就去启服务。
+
+**会做哪些检查**（按顺序）：
+
+1. **连接探测**：对当前库执行 `SELECT 1`，输出 `ping: ok`。
+2. **核心表是否存在**：在 `information_schema` 中检查 6 张表是否都在 `public` schema 下：
+   - `users` · `pandas` · `strategies` · `strategy_history` · `simulations` · `trades`
+3. **迁移版本**：读取 `alembic_version` 表中的 `version_num`（期望为 `001_initial_core`）。
+
+**不会做什么**：不插入、不修改、不删除任何业务数据；不替代 `pytest`；不检查 Redis。
+
+**退出码**：
+
+| 码 | 含义 |
+|----|------|
+| `0` | 全部检查通过 |
+| `1` | 未配置 `DATABASE_URL` |
+| `2` | 连接成功但某张核心表 `MISSING`（通常需再跑 `python -m alembic upgrade head`） |
+
+**期望输出示例**：
 
 ```text
 ping: ok
 table users: ok
 table pandas: ok
-...
+table strategies: ok
+table strategy_history: ok
+table simulations: ok
+table trades: ok
 alembic_version: 001_initial_core
 ```
 
-**`seed_dev.py` 期望输出（记下 ID，供 L4/L5 联调）：**
+任一表为 `MISSING` 时脚本会以退出码 `2` 结束。
+
+---
+
+### `scripts/seed_dev.py` — 本地开发用最小业务数据
+
+**作用**：在空库（或尚无 dev 用户）里写入**一套可跑通决策引擎联调**的最小数据，省去「先铸 NFT、再喂策略、再开模拟盘」的完整链上流程。适合 L4/L5：`POST /engine/actors/{panda_id}/start` 需要库里已有熊猫、活跃策略和模拟会话。
+
+**会写入哪些行**（首次成功时）：
+
+| 表 | 内容概要 |
+|----|----------|
+| `users` | 固定钱包 `0xdev_seed_user_trading_panda_local_only`，昵称 `Dev Trader` |
+| `pandas` | 一只 mock 熊猫（固定 `sui_object_id`、五轴性格、情绪 `focused`） |
+| `strategies` | 一条**激活**策略：`parsed_json` 含 RSI&lt;30 买入规则，`proficiency=15` |
+| `simulations` | 一条 `status=running` 的模拟盘，`initial_capital=10000`，`data_source=deepbook` |
+
+**不会写入**：`trades`、链上真实 Object ID、其他用户的数据。
+
+**幂等性**：若已存在上述 dev 钱包用户，脚本**不会重复插入**，只打印 `seed: already exists` 以及已有的 `user_id` / `panda_id`（退出码 `0`）。可安全多次执行。
+
+**首次成功时的输出**（请保存 `panda_id` 与 `simulation_id`，供下文 L4 联调）：
 
 ```text
 seed: created dev fixtures
-  user_id=...
-  panda_id=...
-  strategy_id=...
-  simulation_id=...
+  user_id=<uuid>
+  panda_id=<uuid>
+  strategy_id=<uuid>
+  simulation_id=<uuid>
   wallet=0xdev_seed_user_trading_panda_local_only
 ```
 
-再次执行 `seed_dev.py` 会显示 `seed: already exists`（幂等）。
+**与 `PandaActor` 的关系**：
 
-> 脚本须在 `backend/` 下运行；已内置 `scripts/_bootstrap.py` 自动加入 `app` 模块路径。若报 `No module named 'app'`，确认当前目录为 `backend/` 而非仓库根目录。
+- `hydrate()` 需要：`pandas` 行 + `strategies.is_active=true` 且含 `signal_rules`。
+- 写 `trades` 需要合法的 `simulation_id`（外键）；前端若随机生成 UUID 而库中无对应 `simulations` 行，决策能跑但落库会失败——seed 的目的就是提供**稳定、已知**的 `simulation_id`。
+
+**使用示例**（启动 Actor）：
+
+```bash
+export PANDA_ID="<seed 输出的 panda_id>"
+export SIM_ID="<seed 输出的 simulation_id>"
+
+curl -X POST "http://localhost:8000/engine/actors/${PANDA_ID}/start" \
+  -H "Content-Type: application/json" \
+  -d "{\"panda_id\":\"${PANDA_ID}\",\"simulation_id\":\"${SIM_ID}\",\"speed\":\"1x\"}"
+```
 
 ---
 
