@@ -6,11 +6,7 @@ import { PositionList } from "@/components/trading/PositionList";
 import { OrderBook } from "@/components/trading/OrderBook";
 import { TradeForm } from "@/components/trading/TradeForm";
 import { TradeHistory } from "@/components/trading/TradeHistory";
-import {
-  MOCK_POSITIONS,
-  MOCK_TRADE_HISTORY,
-  generateOrderBook,
-} from "@/lib/mockData";
+import { MOCK_POSITIONS, generateOrderBook } from "@/lib/mockData";
 
 export default function TradingPage({ params }: { params: { id: string } }) {
   const { asks, bids } = generateOrderBook();
@@ -69,7 +65,7 @@ export default function TradingPage({ params }: { params: { id: string } }) {
         <aside className="space-y-4">
           <TradeForm />
           <div className="card-white p-4">
-            <TradeHistory items={MOCK_TRADE_HISTORY} />
+            <TradeHistory items={[]} />
           </div>
         </aside>
       </div>

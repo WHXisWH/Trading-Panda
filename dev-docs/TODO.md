@@ -124,65 +124,97 @@
 
 ### 2.1 契约
 
-- [ ] 实现 `POST /api/panda/:id/strategy`（`parsed` 优先，跳过 LLM）
-- [ ] 实现 `POST /api/panda/:id/strategy/validate`（试编译 + Step1 预览）
-- [ ] 可选：`raw_text` + `parse_with_llm` 路径（DeepSeek，5/min 限流）
+- [x] 实现 `POST /api/panda/:id/strategy`（`parsed` 优先，跳过 LLM）
+- [x] 实现 `POST /api/panda/:id/strategy/validate`（试编译 + Step1 预览）
+- [x] 可选：`raw_text` + `parse_with_llm` 路径（DeepSeek，5/min 限流）
 
 ### 2.2 后端
 
-- [ ] `strategy.py`：Pydantic 校验 · RuleEngine 试编译 · 至少 1 条有效规则
-- [ ] deactivate 旧策略 · `strategy_history` · `ghost_weight=0.40`
-- [ ] `strategy_hash = SHA256(parsed_json)` · 性格匹配度（规则表，非必须 LLM）
-- [ ] 无 `raw_text` 时生成摘要写入 `strategies.raw_text`
+- [x] `strategy.py`：Pydantic 校验 · RuleEngine 试编译 · 至少 1 条有效规则
+- [x] deactivate 旧策略 · `strategy_history` · `ghost_weight=0.40`
+- [x] `strategy_hash = SHA256(parsed_json)` · 性格匹配度（规则表，非必须 LLM）
+- [x] 无 `raw_text` 时生成摘要写入 `strategies.raw_text`
 
 ### 2.3 前端
 
-- [ ] `StrategyBuilder`：哲学 + 规则行（RSI/MA20/MACD/PRICE）+ 仓位/止损滑块
-- [ ] `StrategyTemplates` 四套模板 · 行内校验 · 软警告黄条
-- [ ] `StrategyTextInput` 折叠（进阶 LLM）· 解析结果灌入 Builder
-- [ ] `feedStrategy` / `validateStrategy` service + mutations
-- [ ] 匹配度展示 ·「教给熊猫」主按钮
+- [x] `StrategyBuilder`：哲学 + 规则行（RSI/MA20/MACD/PRICE）+ 仓位/止损滑块
+- [x] `StrategyTemplates` 四套模板 · 行内校验 · 软警告黄条
+- [x] `StrategyTextInput` 折叠（进阶 LLM）· 解析结果灌入 Builder
+- [x] `feedStrategy` / `validateStrategy` service + mutations
+- [x] 匹配度展示 ·「教给熊猫」主按钮
 
 ### 2.4 联调与验收
 
-- [ ] 提交 2 买 2 卖规则 → GET strategy 回读一致
-- [ ] 无效 indicator → `STRATEGY_RULE_INVALID`
-- [ ] 换策后 simulation 使用新 `active_strategy`；ghost 在 Step4 可观测
-- [ ] pytest：`test_rule_engine` · `test_verdict` 仍绿
+- [x] 提交 2 买 2 卖规则 → GET strategy 回读一致
+- [x] 无效 indicator → `STRATEGY_RULE_INVALID`
+- [x] 换策后 simulation 使用新 `active_strategy`；ghost 在 Step4 可观测
+- [x] pytest：`test_rule_engine` · `test_verdict` 仍绿
 
 ---
 
 ## Epic 3 — Dashboard 模拟盘（核心体验）
 
-**Done 标准**：选池后启动模拟 → K 线 + 右侧决策链 WS 更新 → 熊猫自动 decision/trade；布局符合 Obsidian 180|flex|170。
+**Done 标准**：用户选好 DeepBook 池 → 点击 **「开始训练」** 后熊猫才消费 tick 并跑八步管线 → 主区 K 线为**所选池真实行情**（REST 历史 + WS 增量）→ 右侧 **上半：实时决策链（WS）**、**下半：交易历史列表** → 布局 Obsidian **180 | flex | 170**。
 
-**依赖**：Epic 2 · Sprint 0 WS · market-monitor
+**依赖**：Epic 2 · Sprint 0 WS · market-monitor（`DEEP/SUI` · `SUI/DBUSDC`）
+
+### 产品共识（2026-05-25 讨论锁定）
+
+| 项 | 结论 |
+|----|------|
+| **何时练** | **会话制**：仅用户点 **「开始训练」** 后 `ActorManager.start`；未训练时 monitor 仍推 `market:tick`，但该熊猫不决策、不写 `trades` |
+| **结束训练** | **「暂停训练」**（`simulation/stop`）释放 `is_trading` 锁；非「关页面即停」的隐含行为需在文案写清 |
+| **行情 vs 成交** | 行情来自 DeepBook（monitor）；买卖为链下 paper trade（MVP 不向 DeepBook 下单） |
+| **MVP 池** | 仅 **DeepBook Testnet 两池**：`DEEP/SUI`、`SUI/DBUSDC`（与 `DEEPBOOK_POOLS` 一致）；UI 禁止 Cetus/假池名 |
+| **右侧决策链** | **实时 WS**（`subscribe.simulation` → `decision` / `emotion` / `trade_executed`）；训练中展示最近一笔评估/成交摘要，可展开 8 步 |
+| **交易历史** | 右侧栏 **下半部分**；列表来自 `GET trades`（或 WS `trade_executed` 增量）；点击某笔可展开该笔 `decision_details`（8 步回顾，与实时区二选一展示或折叠切换） |
+| **池切换位置** | **ChartHeader 旁**（symbol / timeframe 一行），**不在**主区底栏；底栏仅 **速度控制 + 开始/暂停训练** |
+| **移除 mock** | Dashboard 不得使用 `MOCK_DECISIONS`、`generateCandles`、占位「Cetus BTC/SUI」；`/trading/[id]` 非 MVP 主路径（Phase 2） |
+
+**右侧栏布局（170px）**：
+
+```
+┌─ 决策链（上，flex-1）─┐  ← WS 实时：最近 decision + 展开 8 步
+├─ 交易历史（下）──────┤  ← REST/WS：成交列表；点击行 → 8 步回顾
+└──────────────────────┘
+```
 
 ### 3.1 契约
 
-- [ ] `POST /api/panda/:id/simulation/start|stop` · `GET .../status`
-- [ ] WS：`decision` · `emotion` · `trade_executed` 事件形状与 Hub 一致
+- [x] `POST /api/panda/:id/simulation/start|stop` · `GET .../status`（`panda_simulation.py` + BFF）
+- [x] `simulation/start` body：`speed` · `subscribed_pools[]` · `data_source: deepbook`
+- [x] `GET /api/panda/:id/trades`（含 `decision_details`）
+- [x] WS Hub：`decision`/`emotion`/`trade_executed`（`panda:{id}:trade`）
+- [x] 行情 WS + REST candles 同源
 
 ### 3.2 后端（DE）
 
-- [ ] `ActorManager` start/stop；`PandaActor` hydrate 从 DB
-- [ ] 订阅 `market:tick:{pair}` · 八步管线 · publish `panda:{id}:decision|emotion`
-- [ ] 模拟成交写 `trades`（后续 Epic：持仓账本 realized PnL 对齐 schema）
-- [ ] `POST /engine/market/tick` 内部注入（联调）
+- [x] `ActorManager` 仅 `simulation/start` 后 start；`subscribed_pools` 传入 Actor
+- [x] `PandaActor.hydrate` + `subscribed_assets` 过滤
+- [x] 八步管线 + `publish decision|emotion|trade_executed`
+- [x] 模拟成交写 `trades`（`decision_details.steps`）
+- [x] `pandas.is_trading` / simulation `status` 与 start/stop 同步
+- [ ] `POST /engine/market/tick` 内部注入（联调，可选）
 
 ### 3.3 前端
 
-- [ ] Dashboard 三栏：`PandaSidebar` 180px · `DecisionChain` 170px · 主区 Chart + Account/Strategy 并排
-- [ ] `CandlestickChart` REST 历史 + WS 增量；买卖标记；成交量 sub-chart
-- [ ] `DecisionChain`：最近决策 · 8 步展开 · **Step1 规则命中明细**
-- [ ] `SpeedControl` [1×][10×][100×][跳到结果] · `PoolLabel` → `/pools`
-- [ ] `useSimulationStore` + Hub `subscribe.simulation`
-- [ ] 情绪仅 emoji/颜色，不暴露数值（PRD C4）
+- [x] 三栏布局：`PandaSidebar` 180px · 主区 · 右侧 170px（`DashboardRightPanel` 上决策 + 下历史）
+- [x] **ChartHeader**：当前池名（`DEEP/SUI` ▼）· 价格/涨跌；池切换在 **此行**，改池后重拉 REST + 重订 `subscribe.market`
+- [x] `CandlestickChart`：`useMarketWs` + REST + 成交量柱 + K 线买卖标记（`trades`）
+- [x] **训练控制**：主区底栏 **仅** `SpeedControl` + **「开始训练」/「暂停训练」**
+- [x] `useSimulationWs`：`subscribe.simulation`；收 `decision` / `emotion` / `trade_executed`
+- [x] **DecisionChain（右侧上）**：绑定 WS 实时；展开 8 步
+- [x] **TradeHistory（右侧下）**：`GET trades` 列表；点击行回顾 `decision_details`
+- [x] `AccountPanel` 接 `simulation/status`（权益、持仓、盈亏、成交笔数）
+- [x] 情绪仅 emoji/颜色，不暴露数值（PRD C4）
+- [x] 清理：Dashboard 移除 `MOCK_DECISIONS`、Cetus 假池文案
 
 ### 3.4 联调与验收
 
-- [ ] 本地：monitor → Redis → DE → Hub → 浏览器单连接
-- [ ] 1x 模拟跑 ≥10 tick，决策链与 trades 可查
+- [ ] 未点「开始训练」：K 线随所选池更新（market WS），**无**新 `trades`、**无** panda decision 推送
+- [ ] 点「开始训练」后：monitor → Redis → DE Actor → Hub → 浏览器；≥10 tick 有 decision；有成交则有 `trades` 行
+- [ ] 切换池：ChartHeader 换池 → K 线与 `market:tick` 频道变为新池；训练中仅新池 tick 驱动决策（若已订阅过滤）
+- [ ] 右侧：上半随 WS 更新；下半列表与 DB `trades` 一致
 - [ ] 快进 instant 不调 LLM（PRD）
 - [ ] DEV_CONTEXT：Render/WS URL 如有部署则更新
 
@@ -190,29 +222,38 @@
 
 ## Epic 4 — 交易池选择 Pools
 
-**Done 标准**：`/pools` 多选 DeepBook 池 → 确认 → 写回熊猫订阅 → Dashboard 显示当前池。
+**Done 标准**：MVP 仅暴露 **DeepBook 两池**；Dashboard ChartHeader 可切换当前池；`/pools` 用于首次/多池配置（受 focus 限制）→ 写回 `subscribed_pools` → 训练 start 使用该配置。
 
-**依赖**：Epic 3 · market-monitor 池列表
+**依赖**：Epic 3（池名与 WS/REST 已打通）
+
+### 产品共识
+
+- **数据源唯一**：DeepBook v3 Testnet；`market-monitor` 的 `DEEPBOOK_POOLS=DEEP/SUI,SUI/DBUSDC`
+- **Dashboard 主路径**：ChartHeader 下拉切换「当前看盘/训练池」
+- **`/pools` 页**：mint 后可选入口、或 focus 允许多池时的批量勾选；**不是**唯一改池方式
 
 ### 4.1 契约
 
-- [ ] `PUT /api/panda/:id/pools` 或 simulation start 携带 `subscribed_pools[]`
-- [ ] 池列表 API：monitor `/health` 或 BFF 聚合静态+动态
+- [x] `PUT` / `GET /api/panda/:id/pools`
+- [x] `simulation/start` 优先 body 池，否则 `pandas.subscribed_pools`
+- [x] BFF `GET /api/market/health`
 
 ### 4.2 后端
 
-- [ ] 持久化 `pandas.subscribed_assets` / simulation 配置
-- [ ] DE 按 focus 规则限制订阅数量（PRD）
+- [x] Alembic `002` · `pandas.subscribed_pools` JSONB
+- [x] `panda_pools.py` · focus 上限（cap 2）
+- [x] 训练中禁止改池；Actor `set_subscribed_pools`
 
 ### 4.3 前端
 
-- [ ] `/pools`：`PoolListItem` 72px · 多选 · 底部 ConfirmBar 50px
-- [ ] DeepBook 池「推荐」标签 · 空态/骨架屏
-- [ ] 确认后回 Dashboard 并刷新订阅
+- [x] `/pools` DeepBook 两池 + enrichment + ConfirmBar（无 MOCK_POOLS）
+- [x] Dashboard ChartHeader ↔ `PUT pools`
+- [x] 开始训练用已保存 `subscribed_pools`
 
 ### 4.4 联调与验收
 
-- [ ] 选 1–2 池 → Actor 只消费对应 `market:tick`
+- [ ] 手测：选池 → Dashboard → 训练仅订阅所选池
+- [ ] `alembic upgrade head`
 
 ---
 
@@ -312,9 +353,9 @@
 |------|----------|----------------|
 | 1 Mint | `/onboarding` → `/mint` → `/dashboard/[id]` | `contracts/` · `app/mint/` · `panda.service` |
 | 2 Strategy | Dashboard StrategyBuilder → 教给熊猫 | `strategy.py` · `StrategyBuilder` · `rule_engine.py` |
-| 3 Dashboard | 模拟盘运行 + WS | `panda_actor.py` · `websocket/` · `dashboard/[id]` |
-| 4 Pools | `/pools` → 确认 | `app/pools/` · monitor 池列表 |
+| 3 Dashboard | 选池 → **开始训练** → K 线真行情 + 右侧实时决策/历史 | `panda_actor.py` · `useMarketWs` · `useSimulationWs` · `dashboard/[id]` |
+| 4 Pools | ChartHeader 或 `/pools` → 两 DeepBook 池 | `DEEP/SUI` · `SUI/DBUSDC` · `pandas.subscribed_assets` |
 | 5 Market | `/market` | Kiosk · `MarketGrid` |
 | 6 Growth | `/leaderboard` · `/achievements` · `/profile` | 各 API + 页 |
 
-*最后更新：2026-05-25 · Epic 1.3–1.5 Mint 后端/前端/验收完成*
+*最后更新：2026-05-25 · Epic 4 Pools（DeepBook 两池、持久化订阅、/pools 页）*

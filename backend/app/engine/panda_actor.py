@@ -81,6 +81,9 @@ class PandaActor:
         self.state.active_strategy = ctx["strategy"]
         self.state.experience = ctx["experience"]
         self.state.emotion = ctx["emotion"]
+        self._ghosts = GhostManager()
+        for ghost in ctx.get("ghosts") or []:
+            self._ghosts.ghosts.append(ghost)
         self._emotion_ctx = EmotionContext(
             current=ctx["emotion"],
             talent=int(ctx["personality"].get("talent", 0)),
@@ -334,6 +337,7 @@ class PandaActor:
                 decision_details={"steps": result.steps, "zone": result.zone},
             )
             session.add(trade)
+            await session.flush()
 
             sim_result = await session.execute(
                 select(Simulation).where(Simulation.id == self.state.simulation_id)
@@ -348,6 +352,28 @@ class PandaActor:
                 {"asset": event.asset, "pnl_pct": pnl_pct},
             )
             await session.commit()
+
+            if self._publisher:
+                await self._publisher.publish_trade_executed(
+                    self.state.panda_id,
+                    {
+                        "id": trade.id,
+                        "panda_id": self.state.panda_id,
+                        "simulation_id": self.state.simulation_id,
+                        "strategy_id": strategy_id,
+                        "asset": trade.asset,
+                        "action": trade.action,
+                        "price": float(trade.price),
+                        "quantity": float(trade.quantity),
+                        "position_size_pct": float(trade.position_size_pct),
+                        "final_score": float(trade.final_score),
+                        "emotion_at_trade": trade.emotion_at_trade,
+                        "pnl_pct": float(trade.pnl_pct) if trade.pnl_pct is not None else None,
+                        "decision_details": trade.decision_details,
+                        "created_at": trade.created_at.isoformat() if trade.created_at else None,
+                        "pair": event.pair,
+                    },
+                )
 
         if self.state.trade_count % settings.merkle_batch_size == 0:
             logger.info(

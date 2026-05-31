@@ -19,7 +19,7 @@ export function AppShell({
   return (
     <div
       className={clsx(
-        "flex min-h-[calc(100dvh-var(--navbar-height))] flex-col",
+        "flex min-h-[calc(100dvh-var(--navbar-height))] flex-col overflow-x-clip",
         variant === "full" && "min-h-0 flex-1",
         className,
       )}

@@ -6,7 +6,7 @@ const ASSET_TO_PAIR: Record<string, string> = {
   SUI: "SUI-USDC",
 };
 
-const PANDA_SUFFIXES = ["decision", "emotion", "experience", "diary"] as const;
+const PANDA_SUFFIXES = ["decision", "emotion", "experience", "diary", "trade"] as const;
 
 export function assetToPair(asset: string): string {
   const upper = asset.toUpperCase();
@@ -45,7 +45,7 @@ export function channelsForMarketSubscribe(
 }
 
 export function parsePandaIdFromChannel(channel: string): string | null {
-  const match = /^panda:([^:]+):(decision|emotion|experience|diary)$/.exec(channel);
+  const match = /^panda:([^:]+):(decision|emotion|experience|diary|trade)$/.exec(channel);
   return match ? match[1] : null;
 }
 

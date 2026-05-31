@@ -12,7 +12,7 @@ interface Props {
 export function SimulationControls({ active = "1×", onChange }: Props) {
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <span className="text-[11px] text-ink-500">⏱ 模拟速度</span>
+      <span className="text-[11px] text-ink-500">⏱ 训练速度</span>
       {SPEEDS.map((s) => (
         <button
           key={s}

@@ -1,5 +1,6 @@
 /** Panda types — API wire + app models */
 
+import type { DeepbookPool } from "@/lib/constants/deepbookPools";
 import type { Philosophy } from "./strategy";
 
 export type EmotionState =
@@ -74,6 +75,9 @@ export interface PandaDetailApi {
   walrus_sync_status: WalrusSyncStatus;
   generation: number;
   active_strategy_id?: string | null;
+  subscribed_pools?: DeepbookPool[];
+  primary_pool?: DeepbookPool;
+  max_pools?: number;
   created_at: string;
   updated_at: string;
 }

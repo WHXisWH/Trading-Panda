@@ -4,8 +4,9 @@ from __future__ import annotations
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import Panda, Strategy
+from app.db.models import Panda, Strategy, StrategyHistory
 from app.engine.experience_engine import ExperienceEngine
+from app.engine.strategy_ghost import StrategyGhost
 
 
 async def load_actor_context(session: AsyncSession, panda_id: str) -> dict | None:
@@ -49,6 +50,35 @@ async def load_actor_context(session: AsyncSession, panda_id: str) -> dict | Non
 
     max_assets = 1 + personality["focus"] // 25
 
+    ghosts: list[StrategyGhost] = []
+    hist_result = await session.execute(
+        select(StrategyHistory)
+        .where(StrategyHistory.panda_id == panda_id)
+        .order_by(StrategyHistory.switched_at.desc())
+        .limit(3)
+    )
+    for entry in hist_result.scalars().all():
+        if float(entry.ghost_weight or 0) <= 0:
+            continue
+        strat_lookup = await session.execute(
+            select(Strategy)
+            .where(
+                Strategy.panda_id == panda_id,
+                Strategy.strategy_hash == entry.strategy_hash,
+            )
+            .order_by(Strategy.created_at.desc())
+            .limit(1)
+        )
+        old_row = strat_lookup.scalar_one_or_none()
+        if old_row is None:
+            continue
+        ghosts.append(
+            StrategyGhost(
+                parsed_json=old_row.parsed_json,
+                trades_since_switch=int(entry.trades_since_switch),
+            )
+        )
+
     return {
         "personality": personality,
         "strategy": strategy,
@@ -56,4 +86,5 @@ async def load_actor_context(session: AsyncSession, panda_id: str) -> dict | Non
         "emotion": panda.emotion_state or "focused",
         "max_assets": max_assets,
         "strategy_id": strategy_row.id if strategy_row else None,
+        "ghosts": ghosts,
     }

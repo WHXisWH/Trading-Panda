@@ -71,7 +71,7 @@
     animation: breathe 3s ease-in-out infinite;
   }
 
-  /* Dashboard 三栏：180px | flex | 170px（Obsidian） */
+  /* Dashboard v1（遗留类名，新页用 dashboard-layout-v2） */
   .dashboard-layout {
     display: flex;
     flex-direction: column;
@@ -82,6 +82,98 @@
     .dashboard-layout {
       flex-direction: row;
       align-items: flex-start;
+    }
+  }
+
+  /* Dashboard v2：Grid + minmax(0) 防止横向撑破视口 */
+  .dashboard-page {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+    box-sizing: border-box;
+  }
+
+  .dashboard-layout-v2 {
+    display: flex;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .dashboard-col-left,
+  .dashboard-col-main,
+  .dashboard-col-right {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .dashboard-col-main {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .dashboard-strategy-scroll {
+    min-width: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-right: 2px;
+  }
+
+  .dashboard-main-footer {
+    min-height: 200px;
+    max-height: 38vh;
+    min-width: 0;
+  }
+
+  /* 平板：左栏 + 主栏（账户在主栏内） */
+  @media (min-width: 1024px) and (max-width: 1279.98px) {
+    .dashboard-layout-v2 {
+      display: grid;
+      align-items: start;
+      grid-template-columns: minmax(0, clamp(200px, 20vw, 220px)) minmax(0, 1fr);
+      column-gap: var(--spacing-md);
+      min-height: calc(100dvh - var(--navbar-height) - 2rem);
+    }
+
+    .dashboard-col-left {
+      max-height: calc(100dvh - var(--navbar-height) - 2rem);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+  }
+
+  /* 桌面：三栏（左熊猫 · 主区 · 右账户+策略） */
+  @media (min-width: 1280px) {
+    .dashboard-layout-v2 {
+      display: grid;
+      align-items: start;
+      grid-template-columns:
+        minmax(0, clamp(220px, 20vw, 280px))
+        minmax(0, 1fr)
+        minmax(0, clamp(260px, 24vw, 300px));
+      column-gap: var(--spacing-md);
+      min-height: calc(100dvh - var(--navbar-height) - 2rem);
+    }
+
+    .dashboard-col-left,
+    .dashboard-col-right {
+      max-height: calc(100dvh - var(--navbar-height) - 2rem);
+      overflow: hidden;
+    }
+
+    .dashboard-col-right {
+      display: flex;
+      flex-direction: column;
+    }
+  }
+
+  @media (max-width: 1023px) {
+    .dashboard-main-footer {
+      max-height: none;
     }
   }
 }
@@ -176,4 +268,9 @@
 
 .animate-glow-pulse {
   animation: glowPulse 2s ease-in-out infinite;
+}
+
+.pixel-panda svg {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }

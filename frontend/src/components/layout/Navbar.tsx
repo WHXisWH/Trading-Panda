@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { PandaSelector } from "@/components/panda/PandaSelector";
 import { WalletButton } from "@/components/layout/WalletButton";
 import { APP_SUI_NETWORK } from "@/lib/sui/network";
+import { isPandaLabEnabled } from "@/lib/pandaLab";
 
 const NAV_LINKS = [
   { href: "/", label: "首页" },
@@ -17,19 +18,34 @@ const NAV_LINKS = [
   { href: "/achievements", label: "成就" },
 ];
 
+const LAB_NAV = { href: "/panda-lab", label: "试装实验室" } as const;
+
 const NETWORK_LABEL = APP_SUI_NETWORK === "testnet" ? "Testnet" : "Mainnet";
+
+/** Routes that need the full panda list in the nav (not /pools — that page uses /api/pools). */
+function needsPandaListRoute(pathname: string): boolean {
+  return (
+    pathname === "/" ||
+    pathname === "/mint" ||
+    pathname === "/profile" ||
+    pathname.startsWith("/dashboard")
+  );
+}
 
 export function Navbar() {
   const pathname = usePathname();
   const { jwt, isAuthed } = useAuth();
 
   const { data: pandas } = useQuery<{ id: string; name?: string }[]>({
-    queryKey: ["pandas", jwt],
-    enabled: !!jwt,
-    queryFn: () =>
-      fetch("/api/pandas", { headers: { Authorization: `Bearer ${jwt}` } }).then(
-        (r) => r.json(),
-      ),
+    queryKey: ["panda", "my", jwt],
+    enabled: !!jwt && needsPandaListRoute(pathname),
+    queryFn: async () => {
+      const res = await fetch("/api/panda/my", {
+        headers: { Authorization: `Bearer ${jwt}` },
+      });
+      const json = await res.json();
+      return json.data ?? json;
+    },
   });
 
   const dashMatch = pathname.match(/^\/dashboard\/([^/]+)/);
@@ -46,7 +62,8 @@ export function Navbar() {
         </Link>
 
         <nav className="hidden items-center gap-0.5 md:flex">
-          {NAV_LINKS.map(({ href, label }) => (
+          {[...NAV_LINKS, ...(isPandaLabEnabled() ? [LAB_NAV] : [])].map(
+            ({ href, label }) => (
             <Link
               key={href}
               href={href}
@@ -59,10 +76,11 @@ export function Navbar() {
             >
               {label}
             </Link>
-          ))}
+          )
+          )}
           {isAuthed && pandas && pandas.length > 0 && (
             <Link
-              href={`/dashboard/${pandas[0].id}`}
+              href={`/dashboard/${currentPandaId ?? pandas[0].id}`}
               className={clsx(
                 "rounded-lg px-3 py-1.5 text-[length:var(--text-body)] font-medium transition-colors",
                 pathname.startsWith("/dashboard")

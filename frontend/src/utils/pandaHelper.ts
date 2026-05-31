@@ -11,6 +11,8 @@ export type PandaEmotion =
 
 export type GrowthStage = "infant" | "apprentice" | "mature";
 
+export type VisualTier = "low" | "mid" | "high";
+
 export interface PandaStats {
   patience: number;
   boldness: number;
@@ -44,6 +46,43 @@ export function getTraitTier(value: number): number {
   if (value >= 100) return 10;
   return Math.floor((value - 1) / 10) + 1;
 }
+
+/** Tier 1-10 → visual asset bucket (low / mid / high) */
+export function getVisualTier(tier: number): VisualTier {
+  if (tier <= 3) return "low";
+  if (tier <= 7) return "mid";
+  return "high";
+}
+
+export const PANDA_EMOTIONS: PandaEmotion[] = [
+  "calm",
+  "excited",
+  "greedy",
+  "cautious",
+  "panic",
+  "numb",
+  "frustrated",
+];
+
+export const EMOTION_LABELS: Record<PandaEmotion, string> = {
+  calm: "平静",
+  excited: "兴奋",
+  greedy: "贪婪",
+  cautious: "谨慎",
+  panic: "恐慌",
+  numb: "麻木",
+  frustrated: "烦躁",
+};
+
+export const DEFAULT_PANDA_STATS: PandaStats = {
+  boldness: 50,
+  patience: 50,
+  intuition: 50,
+  focus: 50,
+  contrarian: 50,
+  emotion: "calm",
+  experience: 35,
+};
 
 /** experience 0-100 → growth stage */
 export function getGrowthStage(experience: number): GrowthStage {

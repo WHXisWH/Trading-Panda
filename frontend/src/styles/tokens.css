@@ -114,6 +114,10 @@
   --page-mint-max-width: 800px;
   --sidebar-width: 180px;
   --sidebar-width-wide: 260px;
+  --dashboard-left-min: 220px;
+  --dashboard-left-max: 280px;
+  --account-panel-width: 220px;
+  --account-panel-max: 240px;
   --decision-panel-width: 170px;
   --trading-positions-width: 220px;
   --trading-orderbook-width: 320px;

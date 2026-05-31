@@ -19,7 +19,8 @@ describe("channels", () => {
   it("builds panda redis channels", () => {
     const channels = pandaChannels("pnd-1");
     expect(channels).toContain("panda:pnd-1:decision");
-    expect(channels).toHaveLength(4);
+    expect(channels).toContain("panda:pnd-1:trade");
+    expect(channels).toHaveLength(5);
   });
 
   it("collects channels from subscriptions", () => {

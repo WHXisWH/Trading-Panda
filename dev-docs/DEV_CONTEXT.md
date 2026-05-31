@@ -39,7 +39,7 @@ TradingPanda 是 Sui 链上的 **AI 交易宠物养成系统**，目标是 Sui O
 | Sui Move 合约 | 🟡 Testnet 已 publish | 80% | `sui client publish` 至 Testnet（Package `0x5950…1465`）；`mint::mint` + DF 初始化；UpgradeCap 在 `0xa459…7bf3`；Kiosk/版税深化待做 |
 | PostgreSQL Schema | 🟡 Sprint 0.2 核心表 | 35% | Alembic `001_initial_core`：`users`+5 业务表；其余 12 表待后续迁移 |
 | 铸造流程（Mint） | 🟡 Epic 1.3–1.5 完成 | 75% | 问卷→mint→DB 注册→Dashboard；Epic 1.2 合约复核待办 |
-| 策略解析 | ⏸️ 待开始 | 0% | DeepSeek V3（可选路径）+ **积木 `parsed` 直传** + `validate` 试编译 |
+| 策略解析 | ✅ Epic 2 完成 | 100% | `POST/GET /panda/:id/strategy` + `validate`；积木 `StrategyBuilder`；LLM 5/min；`strategy_history` ghost 0.40 |
 | 8步决策引擎 | 🟡 MVP 实现 | 75% | `decision_pipeline` 八步公式 + `RuleEngine` + `PandaActor` + Redis `market:tick:*` 订阅；Agent/Merkle 链上提交待完善 |
 | 情绪状态机 | 🟡 MVP 实现 | 80% | 7 状态转移 + Step 8 情绪扭曲；已接入 Actor |
 | 经验引擎（5子系统） | ⏸️ 待开始 | 0% | PostgreSQL 读写 |
@@ -318,3 +318,18 @@ Package ID：**0x595087bb3e5f6c5011585797e4eb4db513b55d39ce84f984bb357e9375c1146
 | 2026-05-25 | **Testnet 重新 publish（本项目首次）**：清除 `Published.toml` 旧 testnet 条目后 `sui client publish`（deployer `0xa459…7bf3`，tx `HM2XXX4MHQzskM6TLgxmoYAsJJarRJfiAKUuWrjaZiQ3`）。Package=`0x595087bb3e5f6c5011585797e4eb4db513b55d39ce84f984bb357e9375c11465`，PandaRegistry=`0x5cbf822c3fe346d7001125ff0ad52d675611148b2c4734d1e200ebf23d53baa5`，AchievementRegistry=`0x53c879bc3560a54548219f0a1f44dff471792c585a7b666829cfa08e722c8f8b`，AdminCap=`0xf6ff3f496b7471353dc2ea3c7732cd822f596cdb62d27bdb0362171862b60a00`，UpgradeCap=`0x40d481fc083c49ea5d1f48d25a60096ec07a49197370e9efe7a1cda3cd8e381e`；已更新前后端 `.env*`、`Published.toml`、`contracts/DEPLOY.md`、§3 | 文档旧 ID `0x9b26…` 作废；`mint::mint` 已上链；UpgradeCap 在本钱包 |
 | 2026-05-25 | **Mint 前端入口修正**：`mintPanda.ts` 调用 `::mint::mint`（非 `::panda::mint`）；与 Testnet Package `0x595087…` 上 `mint.move` 一致 | 修复 Slush「No function was found with function name mint」 |
 | 2026-05-25 | **Epic 1.2 合约（Sui Testnet）**：`contracts/sources/mint.move` 入口 `mint`/`mint_panda`（`sui::random` 五轴+天赋 + 铸造时初始化 experience/strategy_shadows/trust_proofs/achievements 四类 dynamic_field）；`panda::mint_panda_body`/`finish_mint` 拆分；`tests/mint_tests.move` 2 项；`sui move test` **13/13**；链上 Package `0x9b26…9710` 与 §3 一致（RPC 已验）；`frontend/.../mintPanda.ts` 改为 `::mint::mint`；Testnet upgrade 因本机 Sui CLI protocol 117<124 未执行，**UpgradeCap** `0x4254…308` 不变 | 本地合约 Epic 1.2 Done；生产铸造需升级后 `mint::mint` 才含 DF 初始化；旧 `panda::mint` 在 v1 链上仍可用至升级 |
+| 2026-05-25 | **Epic 2 猎手策略 StrategyBuilder**：后端 `panda_strategy.py` + `strategy_feed.py`（`parsed` 直传/LLM 可选、`validate` Step1 预览、`strategy_history` ghost_weight=0.40、性格匹配度规则表）；`panda_loader` 加载残影供 Step4；前端 `StrategyBuilder`/`StrategyTemplates`/`StrategyTextInput` + `strategy.service.ts`；BFF `/api/panda/:id/strategy` + `/validate`；`tests/test_strategy_feed.py` + rule_engine/verdict 绿 | Dashboard「教给熊猫」走积木主路径；无效 MACD 条件 → `STRATEGY_RULE_INVALID` |
+| 2026-05-25 | **Epic 3/4 产品共识（TODO）**：会话制——仅「开始训练」后 Actor 消费 `market:tick`；MVP 池 `DEEP/SUI`·`SUI/DBUSDC`；K 线接真行情（禁 mock）；右侧上实时决策链 WS、下交易历史；池切换在 ChartHeader；底栏仅速度+训练按钮 | 见 `dev-docs/TODO.md` Epic 3 §产品共识 |
+| 2026-05-25 | **Epic 3 Dashboard 首版**：后端 `panda_simulation.py`（start/stop/status + trades）；`ActorManager` 支持 `subscribed_pools`；前端 Dashboard 接 `useMarketWs`·`useSimulationWs`·`CandlestickChart` 真 K 线·`DashboardRightPanel`·「开始训练」 | 联调需 monitor+Redis+Hub+`JWT` |
+| 2026-05-25 | **Epic 3 Dashboard 补全**：`publish_trade_executed`→`panda:{id}:trade`；Hub 订阅 `trade` 后缀；`simulation/status` 含 equity/positions；`AccountPanel` 实盘账；K 线成交量+成交标记 | 部署 Hub 需重新 `wrangler deploy` 以含 trade 频道 |
+| 2026-05-25 | **Epic 4 Pools**：`pandas.subscribed_pools` 迁移；`GET/PUT /panda/:id/pools`；`/pools` 页替换 MOCK；Dashboard 与训练订阅同步 | 部署须 `alembic upgrade head`；monitor `/health` 可选 enrichment |
+| 2026-05-25 | **Pools API 拆分**：`/pools` 页 `GET /api/pools`（目录）；已选池并入 `GET /api/panda/:id`；仅确认时 `PUT /api/panda/:id/pools` | 避免进页即调 panda/pools；500 多为未跑迁移 `002` |
+| 2026-05-25 | **Pools 页修复**：移除 `/api/market/candles` 拉价；目录仅 `GET /api/pools`；`PUT …/pools` 缺列时 503 提示 `alembic upgrade head`；本地已执行 `002_panda_subscribed_pools` | 确认选池应 200；Render 须同样跑迁移 |
+| 2026-05-25 | **Pools 确认栏 UX**：确认按钮 loading（保存中…）+ 去掉 ✅；请求期间禁用清空/确认 | 防重复提交 |
+| 2026-05-25 | **Dashboard 方案 A**：ChartHeader 下拉仅 `subscribed_pools`；改池不再扩容订阅；训练条移至主区顶部（`DashboardTrainingBar`） | 增删池仅 `/pools`「管理交易池」 |
+| 2026-05-25 | **Dashboard 布局 v2**：左栏熊猫+策略积木；右栏账户；主区底决策链+交易历史；小屏策略底部抽屉；见 `dev-docs/dashboard-layout-v2.md` | `dashboard-layout-v2` CSS |
+| 2026-05-25 | **Dashboard 横向溢出修复**：CSS Grid `minmax(0,1fr)`；≥1280 三栏 / 1024–1279 两栏；侧栏策略 `compact` 单列；`PageContainer` dashboard 全宽 clip | 修复窄屏撑破视口 |
+| 2026-05-25 | **Dashboard 策略右栏**：策略积木迁至 `DashboardRightColumn`（账户上+策略下）；左栏仅熊猫；&lt;1280px 策略底部抽屉 | 右栏宽 260–300px |
+| 2026-05-25 | **Dashboard v3 左栏合并**：`DashboardPandaPanel`（熊猫+模拟账户）；右栏仅策略；管理池仅训练条；见 `dashboard-layout-v3-left-panel.md` | `PandaAccountLedger` 折叠详情 |
+| 2026-05-26 | **Dashboard 布局优化与溢出修复**：侧栏 w-full 改 lg:w-auto + min-w-0；globals.css 强化 Grid minmax(0, ...) 约束；PageContainer 强制 variant="dashboard" | 彻底解决横向撑破视口问题，适配不同桌面分辨率 |
+| 2026-05-26 | **熊猫试装实验室 + 96×96 像素 SVG**：`/panda-lab`（dev 默认开；生产 `NEXT_PUBLIC_ENABLE_PANDA_LAB=true`）；五维/经验/情绪滑条、预设、随机、URL 同步、对比 A、Mint 圆预览；`assets/panda/pixel/` 占位精灵层；`PandaSvgRenderer` 改 `viewBox 0 0 96 96` + `crispEdges` | 无需钱包即可调形象；Navbar「试装实验室」随 flag 显示 |

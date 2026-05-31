@@ -47,21 +47,30 @@ class RuleEngine:
 
     def match_signals(self, market: dict[str, Any]) -> float:
         """Signed signal strength in [-1, 1]. Positive = BUY bias."""
-        buy_hits = 0.0
-        sell_hits = 0.0
+        signed, _, _, _ = self.match_signal_detail(market)
+        return signed
+
+    def match_signal_detail(
+        self, market: dict[str, Any]
+    ) -> tuple[float, int, int, list[int]]:
+        """Return (signed_score, buy_hits, sell_hits, matched_rule_indexes)."""
+        buy_hits = 0
+        sell_hits = 0
+        matched: list[int] = []
         total = len(self._compiled) or 1
 
-        for action, fn in self._compiled:
+        for index, (action, fn) in enumerate(self._compiled):
             if not fn(market):
                 continue
+            matched.append(index)
             if action == "SELL":
-                sell_hits += 1.0
+                sell_hits += 1
             else:
-                buy_hits += 1.0
+                buy_hits += 1
 
         if buy_hits == 0 and sell_hits == 0:
-            return 0.0
-        return (buy_hits - sell_hits) / total
+            return 0.0, 0, 0, matched
+        return (buy_hits - sell_hits) / total, buy_hits, sell_hits, matched
 
 
 def _parse_threshold(condition: str, rule: dict[str, Any]) -> float:

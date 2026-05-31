@@ -5,7 +5,7 @@ export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } },
 ) {
-  return proxyBackend(req, { backendPath: `pandas/${params.id}/strategy` });
+  return proxyBackend(req, { backendPath: `panda/${params.id}/strategy` });
 }
 
 export async function POST(
@@ -15,7 +15,7 @@ export async function POST(
   const body = await req.json();
   return proxyBackend(req, {
     method: "POST",
-    backendPath: `pandas/${params.id}/strategy`,
+    backendPath: `panda/${params.id}/strategy`,
     body,
   });
 }

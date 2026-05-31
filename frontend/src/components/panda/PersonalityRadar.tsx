@@ -32,7 +32,7 @@ export function PersonalityRadar({
   return (
     <div
       className={clsx(animated && "animate-radar-reveal", className)}
-      style={{ width: "100%", height: size }}
+      style={{ width: "100%", maxWidth: "100%", height: size }}
     >
       <ResponsiveContainer width="100%" height={size}>
         <RadarChart data={data} margin={{ top: 10, right: 20, bottom: 10, left: 20 }}>

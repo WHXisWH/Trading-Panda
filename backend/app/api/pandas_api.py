@@ -1,6 +1,7 @@
-"""Panda CRUD endpoints."""
+"""Panda CRUD endpoints (legacy /pandas paths — prefer /panda for api-spec)."""
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import Optional
@@ -8,6 +9,15 @@ from typing import Optional
 from app.db.database import get_db
 from app.db.models import Panda, User, Strategy
 from app.api.deps import get_current_user
+from app.schemas.common import error, success
+from app.schemas.errors import ApiError, ApiErrorCode
+from app.schemas.strategy import StrategyFeedRequest
+from app.services.strategy_feed import (
+    feed_strategy,
+    get_active_strategy_record,
+    load_owned_panda,
+    validate_strategy_body,
+)
 
 router = APIRouter()
 
@@ -132,22 +142,54 @@ async def get_panda_strategy(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    result = await db.execute(
-        select(Panda).where(Panda.id == panda_id, Panda.owner_id == user.id)
-    )
-    if result.scalar_one_or_none() is None:
-        raise HTTPException(404, "Panda not found")
-    s_result = await db.execute(
-        select(Strategy).where(Strategy.panda_id == panda_id, Strategy.is_active == True)
-    )
-    strategy = s_result.scalar_one_or_none()
-    if strategy is None:
-        return None
-    return {
-        "id": strategy.id,
-        "raw_text": strategy.raw_text,
-        "parsed_json": strategy.parsed_json,
-        "philosophy": strategy.philosophy,
-        "proficiency": strategy.proficiency,
-        "created_at": strategy.created_at,
-    }
+    try:
+        await load_owned_panda(panda_id, user, db)
+        record = await get_active_strategy_record(panda_id, db)
+        if record is None:
+            return None
+        return record
+    except ApiError as exc:
+        if exc.code == ApiErrorCode.PANDA_NOT_FOUND:
+            raise HTTPException(404, exc.message) from exc
+        raise HTTPException(exc.status_code, exc.message) from exc
+
+
+@router.post("/{panda_id}/strategy")
+async def post_panda_strategy(
+    panda_id: str,
+    body: StrategyFeedRequest,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    try:
+        panda = await load_owned_panda(panda_id, user, db)
+        data = await feed_strategy(panda, body, db, user.id)
+        return JSONResponse(content=success(data))
+    except ApiError as exc:
+        return JSONResponse(
+            status_code=exc.status_code,
+            content=error(exc.code.value, exc.message, invalid_rules=exc.invalid_rules),
+        )
+    except ValidationError as exc:
+        return JSONResponse(
+            status_code=400,
+            content=error(ApiErrorCode.STRATEGY_BODY_EMPTY.value, str(exc)),
+        )
+
+
+@router.post("/{panda_id}/strategy/validate")
+async def post_panda_strategy_validate(
+    panda_id: str,
+    body: StrategyFeedRequest,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    try:
+        await load_owned_panda(panda_id, user, db)
+        data = validate_strategy_body(body)
+        return JSONResponse(content=success(data.model_dump()))
+    except ApiError as exc:
+        return JSONResponse(
+            status_code=exc.status_code,
+            content=error(exc.code.value, exc.message, invalid_rules=exc.invalid_rules),
+        )

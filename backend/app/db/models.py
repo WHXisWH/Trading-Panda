@@ -55,6 +55,7 @@ class Panda(Base):
     walrus_blob_id = Column(Text)
     walrus_last_synced_at = Column(DateTime(timezone=True))
     walrus_sync_status = Column(String(10), nullable=False, default="pending")
+    subscribed_pools = Column(JSONB, nullable=True)
 
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
     updated_at = Column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow)

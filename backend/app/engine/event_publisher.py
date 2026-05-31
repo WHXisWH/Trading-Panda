@@ -38,3 +38,9 @@ class EventPublisher:
 
     async def publish_emotion(self, panda_id: str, payload: dict[str, Any]) -> None:
         await self.publish(f"panda:{panda_id}:emotion", {"event": "emotion", "payload": payload})
+
+    async def publish_trade_executed(self, panda_id: str, payload: dict[str, Any]) -> None:
+        await self.publish(
+            f"panda:{panda_id}:trade",
+            {"event": "trade_executed", "payload": payload},
+        )

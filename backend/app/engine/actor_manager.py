@@ -34,7 +34,14 @@ class ActorManager:
         await self._market_consumer.stop()
         await self._publisher.close()
 
-    async def start(self, panda_id: str, simulation_id: str, speed: str) -> None:
+    async def start(
+        self,
+        panda_id: str,
+        simulation_id: str,
+        speed: str,
+        subscribed_pools: list[str] | None = None,
+        initial_capital: float | None = None,
+    ) -> None:
         if panda_id in self._actors:
             return
 
@@ -47,6 +54,11 @@ class ActorManager:
             speed=speed,
             publisher=self._publisher,
         )
+        if subscribed_pools:
+            actor.state.subscribed_assets = list(subscribed_pools)
+        if initial_capital is not None and initial_capital > 0:
+            actor.state.equity = float(initial_capital)
+            actor._peak_equity = float(initial_capital)
         self._actors[panda_id] = actor
         self._tasks[panda_id] = asyncio.create_task(actor.run(), name=f"actor-{panda_id}")
         logger.info("Started PandaActor %s (sim=%s, speed=%s)", panda_id, simulation_id, speed)
@@ -74,6 +86,11 @@ class ActorManager:
         for actor in list(self._actors.values()):
             if actor.accepts_asset(event.asset):
                 await actor.enqueue_tick(event)
+
+    def set_subscribed_pools(self, panda_id: str, pools: list[str]) -> None:
+        actor = self._actors.get(panda_id)
+        if actor is not None:
+            actor.state.subscribed_assets = list(pools)
 
     @property
     def active_count(self) -> int:

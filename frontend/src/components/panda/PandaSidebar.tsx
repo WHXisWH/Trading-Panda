@@ -10,6 +10,7 @@ import { PERSONALITY_AXES, type PersonalityKey } from "@/lib/personality";
 import { getGrowthStage } from "@/utils/pandaHelper";
 
 interface Props {
+  variant?: "default" | "dashboard-left";
   pandaId: string;
   name?: string;
   boldness: number;
@@ -31,6 +32,7 @@ const STAGE_LABEL: Record<string, string> = {
 };
 
 export function PandaSidebar({
+  variant = "default",
   pandaId,
   name = "我的熊猫",
   boldness,
@@ -53,9 +55,17 @@ export function PandaSidebar({
   };
   const stage = STAGE_LABEL[getGrowthStage(experienceLevel)] ?? "幼年";
   const prof = experienceLevel % 100;
+  const isDashboardLeft = variant === "dashboard-left";
+  const radarSize = isDashboardLeft ? 120 : 160;
 
   return (
-    <aside className="flex w-full shrink-0 flex-col gap-4 rounded-xl bg-paper-card p-4 lg:w-sidebar">
+    <aside
+      className={
+        isDashboardLeft
+          ? "flex w-full min-w-0 max-w-full shrink-0 flex-col gap-3 rounded-xl bg-paper-card p-3"
+          : "flex w-full shrink-0 flex-col gap-4 rounded-xl bg-paper-card p-4 lg:w-sidebar"
+      }
+    >
       <div className="flex flex-col items-center gap-3">
         <PandaAvatar
           panda={{
@@ -83,20 +93,20 @@ export function PandaSidebar({
         <TalentBadge talentId={talent} />
       </div>
 
-      <div className="hidden sm:block">
-        <PersonalityRadar scores={scores} size={160} />
-      </div>
+      <PersonalityRadar scores={scores} size={radarSize} className="mx-auto" />
 
-      <div className="grid grid-cols-1 gap-1 text-[11px] text-ink-500">
-        {PERSONALITY_AXES.map((axis) => (
-          <div key={axis.key} className="flex justify-between">
-            <span>{axis.label}</span>
-            <span className="font-mono font-medium text-bamboo-500">
-              {scores[axis.key]}
-            </span>
-          </div>
-        ))}
-      </div>
+      {!isDashboardLeft && (
+        <div className="grid grid-cols-1 gap-1 text-[11px] text-ink-500">
+          {PERSONALITY_AXES.map((axis) => (
+            <div key={axis.key} className="flex justify-between">
+              <span>{axis.label}</span>
+              <span className="font-mono font-medium text-bamboo-500">
+                {scores[axis.key]}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
 
       <button
         type="button"
@@ -125,7 +135,7 @@ export function PandaSidebar({
       )}
 
       <Link
-        href={`/pools?panda=${pandaId}`}
+        href={`/pools?panda=${pandaId}&focus=${focus}`}
         className="text-center text-[11px] text-bamboo-500 hover:underline"
       >
         配置交易池 →

@@ -3,11 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useWebSocket } from "@/hooks/useWebSocket";
+import type { DecisionLog, TradeRecordApi } from "@/types/trading";
 import type { SubscribeSimulationPayload, WsServerEvent } from "@/types/ws";
 
 export type SimulationWsEvent =
-  | { type: "decision"; payload: Record<string, unknown> }
+  | { type: "decision"; payload: DecisionLog }
   | { type: "emotion"; payload: Record<string, unknown> }
+  | { type: "trade_executed"; payload: TradeRecordApi }
   | { type: "other"; event: string; payload: Record<string, unknown> };
 
 export type UseSimulationWsOptions = {
@@ -17,13 +19,28 @@ export type UseSimulationWsOptions = {
   onEvent?: (evt: SimulationWsEvent) => void;
 };
 
+function mapDecisionPayload(raw: Record<string, unknown>): DecisionLog {
+  return {
+    timestamp: (raw.timestamp as number) ?? Date.now(),
+    action: (raw.action as DecisionLog["action"]) ?? "HOLD",
+    final_score: Number(raw.final_score ?? 0),
+    zone: (raw.zone as DecisionLog["zone"]) ?? "OBSERVE",
+    asset: raw.asset as string | undefined,
+    price: raw.price as number | undefined,
+    steps: (raw.steps as DecisionLog["steps"]) ?? [],
+  };
+}
+
 function mapServerEvent(event: WsServerEvent): SimulationWsEvent {
   const payload = event.payload ?? {};
   if (event.event === "decision" || event.event === "decision.chain") {
-    return { type: "decision", payload };
+    return { type: "decision", payload: mapDecisionPayload(payload) };
   }
   if (event.event === "emotion" || event.event === "emotion.changed") {
     return { type: "emotion", payload };
+  }
+  if (event.event === "trade_executed") {
+    return { type: "trade_executed", payload: payload as unknown as TradeRecordApi };
   }
   return { type: "other", event: event.event, payload };
 }
@@ -56,7 +73,7 @@ export function useSimulationWs(options: UseSimulationWsOptions) {
 
   const ws = useWebSocket({
     token: accessToken,
-    enabled: enabled && !!accessToken && !!pandaId,
+    enabled: enabled && !!accessToken && !!pandaId && !!simulationId,
     onEvent: handleEvent,
   });
 

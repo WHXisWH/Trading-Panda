@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Panda, Strategy
 from app.services.panda_stats import growth_stage_from_experience, trade_stats_for_panda
+from app.services.pool_catalog import max_pools_for_focus, normalize_subscribed_pools
 from app.services.talent_meta import talent_payload
 
 
@@ -53,11 +54,16 @@ async def panda_detail_dict(
             "proficiency": int(strategy.proficiency),
         }
 
+    raw_pools = getattr(panda, "subscribed_pools", None)
+    subscribed = normalize_subscribed_pools(raw_pools)
     return {
         "id": panda.id,
         "sui_object_id": panda.sui_object_id,
         "owner_id": panda.owner_id,
         "name": name,
+        "subscribed_pools": subscribed,
+        "primary_pool": subscribed[0],
+        "max_pools": max_pools_for_focus(int(panda.focus)),
         "personality": _personality(panda),
         "talent": _talent_full(panda),
         "experience_level": int(panda.experience_level),
