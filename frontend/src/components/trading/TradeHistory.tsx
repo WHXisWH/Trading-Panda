@@ -27,6 +27,7 @@ export function tradeToDecisionLog(trade: TradeRecordApi): DecisionLog {
     asset: trade.asset,
     price: trade.price,
     steps: trade.decision_details?.steps ?? [],
+    entry_threshold: trade.decision_details?.entry_threshold,
   };
 }
 
@@ -76,7 +77,7 @@ export function TradeHistory({
                 onClick={() => onSelect?.(item)}
                 className={clsx(
                   "flex w-full flex-wrap items-center justify-between gap-1 rounded px-2 py-1.5 text-left",
-                  selected ? "bg-bamboo-50 ring-1 ring-bamboo-300" : "hover:bg-paper-card",
+                  selected ? "bg-bamboo-50 ring-1 ring-bamboo-500" : "hover:bg-paper-card",
                 )}
               >
                 <span className="text-ink-500">{formatTradeTime(item.created_at)}</span>

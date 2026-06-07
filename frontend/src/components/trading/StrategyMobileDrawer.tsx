@@ -6,10 +6,16 @@ import { clsx } from "clsx";
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  showFloatingButton?: boolean;
   children: ReactNode;
 }
 
-export function StrategyMobileDrawer({ open, onOpenChange, children }: Props) {
+export function StrategyMobileDrawer({
+  open,
+  onOpenChange,
+  showFloatingButton = true,
+  children,
+}: Props) {
   useEffect(() => {
     if (!open) {
       return;
@@ -23,18 +29,20 @@ export function StrategyMobileDrawer({ open, onOpenChange, children }: Props) {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => onOpenChange(true)}
-        className="fixed bottom-4 left-1/2 z-40 -translate-x-1/2 rounded-full border border-bamboo-500 bg-bamboo-500 px-5 py-2.5 text-sm font-medium text-white shadow-lg xl:hidden"
-        aria-expanded={open}
-        aria-controls="strategy-mobile-drawer"
-      >
-        编辑策略
-      </button>
+      {showFloatingButton && (
+        <button
+          type="button"
+          onClick={() => onOpenChange(true)}
+          className="fixed bottom-4 left-1/2 z-40 -translate-x-1/2 rounded-full border border-bamboo-500 bg-bamboo-500 px-5 py-2.5 text-sm font-medium text-white shadow-lg xl:hidden"
+          aria-expanded={open}
+          aria-controls="strategy-drawer"
+        >
+          编辑策略
+        </button>
+      )}
 
       {open && (
-        <div className="fixed inset-0 z-50 xl:hidden" role="presentation">
+        <div className="fixed inset-0 z-50" role="presentation">
           <button
             type="button"
             className="absolute inset-0 bg-black/40"
@@ -42,10 +50,11 @@ export function StrategyMobileDrawer({ open, onOpenChange, children }: Props) {
             onClick={() => onOpenChange(false)}
           />
           <div
-            id="strategy-mobile-drawer"
+            id="strategy-drawer"
             className={clsx(
               "absolute bottom-0 left-0 right-0 flex max-h-[85dvh] flex-col",
               "rounded-t-2xl border border-[var(--color-border)] bg-paper-card shadow-xl",
+              "xl:bottom-auto xl:left-auto xl:right-5 xl:top-[calc(var(--navbar-height)+1rem)] xl:h-[calc(100dvh-var(--navbar-height)-2rem)] xl:w-[420px] xl:rounded-lg",
             )}
           >
             <div className="flex shrink-0 items-center justify-between border-b border-[var(--color-border)] px-4 py-3">

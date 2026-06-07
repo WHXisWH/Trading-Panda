@@ -4,11 +4,15 @@ import React, { useEffect, useRef } from "react";
 import {
   createChart,
   type IChartApi,
+  type IPriceLine,
   type ISeriesApi,
   type CandlestickData,
   type HistogramData,
+  type MouseEventParams,
   type UTCTimestamp,
   ColorType,
+  CrosshairMode,
+  LineStyle,
 } from "lightweight-charts";
 import { clsx } from "clsx";
 import {
@@ -17,51 +21,157 @@ import {
 } from "@/lib/constants/deepbookPools";
 import { tradesToChartMarkers } from "@/lib/chart/tradeMarkers";
 import type { TradeRecordApi } from "@/types/trading";
-import type { CandlesResponse, MarketTickPayload } from "@/types/ws";
+import type { CandlesResponse, MarketInterval, MarketTickPayload, WsConnectionStatus } from "@/types/ws";
 
 interface Props {
   pool: DeepbookPool;
+  interval?: MarketInterval;
+  onIntervalChange?: (interval: MarketInterval) => void;
   /** Pools the user may switch to (scheme A: `subscribed_pools` only). */
   availablePools?: DeepbookPool[];
   onPoolChange?: (pool: DeepbookPool) => void;
   history?: CandlesResponse | null;
   lastTick?: MarketTickPayload | null;
+  marketStatus?: WsConnectionStatus;
+  historyLoading?: boolean;
   historyError?: string | null;
+  onRefresh?: () => void;
   trades?: TradeRecordApi[];
   className?: string;
+}
+
+const INTERVALS: MarketInterval[] = ["1m", "5m", "15m"];
+
+type HoverCandle = {
+  time: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume?: number;
+};
+
+function toChartTime(raw: number | undefined): UTCTimestamp | null {
+  if (!raw || !Number.isFinite(raw)) {
+    return null;
+  }
+  return Math.floor(raw > 1e12 ? raw / 1000 : raw) as UTCTimestamp;
 }
 
 function candlesFromHistory(history: CandlesResponse | null | undefined): CandlestickData[] {
   if (!history?.candles?.length) {
     return [];
   }
-  return history.candles.map((c) => ({
-    time: c.t as UTCTimestamp,
-    open: c.o,
-    high: c.h,
-    low: c.l,
-    close: c.c,
-  }));
+  const candles: CandlestickData[] = [];
+  for (const c of history.candles) {
+    const time = toChartTime(c.t);
+    if (time == null) {
+      continue;
+    }
+    candles.push({
+      time,
+      open: c.o,
+      high: c.h,
+      low: c.l,
+      close: c.c,
+    });
+  }
+  return candles;
 }
 
 function volumeFromHistory(history: CandlesResponse | null | undefined): HistogramData[] {
   if (!history?.candles?.length) {
     return [];
   }
-  return history.candles.map((c) => ({
-    time: c.t as UTCTimestamp,
-    value: c.v,
-    color: c.c >= c.o ? "rgba(45, 90, 61, 0.35)" : "rgba(194, 58, 58, 0.35)",
-  }));
+  const volumes: HistogramData[] = [];
+  for (const c of history.candles) {
+    const time = toChartTime(c.t);
+    if (time == null) {
+      continue;
+    }
+    volumes.push({
+      time,
+      value: c.v,
+      color: c.c >= c.o ? "rgba(45, 90, 61, 0.35)" : "rgba(194, 58, 58, 0.35)",
+    });
+  }
+  return volumes;
+}
+
+function formatPrice(value: number | undefined): string {
+  if (value == null || !Number.isFinite(value)) {
+    return "--";
+  }
+  if (Math.abs(value) < 1) {
+    return value.toPrecision(5);
+  }
+  return value.toLocaleString(undefined, { maximumFractionDigits: 4 });
+}
+
+function formatVolume(value: number | undefined): string {
+  if (value == null || !Number.isFinite(value)) {
+    return "--";
+  }
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(2)}M`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(2)}K`;
+  return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
+}
+
+function formatTime(raw: number | string | undefined): string {
+  if (raw == null) {
+    return "--";
+  }
+  const n = typeof raw === "number" ? raw : Number(raw);
+  if (Number.isFinite(n)) {
+    const ms = n > 1e12 ? n : n * 1000;
+    return new Date(ms).toLocaleString("zh-CN", {
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+  return String(raw);
+}
+
+function statusLabel(status: WsConnectionStatus | undefined): string {
+  if (status === "open") return "WSS 已连接";
+  if (status === "connecting") return "WSS 连接中";
+  if (status === "error") return "WSS 错误";
+  if (status === "closed") return "WSS 已断开";
+  return "WSS 未连接";
+}
+
+function statusClass(status: WsConnectionStatus | undefined): string {
+  if (status === "open") return "bg-bamboo-50 text-bamboo-600";
+  if (status === "connecting") return "bg-[var(--color-warning-bg)] text-ink-900";
+  if (status === "error") return "bg-[var(--color-seal-bg)] text-loss";
+  return "bg-paper-card text-ink-500";
+}
+
+function isCandlestickData(data: unknown): data is CandlestickData {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    "open" in data &&
+    "high" in data &&
+    "low" in data &&
+    "close" in data
+  );
 }
 
 export function CandlestickChart({
   pool,
+  interval = "1m",
+  onIntervalChange,
   availablePools = [...DEEPBOOK_MVP_POOLS],
   onPoolChange,
   history,
   lastTick,
+  marketStatus,
+  historyLoading,
   historyError,
+  onRefresh,
   trades = [],
   className,
 }: Props) {
@@ -71,6 +181,9 @@ export function CandlestickChart({
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const volumeRef = useRef<ISeriesApi<"Histogram"> | null>(null);
+  const latestPriceLineRef = useRef<IPriceLine | null>(null);
+  const [hoverCandle, setHoverCandle] = React.useState<HoverCandle | null>(null);
+  const [followRealtime, setFollowRealtime] = React.useState(true);
 
   const displayPrice =
     lastTick?.price ??
@@ -86,6 +199,23 @@ export function CandlestickChart({
     firstClose && lastClose && firstClose > 0
       ? ((lastClose - firstClose) / firstClose) * 100
       : 0;
+  const candleCount = history?.candles?.length ?? 0;
+  const lastTickAgeSec =
+    lastTick?.timestamp != null
+      ? Math.max(0, Math.floor(Date.now() / 1000 - (lastTick.timestamp > 1e12 ? lastTick.timestamp / 1000 : lastTick.timestamp)))
+      : null;
+  const visibleCandle = hoverCandle ?? (
+    history?.candles?.length
+      ? {
+          time: formatTime(history.candles[history.candles.length - 1].t),
+          open: history.candles[history.candles.length - 1].o,
+          high: history.candles[history.candles.length - 1].h,
+          low: history.candles[history.candles.length - 1].l,
+          close: history.candles[history.candles.length - 1].c,
+          volume: history.candles[history.candles.length - 1].v,
+        }
+      : null
+  );
 
   useEffect(() => {
     if (!containerRef.current) {
@@ -94,14 +224,27 @@ export function CandlestickChart({
     const chart = createChart(containerRef.current, {
       layout: {
         background: { type: ColorType.Solid, color: "#ffffff" },
-        textColor: "#888",
+        textColor: "#777",
+      },
+      crosshair: {
+        mode: CrosshairMode.Normal,
+        vertLine: { color: "rgba(45, 90, 61, 0.35)", style: LineStyle.Dashed },
+        horzLine: { color: "rgba(45, 90, 61, 0.25)", style: LineStyle.Dashed },
       },
       grid: {
-        vertLines: { color: "#ede8dc" },
-        horzLines: { color: "#ede8dc" },
+        vertLines: { color: "rgba(237, 232, 220, 0.75)" },
+        horzLines: { color: "rgba(237, 232, 220, 0.75)" },
+      },
+      rightPriceScale: {
+        borderColor: "#ede8dc",
+      },
+      timeScale: {
+        borderColor: "#ede8dc",
+        timeVisible: true,
+        secondsVisible: false,
       },
       width: containerRef.current.clientWidth,
-      height: 320,
+      height: containerRef.current.clientHeight || 420,
     });
 
     const candleSeries = chart.addCandlestickSeries({
@@ -127,17 +270,44 @@ export function CandlestickChart({
     volumeSeries.setData(volumeFromHistory(history));
     chart.timeScale().fitContent();
 
+    const handleCrosshair = (param: MouseEventParams) => {
+      const candle = param.seriesData.get(candleSeries);
+      if (!param.time || !isCandlestickData(candle)) {
+        setHoverCandle(null);
+        return;
+      }
+      const volume = volumeRef.current
+        ? param.seriesData.get(volumeRef.current)
+        : undefined;
+      setHoverCandle({
+        time: formatTime(param.time as number),
+        open: candle.open,
+        high: candle.high,
+        low: candle.low,
+        close: candle.close,
+        volume:
+          typeof volume === "object" && volume !== null && "value" in volume
+            ? Number(volume.value)
+            : undefined,
+      });
+    };
+    chart.subscribeCrosshairMove(handleCrosshair);
+
     chartRef.current = chart;
     seriesRef.current = candleSeries;
     volumeRef.current = volumeSeries;
 
     const ro = new ResizeObserver(() => {
       if (containerRef.current) {
-        chart.applyOptions({ width: containerRef.current.clientWidth });
+        chart.applyOptions({
+          width: containerRef.current.clientWidth,
+          height: containerRef.current.clientHeight || 420,
+        });
       }
     });
     ro.observe(containerRef.current);
     return () => {
+      chart.unsubscribeCrosshairMove(handleCrosshair);
       ro.disconnect();
       chart.remove();
       chartRef.current = null;
@@ -152,9 +322,9 @@ export function CandlestickChart({
     }
     const candles = candlesFromHistory(history);
     const volumes = volumeFromHistory(history);
+    seriesRef.current.setData(candles);
+    volumeRef.current.setData(volumes);
     if (candles.length > 0) {
-      seriesRef.current.setData(candles);
-      volumeRef.current.setData(volumes);
       chartRef.current?.timeScale().fitContent();
     }
   }, [history]);
@@ -164,7 +334,10 @@ export function CandlestickChart({
     if (!seriesRef.current || !volumeRef.current || !candle || !lastTick?.timestamp) {
       return;
     }
-    const time = lastTick.timestamp as UTCTimestamp;
+    const time = toChartTime(lastTick.timestamp);
+    if (time == null) {
+      return;
+    }
     seriesRef.current.update({
       time,
       open: candle.open,
@@ -180,6 +353,9 @@ export function CandlestickChart({
           ? "rgba(45, 90, 61, 0.35)"
           : "rgba(194, 58, 58, 0.35)",
     });
+    if (followRealtime) {
+      chartRef.current?.timeScale().scrollToRealTime();
+    }
   }, [lastTick]);
 
   useEffect(() => {
@@ -190,71 +366,166 @@ export function CandlestickChart({
     seriesRef.current.setMarkers(markers);
   }, [trades]);
 
+  useEffect(() => {
+    if (!seriesRef.current || displayPrice == null) {
+      return;
+    }
+    if (latestPriceLineRef.current) {
+      seriesRef.current.removePriceLine(latestPriceLineRef.current);
+    }
+    latestPriceLineRef.current = seriesRef.current.createPriceLine({
+      price: displayPrice,
+      color: "#4a6d8c",
+      lineWidth: 1,
+      lineStyle: LineStyle.Dotted,
+      axisLabelVisible: true,
+      title: "last",
+    });
+  }, [displayPrice]);
+
   const isUp = changePct >= 0;
+  const hasCandles = candleCount > 0;
+  const showOverlay = historyLoading || historyError || !hasCandles;
 
   return (
-    <div className={clsx("flex min-w-0 max-w-full flex-col gap-2", className)}>
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          {canSwitchPools ? (
-            <select
-              value={pool}
-              onChange={(e) => onPoolChange!(e.target.value as DeepbookPool)}
-              className="rounded border border-[var(--color-border)] bg-white px-2 py-1 font-mono text-sm text-ink-700"
-              aria-label="交易池"
-            >
-              {poolOptions.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <span className="font-mono text-sm font-medium text-ink-700">{pool}</span>
-          )}
-          {displayPrice != null && (
-            <>
-              <span className="font-mono text-2xl font-bold">
-                {displayPrice < 1
-                  ? displayPrice.toPrecision(4)
-                  : displayPrice.toLocaleString(undefined, { maximumFractionDigits: 4 })}
-              </span>
-              <span
-                className={clsx(
-                  "text-sm font-medium",
-                  isUp ? "text-profit" : "text-loss",
-                )}
+    <section className={clsx("flex min-w-0 max-w-full flex-col overflow-hidden rounded-lg border border-[var(--color-border)] bg-white", className)}>
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-[var(--color-border)] bg-paper-card px-3 py-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2">
+            {canSwitchPools ? (
+              <select
+                value={pool}
+                onChange={(e) => onPoolChange!(e.target.value as DeepbookPool)}
+                className="h-8 rounded border border-[var(--color-border)] bg-white px-2 font-mono text-sm text-ink-900"
+                aria-label="交易池"
               >
-                {isUp ? "+" : ""}
-                {changePct.toFixed(2)}% 区间
-              </span>
-            </>
+                {poolOptions.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <span className="font-mono text-sm font-medium text-ink-900">{pool}</span>
+            )}
+            <span className={clsx("rounded px-2 py-1 text-[10px]", statusClass(marketStatus))}>
+              {statusLabel(marketStatus)}
+            </span>
+          </div>
+          <span className="font-mono text-[24px] font-bold leading-none text-ink-900">
+            {formatPrice(displayPrice)}
+          </span>
+          <span
+            className={clsx(
+              "text-sm font-medium",
+              isUp ? "text-profit" : "text-loss",
+            )}
+          >
+            {isUp ? "+" : ""}
+            {changePct.toFixed(2)}%
+          </span>
+          {lastTickAgeSec != null && (
+            <span className="text-[10px] text-ink-500">
+              tick {lastTickAgeSec}s 前
+            </span>
           )}
           {lastTick?.stale && (
-            <span className="text-[10px] text-ink-500">（行情延迟）</span>
+            <span className="rounded bg-[var(--color-warning-bg)] px-2 py-0.5 text-[10px] text-ink-900">
+              行情延迟
+            </span>
           )}
         </div>
-        <span className="rounded bg-bamboo-50 px-2 py-0.5 text-[10px] text-bamboo-700">
-          DeepBook · 1m
-        </span>
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex overflow-hidden rounded border border-[var(--color-border)] bg-white">
+            {INTERVALS.map((item) => (
+              <button
+                key={item}
+                type="button"
+                onClick={() => onIntervalChange?.(item)}
+                className={clsx(
+                  "h-8 px-2.5 font-mono text-[11px]",
+                  item === interval
+                    ? "bg-bamboo-500 text-white"
+                    : "text-ink-500 hover:bg-bamboo-50",
+                )}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              chartRef.current?.timeScale().fitContent();
+            }}
+            className="h-8 rounded border border-[var(--color-border)] bg-white px-2 text-[11px] text-ink-600 hover:bg-bamboo-50"
+          >
+            适配
+          </button>
+          <button
+            type="button"
+            onClick={() => setFollowRealtime((v) => !v)}
+            className={clsx(
+              "h-8 rounded border px-2 text-[11px]",
+              followRealtime
+                ? "border-bamboo-500 bg-bamboo-50 text-bamboo-600"
+                : "border-[var(--color-border)] bg-white text-ink-500 hover:bg-bamboo-50",
+            )}
+          >
+            实时
+          </button>
+          <button
+            type="button"
+            onClick={onRefresh}
+            disabled={historyLoading}
+            className="h-8 rounded border border-[var(--color-border)] bg-white px-2 text-[11px] text-ink-600 hover:bg-bamboo-50 disabled:opacity-50"
+          >
+            刷新
+          </button>
+        </div>
       </div>
-      <div
-        ref={containerRef}
-        className="w-full min-w-0 max-w-full rounded-lg border border-[var(--color-border)]"
-      />
-      {historyError && (
-        <p className="text-[10px] text-loss">K 线加载失败：{historyError}</p>
+
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-[var(--color-border)] px-3 py-2 text-[11px] text-ink-500">
+        <span>{visibleCandle?.time ?? "等待数据"}</span>
+        <span>O <b className="font-mono text-ink-900">{formatPrice(visibleCandle?.open)}</b></span>
+        <span>H <b className="font-mono text-profit">{formatPrice(visibleCandle?.high)}</b></span>
+        <span>L <b className="font-mono text-loss">{formatPrice(visibleCandle?.low)}</b></span>
+        <span>C <b className="font-mono text-ink-900">{formatPrice(visibleCandle?.close)}</b></span>
+        <span>V <b className="font-mono text-ink-900">{formatVolume(visibleCandle?.volume)}</b></span>
+        <span className="ml-auto">DeepBook · {interval} · {candleCount} bars</span>
+      </div>
+
+      <div className="relative min-h-[360px] md:min-h-[440px] xl:min-h-[52dvh]">
+        <div ref={containerRef} className="absolute inset-0 min-w-0 max-w-full" />
+        {showOverlay && (
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-white/70 px-4">
+            <div className="max-w-sm rounded-lg border border-[var(--color-border)] bg-white/95 px-4 py-3 text-center shadow-sm">
+              <p className="text-sm font-semibold text-ink-800">
+                {historyLoading
+                  ? "正在加载 K 线"
+                  : historyError
+                    ? "K 线数据不可用"
+                    : "等待 DeepBook K 线"}
+              </p>
+              <p className="mt-1 text-[11px] leading-5 text-ink-500">
+                {historyLoading
+                  ? "正在从 market-monitor 拉取历史 candles。"
+                  : historyError
+                    ? historyError
+                    : "需要 market-monitor 连接 DeepBook 并提供 candles；有实时 tick 后图表会继续更新。"}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {(historyError || trades.length > 0) && (
+        <div className="flex flex-wrap items-center gap-3 border-t border-[var(--color-border)] px-3 py-2 text-[10px] text-ink-500">
+          {historyError && <span className="text-loss">REST candles: error</span>}
+          {trades.length > 0 && <span>K 线标记：{trades.length} 笔 Panda 成交</span>}
+        </div>
       )}
-      {!historyError && !history?.candles?.length && (
-        <p className="text-[10px] text-ink-500">
-          等待 DeepBook 行情…（需 market-monitor + Redis）
-        </p>
-      )}
-      {trades.length > 0 && (
-        <p className="text-[10px] text-ink-500">
-          K 线标记：{trades.length} 笔成交（▲买 ▼卖）
-        </p>
-      )}
-    </div>
+    </section>
   );
 }

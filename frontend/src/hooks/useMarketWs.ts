@@ -39,6 +39,7 @@ export function useMarketWs(options: UseMarketWsOptions = {}) {
   const { accessToken } = useAuth();
   const [lastTick, setLastTick] = useState<MarketTickPayload | null>(null);
   const [history, setHistory] = useState<CandlesResponse | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
   const onTickRef = useRef(onTick);
   onTickRef.current = onTick;
@@ -90,33 +91,46 @@ export function useMarketWs(options: UseMarketWsOptions = {}) {
     subscribe();
   }, [subscribe, ws.isConnected]);
 
-  useEffect(() => {
+  const reloadHistory = useCallback(() => {
     if (!pool || !enabled) {
-      return;
+      return Promise.resolve(null);
     }
-    let cancelled = false;
+    setHistoryLoading(true);
     setHistoryError(null);
-    fetchMarketCandles({ pool, interval, limit: candleLimit })
+    return fetchMarketCandles({ pool, interval, limit: candleLimit })
       .then((data) => {
-        if (!cancelled) {
-          setHistory(data);
-        }
+        setHistory(data);
+        return data;
       })
       .catch((err: unknown) => {
-        if (!cancelled) {
-          setHistoryError(err instanceof Error ? err.message : "Failed to load candles");
-        }
+        setHistory(null);
+        setHistoryError(err instanceof Error ? err.message : "Failed to load candles");
+        return null;
+      })
+      .finally(() => {
+        setHistoryLoading(false);
       });
+  }, [candleLimit, enabled, interval, pool]);
+
+  useEffect(() => {
+    let cancelled = false;
+    reloadHistory().then((data) => {
+      if (cancelled || data) {
+        return;
+      }
+    });
     return () => {
       cancelled = true;
     };
-  }, [candleLimit, enabled, interval, pool]);
+  }, [reloadHistory]);
 
   return {
     ...ws,
     lastTick,
     history,
+    historyLoading,
     historyError,
+    reloadHistory,
     subscribe,
     unsubscribe,
   };

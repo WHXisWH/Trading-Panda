@@ -59,6 +59,7 @@ export interface TradeRecordApi {
   decision_details: {
     steps: DecisionStep[];
     zone?: DecisionZone;
+    entry_threshold?: number;
   };
   created_at: string;
 }
@@ -78,6 +79,7 @@ export interface Trade {
   decisionDetails: {
     steps: DecisionStep[];
     zone?: DecisionZone;
+    entry_threshold?: number;
   };
   createdAt: string;
 }

@@ -8,6 +8,7 @@ import { useMarketWs } from "@/hooks/useMarketWs";
 import { useSimulationWs, type SimulationWsEvent } from "@/hooks/useSimulationWs";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { CandlestickChart } from "@/components/trading/CandlestickChart";
+import { DashboardTradingWorkspace } from "@/components/trading/DashboardTradingWorkspace";
 import { DashboardTrainingBar } from "@/components/trading/DashboardTrainingBar";
 import { DashboardLeftColumn } from "@/components/trading/DashboardLeftColumn";
 import { DashboardMainFooter } from "@/components/trading/DashboardMainFooter";
@@ -42,11 +43,13 @@ import type { PandaDetailApi } from "@/types/panda";
 import type { ParsedStrategyLayers, StrategyFeedData, StrategyRecord } from "@/types/strategy";
 import type { DecisionLog } from "@/types/trading";
 import type { TradeRecordApi } from "@/types/trading";
+import type { MarketInterval } from "@/types/ws";
 
 export default function DashboardPage({ params }: { params: { id: string } }) {
   const { jwt } = useAuth();
   const qc = useQueryClient();
   const [pool, setPool] = useState<DeepbookPool>("DEEP/SUI");
+  const [marketInterval, setMarketInterval] = useState<MarketInterval>("1m");
   const [simRunning, setSimRunning] = useState(false);
   const [simulationId, setSimulationId] = useState<string | null>(null);
   const [simSpeed, setSimSpeed] = useState("1×");
@@ -130,7 +133,7 @@ export default function DashboardPage({ params }: { params: { id: string } }) {
     pool,
     pairs: [pool],
     enabled: !!jwt,
-    interval: "1m",
+    interval: marketInterval,
   });
 
   const onSimulationEvent = useCallback(
@@ -331,6 +334,18 @@ export default function DashboardPage({ params }: { params: { id: string } }) {
     (market.history?.candles?.length
       ? market.history.candles[market.history.candles.length - 1].c
       : undefined);
+  const lastTickAgeSec =
+    market.lastTick?.timestamp != null
+      ? Math.max(
+          0,
+          Math.floor(
+            Date.now() / 1000 -
+              (market.lastTick.timestamp > 1e12
+                ? market.lastTick.timestamp / 1000
+                : market.lastTick.timestamp),
+          ),
+        )
+      : null;
 
   const accountSnapshot: AccountPanelSnapshot = {
     equity: simStatus?.equity ?? simStatus?.initial_capital ?? 10_000,
@@ -376,21 +391,52 @@ export default function DashboardPage({ params }: { params: { id: string } }) {
             simSpeed={simSpeed}
             simRunning={simRunning}
             canTrain={!!strategy || simRunning}
+            hasStrategy={!!strategy}
+            actorActive={simStatus?.actor_active}
+            tradeCount={simStatus?.trade_count ?? trades.length}
             onSpeedChange={setSimSpeed}
             onToggleTraining={toggleTraining}
+            onOpenStrategy={() => setStrategyDrawerOpen(true)}
           />
 
           <CandlestickChart
             pool={pool}
+            interval={marketInterval}
+            onIntervalChange={setMarketInterval}
             availablePools={subscribedPools}
             onPoolChange={handlePoolChange}
             history={market.history}
             lastTick={market.lastTick}
+            marketStatus={market.status}
+            historyLoading={market.historyLoading}
             historyError={market.historyError}
+            onRefresh={() => {
+              void market.reloadHistory();
+            }}
             trades={trades}
           />
 
+          <DashboardTradingWorkspace
+            account={accountSnapshot}
+            trades={trades}
+            selectedTradeId={selectedTradeId}
+            onSelectTrade={handleSelectTrade}
+            tradesLoading={tradesLoading}
+            liveDecision={liveDecision}
+            pool={pool}
+            interval={marketInterval}
+            marketStatus={market.status}
+            historyLoading={market.historyLoading}
+            historyError={market.historyError}
+            candleCount={market.history?.candles?.length ?? 0}
+            lastTickAgeSec={lastTickAgeSec}
+            actorActive={Boolean(simStatus?.actor_active)}
+            strategyReady={Boolean(strategy)}
+            simulationId={simulationId}
+          />
+
           <DashboardMainFooter
+            className="xl:hidden"
             liveDecision={liveDecision}
             reviewDecision={reviewDecision}
             trades={trades}
@@ -403,12 +449,23 @@ export default function DashboardPage({ params }: { params: { id: string } }) {
         </div>
 
         <DashboardRightColumn
-          strategy={strategySectionProps}
           className="order-3 hidden xl:flex"
+          liveDecision={liveDecision}
+          reviewDecision={reviewDecision}
+          trades={trades}
+          selectedTradeId={selectedTradeId}
+          onSelectTrade={handleSelectTrade}
+          onClearReview={handleClearReview}
+          training={simRunning}
+          tradesLoading={tradesLoading}
         />
       </div>
 
-      <StrategyMobileDrawer open={strategyDrawerOpen} onOpenChange={setStrategyDrawerOpen}>
+      <StrategyMobileDrawer
+        open={strategyDrawerOpen}
+        onOpenChange={setStrategyDrawerOpen}
+        showFloatingButton={false}
+      >
         <DashboardStrategySection {...strategySectionProps} />
       </StrategyMobileDrawer>
     </PageContainer>

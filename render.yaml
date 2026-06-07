@@ -36,6 +36,14 @@ services:
         value: "259200"
       - key: FILLS_LOOKBACK_SEC
         value: "2592000"
+      - key: CANDLE_PERIOD
+        value: "1m"
+      - key: OHLCV_LIMIT
+        value: "60"
+      - key: PRICE_SCALE
+        value: "1000000000"
+      - key: QTY_SCALE
+        value: "1000000000"
 
   - type: web
     name: trading-panda-backend
@@ -47,34 +55,44 @@ services:
     healthCheckPath: /health
     envVars:
       - key: DATABASE_URL
-        fromDatabase:
-          name: trading-panda-db
-          property: connectionString
+        sync: false
       - key: REDIS_URL
         sync: false
       - key: DEEPSEEK_API_KEY
         sync: false
+      - key: DEEPSEEK_BASE_URL
+        value: https://api.deepseek.com/v1
+      - key: DEEPSEEK_MODEL
+        value: deepseek-chat
+      - key: AGENT_TIMEOUT_SECONDS
+        value: "3"
       - key: SUI_RPC_URL
         value: https://fullnode.testnet.sui.io:443
       - key: SUI_PRIVATE_KEY
+        sync: false
+      - key: SUI_WALLET_ADDRESS
         sync: false
       - key: PACKAGE_ID
         sync: false
       - key: REGISTRY_ID
         sync: false
+      - key: ACHIEVEMENT_REGISTRY_ID
+        sync: false
+      - key: TRANSFER_POLICY_ID
+        sync: false
       - key: WALRUS_PUBLISHER_URL
         value: https://publisher.walrus-testnet.walrus.space
       - key: WALRUS_AGGREGATOR_URL
         value: https://aggregator.walrus-testnet.walrus.space
+      - key: JWT_SECRET
+        sync: false
       - key: INTERNAL_SECRET
+        sync: false
+      - key: GOOGLE_CLIENT_ID
         sync: false
       - key: MAX_ACTORS
         value: "100"
       - key: MERKLE_BATCH_SIZE
         value: "50"
-
-databases:
-  - name: trading-panda-db
-    plan: free
-    databaseName: trading_panda
-    postgresMajorVersion: "15"
+      - key: DEBUG
+        value: "false"
