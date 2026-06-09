@@ -3,14 +3,27 @@
 import { useMemo, useState } from "react";
 import { clsx } from "clsx";
 import { TradeHistory } from "@/components/trading/TradeHistory";
-import type { AccountPanelSnapshot } from "@/components/trading/AccountPanel";
+import { EquityCurve } from "@/components/trading/EquityCurve";
+import { PositionRiskTable } from "@/components/trading/PositionRiskTable";
+import {
+  computeTradeStats,
+  buildEquityCurve,
+  computePortfolioMetrics,
+  formatUsd,
+  formatPct,
+} from "@/lib/trading/performanceMetrics";
 import type { DecisionLog, TradeRecordApi } from "@/types/trading";
 import type { MarketInterval, WsConnectionStatus } from "@/types/ws";
 
-type TabId = "overview" | "positions" | "trades" | "diagnostics";
+type TabId = "overview" | "positions" | "trades" | "equity" | "diagnostics";
 
 interface Props {
-  account: AccountPanelSnapshot;
+  equity: number;
+  initialCapital: number;
+  positions: Record<string, number>;
+  tradeCount: number;
+  lastPrice?: number;
+  isRunning: boolean;
   trades: TradeRecordApi[];
   selectedTradeId: string | null;
   onSelectTrade: (trade: TradeRecordApi) => void;
@@ -32,216 +45,11 @@ const TABS: Array<{ id: TabId; label: string }> = [
   { id: "overview", label: "总览" },
   { id: "positions", label: "持仓" },
   { id: "trades", label: "成交" },
+  { id: "equity", label: "权益" },
   { id: "diagnostics", label: "诊断" },
 ];
 
-function formatUsd(value: number): string {
-  return `$${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
-}
-
-function formatPct(value: number): string {
-  return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
-}
-
-function formatQty(value: number): string {
-  if (Math.abs(value) < 0.0001 && value !== 0) return value.toExponential(2);
-  return value.toLocaleString(undefined, { maximumFractionDigits: 6 });
-}
-
-function statusTone(ok: boolean): string {
-  return ok ? "bg-bamboo-50 text-bamboo-600" : "bg-white text-ink-500";
-}
-
-function computeTradeStats(trades: TradeRecordApi[]) {
-  const executed = trades.filter((t) => t.action !== "HOLD");
-  const wins = executed.filter((t) => (t.pnl_pct ?? 0) > 0).length;
-  const pnl = executed.reduce((sum, t) => sum + (t.pnl_pct ?? 0), 0);
-  const avgScore =
-    executed.length > 0
-      ? executed.reduce((sum, t) => sum + t.final_score, 0) / executed.length
-      : 0;
-  return {
-    executed: executed.length,
-    winRate: executed.length > 0 ? (wins / executed.length) * 100 : 0,
-    pnlPct: pnl * 100,
-    avgScore,
-  };
-}
-
-export function DashboardTradingWorkspace({
-  account,
-  trades,
-  selectedTradeId,
-  onSelectTrade,
-  tradesLoading,
-  liveDecision,
-  pool,
-  interval,
-  marketStatus,
-  historyLoading,
-  historyError,
-  candleCount,
-  lastTickAgeSec,
-  actorActive,
-  strategyReady,
-  simulationId,
-}: Props) {
-  const [activeTab, setActiveTab] = useState<TabId>("overview");
-  const stats = useMemo(() => computeTradeStats(trades), [trades]);
-  const pnl = account.equity - account.initialCapital;
-  const pnlPct = account.initialCapital > 0 ? (pnl / account.initialCapital) * 100 : 0;
-  const positionRows = Object.entries(account.positions).filter(([, qty]) => qty > 0);
-
-  return (
-    <section className="overflow-hidden rounded-lg border border-[var(--color-border)] bg-white">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--color-border)] bg-paper-card px-3 py-2">
-        <div>
-          <h2 className="text-[15px] font-semibold text-ink-900">模拟交易工作台</h2>
-          <p className="text-[10px] text-ink-500">
-            {pool} · {interval} · {account.training ? "训练中" : "未训练"}
-          </p>
-        </div>
-        <div className="flex overflow-hidden rounded border border-[var(--color-border)] bg-white">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id)}
-              className={clsx(
-                "h-8 px-3 text-[11px] font-medium",
-                activeTab === tab.id
-                  ? "bg-bamboo-500 text-white"
-                  : "text-ink-500 hover:bg-bamboo-50",
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {activeTab === "overview" && (
-        <div className="grid gap-3 p-3 md:grid-cols-4">
-          <Metric
-            label="权益"
-            value={formatUsd(account.equity)}
-            detail={`${formatPct(pnlPct)} · ${formatUsd(pnl)}`}
-            positive={pnl >= 0}
-          />
-          <Metric
-            label="胜率"
-            value={`${stats.winRate.toFixed(1)}%`}
-            detail={`${stats.executed} 笔成交`}
-          />
-          <Metric
-            label="平均决策分"
-            value={stats.executed ? stats.avgScore.toFixed(2) : "--"}
-            detail={liveDecision ? `${liveDecision.action} · ${liveDecision.zone}` : "等待决策"}
-          />
-          <Metric
-            label="当前持仓"
-            value={positionRows.length ? `${positionRows.length} 个资产` : "空仓"}
-            detail={positionRows[0] ? `${positionRows[0][0]} ${formatQty(positionRows[0][1])}` : "无持仓风险"}
-          />
-        </div>
-      )}
-
-      {activeTab === "positions" && (
-        <div className="p-3">
-          {positionRows.length === 0 ? (
-            <p className="rounded-lg bg-paper-card px-3 py-4 text-[12px] text-ink-500">
-              当前没有持仓。训练开始后，成交会更新这里的资产数量和仓位占比。
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[520px] text-left text-[12px]">
-                <thead className="text-[10px] uppercase text-ink-500">
-                  <tr>
-                    <th className="px-2 py-2">资产</th>
-                    <th className="px-2 py-2">数量</th>
-                    <th className="px-2 py-2">参考价</th>
-                    <th className="px-2 py-2">名义价值</th>
-                    <th className="px-2 py-2">仓位占比</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {positionRows.map(([asset, qty]) => {
-                    const notional = account.lastPrice ? qty * account.lastPrice : 0;
-                    const pct = account.equity > 0 ? (notional / account.equity) * 100 : 0;
-                    return (
-                      <tr key={asset} className="border-t border-[var(--color-border)]">
-                        <td className="px-2 py-2 font-mono font-semibold">{asset}</td>
-                        <td className="px-2 py-2 font-mono">{formatQty(qty)}</td>
-                        <td className="px-2 py-2 font-mono">
-                          {account.lastPrice ? account.lastPrice.toPrecision(6) : "--"}
-                        </td>
-                        <td className="px-2 py-2 font-mono">{notional ? formatUsd(notional) : "--"}</td>
-                        <td className="px-2 py-2 font-mono">{notional ? `${pct.toFixed(2)}%` : "--"}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
-
-      {activeTab === "trades" && (
-        <TradeHistory
-          embedded
-          className="max-h-[320px] px-3 py-3"
-          items={trades}
-          selectedId={selectedTradeId}
-          onSelect={onSelectTrade}
-          loading={tradesLoading}
-        />
-      )}
-
-      {activeTab === "diagnostics" && (
-        <div className="grid gap-2 p-3 md:grid-cols-2">
-          <Diagnostic label="策略" value={strategyReady ? "ready" : "missing"} ok={strategyReady} />
-          <Diagnostic label="Actor" value={actorActive ? "active" : "idle"} ok={actorActive} />
-          <Diagnostic label="WebSocket" value={marketStatus} ok={marketStatus === "open"} />
-          <Diagnostic label="REST candles" value={historyError ? "error" : historyLoading ? "loading" : "ready"} ok={!historyError && candleCount > 0} />
-          <Diagnostic label="K线数量" value={`${candleCount} bars`} ok={candleCount > 0} />
-          <Diagnostic label="最近 tick" value={lastTickAgeSec == null ? "none" : `${lastTickAgeSec}s ago`} ok={lastTickAgeSec != null && lastTickAgeSec < 60} />
-          <Diagnostic label="Simulation" value={simulationId ? simulationId.slice(0, 8) : "none"} ok={Boolean(simulationId)} />
-          <Diagnostic label="错误" value={historyError ?? "none"} ok={!historyError} wide />
-        </div>
-      )}
-    </section>
-  );
-}
-
-function Metric({
-  label,
-  value,
-  detail,
-  positive,
-}: {
-  label: string;
-  value: string;
-  detail: string;
-  positive?: boolean;
-}) {
-  return (
-    <div className="rounded-lg bg-paper-card px-3 py-3">
-      <p className="text-[10px] text-ink-500">{label}</p>
-      <p className="mt-1 font-mono text-[18px] font-semibold text-ink-900">{value}</p>
-      <p
-        className={clsx(
-          "mt-1 text-[11px]",
-          positive == null ? "text-ink-500" : positive ? "text-profit" : "text-loss",
-        )}
-      >
-        {detail}
-      </p>
-    </div>
-  );
-}
-
-function Diagnostic({
+function DiagnosticRow({
   label,
   value,
   ok,
@@ -260,9 +68,253 @@ function Diagnostic({
       )}
     >
       <span className="text-ink-500">{label}</span>
-      <span className={clsx("truncate rounded px-2 py-0.5 font-mono text-[11px]", statusTone(ok))}>
+      <span
+        className={clsx(
+          "truncate rounded-full px-2 py-0.5 font-mono text-[11px]",
+          ok ? "bg-bamboo-50 text-bamboo-600" : "bg-paper-card text-ink-500",
+        )}
+      >
         {value}
       </span>
+    </div>
+  );
+}
+
+const DIAGNOSTIC_LABELS: Record<string, Record<string, string>> = {
+  strategy: { ready: "已就绪", missing: "未设置" },
+  actor: { active: "活跃", idle: "空闲" },
+  ws: {
+    open: "已连接",
+    connecting: "连接中",
+    closed: "已断开",
+    error: "错误",
+    idle: "未连接",
+  },
+  candles: { ready: "正常", loading: "加载中", error: "异常" },
+};
+
+export function DashboardTradingWorkspace({
+  equity,
+  initialCapital,
+  positions,
+  lastPrice,
+  isRunning,
+  trades,
+  selectedTradeId,
+  onSelectTrade,
+  tradesLoading,
+  liveDecision,
+  pool,
+  interval,
+  marketStatus,
+  historyLoading,
+  historyError,
+  candleCount,
+  lastTickAgeSec,
+  actorActive,
+  strategyReady,
+  simulationId,
+}: Props) {
+  const [activeTab, setActiveTab] = useState<TabId>("overview");
+  const stats = useMemo(() => computeTradeStats(trades), [trades]);
+  const equityPoints = useMemo(
+    () => buildEquityCurve(trades, initialCapital),
+    [trades, initialCapital],
+  );
+  const portfolio = useMemo(
+    () => computePortfolioMetrics(trades, initialCapital, equity),
+    [trades, initialCapital, equity],
+  );
+  const pnl = equity - initialCapital;
+  const pnlPct = initialCapital > 0 ? (pnl / initialCapital) * 100 : 0;
+  const positionCount = Object.values(positions).filter((q) => q > 0).length;
+
+  const strategyLabel = strategyReady
+    ? DIAGNOSTIC_LABELS.strategy.ready
+    : DIAGNOSTIC_LABELS.strategy.missing;
+  const actorLabel = actorActive
+    ? DIAGNOSTIC_LABELS.actor.active
+    : DIAGNOSTIC_LABELS.actor.idle;
+  const wsLabel = DIAGNOSTIC_LABELS.ws[marketStatus] ?? marketStatus;
+  const candleStatus = historyError ? "error" : historyLoading ? "loading" : "ready";
+  const candleLabel = DIAGNOSTIC_LABELS.candles[candleStatus] ?? candleStatus;
+  const tickLabel =
+    lastTickAgeSec == null
+      ? "无数据"
+      : lastTickAgeSec < 60
+        ? `${lastTickAgeSec}秒前`
+        : `${Math.floor(lastTickAgeSec / 60)}分钟前`;
+
+  return (
+    <section className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-white shadow-sm">
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--color-border)] bg-paper-card px-4 py-2.5">
+        <div>
+          <h2 className="text-[14px] font-semibold text-ink-900">模拟交易工作台</h2>
+          <p className="text-[10px] text-ink-500">
+            {pool} · {interval} · {isRunning ? "训练中" : "未训练"}
+          </p>
+        </div>
+        <div className="flex overflow-hidden rounded-lg border border-[var(--color-border)] bg-white">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={clsx(
+                "h-8 px-3 text-[11px] font-medium transition-colors",
+                activeTab === tab.id
+                  ? "bg-bamboo-500 text-white"
+                  : "text-ink-500 hover:bg-bamboo-50 hover:text-bamboo-700",
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Tab content */}
+      {activeTab === "overview" && (
+        <div className="p-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <MetricCard
+              label="权益"
+              value={formatUsd(equity)}
+              detail={`${formatPct(pnlPct)} · ${formatUsd(pnl)}`}
+              positive={pnl >= 0}
+            />
+            <MetricCard
+              label="胜率"
+              value={stats.totalTrades > 0 ? `${stats.winRate.toFixed(1)}%` : "--"}
+              detail={`${stats.winCount}胜 / ${stats.lossCount}负 · 共${stats.totalTrades}笔`}
+            />
+            <MetricCard
+              label="盈亏因子"
+              value={
+                stats.profitFactor === Infinity
+                  ? "∞"
+                  : stats.profitFactor > 0
+                    ? stats.profitFactor.toFixed(2)
+                    : "--"
+              }
+              detail={`期望值 ${stats.expectancy > 0 ? "+" : ""}${stats.expectancy.toFixed(2)}%`}
+              positive={stats.profitFactor > 1}
+            />
+            <MetricCard
+              label="最大回撤"
+              value={
+                portfolio.maxDrawdownPct > 0
+                  ? `-${portfolio.maxDrawdownPct.toFixed(2)}%`
+                  : "0%"
+              }
+              detail={`最大连亏 ${stats.maxConsecutiveLoss} 笔`}
+              positive={portfolio.maxDrawdownPct < 5}
+            />
+          </div>
+
+          <div className="mt-3 grid gap-2 sm:grid-cols-3 lg:grid-cols-6">
+            <MiniMetric label="平均决策分" value={stats.avgScore > 0 ? stats.avgScore.toFixed(2) : "--"} />
+            <MiniMetric label="平均盈亏" value={stats.totalTrades > 0 ? formatPct(stats.avgPnlPct) : "--"} />
+            <MiniMetric label="最大单笔盈" value={stats.maxWin > 0 ? formatPct(stats.maxWin) : "--"} />
+            <MiniMetric label="最大单笔亏" value={stats.maxLoss < 0 ? formatPct(stats.maxLoss) : "--"} />
+            <MiniMetric label="夏普比率" value={portfolio.sharpeRatio !== 0 ? portfolio.sharpeRatio.toFixed(2) : "--"} />
+            <MiniMetric label="持仓数" value={`${positionCount} 个`} />
+          </div>
+
+          {liveDecision && (
+            <div className="mt-3 rounded-lg bg-paper-card px-3 py-2 text-[11px]">
+              <span className="text-ink-500">最新决策 </span>
+              <span className={clsx("font-semibold", liveDecision.action === "BUY" ? "text-profit" : liveDecision.action === "SELL" ? "text-loss" : "text-ink-700")}>
+                {liveDecision.action}
+              </span>
+              <span className="ml-2 text-ink-500">
+                分数 <span className="font-mono text-ink-700">{liveDecision.final_score.toFixed(2)}</span>
+              </span>
+              <span className="ml-2 text-ink-500">
+                区间 <span className={clsx("font-semibold", liveDecision.zone === "EXECUTE" ? "text-bamboo-600" : "text-ink-700")}>{liveDecision.zone}</span>
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === "positions" && (
+        <PositionRiskTable
+          positions={positions}
+          equity={equity}
+          lastPrice={lastPrice}
+        />
+      )}
+
+      {activeTab === "trades" && (
+        <TradeHistory
+          embedded
+          className="max-h-[360px] px-3 py-3"
+          items={trades}
+          selectedId={selectedTradeId}
+          onSelect={onSelectTrade}
+          loading={tradesLoading}
+        />
+      )}
+
+      {activeTab === "equity" && (
+        <div className="p-3">
+          <EquityCurve
+            points={equityPoints}
+            initialCapital={initialCapital}
+          />
+        </div>
+      )}
+
+      {activeTab === "diagnostics" && (
+        <div className="grid gap-2 p-4 md:grid-cols-2">
+          <DiagnosticRow label="策略状态" value={strategyLabel} ok={strategyReady} />
+          <DiagnosticRow label="Actor 状态" value={actorLabel} ok={actorActive} />
+          <DiagnosticRow label="WebSocket" value={wsLabel} ok={marketStatus === "open"} />
+          <DiagnosticRow label="K线数据" value={candleLabel} ok={!historyError && candleCount > 0} />
+          <DiagnosticRow label="K线数量" value={`${candleCount} 根`} ok={candleCount > 0} />
+          <DiagnosticRow label="最近行情" value={tickLabel} ok={lastTickAgeSec != null && lastTickAgeSec < 60} />
+          <DiagnosticRow label="会话 ID" value={simulationId ? simulationId.slice(0, 8) + "…" : "无"} ok={Boolean(simulationId)} />
+          <DiagnosticRow label="异常信息" value={historyError ?? "无"} ok={!historyError} wide />
+        </div>
+      )}
+    </section>
+  );
+}
+
+function MetricCard({
+  label,
+  value,
+  detail,
+  positive,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+  positive?: boolean;
+}) {
+  return (
+    <div className="rounded-lg bg-paper-card px-3 py-3">
+      <p className="text-[10px] font-medium uppercase tracking-wide text-ink-500">{label}</p>
+      <p className="mt-1 font-mono text-[20px] font-bold text-ink-900">{value}</p>
+      <p
+        className={clsx(
+          "mt-0.5 text-[11px]",
+          positive == null ? "text-ink-500" : positive ? "text-profit" : "text-loss",
+        )}
+      >
+        {detail}
+      </p>
+    </div>
+  );
+}
+
+function MiniMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-[var(--color-border)] px-2.5 py-2 text-center">
+      <p className="text-[9px] text-ink-500">{label}</p>
+      <p className="mt-0.5 font-mono text-[13px] font-semibold text-ink-800">{value}</p>
     </div>
   );
 }
