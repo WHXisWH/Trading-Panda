@@ -1,0 +1,9 @@
+{
+  "status": "temporary-fallback",
+  "compatibilityStrategy": "Old broad-layer directories are retained only as temporary archived assets. Sublayer manifest, renderer, audit, and Panda Lab QA now use sublayer assets only; do not load these broad-layer files in the renderer.",
+  "directories": [
+    "traits/boldness/tier-*.png",
+    "traits/intuition/tier-*.png",
+    "emotions/tier-*.png"
+  ]
+}

@@ -5,7 +5,7 @@ import { isPandaLabEnabled } from "@/lib/pandaLab";
 
 export const metadata = {
   title: "熊猫试装实验室 | TradingPanda",
-  description: "无需铸造，调试像素熊猫 SVG 形象",
+  description: "无需铸造，调试 Canvas PNG 素材合成熊猫",
 };
 
 export default function PandaLabRoute() {

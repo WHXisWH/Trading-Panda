@@ -3,7 +3,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { PageContainer } from "@/components/layout/PageContainer";
 import { PandaLabControls } from "@/components/panda/lab/PandaLabControls";
 import { PandaLabPreview } from "@/components/panda/lab/PandaLabPreview";
 import { PandaLabInfo } from "@/components/panda/lab/PandaLabInfo";
@@ -43,16 +42,20 @@ function PandaLabContent() {
         <div>
           <h1 className="font-serif text-2xl font-bold text-ink-900">熊猫试装实验室</h1>
           <p className="mt-1 max-w-xl text-[13px] text-ink-500">
-            无需连接钱包或铸造，实时调试 96×96 像素 SVG 形象。调整滑条后 URL
-            自动同步，可分享链接。
+            无需连接钱包或铸造，实时调试由 PNG 素材分层合成的 Canvas 熊猫。调整滑条后 URL 自动同步，可分享链接。
           </p>
         </div>
-        <Link
-          href="/mint"
-          className="text-[13px] text-bamboo-600 hover:underline"
-        >
-          去铸造 →
-        </Link>
+        <div className="flex gap-3 text-[13px]">
+          <Link href="/panda-lab/rig" className="text-ink-500 hover:underline">
+            Rig 标注
+          </Link>
+          <Link href="/panda-lab/qa" className="text-ink-500 hover:underline">
+            视觉验收
+          </Link>
+          <Link href="/mint" className="text-bamboo-600 hover:underline">
+            去铸造 →
+          </Link>
+        </div>
       </header>
 
       <div className="flex flex-wrap gap-3 text-[12px]">

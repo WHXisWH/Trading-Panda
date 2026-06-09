@@ -1,0 +1,4416 @@
+{
+  "generatedAt": "2026-06-09T11:22:25.155Z",
+  "root": "frontend/public/assets/panda",
+  "expected": 166,
+  "ok": 158,
+  "missing": [],
+  "hardFailures": [
+    "frontend/public/assets/panda/traits/boldness/cape/tier-09.png: sublayer covers multiple unrelated landmarks: leftEye, mouth, face; boldness/cape overlaps eye rect above 10%",
+    "frontend/public/assets/panda/traits/focus/monocle/tier-01.png: sublayer covers multiple unrelated landmarks: rightEye, mouth",
+    "frontend/public/assets/panda/traits/focus/chest-core/tier-04.png: focus/chest-core intersects faceRect",
+    "frontend/public/assets/panda/traits/focus/chest-core/tier-06.png: sublayer covers multiple unrelated landmarks: mouth, face; focus/chest-core intersects faceRect",
+    "frontend/public/assets/panda/traits/focus/chest-core/tier-07.png: sublayer covers multiple unrelated landmarks: mouth, face; focus/chest-core intersects faceRect",
+    "frontend/public/assets/panda/traits/focus/chest-core/tier-08.png: sublayer covers multiple unrelated landmarks: mouth, face; focus/chest-core intersects faceRect",
+    "frontend/public/assets/panda/traits/focus/chest-core/tier-09.png: sublayer covers multiple unrelated landmarks: mouth, face; focus/chest-core intersects faceRect",
+    "frontend/public/assets/panda/traits/focus/chest-core/tier-10.png: focus/chest-core intersects faceRect"
+  ],
+  "dimensions": [
+    "1024x1024"
+  ],
+  "legacyFallbacks": {
+    "status": "temporary-fallback",
+    "compatibilityStrategy": "Official public assets currently contain only generated sublayer PNGs that exist on disk and passed staged QA; legacy broad-layer fallback PNGs are not loaded by the renderer.",
+    "directories": []
+  },
+  "items": [
+    {
+      "src": "/assets/panda/traits/boldness/headband/tier-01.png",
+      "attribute": "boldness",
+      "sublayer": "headband",
+      "tier": 1,
+      "anchorPolicy": "faceTopCenter",
+      "bboxPolicy": "headband",
+      "alphaBbox": {
+        "x": 179.097607421875,
+        "y": 70.794580078125,
+        "width": 180.3720703125,
+        "height": 37.396874999999994
+      },
+      "anchor": {
+        "x": 269.05,
+        "y": 217.85
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/boldness/headband/tier-02.png",
+      "attribute": "boldness",
+      "sublayer": "headband",
+      "tier": 2,
+      "anchorPolicy": "faceTopCenter",
+      "bboxPolicy": "headband",
+      "alphaBbox": {
+        "x": 157.45851374218836,
+        "y": 35.15558506141852,
+        "width": 197.30605575058956,
+        "height": 78.61809419367965
+      },
+      "anchor": {
+        "x": 255.29999999999998,
+        "y": 20.7
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/boldness/headband/tier-03.png",
+      "attribute": "boldness",
+      "sublayer": "headband",
+      "tier": 3,
+      "anchorPolicy": "faceTopCenter",
+      "bboxPolicy": "headband",
+      "alphaBbox": {
+        "x": 155.35458776822588,
+        "y": 94.35136256034528,
+        "width": 204.2716886231542,
+        "height": 57.76320243842406
+      },
+      "anchor": {
+        "x": 255.6,
+        "y": 33.7
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/boldness/headband/tier-04.png",
+      "attribute": "boldness",
+      "sublayer": "headband",
+      "tier": 4,
+      "anchorPolicy": "faceTopCenter",
+      "bboxPolicy": "headband",
+      "alphaBbox": {
+        "x": 163.93382824294105,
+        "y": 38.179423236725825,
+        "width": 186.38918943358675,
+        "height": 75.42036788936372
+      },
+      "anchor": {
+        "x": 256.6,
+        "y": 38.9
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.9996371991776515,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/boldness/headband/tier-05.png",
+      "attribute": "boldness",
+      "sublayer": "headband",
+      "tier": 5,
+      "anchorPolicy": "faceTopCenter",
+      "bboxPolicy": "headband",
+      "alphaBbox": {
+        "x": 157.75,
+        "y": 42.25,
+        "width": 194.5,
+        "height": 75
+      },
+      "anchor": {
+        "x": 256.2,
+        "y": 33.5
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/boldness/headband/tier-06.png",
+      "attribute": "boldness",
+      "sublayer": "headband",
+      "tier": 6,
+      "anchorPolicy": "faceTopCenter",
+      "bboxPolicy": "headband",
+      "alphaBbox": {
+        "x": 156.28212600114114,
+        "y": 7.881747733168602,
+        "width": 192.04190727233168,
+        "height": 74.05214933380398
+      },
+      "anchor": {
+        "x": 256.45,
+        "y": 33.8
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.8408852213053263,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/boldness/headband/tier-07.png",
+      "attribute": "boldness",
+      "sublayer": "headband",
+      "tier": 7,
+      "anchorPolicy": "faceTopCenter",
+      "bboxPolicy": "headband",
+      "alphaBbox": {
+        "x": 187.43017700998593,
+        "y": 11.045890027992996,
+        "width": 140.87050891723226,
+        "height": 78.4714915444985
+      },
+      "anchor": {
+        "x": 256.4,
+        "y": 38.7
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.8000147918053399,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/boldness/headband/tier-08.png",
+      "attribute": "boldness",
+      "sublayer": "headband",
+      "tier": 8,
+      "anchorPolicy": "faceTopCenter",
+      "bboxPolicy": "headband",
+      "alphaBbox": {
+        "x": 177.73024322413687,
+        "y": 13.788606407369091,
+        "width": 158.26602440857914,
+        "height": 77.49899720302105
+      },
+      "anchor": {
+        "x": 257.04999999999995,
+        "y": 41.1
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.8508603018821045,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/boldness/headband/tier-09.png",
+      "attribute": "boldness",
+      "sublayer": "headband",
+      "tier": 9,
+      "anchorPolicy": "faceTopCenter",
+      "bboxPolicy": "headband",
+      "alphaBbox": {
+        "x": 205.64989496268848,
+        "y": 0.9381158211813094,
+        "width": 97.01123298266558,
+        "height": 56.03235008481546
+      },
+      "anchor": {
+        "x": 254.95,
+        "y": 25.4
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.8533659730722154,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/boldness/headband/tier-10.png",
+      "attribute": "boldness",
+      "sublayer": "headband",
+      "tier": 10,
+      "anchorPolicy": "faceTopCenter",
+      "bboxPolicy": "headband",
+      "alphaBbox": {
+        "x": 189.03940944873153,
+        "y": 26.12965624764103,
+        "width": 164.47054038163105,
+        "height": 75.8768730111133
+      },
+      "anchor": {
+        "x": 264.45,
+        "y": 32.7
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.9758930801898577,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/boldness/cape/tier-01.png",
+      "attribute": "boldness",
+      "sublayer": "cape",
+      "tier": 1,
+      "anchorPolicy": "upperBodyCenter",
+      "bboxPolicy": "cape",
+      "alphaBbox": {
+        "x": 34.13828124999999,
+        "y": 224.999365234375,
+        "width": 146.7234375,
+        "height": 44.185156250000006
+      },
+      "anchor": {
+        "x": 162.89999999999998,
+        "y": 208.55
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.21722935220615625,
+        "body": 0.3712370051809962
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/boldness/cape/tier-02.png",
+      "attribute": "boldness",
+      "sublayer": "cape",
+      "tier": 2,
+      "anchorPolicy": "upperBodyCenter",
+      "bboxPolicy": "cape",
+      "alphaBbox": {
+        "x": 96.03059589171676,
+        "y": 278.1508645720616,
+        "width": 177.88023511661663,
+        "height": 109.14185517479717
+      },
+      "anchor": {
+        "x": 256.7,
+        "y": 310.98
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 1
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/boldness/cape/tier-03.png",
+      "attribute": "boldness",
+      "sublayer": "cape",
+      "tier": 3,
+      "anchorPolicy": "upperBodyCenter",
+      "bboxPolicy": "cape",
+      "alphaBbox": {
+        "x": 117.48205032014181,
+        "y": 309.8184415945128,
+        "width": 156.5472424514436,
+        "height": 85.89317727424338
+      },
+      "anchor": {
+        "x": 255.65,
+        "y": 334.0925
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 1
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/boldness/cape/tier-04.png",
+      "attribute": "boldness",
+      "sublayer": "cape",
+      "tier": 4,
+      "anchorPolicy": "upperBodyCenter",
+      "bboxPolicy": "cape",
+      "alphaBbox": {
+        "x": 110.12658191794716,
+        "y": 237.01406833069962,
+        "width": 163.11830614666636,
+        "height": 127.51136026214334
+      },
+      "anchor": {
+        "x": 256.5,
+        "y": 299.3575
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.07113703968455277,
+        "body": 0.9442202596444301
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/boldness/cape/tier-05.png",
+      "attribute": "boldness",
+      "sublayer": "cape",
+      "tier": 5,
+      "anchorPolicy": "upperBodyCenter",
+      "bboxPolicy": "cape",
+      "alphaBbox": {
+        "x": 105.25,
+        "y": 267.25,
+        "width": 169.5,
+        "height": 105.5
+      },
+      "anchor": {
+        "x": 258.35,
+        "y": 304.5325
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 1
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/boldness/cape/tier-06.png",
+      "attribute": "boldness",
+      "sublayer": "cape",
+      "tier": 6,
+      "anchorPolicy": "upperBodyCenter",
+      "bboxPolicy": "cape",
+      "alphaBbox": {
+        "x": 103.19689446370737,
+        "y": 213.74277028205339,
+        "width": 165.70292369251504,
+        "height": 96.29343943193354
+      },
+      "anchor": {
+        "x": 255.8,
+        "y": 299.07
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0.47903944649917146,
+        "face": 0.3022155550426956,
+        "body": 0.6652434802677129
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/boldness/cape/tier-07.png",
+      "attribute": "boldness",
+      "sublayer": "cape",
+      "tier": 7,
+      "anchorPolicy": "upperBodyCenter",
+      "bboxPolicy": "cape",
+      "alphaBbox": {
+        "x": 114.58707598279673,
+        "y": 224.98162893270722,
+        "width": 156.2288740752185,
+        "height": 98.16150494991604
+      },
+      "anchor": {
+        "x": 255.7,
+        "y": 298.5175
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0.32762824509375577,
+        "face": 0.15607872782742516,
+        "body": 0.8439212721725748
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/boldness/cape/tier-08.png",
+      "attribute": "boldness",
+      "sublayer": "cape",
+      "tier": 8,
+      "anchorPolicy": "upperBodyCenter",
+      "bboxPolicy": "cape",
+      "alphaBbox": {
+        "x": 105.77717250590726,
+        "y": 223.56795803565706,
+        "width": 169.80605069655005,
+        "height": 93.66882442553054
+      },
+      "anchor": {
+        "x": 257.15,
+        "y": 300.99
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.1990864561108273,
+        "body": 0.7693301679838928
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/boldness/cape/tier-09.png",
+      "attribute": "boldness",
+      "sublayer": "cape",
+      "tier": 9,
+      "anchorPolicy": "upperBodyCenter",
+      "bboxPolicy": "cape",
+      "alphaBbox": {
+        "x": 85.13984239454757,
+        "y": 170.02258406225485,
+        "width": 191.76434823072626,
+        "height": 119.92342721213555
+      },
+      "anchor": {
+        "x": 258.35,
+        "y": 283.4775
+      },
+      "overlapRatios": {
+        "leftEye": 0.10334162226963123,
+        "rightEye": 0,
+        "eyes": 0.05297418247937275,
+        "mouth": 0.7203012680497436,
+        "face": 0.4071680233264488,
+        "body": 0.5032438342850201
+      },
+      "status": "fail",
+      "failures": [
+        "sublayer covers multiple unrelated landmarks: leftEye, mouth, face",
+        "boldness/cape overlaps eye rect above 10%"
+      ]
+    },
+    {
+      "src": "/assets/panda/traits/boldness/cape/tier-10.png",
+      "attribute": "boldness",
+      "sublayer": "cape",
+      "tier": 10,
+      "anchorPolicy": "upperBodyCenter",
+      "bboxPolicy": "cape",
+      "alphaBbox": {
+        "x": 94.59918826356974,
+        "y": 217.8587520440185,
+        "width": 179.8863865617623,
+        "height": 102.41319352926291
+      },
+      "anchor": {
+        "x": 256.55,
+        "y": 275.46750000000003
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.00815833579808735,
+        "body": 0.9741940254362614
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/boldness/weapon/tier-01.png",
+      "attribute": "boldness",
+      "sublayer": "weapon",
+      "tier": 1,
+      "anchorPolicy": "bodyCenter",
+      "bboxPolicy": "weaponSide",
+      "alphaBbox": {
+        "x": 330.75688476562505,
+        "y": 285.628466796875,
+        "width": 51.27890624999998,
+        "height": 137.36572265625
+      },
+      "anchor": {
+        "x": 253.65,
+        "y": 258.95
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 1
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/boldness/weapon/tier-02.png",
+      "attribute": "boldness",
+      "sublayer": "weapon",
+      "tier": 2,
+      "anchorPolicy": "bodyCenter",
+      "bboxPolicy": "weaponSide",
+      "alphaBbox": {
+        "x": 341.07504957743936,
+        "y": 269.58557303485725,
+        "width": 107.5676938020838,
+        "height": 198.86905341946226
+      },
+      "anchor": {
+        "x": 256.7,
+        "y": 373.9
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 1
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/boldness/weapon/tier-03.png",
+      "attribute": "boldness",
+      "sublayer": "weapon",
+      "tier": 3,
+      "anchorPolicy": "bodyCenter",
+      "bboxPolicy": "weaponSide",
+      "alphaBbox": {
+        "x": 358.0753049431569,
+        "y": 298.9223118458706,
+        "width": 44.33196246412564,
+        "height": 175.01889347816262
+      },
+      "anchor": {
+        "x": 255.65,
+        "y": 391.65
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 1
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/boldness/weapon/tier-04.png",
+      "attribute": "boldness",
+      "sublayer": "weapon",
+      "tier": 4,
+      "anchorPolicy": "bodyCenter",
+      "bboxPolicy": "weaponSide",
+      "alphaBbox": {
+        "x": 354.56345366575397,
+        "y": 250.85009711284974,
+        "width": 59.665693103795434,
+        "height": 182.36530392208422
+      },
+      "anchor": {
+        "x": 256.5,
+        "y": 355.65
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.015461554490518859,
+        "body": 0.9932485934569703
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/boldness/weapon/tier-05.png",
+      "attribute": "boldness",
+      "sublayer": "weapon",
+      "tier": 5,
+      "anchorPolicy": "bodyCenter",
+      "bboxPolicy": "weaponSide",
+      "alphaBbox": {
+        "x": 332.75,
+        "y": 336.25,
+        "width": 114.5,
+        "height": 28
+      },
+      "anchor": {
+        "x": 258.35,
+        "y": 361.65
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 1
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/boldness/weapon/tier-06.png",
+      "attribute": "boldness",
+      "sublayer": "weapon",
+      "tier": 6,
+      "anchorPolicy": "bodyCenter",
+      "bboxPolicy": "weaponSide",
+      "alphaBbox": {
+        "x": 355.4172738894825,
+        "y": 219.71158642542574,
+        "width": 52.30151278790299,
+        "height": 185.25489108986196
+      },
+      "anchor": {
+        "x": 255.8,
+        "y": 355.5
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.1247429426060946,
+        "body": 0.8674518601607777
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/boldness/weapon/tier-07.png",
+      "attribute": "boldness",
+      "sublayer": "weapon",
+      "tier": 7,
+      "anchorPolicy": "bodyCenter",
+      "bboxPolicy": "weaponSide",
+      "alphaBbox": {
+        "x": 325.19650209599683,
+        "y": 236.9031714970027,
+        "width": 103.69173058089723,
+        "height": 174.2021073759073
+      },
+      "anchor": {
+        "x": 255.7,
+        "y": 355.25
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 0.9619179163378059
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/boldness/weapon/tier-08.png",
+      "attribute": "boldness",
+      "sublayer": "weapon",
+      "tier": 8,
+      "anchorPolicy": "bodyCenter",
+      "bboxPolicy": "weaponSide",
+      "alphaBbox": {
+        "x": 348.2141298425746,
+        "y": 222.252812151282,
+        "width": 86.15528235931151,
+        "height": 189.8421628731341
+      },
+      "anchor": {
+        "x": 257.15,
+        "y": 359.4
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 0.8764178317066738
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/boldness/weapon/tier-09.png",
+      "attribute": "boldness",
+      "sublayer": "weapon",
+      "tier": 9,
+      "anchorPolicy": "bodyCenter",
+      "bboxPolicy": "weaponSide",
+      "alphaBbox": {
+        "x": 353.8362005349457,
+        "y": 194.97667351135877,
+        "width": 106.9128667127058,
+        "height": 214.39140996886502
+      },
+      "anchor": {
+        "x": 258.35,
+        "y": 354.95
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 0.9035784506488399
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/boldness/weapon/tier-10.png",
+      "attribute": "boldness",
+      "sublayer": "weapon",
+      "tier": 10,
+      "anchorPolicy": "bodyCenter",
+      "bboxPolicy": "weaponSide",
+      "alphaBbox": {
+        "x": 336.03961860457815,
+        "y": 225.40761472982285,
+        "width": 121.51617263316689,
+        "height": 181.47830148708766
+      },
+      "anchor": {
+        "x": 256.55,
+        "y": 340.45000000000005
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 1
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/contrarian/aura/tier-01.png",
+      "attribute": "contrarian",
+      "sublayer": "aura",
+      "tier": 1,
+      "anchorPolicy": "worldAura",
+      "bboxPolicy": "auraPeripheral",
+      "alphaBbox": {
+        "x": 110.63722562208312,
+        "y": 132.59481657736615,
+        "width": 289.86374154739525,
+        "height": 254.75749461694147
+      },
+      "anchor": {
+        "x": 256.85,
+        "y": 353.1
+      },
+      "overlapRatios": {
+        "leftEye": 0.15372555767549823,
+        "rightEye": 0.021131481729426905,
+        "eyes": 0.08696954234485887,
+        "mouth": 0,
+        "face": 0.43782702369959986,
+        "body": 0.5339591669231558
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/contrarian/aura/tier-02.png",
+      "attribute": "contrarian",
+      "sublayer": "aura",
+      "tier": 2,
+      "anchorPolicy": "worldAura",
+      "bboxPolicy": "auraPeripheral",
+      "alphaBbox": {
+        "x": 141.68127570040596,
+        "y": 165.69092243577145,
+        "width": 223.00619446773473,
+        "height": 243.4702923130092
+      },
+      "anchor": {
+        "x": 256.7,
+        "y": 373.9
+      },
+      "overlapRatios": {
+        "leftEye": 0.09100607160237725,
+        "rightEye": 0.01248681404613986,
+        "eyes": 0.05147928904668566,
+        "mouth": 0,
+        "face": 0.4177098150782361,
+        "body": 0.5709815078236131
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/contrarian/aura/tier-03.png",
+      "attribute": "contrarian",
+      "sublayer": "aura",
+      "tier": 3,
+      "anchorPolicy": "worldAura",
+      "bboxPolicy": "auraPeripheral",
+      "alphaBbox": {
+        "x": 123.48533690382547,
+        "y": 226.88287284166643,
+        "width": 264.60640095774977,
+        "height": 207.34428277492088
+      },
+      "anchor": {
+        "x": 255.65,
+        "y": 391.65
+      },
+      "overlapRatios": {
+        "leftEye": 0.0014465248478361882,
+        "rightEye": 0,
+        "eyes": 0.0007218104524890601,
+        "mouth": 0,
+        "face": 0.3406237343053868,
+        "body": 0.6583347798414627
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/contrarian/aura/tier-04.png",
+      "attribute": "contrarian",
+      "sublayer": "aura",
+      "tier": 4,
+      "anchorPolicy": "worldAura",
+      "bboxPolicy": "auraPeripheral",
+      "alphaBbox": {
+        "x": 118.78773091688518,
+        "y": 141.62338473735338,
+        "width": 270.420318744621,
+        "height": 293.03554113073693
+      },
+      "anchor": {
+        "x": 256.5,
+        "y": 355.65
+      },
+      "overlapRatios": {
+        "leftEye": 0.031516118955555616,
+        "rightEye": 0.15847040640697024,
+        "eyes": 0.09320606482229263,
+        "mouth": 0,
+        "face": 0.40230956449691885,
+        "body": 0.6022992077054529
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/contrarian/aura/tier-05.png",
+      "attribute": "contrarian",
+      "sublayer": "aura",
+      "tier": 5,
+      "anchorPolicy": "worldAura",
+      "bboxPolicy": "auraPeripheral",
+      "alphaBbox": {
+        "x": 80.25,
+        "y": 130.75,
+        "width": 349.5,
+        "height": 282.5
+      },
+      "anchor": {
+        "x": 258.35,
+        "y": 361.65
+      },
+      "overlapRatios": {
+        "leftEye": 0.15156653746770027,
+        "rightEye": 0.19172956431080265,
+        "eyes": 0.17120998843198054,
+        "mouth": 0,
+        "face": 0.36827490454703227,
+        "body": 0.6228740020826102
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/contrarian/aura/tier-06.png",
+      "attribute": "contrarian",
+      "sublayer": "aura",
+      "tier": 6,
+      "anchorPolicy": "worldAura",
+      "bboxPolicy": "auraPeripheral",
+      "alphaBbox": {
+        "x": 78.75693521702371,
+        "y": 139.05972091136974,
+        "width": 341.6706302686373,
+        "height": 265.906756603918
+      },
+      "anchor": {
+        "x": 255.8,
+        "y": 355.5
+      },
+      "overlapRatios": {
+        "leftEye": 0.26527709450145703,
+        "rightEye": 0.21027558971606614,
+        "eyes": 0.23688698854472479,
+        "mouth": 0,
+        "face": 0.3818839690911321,
+        "body": 0.6066171961241261
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/contrarian/aura/tier-07.png",
+      "attribute": "contrarian",
+      "sublayer": "aura",
+      "tier": 7,
+      "anchorPolicy": "worldAura",
+      "bboxPolicy": "auraPeripheral",
+      "alphaBbox": {
+        "x": 91.54446918704181,
+        "y": 139.66337081891683,
+        "width": 322.13564300465396,
+        "height": 273.2853165976535
+      },
+      "anchor": {
+        "x": 255.7,
+        "y": 355.25
+      },
+      "overlapRatios": {
+        "leftEye": 0.11977032279165979,
+        "rightEye": 0.12521805156776467,
+        "eyes": 0.12244468936710963,
+        "mouth": 0,
+        "face": 0.3403214928057554,
+        "body": 0.6451214028776978
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/contrarian/aura/tier-08.png",
+      "attribute": "contrarian",
+      "sublayer": "aura",
+      "tier": 8,
+      "anchorPolicy": "worldAura",
+      "bboxPolicy": "auraPeripheral",
+      "alphaBbox": {
+        "x": 80.73203228517718,
+        "y": 126.58037650809305,
+        "width": 350.1310602858067,
+        "height": 290.02272375605446
+      },
+      "anchor": {
+        "x": 257.15,
+        "y": 359.4
+      },
+      "overlapRatios": {
+        "leftEye": 0.0759327858319451,
+        "rightEye": 0.4010385841096386,
+        "eyes": 0.2403143075057814,
+        "mouth": 0,
+        "face": 0.29151488227454464,
+        "body": 0.6496273261266597
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/contrarian/aura/tier-09.png",
+      "attribute": "contrarian",
+      "sublayer": "aura",
+      "tier": 9,
+      "anchorPolicy": "worldAura",
+      "bboxPolicy": "auraPeripheral",
+      "alphaBbox": {
+        "x": 71.56360535166428,
+        "y": 88.62948334210648,
+        "width": 365.4270470709415,
+        "height": 344.49701496316305
+      },
+      "anchor": {
+        "x": 258.35,
+        "y": 354.95
+      },
+      "overlapRatios": {
+        "leftEye": 0.13995796775426558,
+        "rightEye": 0.09908770471289882,
+        "eyes": 0.12003830259188694,
+        "mouth": 0,
+        "face": 0.15909629512599732,
+        "body": 0.696128107614007
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/contrarian/aura/tier-10.png",
+      "attribute": "contrarian",
+      "sublayer": "aura",
+      "tier": 10,
+      "anchorPolicy": "worldAura",
+      "bboxPolicy": "auraPeripheral",
+      "alphaBbox": {
+        "x": 68.06727284148084,
+        "y": 85.31910130119377,
+        "width": 370.91617760080203,
+        "height": 322.6280915326003
+      },
+      "anchor": {
+        "x": 256.55,
+        "y": 340.45000000000005
+      },
+      "overlapRatios": {
+        "leftEye": 0.0076183916436055755,
+        "rightEye": 0.011870895692098324,
+        "eyes": 0.009741589340824993,
+        "mouth": 0,
+        "face": 0.20543707693427468,
+        "body": 0.5382851735934202
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/contrarian/mark/tier-01.png",
+      "attribute": "contrarian",
+      "sublayer": "mark",
+      "tier": 1,
+      "anchorPolicy": "upperBodyCenter",
+      "bboxPolicy": "bodySideMark",
+      "alphaBbox": {
+        "x": 281.33401242939175,
+        "y": 274.39442685306824,
+        "width": 141.84821394872534,
+        "height": 129.98799539113958
+      },
+      "anchor": {
+        "x": 384.85,
+        "y": 292.69
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 1
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/contrarian/mark/tier-02.png",
+      "attribute": "contrarian",
+      "sublayer": "mark",
+      "tier": 2,
+      "anchorPolicy": "upperBodyCenter",
+      "bboxPolicy": "bodySideMark",
+      "alphaBbox": {
+        "x": 268.10711432769256,
+        "y": 285.071112350771,
+        "width": 156.891416813771,
+        "height": 129.6059530200717
+      },
+      "anchor": {
+        "x": 384.7,
+        "y": 308.98
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 1
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/contrarian/mark/tier-03.png",
+      "attribute": "contrarian",
+      "sublayer": "mark",
+      "tier": 3,
+      "anchorPolicy": "upperBodyCenter",
+      "bboxPolicy": "bodySideMark",
+      "alphaBbox": {
+        "x": 297.664464470623,
+        "y": 302.7387375621651,
+        "width": 110.82990616031401,
+        "height": 128.83976591136508
+      },
+      "anchor": {
+        "x": 383.65,
+        "y": 332.0925
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 1
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/contrarian/mark/tier-04.png",
+      "attribute": "contrarian",
+      "sublayer": "mark",
+      "tier": 4,
+      "anchorPolicy": "upperBodyCenter",
+      "bboxPolicy": "bodySideMark",
+      "alphaBbox": {
+        "x": 292.01817568911713,
+        "y": 248.96814171787756,
+        "width": 117.40668643004898,
+        "height": 134.2478094835396
+      },
+      "anchor": {
+        "x": 384.5,
+        "y": 297.3575
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.014308253087427234,
+        "body": 0.990724117295033
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/contrarian/mark/tier-05.png",
+      "attribute": "contrarian",
+      "sublayer": "mark",
+      "tier": 5,
+      "anchorPolicy": "upperBodyCenter",
+      "bboxPolicy": "bodySideMark",
+      "alphaBbox": {
+        "x": 275.25,
+        "y": 288.75,
+        "width": 149.5,
+        "height": 94.5
+      },
+      "anchor": {
+        "x": 386.35,
+        "y": 302.5325
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 1
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/contrarian/mark/tier-06.png",
+      "attribute": "contrarian",
+      "sublayer": "mark",
+      "tier": 6,
+      "anchorPolicy": "upperBodyCenter",
+      "bboxPolicy": "bodySideMark",
+      "alphaBbox": {
+        "x": 272.2560259981359,
+        "y": 227.38434419993092,
+        "width": 146.1509562951681,
+        "height": 99.71503372646924
+      },
+      "anchor": {
+        "x": 383.8,
+        "y": 297.07
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.20465530640483728,
+        "body": 0.7738120059897264
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/contrarian/mark/tier-07.png",
+      "attribute": "contrarian",
+      "sublayer": "mark",
+      "tier": 7,
+      "anchorPolicy": "upperBodyCenter",
+      "bboxPolicy": "bodySideMark",
+      "alphaBbox": {
+        "x": 283.1420639433254,
+        "y": 224.36418534045254,
+        "width": 134.10797155129376,
+        "height": 128.5777459203125
+      },
+      "anchor": {
+        "x": 383.7,
+        "y": 296.5175
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.1477413177822265,
+        "body": 0.851666811732962
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/contrarian/mark/tier-08.png",
+      "attribute": "contrarian",
+      "sublayer": "mark",
+      "tier": 8,
+      "anchorPolicy": "upperBodyCenter",
+      "bboxPolicy": "bodySideMark",
+      "alphaBbox": {
+        "x": 286.37196696944045,
+        "y": 216.55892999151104,
+        "width": 128.7320207345527,
+        "height": 139.7518824316739
+      },
+      "anchor": {
+        "x": 385.15,
+        "y": 298.99
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.11053051102648127,
+        "body": 0.8678593570100079
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/contrarian/mark/tier-09.png",
+      "attribute": "contrarian",
+      "sublayer": "mark",
+      "tier": 9,
+      "anchorPolicy": "upperBodyCenter",
+      "bboxPolicy": "bodySideMark",
+      "alphaBbox": {
+        "x": 276.4956152613362,
+        "y": 169.15393714916178,
+        "width": 138.0250766026466,
+        "height": 157.82375562351803
+      },
+      "anchor": {
+        "x": 386.35,
+        "y": 281.4775
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0.07967361148391948,
+        "face": 0.19250893766129223,
+        "body": 0.7088808390747449
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/contrarian/mark/tier-10.png",
+      "attribute": "contrarian",
+      "sublayer": "mark",
+      "tier": 10,
+      "anchorPolicy": "upperBodyCenter",
+      "bboxPolicy": "bodySideMark",
+      "alphaBbox": {
+        "x": 267.172806172679,
+        "y": 228.59407144662114,
+        "width": 158.66085422409122,
+        "height": 115.14851293186555
+      },
+      "anchor": {
+        "x": 384.55,
+        "y": 273.46750000000003
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 1
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/focus/monocle/tier-01.png",
+      "attribute": "focus",
+      "sublayer": "monocle",
+      "tier": 1,
+      "anchorPolicy": "rightEyeCenter",
+      "bboxPolicy": "monocle",
+      "alphaBbox": {
+        "x": 262.84522750630805,
+        "y": 163.6530672138494,
+        "width": 87.61519219227057,
+        "height": 53.91704134908957
+      },
+      "anchor": {
+        "x": 312.55,
+        "y": 162.6
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0.13470836524608526,
+        "eyes": 0.06782047864031648,
+        "mouth": 0.13818336782121626,
+        "face": 1,
+        "body": 0
+      },
+      "status": "fail",
+      "failures": [
+        "sublayer covers multiple unrelated landmarks: rightEye, mouth"
+      ]
+    },
+    {
+      "src": "/assets/panda/traits/focus/monocle/tier-02.png",
+      "attribute": "focus",
+      "sublayer": "monocle",
+      "tier": 2,
+      "anchorPolicy": "rightEyeCenter",
+      "bboxPolicy": "monocle",
+      "alphaBbox": {
+        "x": 259.47941448527394,
+        "y": 133.31654564796662,
+        "width": 101.72322226268386,
+        "height": 63.63507511409904
+      },
+      "anchor": {
+        "x": 322.65,
+        "y": 168.85000000000002
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0.17722121188605208,
+        "eyes": 0.0892135830685738,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/focus/monocle/tier-03.png",
+      "attribute": "focus",
+      "sublayer": "monocle",
+      "tier": 3,
+      "anchorPolicy": "rightEyeCenter",
+      "bboxPolicy": "monocle",
+      "alphaBbox": {
+        "x": 254.02930340752116,
+        "y": 173.26692051246337,
+        "width": 93.18104488871822,
+        "height": 64.2481177086596
+      },
+      "anchor": {
+        "x": 316.15,
+        "y": 191.35000000000002
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0.13449748803060926,
+        "eyes": 0.0673837479249778,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/focus/monocle/tier-04.png",
+      "attribute": "focus",
+      "sublayer": "monocle",
+      "tier": 4,
+      "anchorPolicy": "rightEyeCenter",
+      "bboxPolicy": "monocle",
+      "alphaBbox": {
+        "x": 253.4786199581546,
+        "y": 114.6813892705143,
+        "width": 94.3182822137172,
+        "height": 58.82215449887741
+      },
+      "anchor": {
+        "x": 319.4,
+        "y": 173.25
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0.08342302644231579,
+        "eyes": 0.04053712630410645,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/focus/monocle/tier-05.png",
+      "attribute": "focus",
+      "sublayer": "monocle",
+      "tier": 5,
+      "anchorPolicy": "rightEyeCenter",
+      "bboxPolicy": "monocle",
+      "alphaBbox": {
+        "x": 255.25,
+        "y": 147.25,
+        "width": 109.5,
+        "height": 56
+      },
+      "anchor": {
+        "x": 320.25,
+        "y": 176
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0.19080170456270815,
+        "eyes": 0.09331975755015422,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/focus/monocle/tier-06.png",
+      "attribute": "focus",
+      "sublayer": "monocle",
+      "tier": 6,
+      "anchorPolicy": "rightEyeCenter",
+      "bboxPolicy": "monocle",
+      "alphaBbox": {
+        "x": 243.46386337001388,
+        "y": 91.19136404118727,
+        "width": 98.53078431624658,
+        "height": 51.739909572458245
+      },
+      "anchor": {
+        "x": 314.55,
+        "y": 175.1
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0.004217544309520516,
+        "eyes": 0.0021769682537177465,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/focus/monocle/tier-07.png",
+      "attribute": "focus",
+      "sublayer": "monocle",
+      "tier": 7,
+      "anchorPolicy": "rightEyeCenter",
+      "bboxPolicy": "monocle",
+      "alphaBbox": {
+        "x": 241.91911873677788,
+        "y": 82.53186258255252,
+        "width": 100.82492354551363,
+        "height": 74.58282015695531
+      },
+      "anchor": {
+        "x": 314.2,
+        "y": 175.3
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0.05837081324376393,
+        "eyes": 0.028655052102752408,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/focus/monocle/tier-08.png",
+      "attribute": "focus",
+      "sublayer": "monocle",
+      "tier": 8,
+      "anchorPolicy": "rightEyeCenter",
+      "bboxPolicy": "monocle",
+      "alphaBbox": {
+        "x": 250.31544541041103,
+        "y": 91.5250297639625,
+        "width": 85.45557502371696,
+        "height": 40.53035843982002
+      },
+      "anchor": {
+        "x": 315.75,
+        "y": 169.9
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0.004428421524996543,
+        "eyes": 0.0022391193043881466,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/focus/monocle/tier-09.png",
+      "attribute": "focus",
+      "sublayer": "monocle",
+      "tier": 9,
+      "anchorPolicy": "rightEyeCenter",
+      "bboxPolicy": "monocle",
+      "alphaBbox": {
+        "x": 253.37882090687572,
+        "y": 72.02513747869472,
+        "width": 79.60092147596151,
+        "height": 37.07440178332453
+      },
+      "anchor": {
+        "x": 307.90000000000003,
+        "y": 148.9
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/focus/monocle/tier-10.png",
+      "attribute": "focus",
+      "sublayer": "monocle",
+      "tier": 10,
+      "anchorPolicy": "rightEyeCenter",
+      "bboxPolicy": "monocle",
+      "alphaBbox": {
+        "x": 249.83635811696968,
+        "y": 90.88892975290202,
+        "width": 75.89333817175407,
+        "height": 44.23497424867949
+      },
+      "anchor": {
+        "x": 309.25,
+        "y": 147.05
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0.0440311625913942,
+        "eyes": 0.02198395626526852,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/focus/headband/tier-01.png",
+      "attribute": "focus",
+      "sublayer": "headband",
+      "tier": 1,
+      "anchorPolicy": "faceTopCenter",
+      "bboxPolicy": "headband",
+      "alphaBbox": {
+        "x": 174.0162973537469,
+        "y": 80.00791253682613,
+        "width": 164.65765461910547,
+        "height": 20.41928698442733
+      },
+      "anchor": {
+        "x": 255.64999999999998,
+        "y": 44.6
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/focus/headband/tier-02.png",
+      "attribute": "focus",
+      "sublayer": "headband",
+      "tier": 2,
+      "anchorPolicy": "faceTopCenter",
+      "bboxPolicy": "headband",
+      "alphaBbox": {
+        "x": 159.99458129682318,
+        "y": 54.42969847664321,
+        "width": 192.2339206413199,
+        "height": 27.8967431009831
+      },
+      "anchor": {
+        "x": 255.29999999999998,
+        "y": 20.7
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/focus/headband/tier-03.png",
+      "attribute": "focus",
+      "sublayer": "headband",
+      "tier": 3,
+      "anchorPolicy": "faceTopCenter",
+      "bboxPolicy": "headband",
+      "alphaBbox": {
+        "x": 157.98018787906332,
+        "y": 103.80352295936012,
+        "width": 199.0204884014793,
+        "height": 27.30624115270956
+      },
+      "anchor": {
+        "x": 255.6,
+        "y": 33.7
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/focus/headband/tier-04.png",
+      "attribute": "focus",
+      "sublayer": "headband",
+      "tier": 4,
+      "anchorPolicy": "faceTopCenter",
+      "bboxPolicy": "headband",
+      "alphaBbox": {
+        "x": 166.3357507871883,
+        "y": 84.77672059512253,
+        "width": 182.06572885394175,
+        "height": 21.136918389375808
+      },
+      "anchor": {
+        "x": 256.6,
+        "y": 38.9
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/focus/headband/tier-05.png",
+      "attribute": "focus",
+      "sublayer": "headband",
+      "tier": 5,
+      "anchorPolicy": "faceTopCenter",
+      "bboxPolicy": "headband",
+      "alphaBbox": {
+        "x": 160.25,
+        "y": 60.25,
+        "width": 189.5,
+        "height": 30
+      },
+      "anchor": {
+        "x": 256.2,
+        "y": 33.5
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/focus/headband/tier-06.png",
+      "attribute": "focus",
+      "sublayer": "headband",
+      "tier": 6,
+      "anchorPolicy": "faceTopCenter",
+      "bboxPolicy": "headband",
+      "alphaBbox": {
+        "x": 158.7505309789346,
+        "y": 40.95837443560105,
+        "width": 187.10509731674478,
+        "height": 40.975522631371526
+      },
+      "anchor": {
+        "x": 256.45,
+        "y": 33.8
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/focus/headband/tier-07.png",
+      "attribute": "focus",
+      "sublayer": "headband",
+      "tier": 7,
+      "anchorPolicy": "faceTopCenter",
+      "bboxPolicy": "headband",
+      "alphaBbox": {
+        "x": 168.04866403815197,
+        "y": 46.02715734301041,
+        "width": 179.1608150323189,
+        "height": 36.87214662934267
+      },
+      "anchor": {
+        "x": 256.4,
+        "y": 38.7
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/focus/headband/tier-08.png",
+      "attribute": "focus",
+      "sublayer": "headband",
+      "tier": 8,
+      "anchorPolicy": "faceTopCenter",
+      "bboxPolicy": "headband",
+      "alphaBbox": {
+        "x": 168.39301464545963,
+        "y": 66.0770864479616,
+        "width": 176.94048156593362,
+        "height": 28.01168573603171
+      },
+      "anchor": {
+        "x": 257.04999999999995,
+        "y": 41.1
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/focus/headband/tier-09.png",
+      "attribute": "focus",
+      "sublayer": "headband",
+      "tier": 9,
+      "anchorPolicy": "faceTopCenter",
+      "bboxPolicy": "headband",
+      "alphaBbox": {
+        "x": 174.70665685614858,
+        "y": 32.717657660330374,
+        "width": 158.47955732944075,
+        "height": 30.943238106539887
+      },
+      "anchor": {
+        "x": 254.95,
+        "y": 25.4
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/focus/headband/tier-10.png",
+      "attribute": "focus",
+      "sublayer": "headband",
+      "tier": 10,
+      "anchorPolicy": "faceTopCenter",
+      "bboxPolicy": "headband",
+      "alphaBbox": {
+        "x": 191.15887517529893,
+        "y": 46.05263407737469,
+        "width": 160.65550207380977,
+        "height": 27.129161300062847
+      },
+      "anchor": {
+        "x": 264.45,
+        "y": 32.7
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/focus/chest-core/tier-01.png",
+      "attribute": "focus",
+      "sublayer": "chest-core",
+      "tier": 1,
+      "anchorPolicy": "upperBodyCenter",
+      "bboxPolicy": "chestCore",
+      "alphaBbox": {
+        "x": 205.9933828250724,
+        "y": 283.0361492453162,
+        "width": 99.15142714141672,
+        "height": 85.39357361461725
+      },
+      "anchor": {
+        "x": 256.85,
+        "y": 294.69
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 1
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/focus/chest-core/tier-02.png",
+      "attribute": "focus",
+      "sublayer": "chest-core",
+      "tier": 2,
+      "anchorPolicy": "upperBodyCenter",
+      "bboxPolicy": "chestCore",
+      "alphaBbox": {
+        "x": 198.35108511808914,
+        "y": 280.7744668599173,
+        "width": 109.66657563236834,
+        "height": 73.98558451753081
+      },
+      "anchor": {
+        "x": 256.7,
+        "y": 310.98
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 1
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/focus/chest-core/tier-03.png",
+      "attribute": "focus",
+      "sublayer": "chest-core",
+      "tier": 3,
+      "anchorPolicy": "upperBodyCenter",
+      "bboxPolicy": "chestCore",
+      "alphaBbox": {
+        "x": 210.7638880050728,
+        "y": 295.50291204880557,
+        "width": 90.0492987552552,
+        "height": 87.27855110124733
+      },
+      "anchor": {
+        "x": 255.65,
+        "y": 334.0925
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 1
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/focus/chest-core/tier-04.png",
+      "attribute": "focus",
+      "sublayer": "chest-core",
+      "tier": 4,
+      "anchorPolicy": "upperBodyCenter",
+      "bboxPolicy": "chestCore",
+      "alphaBbox": {
+        "x": 207.32392068380733,
+        "y": 241.34464283016862,
+        "width": 93.34793921077664,
+        "height": 90.94206448884941
+      },
+      "anchor": {
+        "x": 256.5,
+        "y": 299.3575
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.11589324356816542,
+        "body": 0.9168412736578161
+      },
+      "status": "fail",
+      "failures": [
+        "focus/chest-core intersects faceRect"
+      ]
+    },
+    {
+      "src": "/assets/panda/traits/focus/chest-core/tier-05.png",
+      "attribute": "focus",
+      "sublayer": "chest-core",
+      "tier": 5,
+      "anchorPolicy": "upperBodyCenter",
+      "bboxPolicy": "chestCore",
+      "alphaBbox": {
+        "x": 202.75,
+        "y": 260.25,
+        "width": 104.5,
+        "height": 91
+      },
+      "anchor": {
+        "x": 258.35,
+        "y": 304.5325
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 1
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/focus/chest-core/tier-06.png",
+      "attribute": "focus",
+      "sublayer": "chest-core",
+      "tier": 6,
+      "anchorPolicy": "upperBodyCenter",
+      "bboxPolicy": "chestCore",
+      "alphaBbox": {
+        "x": 203.40072737511028,
+        "y": 201.52279065871159,
+        "width": 92.38304595246413,
+        "height": 92.3830459524641
+      },
+      "anchor": {
+        "x": 255.8,
+        "y": 299.07
+      },
+      "overlapRatios": {
+        "leftEye": 0.003983139557078934,
+        "rightEye": 0,
+        "eyes": 0.0019271639159186853,
+        "mouth": 0.9986187219334436,
+        "face": 0.5529886733206235,
+        "body": 0.4186011737878958
+      },
+      "status": "fail",
+      "failures": [
+        "sublayer covers multiple unrelated landmarks: mouth, face",
+        "focus/chest-core intersects faceRect"
+      ]
+    },
+    {
+      "src": "/assets/panda/traits/focus/chest-core/tier-07.png",
+      "attribute": "focus",
+      "sublayer": "chest-core",
+      "tier": 7,
+      "anchorPolicy": "upperBodyCenter",
+      "bboxPolicy": "chestCore",
+      "alphaBbox": {
+        "x": 204.45324248624098,
+        "y": 221.75566398130155,
+        "width": 96.31809640625562,
+        "height": 78.34486310556679
+      },
+      "anchor": {
+        "x": 255.7,
+        "y": 298.5175
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 1.0415263666988266,
+        "face": 0.379061836432662,
+        "body": 0.620938163567338
+      },
+      "status": "fail",
+      "failures": [
+        "sublayer covers multiple unrelated landmarks: mouth, face",
+        "focus/chest-core intersects faceRect"
+      ]
+    },
+    {
+      "src": "/assets/panda/traits/focus/chest-core/tier-08.png",
+      "attribute": "focus",
+      "sublayer": "chest-core",
+      "tier": 8,
+      "anchorPolicy": "upperBodyCenter",
+      "bboxPolicy": "chestCore",
+      "alphaBbox": {
+        "x": 203.45321936675464,
+        "y": 209.04177670763357,
+        "width": 104.6886861226518,
+        "height": 93.66882442553054
+      },
+      "anchor": {
+        "x": 257.15,
+        "y": 300.99
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0.9977404801014078,
+        "face": 0.40422225975342,
+        "body": 0.5677757135618984
+      },
+      "status": "fail",
+      "failures": [
+        "sublayer covers multiple unrelated landmarks: mouth, face",
+        "focus/chest-core intersects faceRect"
+      ]
+    },
+    {
+      "src": "/assets/panda/traits/focus/chest-core/tier-09.png",
+      "attribute": "focus",
+      "sublayer": "chest-core",
+      "tier": 9,
+      "anchorPolicy": "upperBodyCenter",
+      "bboxPolicy": "chestCore",
+      "alphaBbox": {
+        "x": 200.5378572590554,
+        "y": 159.8404062800924,
+        "width": 108.60989634306623,
+        "height": 106.91286671270575
+      },
+      "anchor": {
+        "x": 258.35,
+        "y": 283.4775
+      },
+      "overlapRatios": {
+        "leftEye": 0.025641154397728048,
+        "rightEye": 0.020532606852879033,
+        "eyes": 0.023151310951981512,
+        "mouth": 0.9683906436460132,
+        "face": 0.5920360631104433,
+        "body": 0.3738327787914565
+      },
+      "status": "fail",
+      "failures": [
+        "sublayer covers multiple unrelated landmarks: mouth, face",
+        "focus/chest-core intersects faceRect"
+      ]
+    },
+    {
+      "src": "/assets/panda/traits/focus/chest-core/tier-10.png",
+      "attribute": "focus",
+      "sublayer": "chest-core",
+      "tier": 10,
+      "anchorPolicy": "upperBodyCenter",
+      "bboxPolicy": "chestCore",
+      "alphaBbox": {
+        "x": 207.62514796166818,
+        "y": 203.53151771609055,
+        "width": 91.80042736042736,
+        "height": 100.29064029549579
+      },
+      "anchor": {
+        "x": 256.55,
+        "y": 275.46750000000003
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0.02612839601478041,
+        "face": 0.08700686461004052,
+        "body": 0.8862376974609213
+      },
+      "status": "fail",
+      "failures": [
+        "focus/chest-core intersects faceRect"
+      ]
+    },
+    {
+      "src": "/assets/panda/traits/intuition/ear-radar/tier-01.png",
+      "attribute": "intuition",
+      "sublayer": "ear-radar",
+      "tier": 1,
+      "anchorPolicy": "headCenterOffset",
+      "bboxPolicy": "intuitionNoFaceFeatures",
+      "alphaBbox": {
+        "x": 166.09263541140535,
+        "y": 58.6458273621635,
+        "width": 140.32829140361764,
+        "height": 39.10076231060553
+      },
+      "anchor": {
+        "x": 139.2,
+        "y": 73.2
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/intuition/ear-radar/tier-02.png",
+      "attribute": "intuition",
+      "sublayer": "ear-radar",
+      "tier": 2,
+      "anchorPolicy": "headCenterOffset",
+      "bboxPolicy": "intuitionNoFaceFeatures",
+      "alphaBbox": {
+        "x": 160.9811001515477,
+        "y": 22.10439077203658,
+        "width": 182.0896504227806,
+        "height": 49.70692407084263
+      },
+      "anchor": {
+        "x": 137.7,
+        "y": 67.5
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/intuition/ear-radar/tier-03.png",
+      "attribute": "intuition",
+      "sublayer": "ear-radar",
+      "tier": 3,
+      "anchorPolicy": "headCenterOffset",
+      "bboxPolicy": "intuitionNoFaceFeatures",
+      "alphaBbox": {
+        "x": 163.85420923916277,
+        "y": 45.383839323891515,
+        "width": 188.51808795812948,
+        "height": 35.18304148522193
+      },
+      "anchor": {
+        "x": 134.5,
+        "y": 61.400000000000006
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/intuition/ear-radar/tier-04.png",
+      "attribute": "intuition",
+      "sublayer": "ear-radar",
+      "tier": 4,
+      "anchorPolicy": "headCenterOffset",
+      "bboxPolicy": "intuitionNoFaceFeatures",
+      "alphaBbox": {
+        "x": 161.89080248273814,
+        "y": 5.615589227888464,
+        "width": 171.97765416810324,
+        "height": 34.587684637160436
+      },
+      "anchor": {
+        "x": 138.4,
+        "y": 61.099999999999994
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.018046156515703626,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/intuition/ear-radar/tier-05.png",
+      "attribute": "intuition",
+      "sublayer": "ear-radar",
+      "tier": 5,
+      "anchorPolicy": "headCenterOffset",
+      "bboxPolicy": "intuitionNoFaceFeatures",
+      "alphaBbox": {
+        "x": 167.75,
+        "y": 16.75,
+        "width": 177,
+        "height": 38.5
+      },
+      "anchor": {
+        "x": 140.8,
+        "y": 62
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.7128794093519278,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/intuition/ear-radar/tier-06.png",
+      "attribute": "intuition",
+      "sublayer": "ear-radar",
+      "tier": 6,
+      "anchorPolicy": "headCenterOffset",
+      "bboxPolicy": "intuitionNoFaceFeatures",
+      "alphaBbox": {
+        "x": 155.09787172279187,
+        "y": -2.3201549870290634,
+        "width": 177.23147740557084,
+        "height": 50.8491425425454
+      },
+      "anchor": {
+        "x": 135.4,
+        "y": 54.7
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.25096738529574353,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/intuition/ear-radar/tier-07.png",
+      "attribute": "intuition",
+      "sublayer": "ear-radar",
+      "tier": 7,
+      "anchorPolicy": "headCenterOffset",
+      "bboxPolicy": "intuitionNoFaceFeatures",
+      "alphaBbox": {
+        "x": 162.51599961762636,
+        "y": -0.09914020114203481,
+        "width": 169.23369863211124,
+        "height": 37.344866457923985
+      },
+      "anchor": {
+        "x": 139.4,
+        "y": 54.5
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/intuition/ear-radar/tier-08.png",
+      "attribute": "intuition",
+      "sublayer": "ear-radar",
+      "tier": 8,
+      "anchorPolicy": "headCenterOffset",
+      "bboxPolicy": "intuitionNoFaceFeatures",
+      "alphaBbox": {
+        "x": 185.60514960582347,
+        "y": 7.4437821002712425,
+        "width": 122.31769438067178,
+        "height": 49.48731146698935
+      },
+      "anchor": {
+        "x": 141.3,
+        "y": 62.3
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.32638148881108237,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/intuition/ear-radar/tier-09.png",
+      "attribute": "intuition",
+      "sublayer": "ear-radar",
+      "tier": 9,
+      "anchorPolicy": "headCenterOffset",
+      "bboxPolicy": "intuitionNoFaceFeatures",
+      "alphaBbox": {
+        "x": 158.52056319816245,
+        "y": -5.614692424485085,
+        "width": 150.1165200033489,
+        "height": 38.88812356632715
+      },
+      "anchor": {
+        "x": 141,
+        "y": 43.1
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.1830308331511043,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/intuition/ear-radar/tier-10.png",
+      "attribute": "intuition",
+      "sublayer": "ear-radar",
+      "tier": 10,
+      "anchorPolicy": "headCenterOffset",
+      "bboxPolicy": "intuitionNoFaceFeatures",
+      "alphaBbox": {
+        "x": 171.04516916523374,
+        "y": -8.159658283707195,
+        "width": 129.71130246592548,
+        "height": 47.05213912979652
+      },
+      "anchor": {
+        "x": 137.6,
+        "y": 40.8
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.06442350829968596,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/intuition/particles/tier-01.png",
+      "attribute": "intuition",
+      "sublayer": "particles",
+      "tier": 1,
+      "anchorPolicy": "headCenterOffset",
+      "bboxPolicy": "intuitionNoFaceFeatures",
+      "alphaBbox": {
+        "x": 203.89111079019426,
+        "y": 64.91559866898184,
+        "width": 96.8829999473893,
+        "height": 73.42254256102594
+      },
+      "anchor": {
+        "x": 255.2,
+        "y": 91.2
+      },
+      "overlapRatios": {
+        "leftEye": 0.0085978150487797,
+        "rightEye": 0.012203427409624988,
+        "eyes": 0.010413102136981338,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/intuition/particles/tier-02.png",
+      "attribute": "intuition",
+      "sublayer": "particles",
+      "tier": 2,
+      "anchorPolicy": "headCenterOffset",
+      "bboxPolicy": "intuitionNoFaceFeatures",
+      "alphaBbox": {
+        "x": 188.21873573932874,
+        "y": 27.93126650978941,
+        "width": 124.26731017710654,
+        "height": 85.71908334665717
+      },
+      "anchor": {
+        "x": 253.7,
+        "y": 85.5
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/intuition/particles/tier-03.png",
+      "attribute": "intuition",
+      "sublayer": "particles",
+      "tier": 3,
+      "anchorPolicy": "headCenterOffset",
+      "bboxPolicy": "intuitionNoFaceFeatures",
+      "alphaBbox": {
+        "x": 201.61132593620653,
+        "y": 42.904158459359344,
+        "width": 101.34816427832584,
+        "height": 88.74528374630609
+      },
+      "anchor": {
+        "x": 250.5,
+        "y": 79.4
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/intuition/particles/tier-04.png",
+      "attribute": "intuition",
+      "sublayer": "particles",
+      "tier": 4,
+      "anchorPolicy": "headCenterOffset",
+      "bboxPolicy": "intuitionNoFaceFeatures",
+      "alphaBbox": {
+        "x": 201.99005008452494,
+        "y": 6.321746909308246,
+        "width": 101.36113136723404,
+        "height": 81.18498199555714
+      },
+      "anchor": {
+        "x": 254.4,
+        "y": 79.1
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.6130360205831904,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/intuition/particles/tier-05.png",
+      "attribute": "intuition",
+      "sublayer": "particles",
+      "tier": 5,
+      "anchorPolicy": "headCenterOffset",
+      "bboxPolicy": "intuitionNoFaceFeatures",
+      "alphaBbox": {
+        "x": 206.25,
+        "y": 17.75,
+        "width": 102,
+        "height": 84.5
+      },
+      "anchor": {
+        "x": 256.8,
+        "y": 80
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.7560475604756047,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/intuition/particles/tier-06.png",
+      "attribute": "intuition",
+      "sublayer": "particles",
+      "tier": 6,
+      "anchorPolicy": "headCenterOffset",
+      "bboxPolicy": "intuitionNoFaceFeatures",
+      "alphaBbox": {
+        "x": 173.8427155977293,
+        "y": -2.0926708271420154,
+        "width": 118.97711992964508,
+        "height": 83.43208824941915
+      },
+      "anchor": {
+        "x": 251.4,
+        "y": 72.7
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.5565749235474006,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/intuition/particles/tier-07.png",
+      "attribute": "intuition",
+      "sublayer": "particles",
+      "tier": 7,
+      "anchorPolicy": "headCenterOffset",
+      "bboxPolicy": "intuitionNoFaceFeatures",
+      "alphaBbox": {
+        "x": 205.24442618752232,
+        "y": 0.8829459699305744,
+        "width": 95.9621252020072,
+        "height": 79.88965103024246
+      },
+      "anchor": {
+        "x": 255.4,
+        "y": 72.5
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.5633802816901409,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/intuition/particles/tier-08.png",
+      "attribute": "intuition",
+      "sublayer": "particles",
+      "tier": 8,
+      "anchorPolicy": "headCenterOffset",
+      "bboxPolicy": "intuitionNoFaceFeatures",
+      "alphaBbox": {
+        "x": 209.16658667691885,
+        "y": 9.570493516519946,
+        "width": 91.03797864210301,
+        "height": 78.89958148982264
+      },
+      "anchor": {
+        "x": 257.3,
+        "y": 80.3
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.5147304057809894,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/intuition/particles/tier-09.png",
+      "attribute": "intuition",
+      "sublayer": "particles",
+      "tier": 9,
+      "anchorPolicy": "headCenterOffset",
+      "bboxPolicy": "intuitionNoFaceFeatures",
+      "alphaBbox": {
+        "x": 185.87236754158872,
+        "y": -2.2500077451458367,
+        "width": 133.3904453511652,
+        "height": 63.97723554460273
+      },
+      "anchor": {
+        "x": 257,
+        "y": 61.1
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.631413612565445,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/intuition/particles/tier-10.png",
+      "attribute": "intuition",
+      "sublayer": "particles",
+      "tier": 10,
+      "anchorPolicy": "headCenterOffset",
+      "bboxPolicy": "intuitionNoFaceFeatures",
+      "alphaBbox": {
+        "x": 210.74440300880696,
+        "y": -1.6047732071712133,
+        "width": 86.05030849863687,
+        "height": 71.63794155797848
+      },
+      "anchor": {
+        "x": 253.6,
+        "y": 58.8
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.48920454545454545,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/intuition/halo/tier-01.png",
+      "attribute": "intuition",
+      "sublayer": "halo",
+      "tier": 1,
+      "anchorPolicy": "headCenterOffset",
+      "bboxPolicy": "intuitionNoFaceFeatures",
+      "alphaBbox": {
+        "x": 174.348312599959,
+        "y": 38.51798876788668,
+        "width": 155.9685963278598,
+        "height": 60.388955124157434
+      },
+      "anchor": {
+        "x": 255.2,
+        "y": -0.7999999999999972
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.989687235841082,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/intuition/halo/tier-02.png",
+      "attribute": "intuition",
+      "sublayer": "halo",
+      "tier": 2,
+      "anchorPolicy": "headCenterOffset",
+      "bboxPolicy": "intuitionNoFaceFeatures",
+      "alphaBbox": {
+        "x": 159.30756561649167,
+        "y": 14.54936070346907,
+        "width": 182.08965042278066,
+        "height": 66.4449699314325
+      },
+      "anchor": {
+        "x": 253.7,
+        "y": -6.5
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.962893934259573,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/intuition/halo/tier-03.png",
+      "attribute": "intuition",
+      "sublayer": "halo",
+      "tier": 3,
+      "anchorPolicy": "headCenterOffset",
+      "bboxPolicy": "intuitionNoFaceFeatures",
+      "alphaBbox": {
+        "x": 158.02636409630475,
+        "y": 34.92336200615799,
+        "width": 188.51808795812946,
+        "height": 63.014402660098995
+      },
+      "anchor": {
+        "x": 250.5,
+        "y": -12.599999999999994
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/intuition/halo/tier-04.png",
+      "attribute": "intuition",
+      "sublayer": "halo",
+      "tier": 4,
+      "anchorPolicy": "headCenterOffset",
+      "bboxPolicy": "intuitionNoFaceFeatures",
+      "alphaBbox": {
+        "x": 182.29428522169746,
+        "y": 2.7124965376071355,
+        "width": 140.752661092889,
+        "height": 71.57729181856813
+      },
+      "anchor": {
+        "x": 254.4,
+        "y": -12.900000000000006
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.33769132653061223,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/intuition/halo/tier-05.png",
+      "attribute": "intuition",
+      "sublayer": "halo",
+      "tier": 5,
+      "anchorPolicy": "headCenterOffset",
+      "bboxPolicy": "intuitionNoFaceFeatures",
+      "alphaBbox": {
+        "x": 171.75,
+        "y": 4.25,
+        "width": 170.5,
+        "height": 74.5
+      },
+      "anchor": {
+        "x": 256.8,
+        "y": -12
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.8078894584354803,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/intuition/halo/tier-06.png",
+      "attribute": "intuition",
+      "sublayer": "halo",
+      "tier": 6,
+      "anchorPolicy": "headCenterOffset",
+      "bboxPolicy": "intuitionNoFaceFeatures",
+      "alphaBbox": {
+        "x": 161.00700971320327,
+        "y": -3.255367644342467,
+        "width": 168.8389004810731,
+        "height": 73.55846833824529
+      },
+      "anchor": {
+        "x": 251.4,
+        "y": -19.299999999999997
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.5049782997191729,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/intuition/halo/tier-07.png",
+      "attribute": "intuition",
+      "sublayer": "halo",
+      "tier": 7,
+      "anchorPolicy": "headCenterOffset",
+      "bboxPolicy": "intuitionNoFaceFeatures",
+      "alphaBbox": {
+        "x": 168.37227955817966,
+        "y": -4.13660557110722,
+        "width": 169.70641846069256,
+        "height": 65.23533634422166
+      },
+      "anchor": {
+        "x": 255.4,
+        "y": -19.5
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.3243316719528772,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/intuition/halo/tier-08.png",
+      "attribute": "intuition",
+      "sublayer": "halo",
+      "tier": 8,
+      "anchorPolicy": "headCenterOffset",
+      "bboxPolicy": "intuitionNoFaceFeatures",
+      "alphaBbox": {
+        "x": 178.82059379621785,
+        "y": 3.472996440350503,
+        "width": 151.72996440350505,
+        "height": 69.5623529111454
+      },
+      "anchor": {
+        "x": 257.3,
+        "y": -11.700000000000003
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.37656268255637343,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/intuition/halo/tier-09.png",
+      "attribute": "intuition",
+      "sublayer": "halo",
+      "tier": 9,
+      "anchorPolicy": "headCenterOffset",
+      "bboxPolicy": "intuitionNoFaceFeatures",
+      "alphaBbox": {
+        "x": 180.0182414133244,
+        "y": -17.310064345100727,
+        "width": 145.0986976076938,
+        "height": 62.304628079384365
+      },
+      "anchor": {
+        "x": 257,
+        "y": -30.9
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.2124038825160721,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/intuition/halo/tier-10.png",
+      "attribute": "intuition",
+      "sublayer": "halo",
+      "tier": 10,
+      "anchorPolicy": "headCenterOffset",
+      "bboxPolicy": "intuitionNoFaceFeatures",
+      "alphaBbox": {
+        "x": 177.68073767435533,
+        "y": -19.423472777311833,
+        "width": 152.17763916754006,
+        "height": 61.88839921576839
+      },
+      "anchor": {
+        "x": 253.6,
+        "y": -33.2
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0.07004495300367797,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/patience/ground-prop/tier-01.png",
+      "attribute": "patience",
+      "sublayer": "ground-prop",
+      "tier": 1,
+      "anchorPolicy": "feetBase",
+      "bboxPolicy": "groundProp",
+      "alphaBbox": {
+        "x": 190.11768719985696,
+        "y": 413.02979287079773,
+        "width": 203.52135044817112,
+        "height": 37.47829064197089
+      },
+      "anchor": {
+        "x": 302.6,
+        "y": 459
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 1
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/patience/ground-prop/tier-02.png",
+      "attribute": "patience",
+      "sublayer": "ground-prop",
+      "tier": 2,
+      "anchorPolicy": "feetBase",
+      "bboxPolicy": "groundProp",
+      "alphaBbox": {
+        "x": 130.06182271288057,
+        "y": 473.3602992337652,
+        "width": 225.10507629801927,
+        "height": 45.12595935111801
+      },
+      "anchor": {
+        "x": 250.8,
+        "y": 488
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 0.3058984511470828
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/patience/ground-prop/tier-03.png",
+      "attribute": "patience",
+      "sublayer": "ground-prop",
+      "tier": 3,
+      "anchorPolicy": "feetBase",
+      "bboxPolicy": "groundProp",
+      "alphaBbox": {
+        "x": 147.8889925714708,
+        "y": 475.65094554951185,
+        "width": 198.1084572615614,
+        "height": 54.49137052882105
+      },
+      "anchor": {
+        "x": 252.3,
+        "y": 495
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 0.3449245274858354
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/patience/ground-prop/tier-04.png",
+      "attribute": "patience",
+      "sublayer": "ground-prop",
+      "tier": 4,
+      "anchorPolicy": "feetBase",
+      "bboxPolicy": "groundProp",
+      "alphaBbox": {
+        "x": 151.83691957391954,
+        "y": 456.2363680505841,
+        "width": 206.42405114135659,
+        "height": 45.23044477223198
+      },
+      "anchor": {
+        "x": 256.3,
+        "y": 461
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 0.03635837085011716
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/patience/ground-prop/tier-05.png",
+      "attribute": "patience",
+      "sublayer": "ground-prop",
+      "tier": 5,
+      "anchorPolicy": "feetBase",
+      "bboxPolicy": "groundProp",
+      "alphaBbox": {
+        "x": 153.25,
+        "y": 443.25,
+        "width": 214.5,
+        "height": 43
+      },
+      "anchor": {
+        "x": 260.3,
+        "y": 465.2
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 0.4888294936230789
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/patience/ground-prop/tier-06.png",
+      "attribute": "patience",
+      "sublayer": "ground-prop",
+      "tier": 6,
+      "anchorPolicy": "feetBase",
+      "bboxPolicy": "groundProp",
+      "alphaBbox": {
+        "x": 149.51610673169557,
+        "y": 440.7633100759475,
+        "width": 209.69485033654558,
+        "height": 59.14470137697435
+      },
+      "anchor": {
+        "x": 261.5,
+        "y": 458.8
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 0.2702151335311573
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/patience/ground-prop/tier-07.png",
+      "attribute": "patience",
+      "sublayer": "ground-prop",
+      "tier": 7,
+      "anchorPolicy": "feetBase",
+      "bboxPolicy": "groundProp",
+      "alphaBbox": {
+        "x": 156.60559274917165,
+        "y": 456.50267666993113,
+        "width": 197.70556630757739,
+        "height": 41.01584009644381
+      },
+      "anchor": {
+        "x": 258.5,
+        "y": 458.3
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 0.02126070217778544
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/patience/ground-prop/tier-08.png",
+      "attribute": "patience",
+      "sublayer": "ground-prop",
+      "tier": 8,
+      "anchorPolicy": "feetBase",
+      "bboxPolicy": "groundProp",
+      "alphaBbox": {
+        "x": 147.74948713951693,
+        "y": 448.11668651710124,
+        "width": 214.8873030938642,
+        "height": 43.578543984070336
+      },
+      "anchor": {
+        "x": 259,
+        "y": 466.6
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 0.37709126816194105
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/patience/ground-prop/tier-09.png",
+      "attribute": "patience",
+      "sublayer": "ground-prop",
+      "tier": 9,
+      "anchorPolicy": "feetBase",
+      "bboxPolicy": "groundProp",
+      "alphaBbox": {
+        "x": 159.57841995856478,
+        "y": 466.5235651769274,
+        "width": 179.8851408182034,
+        "height": 67.31550867096291
+      },
+      "anchor": {
+        "x": 255.8,
+        "y": 485.7
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 0.2912140745753054
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/patience/ground-prop/tier-10.png",
+      "attribute": "patience",
+      "sublayer": "ground-prop",
+      "tier": 10,
+      "anchorPolicy": "feetBase",
+      "bboxPolicy": "groundProp",
+      "alphaBbox": {
+        "x": 139.47587000352314,
+        "y": 449.5709359704505,
+        "width": 227.64383432152226,
+        "height": 44.04297960066742
+      },
+      "anchor": {
+        "x": 256.8,
+        "y": 459.6
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 0.19622909155387433
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/patience/bamboo/tier-01.png",
+      "attribute": "patience",
+      "sublayer": "bamboo",
+      "tier": 1,
+      "anchorPolicy": "feetBase",
+      "bboxPolicy": "groundSideProp",
+      "alphaBbox": {
+        "x": 333.20628612687807,
+        "y": 346.2482890361354,
+        "width": 94.40733971838239,
+        "height": 122.39745551428479
+      },
+      "anchor": {
+        "x": 456.6,
+        "y": 387
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 0.8823607691795862
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/patience/bamboo/tier-02.png",
+      "attribute": "patience",
+      "sublayer": "bamboo",
+      "tier": 2,
+      "anchorPolicy": "feetBase",
+      "bboxPolicy": "groundSideProp",
+      "alphaBbox": {
+        "x": 271.99325218874435,
+        "y": 383.51980367634644,
+        "width": 104.41937105665693,
+        "height": 132.7542757654985
+      },
+      "anchor": {
+        "x": 404.8,
+        "y": 416
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 0.7267654093064239
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/patience/bamboo/tier-03.png",
+      "attribute": "patience",
+      "sublayer": "bamboo",
+      "tier": 3,
+      "anchorPolicy": "feetBase",
+      "bboxPolicy": "groundSideProp",
+      "alphaBbox": {
+        "x": 291.26779323110736,
+        "y": 385.1792945227928,
+        "width": 91.89646385792707,
+        "height": 136.69021759772068
+      },
+      "anchor": {
+        "x": 406.3,
+        "y": 423
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 0.7042374595469255
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/patience/bamboo/tier-04.png",
+      "attribute": "patience",
+      "sublayer": "bamboo",
+      "tier": 4,
+      "anchorPolicy": "feetBase",
+      "bboxPolicy": "groundSideProp",
+      "alphaBbox": {
+        "x": 301.0251701300651,
+        "y": 350.5541219436028,
+        "width": 83.24326537868228,
+        "height": 148.68305781510298
+      },
+      "anchor": {
+        "x": 410.3,
+        "y": 389
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 0.6573267193993833
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/patience/bamboo/tier-05.png",
+      "attribute": "patience",
+      "sublayer": "bamboo",
+      "tier": 5,
+      "anchorPolicy": "feetBase",
+      "bboxPolicy": "groundSideProp",
+      "alphaBbox": {
+        "x": 295.75,
+        "y": 349.25,
+        "width": 99.5,
+        "height": 137
+      },
+      "anchor": {
+        "x": 414.3,
+        "y": 393.2
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 0.7774266936299292
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/patience/bamboo/tier-06.png",
+      "attribute": "patience",
+      "sublayer": "bamboo",
+      "tier": 6,
+      "anchorPolicy": "feetBase",
+      "bboxPolicy": "groundSideProp",
+      "alphaBbox": {
+        "x": 292.2737254782211,
+        "y": 362.40892067180977,
+        "width": 97.2710378018009,
+        "height": 119.2670011238161
+      },
+      "anchor": {
+        "x": 415.5,
+        "y": 386.8
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 0.7537990145335597
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/patience/bamboo/tier-07.png",
+      "attribute": "patience",
+      "sublayer": "bamboo",
+      "tier": 7,
+      "anchorPolicy": "feetBase",
+      "bboxPolicy": "groundSideProp",
+      "alphaBbox": {
+        "x": 320.2834876033887,
+        "y": 349.4779143403836,
+        "width": 50.69373495066088,
+        "height": 142.40330999776552
+      },
+      "anchor": {
+        "x": 412.5,
+        "y": 386.3
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 0.7916754850088183
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/patience/bamboo/tier-08.png",
+      "attribute": "patience",
+      "sublayer": "bamboo",
+      "tier": 8,
+      "anchorPolicy": "feetBase",
+      "bboxPolicy": "groundSideProp",
+      "alphaBbox": {
+        "x": 290.22872263798104,
+        "y": 346.0625182522251,
+        "width": 99.67965807850578,
+        "height": 152.77535534645358
+      },
+      "anchor": {
+        "x": 413,
+        "y": 394.6
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 0.7256252808147372
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/patience/bamboo/tier-09.png",
+      "attribute": "patience",
+      "sublayer": "bamboo",
+      "tier": 9,
+      "anchorPolicy": "feetBase",
+      "bboxPolicy": "groundSideProp",
+      "alphaBbox": {
+        "x": 271.15267919955454,
+        "y": 368.5024441780678,
+        "width": 108.04421979961273,
+        "height": 174.79405192712215
+      },
+      "anchor": {
+        "x": 409.8,
+        "y": 413.7
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 0.5478925428439092
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/patience/bamboo/tier-10.png",
+      "attribute": "patience",
+      "sublayer": "bamboo",
+      "tier": 10,
+      "anchorPolicy": "feetBase",
+      "bboxPolicy": "groundSideProp",
+      "alphaBbox": {
+        "x": 281.2711889093623,
+        "y": 360.05987179187184,
+        "width": 105.59702337991354,
+        "height": 130.5370238766771
+      },
+      "anchor": {
+        "x": 410.8,
+        "y": 387.6
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 0.6815066851967221
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/patience/tea/tier-01.png",
+      "attribute": "patience",
+      "sublayer": "tea",
+      "tier": 1,
+      "anchorPolicy": "feetBase",
+      "bboxPolicy": "groundSideProp",
+      "alphaBbox": {
+        "x": 181.97578535267996,
+        "y": 350.02591097113026,
+        "width": 91.56088726456181,
+        "height": 115.28132437973329
+      },
+      "anchor": {
+        "x": 180.60000000000002,
+        "y": 433
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 0.9510871962245843
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/patience/tea/tier-02.png",
+      "attribute": "patience",
+      "sublayer": "tea",
+      "tier": 2,
+      "anchorPolicy": "feetBase",
+      "bboxPolicy": "groundSideProp",
+      "alphaBbox": {
+        "x": 121.92616200581806,
+        "y": 433.1928468793444,
+        "width": 124.88346890193144,
+        "height": 75.55974589024424
+      },
+      "anchor": {
+        "x": 128.8,
+        "y": 462
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 0.8102623514462964
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/patience/tea/tier-03.png",
+      "attribute": "patience",
+      "sublayer": "tea",
+      "tier": 3,
+      "anchorPolicy": "feetBase",
+      "bboxPolicy": "groundSideProp",
+      "alphaBbox": {
+        "x": 135.7953161804489,
+        "y": 414.55480859874575,
+        "width": 90.51109003092316,
+        "height": 117.29498401966572
+      },
+      "anchor": {
+        "x": 130.3,
+        "y": 469
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 0.5516704242672679
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/patience/tea/tier-04.png",
+      "attribute": "patience",
+      "sublayer": "tea",
+      "tier": 4,
+      "anchorPolicy": "feetBase",
+      "bboxPolicy": "groundSideProp",
+      "alphaBbox": {
+        "x": 134.25188250556147,
+        "y": 384.04357338958124,
+        "width": 115.00081170812172,
+        "height": 116.92551148566349
+      },
+      "anchor": {
+        "x": 134.3,
+        "y": 435
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 0.5665251891492895
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/patience/tea/tier-05.png",
+      "attribute": "patience",
+      "sublayer": "tea",
+      "tier": 5,
+      "anchorPolicy": "feetBase",
+      "bboxPolicy": "groundSideProp",
+      "alphaBbox": {
+        "x": 153.25,
+        "y": 376.25,
+        "width": 91.5,
+        "height": 127
+      },
+      "anchor": {
+        "x": 138.3,
+        "y": 439.2
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 0.4490082244799226
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/patience/tea/tier-06.png",
+      "attribute": "patience",
+      "sublayer": "tea",
+      "tier": 6,
+      "anchorPolicy": "feetBase",
+      "bboxPolicy": "groundSideProp",
+      "alphaBbox": {
+        "x": 143.361513560976,
+        "y": 375.17057609632,
+        "width": 97.75983698673457,
+        "height": 124.15499297315284
+      },
+      "anchor": {
+        "x": 139.5,
+        "y": 432.8
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 0.3666872067118548
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/patience/tea/tier-07.png",
+      "attribute": "patience",
+      "sublayer": "tea",
+      "tier": 7,
+      "anchorPolicy": "feetBase",
+      "bboxPolicy": "groundSideProp",
+      "alphaBbox": {
+        "x": 141.98414041738965,
+        "y": 377.9655331756099,
+        "width": 94.93553999851036,
+        "height": 117.05644252243508
+      },
+      "anchor": {
+        "x": 136.5,
+        "y": 432.3
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 0.5147819808255445
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/patience/tea/tier-08.png",
+      "attribute": "patience",
+      "sublayer": "tea",
+      "tier": 8,
+      "anchorPolicy": "feetBase",
+      "bboxPolicy": "groundSideProp",
+      "alphaBbox": {
+        "x": 156.9860218961426,
+        "y": 381.54355935951844,
+        "width": 75.13542066219028,
+        "height": 127.2293123213089
+      },
+      "anchor": {
+        "x": 137,
+        "y": 440.6
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 0.48006729200652526
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/patience/tea/tier-09.png",
+      "attribute": "patience",
+      "sublayer": "tea",
+      "tier": 9,
+      "anchorPolicy": "feetBase",
+      "bboxPolicy": "groundSideProp",
+      "alphaBbox": {
+        "x": 144.4912866712706,
+        "y": 393.00673552683594,
+        "width": 103.51880745198497,
+        "height": 143.6818420371813
+      },
+      "anchor": {
+        "x": 133.8,
+        "y": 459.7
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 0.4976223099862981
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/traits/patience/tea/tier-10.png",
+      "attribute": "patience",
+      "sublayer": "tea",
+      "tier": 10,
+      "anchorPolicy": "feetBase",
+      "bboxPolicy": "groundSideProp",
+      "alphaBbox": {
+        "x": 132.62438293538872,
+        "y": 379.527956369783,
+        "width": 126.82255571758463,
+        "height": 127.35319402602642
+      },
+      "anchor": {
+        "x": 134.8,
+        "y": 433.6
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 0,
+        "body": 0.4571840332473104
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/emotions/eyes/tier-01.png",
+      "attribute": "emotion",
+      "sublayer": "eyes",
+      "tier": 1,
+      "anchorPolicy": "eyesMidpoint",
+      "bboxPolicy": "emotionEyes",
+      "alphaBbox": {
+        "x": 201.12561729535008,
+        "y": 180.5023582859846,
+        "width": 112.52330487163147,
+        "height": 21.288192813551916
+      },
+      "anchor": {
+        "x": 257.8,
+        "y": 162.125
+      },
+      "overlapRatios": {
+        "leftEye": 0.06496126925744662,
+        "rightEye": 0.06868914472108771,
+        "eyes": 0.06683811111350929,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/emotions/eyes/tier-02.png",
+      "attribute": "emotion",
+      "sublayer": "eyes",
+      "tier": 2,
+      "anchorPolicy": "eyesMidpoint",
+      "bboxPolicy": "emotionEyes",
+      "alphaBbox": {
+        "x": 190.3873569667964,
+        "y": 156.65403979103093,
+        "width": 131.36829933008408,
+        "height": 15.216405327808985
+      },
+      "anchor": {
+        "x": 258.075,
+        "y": 168.675
+      },
+      "overlapRatios": {
+        "leftEye": 0.0675994993568197,
+        "rightEye": 0.06039935497569131,
+        "eyes": 0.06397492940824867,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/emotions/eyes/tier-03.png",
+      "attribute": "emotion",
+      "sublayer": "eyes",
+      "tier": 3,
+      "anchorPolicy": "eyesMidpoint",
+      "bboxPolicy": "emotionEyes",
+      "alphaBbox": {
+        "x": 192.4492933299256,
+        "y": 195.20825613965522,
+        "width": 136.0060857413803,
+        "height": 22.580160953202125
+      },
+      "anchor": {
+        "x": 255.7,
+        "y": 191.9
+      },
+      "overlapRatios": {
+        "leftEye": 0.09732913146091611,
+        "rightEye": 0.12481957153213555,
+        "eyes": 0.11110194544599354,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/emotions/eyes/tier-04.png",
+      "attribute": "emotion",
+      "sublayer": "eyes",
+      "tier": 4,
+      "anchorPolicy": "eyesMidpoint",
+      "bboxPolicy": "emotionEyes",
+      "alphaBbox": {
+        "x": 193.5642253294386,
+        "y": 136.8848926800966,
+        "width": 124.41958779200769,
+        "height": 19.21538035397802
+      },
+      "anchor": {
+        "x": 255.75,
+        "y": 173.25
+      },
+      "overlapRatios": {
+        "leftEye": 0.06833505699339362,
+        "rightEye": 0.07089401012809127,
+        "eyes": 0.06957850992061697,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/emotions/eyes/tier-05.png",
+      "attribute": "emotion",
+      "sublayer": "eyes",
+      "tier": 5,
+      "anchorPolicy": "eyesMidpoint",
+      "bboxPolicy": "emotionEyes",
+      "alphaBbox": {
+        "x": 189.25,
+        "y": 154.25,
+        "width": 129.5,
+        "height": 35
+      },
+      "anchor": {
+        "x": 256.475,
+        "y": 176.1
+      },
+      "overlapRatios": {
+        "leftEye": 0.13259043927648578,
+        "rightEye": 0.13061734726585036,
+        "eyes": 0.13162541399812866,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/emotions/eyes/tier-06.png",
+      "attribute": "emotion",
+      "sublayer": "eyes",
+      "tier": 6,
+      "anchorPolicy": "eyesMidpoint",
+      "bboxPolicy": "emotionEyes",
+      "alphaBbox": {
+        "x": 189.70590915157499,
+        "y": 97.99650700039408,
+        "width": 127.86337784970152,
+        "height": 28.139816746845526
+      },
+      "anchor": {
+        "x": 256.575,
+        "y": 175.85
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/emotions/eyes/tier-07.png",
+      "attribute": "emotion",
+      "sublayer": "eyes",
+      "tier": 7,
+      "anchorPolicy": "eyesMidpoint",
+      "bboxPolicy": "emotionEyes",
+      "alphaBbox": {
+        "x": 196.43141819014858,
+        "y": 103.80884166137697,
+        "width": 122.43443560256094,
+        "height": 29.308629372041608
+      },
+      "anchor": {
+        "x": 257.625,
+        "y": 174.57500000000002
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/emotions/eyes/tier-08.png",
+      "attribute": "emotion",
+      "sublayer": "eyes",
+      "tier": 8,
+      "anchorPolicy": "eyesMidpoint",
+      "bboxPolicy": "emotionEyes",
+      "alphaBbox": {
+        "x": 198.13164945344545,
+        "y": 98.26839837286543,
+        "width": 120.91711009387018,
+        "height": 27.54482430709784
+      },
+      "anchor": {
+        "x": 258.1,
+        "y": 170.02499999999998
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/emotions/eyes/tier-09.png",
+      "attribute": "emotion",
+      "sublayer": "eyes",
+      "tier": 9,
+      "anchorPolicy": "eyesMidpoint",
+      "bboxPolicy": "emotionEyes",
+      "alphaBbox": {
+        "x": 200.91578530795664,
+        "y": 66.51767976419117,
+        "width": 108.30133337288959,
+        "height": 28.85247877501692
+      },
+      "anchor": {
+        "x": 256.3,
+        "y": 148.35000000000002
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/emotions/eyes/tier-10.png",
+      "attribute": "emotion",
+      "sublayer": "eyes",
+      "tier": 10,
+      "anchorPolicy": "eyesMidpoint",
+      "bboxPolicy": "emotionEyes",
+      "alphaBbox": {
+        "x": 202.94871177511018,
+        "y": 101.59560139505145,
+        "width": 109.78832463619185,
+        "height": 23.314122992241522
+      },
+      "anchor": {
+        "x": 256.55,
+        "y": 146.825
+      },
+      "overlapRatios": {
+        "leftEye": 0.029892789778353093,
+        "rightEye": 0.03634525874324033,
+        "eyes": 0.03311438982656095,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/emotions/brows/tier-01.png",
+      "attribute": "emotion",
+      "sublayer": "brows",
+      "tier": 1,
+      "anchorPolicy": "eyesMidpoint",
+      "bboxPolicy": "emotionBrows",
+      "alphaBbox": {
+        "x": 198.95335272253868,
+        "y": 149.1090757733583,
+        "width": 116.86783401725432,
+        "height": 19.11592824074046
+      },
+      "anchor": {
+        "x": 257.8,
+        "y": 128.125
+      },
+      "overlapRatios": {
+        "leftEye": 0.07938194317524115,
+        "rightEye": 0.07645088347794478,
+        "eyes": 0.07790626739793631,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/emotions/brows/tier-02.png",
+      "attribute": "emotion",
+      "sublayer": "brows",
+      "tier": 2,
+      "anchorPolicy": "eyesMidpoint",
+      "bboxPolicy": "emotionBrows",
+      "alphaBbox": {
+        "x": 187.85128941216158,
+        "y": 122.14682628010397,
+        "width": 136.44043443935374,
+        "height": 18.76689990429773
+      },
+      "anchor": {
+        "x": 258.075,
+        "y": 134.675
+      },
+      "overlapRatios": {
+        "leftEye": 0.0235017867296334,
+        "rightEye": 0.015439302229423175,
+        "eyes": 0.01944311269708547,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/emotions/brows/tier-03.png",
+      "attribute": "emotion",
+      "sublayer": "brows",
+      "tier": 3,
+      "anchorPolicy": "eyesMidpoint",
+      "bboxPolicy": "emotionBrows",
+      "alphaBbox": {
+        "x": 189.82369321908817,
+        "y": 163.83385625049266,
+        "width": 141.2572859630552,
+        "height": 20.479680864532185
+      },
+      "anchor": {
+        "x": 255.7,
+        "y": 157.9
+      },
+      "overlapRatios": {
+        "leftEye": 0.06753055045697759,
+        "rightEye": 0.0856970192608692,
+        "eyes": 0.07663201972969601,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/emotions/brows/tier-04.png",
+      "attribute": "emotion",
+      "sublayer": "brows",
+      "tier": 4,
+      "anchorPolicy": "eyesMidpoint",
+      "bboxPolicy": "emotionBrows",
+      "alphaBbox": {
+        "x": 191.16230278519134,
+        "y": 101.9241236623977,
+        "width": 129.22343288050223,
+        "height": 24.019225442472518
+      },
+      "anchor": {
+        "x": 255.75,
+        "y": 139.25
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/emotions/brows/tier-05.png",
+      "attribute": "emotion",
+      "sublayer": "brows",
+      "tier": 5,
+      "anchorPolicy": "eyesMidpoint",
+      "bboxPolicy": "emotionBrows",
+      "alphaBbox": {
+        "x": 186.75,
+        "y": 127.75,
+        "width": 134.5,
+        "height": 23.5
+      },
+      "anchor": {
+        "x": 256.475,
+        "y": 142.1
+      },
+      "overlapRatios": {
+        "leftEye": 0.023659560723514213,
+        "rightEye": 0.009911229127373212,
+        "eyes": 0.016935349458151328,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    },
+    {
+      "src": "/assets/panda/emotions/brows/tier-06.png",
+      "attribute": "emotion",
+      "sublayer": "brows",
+      "tier": 6,
+      "anchorPolicy": "eyesMidpoint",
+      "bboxPolicy": "emotionBrows",
+      "alphaBbox": {
+        "x": 187.2375041737815,
+        "y": 63.00914500927669,
+        "width": 132.80018780528846,
+        "height": 33.57030769799114
+      },
+      "anchor": {
+        "x": 256.575,
+        "y": 141.85
+      },
+      "overlapRatios": {
+        "leftEye": 0,
+        "rightEye": 0,
+        "eyes": 0,
+        "mouth": 0,
+        "face": 1,
+        "body": 0
+      },
+      "status": "pass",
+      "failures": []
+    }
+  ]
+}

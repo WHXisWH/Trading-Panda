@@ -1,0 +1,480 @@
+{
+  "version": 1,
+  "coordinateSpace": {
+    "width": 512,
+    "height": 512,
+    "unit": "px"
+  },
+  "tiers": {
+    "tier-01": {
+      "image": "/assets/panda/experience/tier-01.png",
+      "faceRect": {
+        "x": 129.1,
+        "y": 44.6,
+        "width": 253.1,
+        "height": 201.4
+      },
+      "leftEye": {
+        "x": 173.2,
+        "y": 126.9,
+        "width": 59.7,
+        "height": 69.5
+      },
+      "rightEye": {
+        "x": 282.5,
+        "y": 127.6,
+        "width": 60.1,
+        "height": 70
+      },
+      "nose": {
+        "x": 240.7,
+        "y": 173.4,
+        "width": 34,
+        "height": 25.9
+      },
+      "mouth": {
+        "x": 230.4,
+        "y": 201.3,
+        "width": 57.3,
+        "height": 16
+      },
+      "bodyRect": {
+        "x": 72.2,
+        "y": 246.9,
+        "width": 369.3,
+        "height": 212.4
+      },
+      "headCenter": {
+        "x": 255.2,
+        "y": 91.2
+      },
+      "feetBase": {
+        "x": 302.6,
+        "y": 459
+      }
+    },
+    "tier-02": {
+      "image": "/assets/panda/experience/tier-02.png",
+      "faceRect": {
+        "x": 107.6,
+        "y": 20.7,
+        "width": 295.4,
+        "height": 235.2
+      },
+      "leftEye": {
+        "x": 160.3,
+        "y": 130.5,
+        "width": 66.4,
+        "height": 76
+      },
+      "rightEye": {
+        "x": 289.9,
+        "y": 129.8,
+        "width": 65.5,
+        "height": 78.1
+      },
+      "nose": {
+        "x": 237.4,
+        "y": 179.8,
+        "width": 39.3,
+        "height": 31.9
+      },
+      "mouth": {
+        "x": 222.2,
+        "y": 221.7,
+        "width": 76.9,
+        "height": 13.2
+      },
+      "bodyRect": {
+        "x": 47,
+        "y": 259.5,
+        "width": 419.4,
+        "height": 228.8
+      },
+      "headCenter": {
+        "x": 253.7,
+        "y": 85.5
+      },
+      "feetBase": {
+        "x": 250.8,
+        "y": 488
+      }
+    },
+    "tier-03": {
+      "image": "/assets/panda/experience/tier-03.png",
+      "faceRect": {
+        "x": 107.9,
+        "y": 33.7,
+        "width": 295.4,
+        "height": 252.1
+      },
+      "leftEye": {
+        "x": 165.1,
+        "y": 157,
+        "width": 60.3,
+        "height": 70.9
+      },
+      "rightEye": {
+        "x": 285,
+        "y": 156.9,
+        "width": 62.3,
+        "height": 68.9
+      },
+      "nose": {
+        "x": 239.3,
+        "y": 215.7,
+        "width": 33.8,
+        "height": 24.9
+      },
+      "mouth": {
+        "x": 237,
+        "y": 247.3,
+        "width": 40.6,
+        "height": 8
+      },
+      "bodyRect": {
+        "x": 78.1,
+        "y": 287,
+        "width": 355.1,
+        "height": 209.3
+      },
+      "headCenter": {
+        "x": 250.5,
+        "y": 79.4
+      },
+      "feetBase": {
+        "x": 252.3,
+        "y": 495
+      }
+    },
+    "tier-04": {
+      "image": "/assets/panda/experience/tier-04.png",
+      "faceRect": {
+        "x": 113,
+        "y": 38.9,
+        "width": 287.2,
+        "height": 217
+      },
+      "leftEye": {
+        "x": 150.7,
+        "y": 134.3,
+        "width": 82.8,
+        "height": 77.9
+      },
+      "rightEye": {
+        "x": 278.7,
+        "y": 135.8,
+        "width": 81.4,
+        "height": 74.9
+      },
+      "nose": {
+        "x": 233.1,
+        "y": 195.9,
+        "width": 48.4,
+        "height": 18.8
+      },
+      "mouth": {
+        "x": 220.7,
+        "y": 220.9,
+        "width": 68.5,
+        "height": 12.6
+      },
+      "bodyRect": {
+        "x": 59.4,
+        "y": 253.3,
+        "width": 394.2,
+        "height": 204.7
+      },
+      "headCenter": {
+        "x": 254.4,
+        "y": 79.1
+      },
+      "feetBase": {
+        "x": 256.3,
+        "y": 461
+      }
+    },
+    "tier-05": {
+      "image": "/assets/panda/experience/tier-05.png",
+      "faceRect": {
+        "x": 104,
+        "y": 33.5,
+        "width": 304.4,
+        "height": 221.8
+      },
+      "leftEye": {
+        "x": 152.7,
+        "y": 137.5,
+        "width": 80,
+        "height": 77.4
+      },
+      "rightEye": {
+        "x": 279.2,
+        "y": 139.9,
+        "width": 82.1,
+        "height": 72.2
+      },
+      "nose": {
+        "x": 235.8,
+        "y": 196.6,
+        "width": 40,
+        "height": 24.8
+      },
+      "mouth": {
+        "x": 225.4,
+        "y": 221.2,
+        "width": 59.2,
+        "height": 11.2
+      },
+      "bodyRect": {
+        "x": 48.6,
+        "y": 257.8,
+        "width": 419.5,
+        "height": 207.7
+      },
+      "headCenter": {
+        "x": 256.8,
+        "y": 80
+      },
+      "feetBase": {
+        "x": 260.3,
+        "y": 465.2
+      }
+    },
+    "tier-06": {
+      "image": "/assets/panda/experience/tier-06.png",
+      "faceRect": {
+        "x": 105,
+        "y": 33.8,
+        "width": 302.9,
+        "height": 217.3
+      },
+      "leftEye": {
+        "x": 164.1,
+        "y": 144,
+        "width": 69,
+        "height": 65.2
+      },
+      "rightEye": {
+        "x": 278.3,
+        "y": 142,
+        "width": 72.5,
+        "height": 66.2
+      },
+      "nose": {
+        "x": 237.6,
+        "y": 189.5,
+        "width": 38.6,
+        "height": 26.8
+      },
+      "mouth": {
+        "x": 235.3,
+        "y": 216.1,
+        "width": 44,
+        "height": 14.6
+      },
+      "bodyRect": {
+        "x": 52.9,
+        "y": 252.9,
+        "width": 405.8,
+        "height": 205.2
+      },
+      "headCenter": {
+        "x": 251.4,
+        "y": 72.7
+      },
+      "feetBase": {
+        "x": 261.5,
+        "y": 458.8
+      }
+    },
+    "tier-07": {
+      "image": "/assets/panda/experience/tier-07.png",
+      "faceRect": {
+        "x": 115,
+        "y": 38.7,
+        "width": 282.8,
+        "height": 213.4
+      },
+      "leftEye": {
+        "x": 164.4,
+        "y": 138.3,
+        "width": 73.3,
+        "height": 71.1
+      },
+      "rightEye": {
+        "x": 278.2,
+        "y": 140.4,
+        "width": 72,
+        "height": 69.8
+      },
+      "nose": {
+        "x": 235.7,
+        "y": 199.8,
+        "width": 43.5,
+        "height": 19.4
+      },
+      "mouth": {
+        "x": 224.8,
+        "y": 225.4,
+        "width": 59.5,
+        "height": 8.4
+      },
+      "bodyRect": {
+        "x": 76.3,
+        "y": 252.1,
+        "width": 358.8,
+        "height": 206.3
+      },
+      "headCenter": {
+        "x": 255.4,
+        "y": 72.5
+      },
+      "feetBase": {
+        "x": 258.5,
+        "y": 458.3
+      }
+    },
+    "tier-08": {
+      "image": "/assets/panda/experience/tier-08.png",
+      "faceRect": {
+        "x": 117.1,
+        "y": 41.1,
+        "width": 279.9,
+        "height": 210.3
+      },
+      "leftEye": {
+        "x": 164.6,
+        "y": 131.6,
+        "width": 71.7,
+        "height": 77.1
+      },
+      "rightEye": {
+        "x": 279.6,
+        "y": 130.8,
+        "width": 72.3,
+        "height": 78.2
+      },
+      "nose": {
+        "x": 240.6,
+        "y": 196.7,
+        "width": 34.5,
+        "height": 19.2
+      },
+      "mouth": {
+        "x": 234.9,
+        "y": 216.9,
+        "width": 46,
+        "height": 6.5
+      },
+      "bodyRect": {
+        "x": 51.3,
+        "y": 253.2,
+        "width": 411.7,
+        "height": 212.4
+      },
+      "headCenter": {
+        "x": 257.3,
+        "y": 80.3
+      },
+      "feetBase": {
+        "x": 259,
+        "y": 466.6
+      }
+    },
+    "tier-09": {
+      "image": "/assets/panda/experience/tier-09.png",
+      "faceRect": {
+        "x": 135.1,
+        "y": 25.4,
+        "width": 239.7,
+        "height": 197
+      },
+      "leftEye": {
+        "x": 179.2,
+        "y": 115.5,
+        "width": 51,
+        "height": 64.6
+      },
+      "rightEye": {
+        "x": 282.8,
+        "y": 117.7,
+        "width": 50.2,
+        "height": 62.4
+      },
+      "nose": {
+        "x": 235.8,
+        "y": 178.4,
+        "width": 42.7,
+        "height": 19.5
+      },
+      "mouth": {
+        "x": 223.3,
+        "y": 204.6,
+        "width": 65,
+        "height": 7.6
+      },
+      "bodyRect": {
+        "x": 43.8,
+        "y": 225,
+        "width": 429.1,
+        "height": 259.9
+      },
+      "headCenter": {
+        "x": 257,
+        "y": 61.1
+      },
+      "feetBase": {
+        "x": 255.8,
+        "y": 485.7
+      }
+    },
+    "tier-10": {
+      "image": "/assets/panda/experience/tier-10.png",
+      "faceRect": {
+        "x": 134.7,
+        "y": 32.7,
+        "width": 259.5,
+        "height": 187
+      },
+      "leftEye": {
+        "x": 167.9,
+        "y": 115.5,
+        "width": 71.9,
+        "height": 62.2
+      },
+      "rightEye": {
+        "x": 275,
+        "y": 114.5,
+        "width": 68.5,
+        "height": 65.1
+      },
+      "nose": {
+        "x": 237.8,
+        "y": 164.9,
+        "width": 40,
+        "height": 23.5
+      },
+      "mouth": {
+        "x": 224.7,
+        "y": 194.5,
+        "width": 67.1,
+        "height": 10.6
+      },
+      "bodyRect": {
+        "x": 48.9,
+        "y": 222.3,
+        "width": 415.3,
+        "height": 236.3
+      },
+      "headCenter": {
+        "x": 253.6,
+        "y": 58.8
+      },
+      "feetBase": {
+        "x": 256.8,
+        "y": 459.6
+      }
+    }
+  }
+}

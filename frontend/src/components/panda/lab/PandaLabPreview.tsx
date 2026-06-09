@@ -1,7 +1,7 @@
 "use client";
 
 import { clsx } from "clsx";
-import { PandaSvgRenderer } from "@/components/panda/PandaSvgRenderer";
+import { PandaCanvasRenderer } from "@/components/panda/PandaCanvasRenderer";
 import type { PandaStats } from "@/utils/pandaHelper";
 
 interface PandaLabPreviewProps {
@@ -28,7 +28,11 @@ export function PandaLabPreview({
         <div className="flex flex-col items-center gap-2">
           <span className="text-[11px] font-medium text-ink-500">主预览 · 384px</span>
           <div className="w-full max-w-[384px] rounded-xl border border-[var(--color-border)] bg-[#efece3] p-4 shadow-sm">
-            <PandaSvgRenderer stats={stats} showBackground={false} className="mx-auto" />
+            <PandaCanvasRenderer
+              stats={stats}
+              showBackground={false}
+              className="mx-auto"
+            />
           </div>
         </div>
 
@@ -36,7 +40,11 @@ export function PandaLabPreview({
           <div className="flex flex-col items-center gap-2">
             <span className="text-[11px] font-medium text-ink-500">对比快照 A</span>
             <div className="w-full max-w-[384px] rounded-xl border border-dashed border-bamboo-400 bg-[#efece3] p-4">
-              <PandaSvgRenderer stats={compareStats} showBackground={false} className="mx-auto" />
+              <PandaCanvasRenderer
+                stats={compareStats}
+                showBackground={false}
+                className="mx-auto"
+              />
             </div>
           </div>
         )}
@@ -48,7 +56,11 @@ export function PandaLabPreview({
             Mint 圆预览 · 120px
           </span>
           <div className="h-[120px] w-[120px] overflow-hidden rounded-full ring-4 ring-bamboo-500/30">
-            <PandaSvgRenderer stats={stats} showBackground className="h-full w-full" />
+            <PandaCanvasRenderer
+              stats={stats}
+              showBackground
+              className="h-full w-full"
+            />
           </div>
         </div>
       )}

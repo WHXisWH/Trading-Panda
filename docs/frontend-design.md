@@ -265,6 +265,8 @@ src/
     └── api.ts                        # API 响应类型
 ```
 
+> Panda Avatar PNG 素材分层、子层命名、`experience-rig.json` 锚点、bbox 质量门与生成 prompt 约束见：`docs/panda-avatar-asset-layering.md`。后续熊猫外观素材必须按“属性 → 单一语义子层 → 单一 anchor”的规则生产；`intuition` 禁止生成眼睛、眼神、瞳孔、眉眼或眼周主表情素材，避免与 `emotions` 语义重复。
+
 ### 1.3 服务层架构
 
 前端分为四层，各层职责严格隔离：

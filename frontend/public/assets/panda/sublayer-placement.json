@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "coordinateSpace": {
+    "width": 512,
+    "height": 512,
+    "unit": "px"
+  },
+  "placements": {
+    "traits/boldness/headband/tier-01": {
+      "tier-01": {
+        "x": 29.8,
+        "y": 18.4,
+        "width": 478.5,
+        "height": 398.9,
+        "rotation": 0,
+        "opacity": 1
+      }
+    },
+    "traits/boldness/cape/tier-01": {
+      "tier-01": {
+        "x": -58.7,
+        "y": 85.6,
+        "width": 443.2,
+        "height": 245.9,
+        "rotation": 0,
+        "opacity": 1
+      }
+    },
+    "traits/boldness/weapon/tier-01": {
+      "tier-01": {
+        "x": 60.6,
+        "y": 65.2,
+        "width": 386.1,
+        "height": 387.5,
+        "rotation": 0,
+        "opacity": 1
+      }
+    }
+  }
+}

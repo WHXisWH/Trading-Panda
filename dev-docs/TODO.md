@@ -327,6 +327,230 @@
 
 ---
 
+## Epic 8 — Panda Avatar 素材分层与锚点骨架（panda-lab）
+
+**Done 标准**：`/panda-lab` 使用真实 PNG 素材图层合成熊猫；属性变化不会出现头带、斗篷、眼部、体型错位；大图预览与 120/128px 头像都可读；每个属性的 10 档素材清单、路径、锚点、验收图都可追踪。
+
+**依赖**：`/Users/Murphywuwu/Documents/Obsidian Vault/Artifact-Registry/sui-ai-trading-pet/design/panda-character-design.md` · 当前 `PandaCanvasRenderer` / `pandaCanvasAssets` · `tmp/imagegen/panda-trait-prompts.jsonl` · `docs/panda-avatar-asset-layering.md`
+
+**当前状态**：子层目录、manifest、renderer、audit、QA 工程链路已跑通；当前生成 PNG 仅作为 smoke fixture，不作为正式美术素材。正式方向已锁定为 `docs/panda-avatar-asset-layering.md` v1.1 的“赛博潮玩微装饰件”。
+
+### 8.1 资产范围与档位契约
+
+- [x] 锁定 7 个外观属性：`boldness` / `patience` / `intuition` / `focus` / `contrarian` / `experience` / `emotion`
+- [x] 将资产目标从“性格五维 50 张”扩展为“每个属性 10 档素材”；若 `emotion` 继续使用现有 7 种枚举，先补充 10 档映射规则或更新情绪模型
+- [x] 明确最终资产目录与命名：`frontend/public/assets/panda/{experience|emotions|traits/...}/tier-01.png` ... `tier-10.png`
+- [x] 为每个属性写清图层职责：`experience` 控制身体/成长基底，`emotion` 控制脸部，性格五维控制局部配饰/气场，不再让单个属性生成整只熊猫
+
+### 8.2 Panda Rig 锚点模型
+
+- [x] 新增统一骨架/锚点模型：`headCenter` · `neck` · `shoulderLeft` · `shoulderRight` · `bodyCenter` · `eyeLeft` · `eyeRight` · `feetBase`
+- [x] 为 10 个 `experience` 档定义锚点变化，体型变大时锚点随之变化，而不是只缩放 base 图
+- [x] 定义 attachment groups：`head` · `eyes` · `neck` · `shoulders` · `torso` · `back` · `hands` · `ground` · `worldAura`
+- [x] 约定安全区：脸部不可遮挡区、身体中央留空区、头像裁切安全区
+
+### 8.3 素材 Manifest 与图层元数据
+
+- [x] 扩展 `pandaCanvasAssets` manifest：每张素材记录 `src` · `attribute` · `tier` · `attachment` · `pivot` · `zIndex` · `scaleWith` · `opacityRule`
+- [x] 支持“Top 1-2 强化 / 全属性显示”两种模式：由 manifest 与 layer state 决定渲染强度，不靠手写 if/else 堆叠
+- [x] 支持“10 阶换图 / 档内渐进增强”两种模式：离散模式只换素材；渐进模式调整 alpha/scale/filter，但不改变 attachment 关系
+- [x] 保留开发期 fallback，但正式 canvas 路径优先加载 PNG 素材，不再以程序绘制作为主视觉
+
+### 8.4 Canvas Renderer 长期重构
+
+- [x] 把 `drawBasePanda` 的经验缩放逻辑迁移到 rig transform，避免 base 与 trait layer 使用不同坐标系
+- [x] 绘制每个素材时按 attachment group 计算 `translate / scale / rotate`，例如胆识斗篷挂 `shoulders/back`，直觉 `ear-radar` / `halo` 挂头部外围锚点
+- [x] 保证 `experience` 体型变化时，头带、斗篷、眼圈、装备、气场跟随正确锚点，不出现固定画布坐标错位
+- [ ] 同时验证主预览 384px、Mint 圆预览 120px、Dashboard 头像 128px 的裁切与可读性
+
+### 8.5 GPT Image 素材生成与质检流水线
+
+- [x] 重写 smoke prompt JSONL，使每张素材都声明对应 attachment、锚点、留空区、禁止完整熊猫输出
+- [x] 使用 `gpt-image-2` 生成 chroma-key 源图，再用本地 chroma-key helper 输出透明 PNG（70/70 smoke fixture 已生成）
+- [x] 每张 smoke 素材生成后做 alpha bounding box 检查：是否居中、是否超出安全区、是否误画完整熊猫、是否带背景/文字/水印
+- [x] 先完成一个纵向工程样例链路：`experience` 1/5/10 + `boldness` 1/5/10 + rig 合成验收
+- [x] smoke 源图保存在 `tmp/imagegen/generated/`，smoke 透明 PNG 放入 `frontend/public/assets/panda/`
+- [ ] 按 `docs/panda-avatar-asset-layering.md` v1.1 重写 production prompt JSONL：赛博潮玩、非常小但精致、不遮脸
+- [ ] 先生成 6 个 production 样例：`boldness/headband`、`focus/monocle`、`intuition/ear-radar`、`patience/tea`、`contrarian/mark`、`emotions/extras`
+- [ ] 6 个样例通过人工视觉审查后，再扩展全量 tier 与其他 sublayer
+- [ ] production 源图与最终透明 PNG 落盘后，替换 smoke fixture 并更新 QA 报告
+
+### 8.6 Panda Avatar 长期修正：底图主权与脸部语义
+
+**背景**：当前 `experience` 10 档底图已经是完整熊猫，包含眼睛、嘴巴、鼻子、耳朵；`emotion` 与 `intuition` 若生成眼部相关素材，直接叠加会出现双眼、错位、表情冲突和脸部脏乱。长期方案需要把 `experience` 定义为体型/角色基底，把 `emotion` 定义为唯一主表情层，把 `intuition` 限制为耳周/头部外围感知特效。
+
+**Done 标准**：任意 `experience tier` + emotion + intuition 组合下，不出现重复五官；表情跟随真实底图 landmarks；直觉效果不替代/覆盖主眼睛；Dashboard 128px 头像仍可读。
+
+- [x] 明确图层职责并写入文档/manifest 注释：`experience = body/head/ear/base identity`，`emotion = 当前唯一五官主层`，`intuition = 耳周/头部外围感知特效`
+- [x] 禁止 `emotion` 使用整张 AI 眼睛 PNG 直接叠脸；改为严格小部件 PNG 渲染
+- [x] 禁止 `intuition` 绘制完整眼睛/眉眼组合；仅允许 ear-radar、head-perimeter signal arcs、insight particles、external halo
+- [x] 定义固定绘制顺序：background → worldAura PNG → ground PNG → experience base PNG → body accessories PNG → emotion PNG → intuition PNG → final highlights PNG
+- [x] 默认展示模式从“全部强叠”收敛到 Top1/Top2 主视觉；低优先级 trait 使用低透明徽记或不显示
+
+### 8.7 Experience Rig 人工/半自动标注工具
+
+**目标**：为 10 张 `experience` 底图建立真实 landmark manifest，替代当前理想坐标推断。
+
+**推荐入口**：新增内部页面 `/panda-lab/rig`，不要塞进 `/panda-lab` 主试装页。`/panda-lab` 保持最终视觉预览，`/panda-lab/rig` 作为资产生产工具，开发环境开放即可。
+
+- [x] 新增 `/panda-lab/rig` 内部标注页：显示当前 tier 底图 + landmark overlay + JSON 预览
+- [x] 标注页固定使用前端最终坐标系（建议 `512x512`），所有源图无论 `1024`/`1254` 都归一化后标注
+- [x] 支持 tier 切换：`tier-01` ... `tier-10`
+- [x] 支持复制上一 tier 的 landmarks，便于连续修正成长变化
+- [x] 支持拖动/缩放矩形：`faceRect`、`leftEye`、`rightEye`、`nose`、`mouth`、`bodyRect`
+- [x] 支持拖动点位：`headCenter`、`feetBase`
+- [x] 支持键盘微调当前选中点/框（1px 或 5px 步进）
+- [x] 支持显示/隐藏 overlay、底图透明度、mask preview、emotion preview
+- [x] 支持导出/保存 `experience-rig.json`
+
+### 8.8 半自动初始标注脚本
+
+**目标**：用图像分析给人工标注提供初始值，最终结果仍以人工校正为准。
+
+- [x] 统一 `experience` 最终资产尺寸，禁止同一资产集混用 `1024x1024` 与 `1254x1254`
+- [x] 基于 alpha channel 估算整只熊猫 bbox，生成 `bodyRect` 初始值
+- [x] 基于上半身深色连通区域估算耳朵/眼圈候选，生成 `faceRect` 初始值
+- [x] 在 `faceRect` 内估算左右眼深色区域，生成 `leftEye` / `rightEye` 初始值
+- [x] 在双眼中间下方估算 `nose` 初始值
+- [x] 在鼻子下方估算 `mouth` 初始值
+- [x] 输出初始 manifest，供 `/panda-lab/rig` 加载并人工校正
+- [x] 半自动脚本只作为辅助，不因识别失败阻塞人工从零标注
+
+### 8.9 Rig Manifest 契约与渲染接入
+
+**目标**：所有脸部相关渲染基于真实 landmarks，而不是固定画布坐标或理想 rig。
+
+- [x] 定义 `experience-rig.json` schema：`tier`、`image`、`canvasSize`、`headCenter`、`faceRect`、`leftEye`、`rightEye`、`nose`、`mouth`、`bodyRect`、`feetBase`
+- [x] 添加 schema 校验：10 个 tier 必须齐全；坐标必须在 canvas 内；左右眼/嘴巴必须落在 `faceRect` 内
+- [x] `PandaCanvasRenderer` 按当前 `experience tier` 读取真实 rig manifest
+- [x] `PandaCanvasRenderer` 使用 emotion PNG 素材层，不再用 Canvas/SVG 程序绘制五官
+- [x] `PandaCanvasRenderer` 使用 intuition PNG 素材层，不再用 Canvas/SVG 程序绘制眼周特效
+- [x] `focus` 使用生成素材图层，不再使用固定画布坐标的程序绘制
+- [x] `boldness` 使用生成素材图层，避免程序绘制头带横穿眼睛
+- [x] `patience` 使用生成素材图层，不再用程序绘制 ground props
+
+### 8.10 Face Cleanup Mask 与五官替换
+
+**目标**：解决 `experience` 底图自带五官与 emotion 五官重复的问题。
+
+- [x] 移除 Canvas/SVG cleanup mask，避免程序绘制覆盖生成素材
+- [x] 默认保留底图鼻子；emotion 仅通过生成 PNG 小部件表达表情
+- [x] 禁止 cleanup mask 破坏熊猫黑眼圈、脸型和水墨纹理
+- [x] 绘制 emotion 时只叠加生成 PNG 素材层
+- [x] 为 calm/excited/panic/numb/frustrated/greedy/cautious 至少 7 种现有 emotion 建立素材 tier 映射
+- [x] 在 128px 小头像尺寸完成 smoke fixture 检查：emotion 层不出现糊脸或空洞感
+- [ ] production emotion/extras 生成后重新验收 128px 小头像可读性
+
+### 8.11 资产质检与视觉验收升级
+
+**目标**：把现有“warning 可接受”的资产检查升级成可阻止错误素材进入前端的质量门。当前已完成工程质量门；production 级视觉验收需等赛博潮玩素材生成后执行。
+
+- [x] 质检 hard fail：素材尺寸不一致
+- [x] 质检 hard fail：非 `experience` 素材疑似完整熊猫或覆盖 body/face 过大
+- [x] 质检 hard fail：`emotion` 素材覆盖身体区域或 bbox 不在 `faceRect` 附近
+- [x] 质检 hard fail：`intuition` 素材出现完整眼睛主体/眉眼组合
+- [x] 生成批量验收图：10 张底图 + landmark overlay
+- [x] 移除 SVG cleanup mask 验收图，改由 `/panda-lab/qa` 检查素材实叠效果
+- [x] 在 `/panda-lab/qa` 完成 smoke fixture 的 calm/excited/panic 等 emotion PNG 实叠检查
+- [x] 在 `/panda-lab/qa` 完成 smoke fixture 的 low/mid/high intuition PNG 实叠检查
+- [x] 在 `/panda-lab` 完成 smoke fixture 的最终组合检查：不同 experience、emotion、intuition、Top1/Top2 traits、384px/128px 尺寸
+- [ ] 在 `/panda-lab/qa` 验收 production cyber accessory 素材实叠效果：6 个样例先过，再扩全量
+- [ ] 在 `/panda-lab` 做 production 最终组合验收：不同 experience、emotion、intuition、Top1/Top2 traits、384px/128px 尺寸
+
+### 8.12 Avatar 素材子层规范落地
+
+**目标**：把“属性 → 单一大图”的旧模型升级为“属性 → 单一语义子层 → 单一 anchor”的生产规范，避免大 bbox 素材压眼睛/嘴巴/身体关键区。
+
+- [x] 在 `docs/panda-avatar-asset-layering.md` 写入完整素材分层规范：目录、子层、anchor、bbox、prompt、迁移计划、赛博潮玩 production prompt 样例
+- [x] 在 `docs/frontend-design.md` 增加 Panda Avatar 素材规范引用
+- [x] 将当前 broad-layer 旧素材标记为临时资产：`traits/boldness/tier-*.png`、`traits/intuition/tier-*.png`、`emotions/tier-*.png`
+- [x] 明确旧目录兼容策略：旧目录仅作为归档临时资产保留，子层素材验收通过后 renderer 不再加载旧 broad-layer
+- [x] 在 `dev-docs/DEV_CONTEXT.md` 记录当前方案变更：intuition 禁止眼相关素材，emotions 独占主五官语义
+- [ ] production 素材生成后回填 `dev-docs/DEV_CONTEXT.md`：最终素材数量、生成方式、QA 报告、已知限制
+
+### 8.13 子层目录与素材重生成
+
+**目标**：按 `docs/panda-avatar-asset-layering.md` 重新生成可组合的小 bbox PNG，不再把多个视觉元素混进同一张属性图。
+
+- [x] 建立新目录结构：`traits/boldness/{headband,cape,weapon}/tier-xx.png`
+- [x] 建立新目录结构：`traits/contrarian/{aura,mark}/tier-xx.png`
+- [x] 建立新目录结构：`traits/focus/{monocle,headband,chest-core}/tier-xx.png`
+- [x] 建立新目录结构：`traits/intuition/{ear-radar,particles,halo}/tier-xx.png`
+- [x] 建立新目录结构：`traits/patience/{ground-prop,bamboo,tea}/tier-xx.png`
+- [x] 建立新目录结构：`emotions/{eyes,brows,mouth,extras}/tier-xx.png`
+- [x] 重写 smoke GPT Image prompt JSONL：每条 prompt 必须声明 `attribute`、`sublayer`、`anchor`、禁止完整熊猫/完整脸/背景/文字/水印
+- [x] 为 smoke `intuition` prompt 加硬约束：禁止 eyes、pupils、eyebrows、eye glow、eye rings、gaze beams、任何改变表情的眼神素材
+- [x] 为 smoke `emotions` prompt 加硬约束：仅允许主五官小部件，不允许 body props、aura、完整脸或完整熊猫
+- [x] 先生成 smoke set：每个属性至少 1 个 sublayer 的 tier-01 / tier-05 / tier-10
+- [x] smoke set 通过 bbox 工程检查后扩展为 full smoke fixture
+- [ ] 重写 production GPT Image prompt JSONL：采用 `docs/panda-avatar-asset-layering.md` v1.1 的赛博潮玩微装饰件样例与 chroma-key 规范
+- [ ] production prompt 必须禁用 broad ink wash / 程序几何占位感 / 大面积遮脸效果
+
+### 8.14 Sublayer Manifest 契约
+
+**目标**：把 `pandaCanvasAssets` 从属性级 manifest 升级为子层级 manifest，让 renderer 能按子层选择真实 anchor。
+
+- [x] 新增 sublayer manifest schema：`attribute`、`sublayer`、`tier`、`src`、`anchorPolicy`、`zIndex`、`opacityRule`、`bboxPolicy`、`role`
+- [x] 定义 anchor policy 枚举：`faceTopCenter`、`leftEyeCenter`、`rightEyeCenter`、`eyesMidpoint`、`mouthCenter`、`bodyCenter`、`upperBodyCenter`、`feetBase`、`headCenterOffset`、`worldAura`
+- [x] 为每个 sublayer 写入固定 anchor policy，禁止 renderer 通过属性名猜测定位
+- [x] 支持一个属性同时渲染多个 sublayer，并由 `zIndex` 控制顺序
+- [x] 保留 Top1/Top2 主视觉逻辑，但 Top2 应作用于属性级开关，属性内部 sublayer 仍按 manifest 渲染
+- [x] 写入新 manifest 的 TypeScript 类型与 schema 校验
+- [x] 保留旧 broad-layer manifest fallback，直到新素材全量通过验收；验收通过后旧 broad-layer 已从 renderer manifest 移除
+
+### 8.15 Renderer 子层锚点接入
+
+**目标**：`PandaCanvasRenderer` 使用 `experience-rig.json` + sublayer manifest 定位每个小素材，彻底避免单一属性大图压脸。
+
+- [x] `experience` 继续 512x512 原位绘制，不做二次 transform
+- [x] `boldness/headband` 基于 `faceRect.topCenter`，并强制位于 eye center 以上
+- [x] `boldness/cape` 基于 upper `bodyRect` / shoulder 区域，不允许覆盖眼睛
+- [x] `boldness/weapon` 基于 body side anchor；缺少 hand anchor 前不得生成手持跨脸素材
+- [x] `contrarian/aura` 基于 `bodyRect.center` 或外圈 `worldAura`，可大但必须外围化
+- [x] `focus/monocle` 基于 `rightEye.center`，不得替代眼睛
+- [x] `focus/headband` 基于 `faceRect.topCenter`
+- [x] `focus/chest-core` 基于 upper `bodyRect.center`
+- [x] `intuition/ear-radar` 基于 `headCenter` 侧偏移，后续补 ear anchors 后迁移
+- [x] `intuition/particles` 基于 `faceRect` 外围，不允许落入 eyes/mouth 主区域
+- [x] `intuition/halo` 基于 `headCenter` 上方，不覆盖眼睛和嘴巴
+- [x] `patience/ground-prop` / `bamboo` / `tea` 基于 `feetBase` 或 ground side offset
+- [x] `emotions/eyes`、`emotions/brows`、`emotions/mouth`、`emotions/extras` 分别基于眼睛/眉区/嘴巴/脸侧局部锚点
+
+### 8.16 子层资产质检升级
+
+**目标**：把 `audit-panda-assets.mjs` 从属性级检查升级为子层级质量门，阻止 broad-layer 或语义冲突素材进入前端。
+
+- [x] 读取 sublayer manifest，按 `bboxPolicy` 对每张 PNG 做 hard fail
+- [x] hard fail：非 `experience` 素材疑似完整熊猫或完整脸
+- [x] hard fail：任一 sublayer 同时覆盖多个不相关 landmark
+- [x] hard fail：`boldness/headband` 与 `leftEye` / `rightEye` overlap 超过 5%
+- [x] hard fail：`boldness/cape` 与任一 eye rect overlap 超过 10%
+- [x] hard fail：`focus/chest-core` 与 `faceRect` 相交
+- [x] hard fail：`focus/monocle` 覆盖双眼或替代主眼睛
+- [x] hard fail：`intuition/*` 与 `leftEye` / `rightEye` / `mouth` overlap 超过 5%
+- [x] hard fail：`intuition/*` prompt 或文件元数据疑似 eye/pupil/brow/gaze 语义
+- [x] hard fail：`patience/ground-prop` 中心高于 `bodyRect.y`
+- [x] hard fail：`emotions/eyes` 不接近 `leftEye` / `rightEye`
+- [x] hard fail：`emotions/mouth` 不接近 `mouth`
+- [x] 生成 QA 报告：每个 sublayer 的 bbox、anchor、overlap ratios、通过/失败原因
+
+### 8.17 Panda Lab 子层验收
+
+**目标**：让 `/panda-lab` 和 `/panda-lab/qa` 能检查每个子层的单独挂载效果与最终组合效果。
+
+- [x] `/panda-lab/qa` 新增 sublayer 单独预览：选择 attribute / sublayer / tier / experience tier
+- [x] `/panda-lab/qa` 显示 anchor overlay、alpha bbox overlay、目标 landmark overlay
+- [x] `/panda-lab/qa` 显示 hard fail 指标：eye overlap、mouth overlap、face overlap、body overlap
+- [x] smoke 验收 `boldness/headband` 在 tier-01 / tier-05 / tier-10 不遮眼
+- [x] smoke 验收 `boldness/cape` 在低/中/高 experience 不压脸
+- [x] smoke 验收 `intuition/*` 不改变眼神或表情
+- [x] smoke 验收 `emotions/*` 能独立表达 calm/excited/panic/numb/frustrated/greedy/cautious
+- [x] smoke 验收 384px 主预览、120px Mint 圆预览、128px Dashboard 头像可读性
+- [ ] production 验收 `boldness/headband`、`focus/monocle`、`intuition/ear-radar`、`patience/tea`、`contrarian/mark`、`emotions/extras` 6 个样例
+- [ ] production 全量通过后，将 smoke fixture 替换为正式素材，并确认旧 broad-layer 目录不再被 renderer manifest 加载
+
+---
+
 ## Phase 2 — 延后（不要挡 MVP）
 
 - [ ] **Trading 界面** `/trading/[id]` 订单簿三栏（只读亦可）
@@ -358,4 +582,4 @@
 | 5 Market | `/market` | Kiosk · `MarketGrid` |
 | 6 Growth | `/leaderboard` · `/achievements` · `/profile` | 各 API + 页 |
 
-*最后更新：2026-05-25 · Epic 4 Pools（DeepBook 两池、持久化订阅、/pools 页）*
+*最后更新：2026-06-08 · Epic 8 Panda Avatar（赛博潮玩 production 素材规范与 smoke fixture 状态修正）*
