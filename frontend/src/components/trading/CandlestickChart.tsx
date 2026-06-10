@@ -8,6 +8,7 @@ import {
   type ISeriesApi,
   type CandlestickData,
   type HistogramData,
+  type LineData,
   type MouseEventParams,
   type UTCTimestamp,
   ColorType,
@@ -98,6 +99,29 @@ function volumeFromHistory(history: CandlesResponse | null | undefined): Histogr
   return volumes;
 }
 
+const MA_FAST_PERIOD = 7;
+const MA_SLOW_PERIOD = 25;
+const MA_FAST_COLOR = "#d4a017";
+const MA_SLOW_COLOR = "#4a6d8c";
+
+function maFromCandles(candles: CandlestickData[], period: number): LineData[] {
+  if (candles.length < period) {
+    return [];
+  }
+  const points: LineData[] = [];
+  let windowSum = 0;
+  for (let i = 0; i < candles.length; i += 1) {
+    windowSum += candles[i].close;
+    if (i >= period) {
+      windowSum -= candles[i - period].close;
+    }
+    if (i >= period - 1) {
+      points.push({ time: candles[i].time, value: windowSum / period });
+    }
+  }
+  return points;
+}
+
 function formatPrice(value: number | undefined): string {
   if (value == null || !Number.isFinite(value)) {
     return "--";
@@ -182,8 +206,11 @@ export function CandlestickChart({
   const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const volumeRef = useRef<ISeriesApi<"Histogram"> | null>(null);
   const latestPriceLineRef = useRef<IPriceLine | null>(null);
+  const maFastRef = useRef<ISeriesApi<"Line"> | null>(null);
+  const maSlowRef = useRef<ISeriesApi<"Line"> | null>(null);
   const [hoverCandle, setHoverCandle] = React.useState<HoverCandle | null>(null);
   const [followRealtime, setFollowRealtime] = React.useState(true);
+  const [showMa, setShowMa] = React.useState(true);
 
   const displayPrice =
     lastTick?.price ??
@@ -266,8 +293,26 @@ export function CandlestickChart({
       scaleMargins: { top: 0.75, bottom: 0 },
     });
 
-    candleSeries.setData(candlesFromHistory(history));
+    const maFastSeries = chart.addLineSeries({
+      color: MA_FAST_COLOR,
+      lineWidth: 1,
+      priceLineVisible: false,
+      lastValueVisible: false,
+      crosshairMarkerVisible: false,
+    });
+    const maSlowSeries = chart.addLineSeries({
+      color: MA_SLOW_COLOR,
+      lineWidth: 1,
+      priceLineVisible: false,
+      lastValueVisible: false,
+      crosshairMarkerVisible: false,
+    });
+
+    const initialCandles = candlesFromHistory(history);
+    candleSeries.setData(initialCandles);
     volumeSeries.setData(volumeFromHistory(history));
+    maFastSeries.setData(maFromCandles(initialCandles, MA_FAST_PERIOD));
+    maSlowSeries.setData(maFromCandles(initialCandles, MA_SLOW_PERIOD));
     chart.timeScale().fitContent();
 
     const handleCrosshair = (param: MouseEventParams) => {
@@ -296,6 +341,8 @@ export function CandlestickChart({
     chartRef.current = chart;
     seriesRef.current = candleSeries;
     volumeRef.current = volumeSeries;
+    maFastRef.current = maFastSeries;
+    maSlowRef.current = maSlowSeries;
 
     const ro = new ResizeObserver(() => {
       if (containerRef.current) {
@@ -313,6 +360,8 @@ export function CandlestickChart({
       chartRef.current = null;
       seriesRef.current = null;
       volumeRef.current = null;
+      maFastRef.current = null;
+      maSlowRef.current = null;
     };
   }, []);
 
@@ -324,10 +373,12 @@ export function CandlestickChart({
     const volumes = volumeFromHistory(history);
     seriesRef.current.setData(candles);
     volumeRef.current.setData(volumes);
+    maFastRef.current?.setData(showMa ? maFromCandles(candles, MA_FAST_PERIOD) : []);
+    maSlowRef.current?.setData(showMa ? maFromCandles(candles, MA_SLOW_PERIOD) : []);
     if (candles.length > 0) {
       chartRef.current?.timeScale().fitContent();
     }
-  }, [history]);
+  }, [history, showMa]);
 
   useEffect(() => {
     const candle = lastTick?.candle;
@@ -382,6 +433,19 @@ export function CandlestickChart({
       title: "last",
     });
   }, [displayPrice]);
+
+  const maLegend = React.useMemo(() => {
+    const candles = candlesFromHistory(history);
+    const fast = maFromCandles(candles, MA_FAST_PERIOD);
+    const slow = maFromCandles(candles, MA_SLOW_PERIOD);
+    if (fast.length === 0) {
+      return null;
+    }
+    return {
+      fast: fast[fast.length - 1].value,
+      slow: slow.length > 0 ? slow[slow.length - 1].value : undefined,
+    };
+  }, [history]);
 
   const isUp = changePct >= 0;
   const hasCandles = candleCount > 0;
@@ -465,6 +529,18 @@ export function CandlestickChart({
           </button>
           <button
             type="button"
+            onClick={() => setShowMa((v) => !v)}
+            className={clsx(
+              "h-8 rounded border px-2 text-[11px]",
+              showMa
+                ? "border-bamboo-500 bg-bamboo-50 text-bamboo-600"
+                : "border-[var(--color-border)] bg-white text-ink-500 hover:bg-bamboo-50",
+            )}
+          >
+            MA
+          </button>
+          <button
+            type="button"
             onClick={() => setFollowRealtime((v) => !v)}
             className={clsx(
               "h-8 rounded border px-2 text-[11px]",
@@ -493,6 +569,16 @@ export function CandlestickChart({
         <span>L <b className="font-mono text-loss">{formatPrice(visibleCandle?.low)}</b></span>
         <span>C <b className="font-mono text-ink-900">{formatPrice(visibleCandle?.close)}</b></span>
         <span>V <b className="font-mono text-ink-900">{formatVolume(visibleCandle?.volume)}</b></span>
+        {showMa && maLegend && (
+          <>
+            <span style={{ color: MA_FAST_COLOR }}>
+              MA{MA_FAST_PERIOD} <b className="font-mono">{formatPrice(maLegend.fast)}</b>
+            </span>
+            <span style={{ color: MA_SLOW_COLOR }}>
+              MA{MA_SLOW_PERIOD} <b className="font-mono">{formatPrice(maLegend.slow)}</b>
+            </span>
+          </>
+        )}
         <span className="ml-auto">DeepBook · {interval} · {candleCount} bars</span>
       </div>
 

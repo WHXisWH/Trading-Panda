@@ -281,6 +281,7 @@ export default function DashboardPage({ params }: { params: { id: string } }) {
             tradeCount={session.tradeCount}
             wsStatus={market.status}
             emotion={session.emotion}
+            lastTickAgeSec={lastTickAgeSec}
             onSpeedChange={session.setSpeed}
             onToggleTraining={() => session.toggleTraining(subscribedPools)}
             onOpenStrategy={() => setStrategyDrawerOpen(true)}
