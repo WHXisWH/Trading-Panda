@@ -15,8 +15,8 @@ export type PandaCanvasAttributeKey =
   | "emotion";
 
 export type PandaCanvasSublayerAttributeKey = PandaCanvasTraitKey | "emotion";
-export type PandaCanvasDisplayMode = "top2" | "all";
 export type PandaCanvasTierMode = "discrete" | "progressive";
+export type PandaCanvasTraitOpacityMode = "weighted" | "solid";
 export type PandaCanvasOpacityRule =
   | "base"
   | "trait"
@@ -33,29 +33,26 @@ export type PandaCanvasAnchorPolicy =
   | "bodyCenter"
   | "upperBodyCenter"
   | "feetBase"
-  | "headCenterOffset"
-  | "worldAura";
+  | "headCenterOffset";
 
 export type PandaCanvasBboxPolicy =
   | "fullExperience"
   | "headband"
   | "cape"
   | "weaponSide"
-  | "auraPeripheral"
   | "bodySideMark"
   | "monocle"
   | "chestCore"
   | "intuitionNoFaceFeatures"
   | "groundProp"
   | "groundSideProp"
-  | "emotionEyes"
   | "emotionBrows"
   | "emotionMouth"
   | "emotionExtras";
 
 export interface PandaCanvasRenderOptions {
-  displayMode: PandaCanvasDisplayMode;
   tierMode: PandaCanvasTierMode;
+  traitOpacityMode?: PandaCanvasTraitOpacityMode;
 }
 
 export interface PandaCanvasLayerState {
@@ -65,8 +62,6 @@ export interface PandaCanvasLayerState {
   score: number;
   progress: number;
   alpha: number;
-  major: boolean;
-  rank: number;
 }
 
 export interface PandaCanvasAssetLayer {
@@ -136,7 +131,6 @@ export const PANDA_CANVAS_ANCHOR_POLICIES: PandaCanvasAnchorPolicy[] = [
   "upperBodyCenter",
   "feetBase",
   "headCenterOffset",
-  "worldAura",
 ];
 
 export const PANDA_CANVAS_BBOX_POLICIES: PandaCanvasBboxPolicy[] = [
@@ -144,14 +138,12 @@ export const PANDA_CANVAS_BBOX_POLICIES: PandaCanvasBboxPolicy[] = [
   "headband",
   "cape",
   "weaponSide",
-  "auraPeripheral",
   "bodySideMark",
   "monocle",
   "chestCore",
   "intuitionNoFaceFeatures",
   "groundProp",
   "groundSideProp",
-  "emotionEyes",
   "emotionBrows",
   "emotionMouth",
   "emotionExtras",
@@ -438,30 +430,21 @@ export function canvasLayerStates(
     contrarian: stats.contrarian,
   };
 
-  const ranked = PANDA_CANVAS_TRAITS.slice().sort((a, b) => values[b] - values[a]);
-  const majorKeys = new Set(
-    options.displayMode === "top2" ? ranked.slice(0, 2) : ranked
-  );
-
   return PANDA_CANVAS_TRAITS.map((key) => {
     const value = values[key];
     const tier = canvasTier(value);
-    const rank = ranked.indexOf(key);
-    const major = majorKeys.has(key);
     const score = clamp(value / 100, 0, 1);
     const progress = canvasTierProgress(value, options.tierMode);
-    const top2Alpha = major ? (rank === 0 ? 1 : 0.78) : 0.18;
-    const allAlpha = 0.34 + score * 0.5;
+    const weightedAlpha = 0.34 + score * 0.5;
+    const alpha = options.traitOpacityMode === "solid" ? 1 : weightedAlpha;
 
     return {
       key,
       value,
       tier,
-      rank,
-      major,
       score,
       progress,
-      alpha: options.displayMode === "top2" ? top2Alpha : allAlpha,
+      alpha,
     };
   });
 }
@@ -488,9 +471,7 @@ export function canvasAssetPaths(
 ): string[] {
   const experienceTier = canvasTier(stats.experience);
   const states = canvasLayerStates(stats, options);
-  const traitAssets = states
-    .filter((state) => options.displayMode === "all" || state.major)
-    .flatMap((state) => canvasTraitAssetsForState(state));
+  const traitAssets = states.flatMap((state) => canvasTraitAssetsForState(state));
   const normalAssets = [...traitAssets, ...canvasEmotionAssets(stats)];
   const activeAssets = debugAssets ?? normalAssets;
 

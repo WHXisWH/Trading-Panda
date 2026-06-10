@@ -21,7 +21,6 @@ const anchorPolicies = new Set([
   "upperBodyCenter",
   "feetBase",
   "headCenterOffset",
-  "worldAura",
 ]);
 
 const bboxPolicies = new Set([
@@ -29,14 +28,12 @@ const bboxPolicies = new Set([
   "headband",
   "cape",
   "weaponSide",
-  "auraPeripheral",
   "bodySideMark",
   "monocle",
   "chestCore",
   "intuitionNoFaceFeatures",
   "groundProp",
   "groundSideProp",
-  "emotionEyes",
   "emotionBrows",
   "emotionMouth",
   "emotionExtras",
@@ -160,6 +157,11 @@ function rectArea(rect) {
   return Math.max(1, rect.width * rect.height);
 }
 
+function bboxAspectRatio(bbox) {
+  if (!bbox || bbox.height <= 0) return Infinity;
+  return bbox.width / bbox.height;
+}
+
 function rectScale(current, baseline) {
   const widthScale = baseline.width === 0 ? 1 : current.width / baseline.width;
   const heightScale = baseline.height === 0 ? 1 : current.height / baseline.height;
@@ -170,9 +172,183 @@ function placementKeyFromSrc(src) {
   return src.replace(/^\/assets\/panda\//, "").replace(/\.png$/, "");
 }
 
-function placementForLayer(layer, tierKey) {
+function placementTemplateKeyForTier(assetKey, tierKey) {
+  return assetKey.replace(/tier-\d{2}$/, tierKey);
+}
+
+function placementGroupKey(assetKey) {
+  return assetKey.replace(/\/tier-\d{2}$/, "");
+}
+
+function tierNumber(tierKey) {
+  return Number(tierKey.slice(-2));
+}
+
+function isTierKey(value) {
+  return /^tier-\d{2}$/.test(value) && tierNumber(value) >= 1 && tierNumber(value) <= 10;
+}
+
+function tierDistance(a, b) {
+  return Math.abs(tierNumber(a) - tierNumber(b));
+}
+
+function rotateVector(point, rotationDegrees) {
+  const radians = (rotationDegrees * Math.PI) / 180;
+  const cos = Math.cos(radians);
+  const sin = Math.sin(radians);
+  return {
+    x: point.x * cos - point.y * sin,
+    y: point.x * sin + point.y * cos,
+  };
+}
+
+function sourceBboxCenter(entry) {
+  if (!entry?.bbox) {
+    return {
+      x: (entry?.canvasWidth ?? canvasSize) / 2,
+      y: (entry?.canvasHeight ?? canvasSize) / 2,
+    };
+  }
+  return {
+    x: entry.bbox.x + entry.bbox.width / 2,
+    y: entry.bbox.y + entry.bbox.height / 2,
+  };
+}
+
+function sourceAnchorLocalVector(entry, rect) {
+  const anchor = sourceBboxCenter(entry);
+  return {
+    x: (anchor.x / entry.canvasWidth) * rect.width - rect.width / 2,
+    y: (anchor.y / entry.canvasHeight) * rect.height - rect.height / 2,
+  };
+}
+
+function renderedSourceAnchor(rect, entry) {
+  const center = rectCenter(rect);
+  const local = sourceAnchorLocalVector(entry, rect);
+  const rotated = rotateVector(local, rect.rotation ?? 0);
+  return {
+    x: center.x + rotated.x,
+    y: center.y + rotated.y,
+  };
+}
+
+function normalizedPlacementFromTemplate(assetKey, templateAssetKey, templateRect) {
+  const currentEntry = sublayerSourceBboxes?.assets?.[assetKey];
+  const templateEntry = sublayerSourceBboxes?.assets?.[templateAssetKey];
+
+  if (
+    !currentEntry ||
+    !templateEntry ||
+    currentEntry.missing ||
+    templateEntry.missing ||
+    !currentEntry.bbox ||
+    !templateEntry.bbox
+  ) {
+    return null;
+  }
+
+  const targetAnchor = renderedSourceAnchor(templateRect, templateEntry);
+  const currentLocal = sourceAnchorLocalVector(currentEntry, templateRect);
+  const currentRotatedLocal = rotateVector(currentLocal, templateRect.rotation ?? 0);
+  return {
+    ...templateRect,
+    x: targetAnchor.x - currentRotatedLocal.x - templateRect.width / 2,
+    y: targetAnchor.y - currentRotatedLocal.y - templateRect.height / 2,
+  };
+}
+
+function placementCandidateForKeyAndTier(assetKey, tierKey) {
+  const rect = sublayerPlacement?.placements?.[assetKey]?.[tierKey];
+  if (!rect) return null;
+  return {
+    assetKey,
+    experienceTierKey: tierKey,
+    rect,
+  };
+}
+
+function nearestPlacementCandidateForKey(assetKey, targetTierKey) {
+  const byTier = sublayerPlacement?.placements?.[assetKey];
+  if (!byTier) return null;
+
+  const candidates = Object.entries(byTier)
+    .filter(([tierKey, rect]) => isTierKey(tierKey) && rect)
+    .sort(([tierA], [tierB]) => {
+      const distance = tierDistance(tierA, targetTierKey) - tierDistance(tierB, targetTierKey);
+      if (distance !== 0) return distance;
+      return tierNumber(tierA) - tierNumber(tierB);
+    });
+
+  const nearest = candidates[0];
+  if (!nearest) return null;
+  return {
+    assetKey,
+    experienceTierKey: nearest[0],
+    rect: nearest[1],
+  };
+}
+
+function sameGroupPlacementCandidate(assetKey, targetTierKey, requireTargetTier) {
+  const groupKey = placementGroupKey(assetKey);
+  const candidates = [];
+
+  for (const [candidateAssetKey, byTier] of Object.entries(sublayerPlacement?.placements ?? {})) {
+    if (placementGroupKey(candidateAssetKey) !== groupKey) continue;
+    for (const [tierKey, rect] of Object.entries(byTier)) {
+      if (!isTierKey(tierKey) || !rect) continue;
+      if (requireTargetTier && tierKey !== targetTierKey) continue;
+      candidates.push({
+        assetKey: candidateAssetKey,
+        experienceTierKey: tierKey,
+        rect,
+      });
+    }
+  }
+
+  candidates.sort((a, b) => {
+    const distance =
+      tierDistance(a.experienceTierKey, targetTierKey) -
+      tierDistance(b.experienceTierKey, targetTierKey);
+    if (distance !== 0) return distance;
+    return a.assetKey.localeCompare(b.assetKey);
+  });
+
+  return candidates[0] ?? null;
+}
+
+function resolveTemplatePlacementCandidate(assetKey, tierKey) {
+  const preferredTemplateKey = placementTemplateKeyForTier(assetKey, tierKey);
+  return (
+    placementCandidateForKeyAndTier(preferredTemplateKey, tierKey) ??
+    sameGroupPlacementCandidate(assetKey, tierKey, true) ??
+    nearestPlacementCandidateForKey(preferredTemplateKey, tierKey) ??
+    sameGroupPlacementCandidate(assetKey, tierKey, false)
+  );
+}
+
+function placementResolutionForLayer(layer, tierKey) {
   if (!sublayerPlacement?.placements || !layer?.src) return null;
-  return sublayerPlacement.placements[placementKeyFromSrc(layer.src)]?.[tierKey] ?? null;
+  const assetKey = placementKeyFromSrc(layer.src);
+  const exactPlacement = sublayerPlacement.placements[assetKey]?.[tierKey];
+  if (exactPlacement) {
+    return {
+      rect: exactPlacement,
+      source: "exact",
+      assetKey,
+    };
+  }
+
+  const template = resolveTemplatePlacementCandidate(assetKey, tierKey);
+  if (!template) return null;
+  const normalized = normalizedPlacementFromTemplate(assetKey, template.assetKey, template.rect);
+  return {
+    rect: normalized ?? template.rect,
+    source: normalized ? "template-normalized" : "template",
+    assetKey,
+    templateAssetKey: template.assetKey,
+    templateExperienceTierKey: template.experienceTierKey,
+  };
 }
 
 function transformSourcePoint(point, layer, currentRig, baselineRig) {
@@ -194,9 +370,15 @@ function transformScaleForLayer(layer, currentRig, baselineRig) {
 }
 
 function transformPlacementPoint(point, placement) {
+  const center = rectCenter(placement);
+  const local = {
+    x: (point.x / canvasSize) * placement.width - placement.width / 2,
+    y: (point.y / canvasSize) * placement.height - placement.height / 2,
+  };
+  const rotated = rotateVector(local, placement.rotation ?? 0);
   return {
-    x: placement.x + (point.x / canvasSize) * placement.width,
-    y: placement.y + (point.y / canvasSize) * placement.height,
+    x: center.x + rotated.x,
+    y: center.y + rotated.y,
   };
 }
 
@@ -260,6 +442,20 @@ function parsePng(path, rigTier, layer, baselineRig, placement) {
   let sourceMinY = height;
   let sourceMaxX = -1;
   let sourceMaxY = -1;
+  const sourceHalfBounds = {
+    left: {
+      minX: width,
+      minY: height,
+      maxX: -1,
+      maxY: -1,
+    },
+    right: {
+      minX: width,
+      minY: height,
+      maxX: -1,
+      maxY: -1,
+    },
+  };
   const cornerAlpha = [];
 
   for (let y = 0; y < height; y += 1) {
@@ -276,6 +472,11 @@ function parsePng(path, rigTier, layer, baselineRig, placement) {
         sourceMinY = Math.min(sourceMinY, y);
         sourceMaxX = Math.max(sourceMaxX, x);
         sourceMaxY = Math.max(sourceMaxY, y);
+        const half = x < width / 2 ? sourceHalfBounds.left : sourceHalfBounds.right;
+        half.minX = Math.min(half.minX, x);
+        half.minY = Math.min(half.minY, y);
+        half.maxX = Math.max(half.maxX, x);
+        half.maxY = Math.max(half.maxY, y);
 
         const sourcePoint = {
           x: ((x + 0.5) / width) * canvasSize,
@@ -313,9 +514,29 @@ function parsePng(path, rigTier, layer, baselineRig, placement) {
         }
       : null;
   const scaledSourceBbox = sourceBbox ? scaleRect(sourceBbox, width) : null;
+  const sourceHalfBboxes = {
+    left:
+      sourceHalfBounds.left.maxX >= sourceHalfBounds.left.minX
+        ? {
+            x: sourceHalfBounds.left.minX,
+            y: sourceHalfBounds.left.minY,
+            width: sourceHalfBounds.left.maxX - sourceHalfBounds.left.minX + 1,
+            height: sourceHalfBounds.left.maxY - sourceHalfBounds.left.minY + 1,
+          }
+        : null,
+    right:
+      sourceHalfBounds.right.maxX >= sourceHalfBounds.right.minX
+        ? {
+            x: sourceHalfBounds.right.minX,
+            y: sourceHalfBounds.right.minY,
+            width: sourceHalfBounds.right.maxX - sourceHalfBounds.right.minX + 1,
+            height: sourceHalfBounds.right.maxY - sourceHalfBounds.right.minY + 1,
+          }
+        : null,
+  };
   const overlapRatios = rigTier
     ? {
-        leftEye: (landmarkCounts.leftEye * transformedPixelArea) / rectArea(rigTier.leftEye),
+      leftEye: (landmarkCounts.leftEye * transformedPixelArea) / rectArea(rigTier.leftEye),
         rightEye: (landmarkCounts.rightEye * transformedPixelArea) / rectArea(rigTier.rightEye),
         eyes:
           ((landmarkCounts.leftEye + landmarkCounts.rightEye) * transformedPixelArea) /
@@ -334,6 +555,7 @@ function parsePng(path, rigTier, layer, baselineRig, placement) {
     coverage: alphaPixels / (width * height),
     bbox,
     sourceBbox: scaledSourceBbox,
+    sourceHalfBboxes,
     transparentCorners: cornerAlpha.every((alpha) => alpha <= alphaThreshold),
     metadataText: metadataText.join("\n"),
     overlapRatios,
@@ -470,7 +692,6 @@ function anchorForLayer(layer, rigTier) {
         rect: rigTier.mouth,
       };
     case "bodyCenter":
-    case "worldAura":
       return {
         point: pointWithOffset(rectCenter(rigTier.bodyRect), layer.anchorOffset),
         rect: rigTier.bodyRect,
@@ -538,23 +759,24 @@ function forbiddenPositivePromptTerms(layer, promptJob, metrics) {
 }
 
 function validateLayerMetrics(layer, metrics, rigTier, promptJob) {
-  const failures = [];
+  const hardFailures = [];
+  const placementWarnings = [];
   const overlap = metrics.overlapRatios;
   const maxEye = Math.max(overlap.leftEye, overlap.rightEye);
 
-  if (!metrics.hasAlpha) failures.push("missing alpha channel");
-  if (!metrics.transparentCorners) failures.push("opaque corner pixels");
-  if (!metrics.bbox) failures.push("empty alpha mask");
-  if (metrics.coverage > 0.28) failures.push("non-experience sublayer likely contains a full panda");
+  if (!metrics.hasAlpha) hardFailures.push("missing alpha channel");
+  if (!metrics.transparentCorners) hardFailures.push("opaque corner pixels");
+  if (!metrics.bbox) hardFailures.push("empty alpha mask");
+  if (metrics.coverage > 0.28) hardFailures.push("non-experience sublayer likely contains a full panda");
   if (overlap.face > 0.72 && overlap.body > 0.22) {
-    failures.push("non-experience sublayer looks like a complete panda or full face");
+    placementWarnings.push("non-experience sublayer looks like a complete panda or full face at current placement");
   }
 
   const unrelatedHits = [
     overlap.leftEye > 0.08 ? "leftEye" : null,
     overlap.rightEye > 0.08 ? "rightEye" : null,
     overlap.mouth > 0.08 ? "mouth" : null,
-    overlap.face > 0.35 && !["emotionEyes", "emotionBrows", "emotionMouth", "emotionExtras", "monocle"].includes(layer.bboxPolicy)
+    overlap.face > 0.35 && !["emotionBrows", "emotionMouth", "emotionExtras", "monocle"].includes(layer.bboxPolicy)
       ? "face"
       : null,
     overlap.body > 0.45 && !["cape", "weaponSide", "bodySideMark", "chestCore", "groundProp", "groundSideProp"].includes(layer.bboxPolicy)
@@ -564,32 +786,32 @@ function validateLayerMetrics(layer, metrics, rigTier, promptJob) {
 
   if (
     unrelatedHits.length >= 2 &&
-    !["auraPeripheral", "emotionEyes", "emotionBrows", "emotionMouth", "emotionExtras"].includes(layer.bboxPolicy)
+    !["emotionBrows", "emotionMouth", "emotionExtras"].includes(layer.bboxPolicy)
   ) {
-    failures.push(`sublayer covers multiple unrelated landmarks: ${unrelatedHits.join(", ")}`);
+    placementWarnings.push(`sublayer covers multiple unrelated landmarks at current placement: ${unrelatedHits.join(", ")}`);
   }
 
   switch (`${layer.attribute}/${layer.sublayer}`) {
     case "boldness/headband":
-      if (maxEye > 0.05) failures.push("boldness/headband overlaps eye rect above 5%");
+      if (maxEye > 0.05) placementWarnings.push("boldness/headband overlaps eye rect above 5%");
       if (metrics.bbox && metrics.bbox.y + metrics.bbox.height > Math.min(rectCenter(rigTier.leftEye).y, rectCenter(rigTier.rightEye).y)) {
-        failures.push("boldness/headband is not above eye centers");
+        placementWarnings.push("boldness/headband is not above eye centers");
       }
       break;
     case "boldness/cape":
-      if (maxEye > 0.1) failures.push("boldness/cape overlaps eye rect above 10%");
+      if (maxEye > 0.1) placementWarnings.push("boldness/cape overlaps eye rect above 10%");
       break;
     case "focus/chest-core":
-      if (overlap.face > 0.01) failures.push("focus/chest-core intersects faceRect");
+      if (overlap.face > 0.01) placementWarnings.push("focus/chest-core intersects faceRect");
       break;
     case "focus/monocle":
       if (overlap.leftEye > 0.05 && overlap.rightEye > 0.05) {
-        failures.push("focus/monocle covers both eyes");
+        placementWarnings.push("focus/monocle covers both eyes");
       }
       break;
     case "patience/ground-prop":
       if (metrics.bbox && rectCenter(metrics.bbox).y < rigTier.bodyRect.y) {
-        failures.push("patience/ground-prop center is above bodyRect.y");
+        placementWarnings.push("patience/ground-prop center is above bodyRect.y");
       }
       break;
     default:
@@ -598,29 +820,24 @@ function validateLayerMetrics(layer, metrics, rigTier, promptJob) {
 
   if (layer.attribute === "intuition") {
     if (maxEye > 0.05 || overlap.mouth > 0.05) {
-      failures.push("intuition sublayer overlaps eyes or mouth above 5%");
+      placementWarnings.push("intuition sublayer overlaps eyes or mouth above 5%");
     }
     const terms = forbiddenPositivePromptTerms(layer, promptJob, metrics);
     if (terms.length > 0) {
-      failures.push(`intuition prompt or metadata contains eye-related positive semantics: ${terms.join(", ")}`);
-    }
-  }
-
-  if (layer.attribute === "emotion" && layer.sublayer === "eyes") {
-    if (overlap.eyes < 0.02 && (!metrics.bbox || !pointInRect(rectCenter(metrics.bbox), rigTier.faceRect))) {
-      failures.push("emotions/eyes is not close to leftEye/rightEye");
+      hardFailures.push(`intuition prompt or metadata contains eye-related positive semantics: ${terms.join(", ")}`);
     }
   }
 
   if (layer.attribute === "emotion" && layer.sublayer === "mouth") {
-    if (overlap.mouth < 0.02) failures.push("emotions/mouth is not close to mouth");
+    if (overlap.mouth < 0.02) placementWarnings.push("emotions/mouth is not close to mouth");
   }
 
-  return failures;
+  return { hardFailures, placementWarnings };
 }
 
 const missing = [];
 const hardFailures = [];
+const placementWarnings = [];
 const dimensionsByPath = {};
 const reportItems = [];
 const promptMap = readPromptMap();
@@ -628,6 +845,7 @@ let ok = 0;
 let rig = null;
 let sublayerManifest = null;
 let sublayerPlacement = null;
+let sublayerSourceBboxes = null;
 
 try {
   rig = JSON.parse(readFileSync(join(root, "experience-rig.json"), "utf8"));
@@ -650,6 +868,15 @@ try {
     : { version: 1, coordinateSpace: { width: canvasSize, height: canvasSize, unit: "px" }, placements: {} };
 } catch (error) {
   hardFailures.push(`sublayer-placement.json is invalid JSON: ${error instanceof Error ? error.message : String(error)}`);
+}
+
+try {
+  const sourceBboxPath = join(root, "sublayer-source-bboxes.json");
+  sublayerSourceBboxes = existsSync(sourceBboxPath)
+    ? JSON.parse(readFileSync(sourceBboxPath, "utf8"))
+    : { version: 1, coordinateSpace: { width: canvasSize, height: canvasSize, unit: "px" }, alphaThreshold, assets: {} };
+} catch (error) {
+  hardFailures.push(`sublayer-source-bboxes.json is invalid JSON: ${error instanceof Error ? error.message : String(error)}`);
 }
 
 if (rig) {
@@ -678,7 +905,8 @@ if (sublayerManifest?.layers && rig) {
     const path = fullAssetPath(layer.src);
     const tierKey = `tier-${pad(layer.tier)}`;
     const rigTier = rig.tiers?.[tierKey];
-    const placement = placementForLayer(layer, tierKey);
+    const placementResolution = placementResolutionForLayer(layer, tierKey);
+    const placement = placementResolution?.rect ?? null;
     const promptJob = promptMap.get(promptTarget(layer.src));
 
     if (!existsSync(path)) {
@@ -691,10 +919,15 @@ if (sublayerManifest?.layers && rig) {
         anchorPolicy: layer.anchorPolicy,
         bboxPolicy: layer.bboxPolicy,
         alphaBbox: null,
+        sourceAlphaBbox: sublayerSourceBboxes?.assets?.[placementKeyFromSrc(layer.src)]?.bbox ?? null,
         anchor: rigTier ? anchorForLayer(layer, rigTier).point : null,
+        placementSource: placementResolution?.source ?? "rig",
+        placementTemplateAssetKey: placementResolution?.templateAssetKey ?? null,
+        placementTemplateExperienceTierKey: placementResolution?.templateExperienceTierKey ?? null,
         overlapRatios: { leftEye: 0, rightEye: 0, eyes: 0, mouth: 0, face: 0, body: 0 },
         status: "missing",
         failures: ["asset file is missing"],
+        placementWarnings: [],
       });
       continue;
     }
@@ -702,12 +935,14 @@ if (sublayerManifest?.layers && rig) {
     try {
       const metrics = parsePng(path, rigTier, layer, baselineRig, placement);
       dimensionsByPath[relative(process.cwd(), path)] = `${metrics.width}x${metrics.height}`;
-      const failures = validateLayerMetrics(layer, metrics, rigTier, promptJob);
-      if (failures.length > 0) {
-        hardFailures.push(`${relative(process.cwd(), path)}: ${failures.join("; ")}`);
-      } else {
-        ok += 1;
+      const validation = validateLayerMetrics(layer, metrics, rigTier, promptJob);
+      if (validation.hardFailures.length > 0) {
+        hardFailures.push(`${relative(process.cwd(), path)}: ${validation.hardFailures.join("; ")}`);
       }
+      if (validation.placementWarnings.length > 0) {
+        placementWarnings.push(`${relative(process.cwd(), path)}: ${validation.placementWarnings.join("; ")}`);
+      }
+      if (validation.hardFailures.length === 0) ok += 1;
       reportItems.push({
         src: layer.src,
         attribute: layer.attribute,
@@ -716,10 +951,15 @@ if (sublayerManifest?.layers && rig) {
         anchorPolicy: layer.anchorPolicy,
         bboxPolicy: layer.bboxPolicy,
         alphaBbox: metrics.bbox,
+        sourceAlphaBbox: metrics.sourceBbox,
         anchor: placement ? rectCenter(placement) : anchorForLayer(layer, rigTier).point,
+        placementSource: placementResolution?.source ?? "rig",
+        placementTemplateAssetKey: placementResolution?.templateAssetKey ?? null,
+        placementTemplateExperienceTierKey: placementResolution?.templateExperienceTierKey ?? null,
         overlapRatios: metrics.overlapRatios,
-        status: failures.length > 0 ? "fail" : "pass",
-        failures,
+        status: validation.hardFailures.length > 0 ? "fail" : validation.placementWarnings.length > 0 ? "warning" : "pass",
+        failures: validation.hardFailures,
+        placementWarnings: validation.placementWarnings,
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -732,10 +972,15 @@ if (sublayerManifest?.layers && rig) {
         anchorPolicy: layer.anchorPolicy,
         bboxPolicy: layer.bboxPolicy,
         alphaBbox: null,
+        sourceAlphaBbox: sublayerSourceBboxes?.assets?.[placementKeyFromSrc(layer.src)]?.bbox ?? null,
         anchor: rigTier ? anchorForLayer(layer, rigTier).point : null,
+        placementSource: placementResolution?.source ?? "rig",
+        placementTemplateAssetKey: placementResolution?.templateAssetKey ?? null,
+        placementTemplateExperienceTierKey: placementResolution?.templateExperienceTierKey ?? null,
         overlapRatios: { leftEye: 0, rightEye: 0, eyes: 0, mouth: 0, face: 0, body: 0 },
         status: "fail",
         failures: [message],
+        placementWarnings: [],
       });
     }
   }
@@ -754,6 +999,7 @@ const report = {
   ok,
   missing,
   hardFailures,
+  placementWarnings,
   dimensions: uniqueDimensions,
   legacyFallbacks: sublayerManifest?.legacyFallbacks ?? null,
   items: reportItems,

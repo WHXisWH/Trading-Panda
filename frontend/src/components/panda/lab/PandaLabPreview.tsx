@@ -2,6 +2,7 @@
 
 import { clsx } from "clsx";
 import { PandaCanvasRenderer } from "@/components/panda/PandaCanvasRenderer";
+import type { PandaCanvasRenderOptions } from "@/lib/pandaCanvasAssets";
 import type { PandaStats } from "@/utils/pandaHelper";
 
 interface PandaLabPreviewProps {
@@ -10,6 +11,11 @@ interface PandaLabPreviewProps {
   showCompare?: boolean;
   mintPreview?: boolean;
 }
+
+const PANDA_LAB_RENDER_OPTIONS: PandaCanvasRenderOptions = {
+  tierMode: "discrete",
+  traitOpacityMode: "solid",
+};
 
 export function PandaLabPreview({
   stats,
@@ -31,6 +37,7 @@ export function PandaLabPreview({
             <PandaCanvasRenderer
               stats={stats}
               showBackground={false}
+              renderOptions={PANDA_LAB_RENDER_OPTIONS}
               className="mx-auto"
             />
           </div>
@@ -43,6 +50,7 @@ export function PandaLabPreview({
               <PandaCanvasRenderer
                 stats={compareStats}
                 showBackground={false}
+                renderOptions={PANDA_LAB_RENDER_OPTIONS}
                 className="mx-auto"
               />
             </div>
@@ -59,6 +67,7 @@ export function PandaLabPreview({
             <PandaCanvasRenderer
               stats={stats}
               showBackground
+              renderOptions={PANDA_LAB_RENDER_OPTIONS}
               className="h-full w-full"
             />
           </div>

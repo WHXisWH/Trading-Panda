@@ -34,8 +34,9 @@ interface QaReportItem {
     face: number;
     body: number;
   };
-  status: "pass" | "fail" | "missing";
+  status: "pass" | "fail" | "warning" | "missing";
   failures: string[];
+  placementWarnings?: string[];
 }
 
 interface QaReport {
@@ -203,7 +204,6 @@ function anchorForAsset(
     case "mouthCenter":
       return pointWithOffset(rectCenter(rig.mouth), asset.anchorOffset);
     case "bodyCenter":
-    case "worldAura":
       return pointWithOffset(rectCenter(rig.bodyRect), asset.anchorOffset);
     case "upperBodyCenter":
       return pointWithOffset(rectCenter(upperBodyRect), asset.anchorOffset);
@@ -262,6 +262,8 @@ function SublayerOverlay({
           bbox,
           reportItem?.status === "fail"
             ? "fill-red-500/10 stroke-red-600"
+            : reportItem?.status === "warning"
+              ? "fill-amber-500/10 stroke-amber-600"
             : "fill-bamboo-500/10 stroke-bamboo-700",
           "alpha"
         )}
@@ -466,6 +468,8 @@ export function PandaLabQaPage() {
                 className={
                   reportItem?.status === "fail"
                     ? "font-semibold text-red-600"
+                    : reportItem?.status === "warning"
+                      ? "font-semibold text-amber-600"
                     : "font-semibold text-bamboo-700"
                 }
               >
@@ -484,6 +488,12 @@ export function PandaLabQaPage() {
             </div>
           ) : null}
 
+          {reportItem?.placementWarnings?.length ? (
+            <div className="border border-amber-300 bg-amber-50 px-3 py-2 text-[12px] text-amber-700">
+              {reportItem.placementWarnings.join(" / ")}
+            </div>
+          ) : null}
+
           <div className="grid gap-5 lg:grid-cols-[384px_120px_128px]">
             <div>
               <div className="mb-2 text-[11px] font-medium text-ink-500">
@@ -495,7 +505,7 @@ export function PandaLabQaPage() {
                     <PandaCanvasRenderer
                       stats={stats}
                       showBackground={false}
-                      renderOptions={{ displayMode: "top2", tierMode: "discrete" }}
+                      renderOptions={{ tierMode: "discrete" }}
                       debugAssets={[selectedAsset]}
                     />
                     <SublayerOverlay
@@ -518,7 +528,7 @@ export function PandaLabQaPage() {
                     stats={stats}
                     showBackground
                     className="h-full w-full"
-                    renderOptions={{ displayMode: "top2", tierMode: "discrete" }}
+                    renderOptions={{ tierMode: "discrete" }}
                     debugAssets={[selectedAsset]}
                   />
                 )}
@@ -535,7 +545,7 @@ export function PandaLabQaPage() {
                     stats={stats}
                     showBackground
                     className="h-full w-full"
-                    renderOptions={{ displayMode: "top2", tierMode: "discrete" }}
+                    renderOptions={{ tierMode: "discrete" }}
                     debugAssets={[selectedAsset]}
                   />
                 )}
@@ -564,7 +574,7 @@ export function PandaLabQaPage() {
                   <PandaCanvasRenderer
                     stats={testCase.stats}
                     showBackground={false}
-                    renderOptions={{ displayMode: "top2", tierMode: "discrete" }}
+                    renderOptions={{ tierMode: "discrete" }}
                   />
                 </div>
                 <div className="h-[128px] w-[128px] overflow-hidden rounded-full bg-[#efece3]">
@@ -572,7 +582,7 @@ export function PandaLabQaPage() {
                     stats={testCase.stats}
                     showBackground
                     className="h-full w-full"
-                    renderOptions={{ displayMode: "top2", tierMode: "discrete" }}
+                    renderOptions={{ tierMode: "discrete" }}
                   />
                 </div>
               </div>

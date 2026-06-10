@@ -9,6 +9,7 @@
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "panda:rig:estimate": "node scripts/estimate-experience-rig.mjs",
+    "panda:assets:bboxes": "node scripts/build-panda-sublayer-bboxes.mjs",
     "panda:assets:audit": "node scripts/audit-panda-assets.mjs"
   },
   "dependencies": {

@@ -92,7 +92,6 @@ assets/panda/
       cape/tier-01.png
       weapon/tier-01.png
     contrarian/
-      aura/tier-01.png
       mark/tier-01.png
     focus/
       monocle/tier-01.png
@@ -100,7 +99,6 @@ assets/panda/
       chest-core/tier-01.png
     intuition/
       ear-radar/tier-01.png
-      particles/tier-01.png
       halo/tier-01.png
     patience/
       ground-prop/tier-01.png
@@ -108,7 +106,6 @@ assets/panda/
       tea/tier-01.png
 
   emotions/
-    eyes/tier-01.png
     brows/tier-01.png
     mouth/tier-01.png
     extras/tier-01.png
@@ -144,11 +141,12 @@ Visual meaning: reversal, anti-consensus, anomaly.
 
 Production motif: asymmetric black-white reversal charms, compact glitch arcs, and abstract red seal tokens. Avoid large smoke clouds as the default look.
 
+`contrarian/aura` is archived and not active. Large reversal auras add too much clutter when multiple trait layers are composed.
+
 Allowed sublayers:
 
 | Sublayer | Anchor | Bbox rule |
 |---|---|---|
-| `aura` | `bodyRect.center` or whole-character outer ring | May be large, but visible pixels should mostly stay outside face/body silhouette |
 | `mark` | side of `bodyRect` or above shoulder | Must not cover eyes/mouth |
 
 Forbidden:
@@ -183,14 +181,15 @@ Visual meaning: instinct, sensing, market awareness.
 
 Important decision: **intuition must not be eye-related**. Eye semantics belong to `emotions`.
 
-Production motif: ear-radar clips, head-perimeter signal arcs, sensing particles, and small external halo pieces. It should read as market sensing, not eye power.
+Production motif: ear-radar clips, head-perimeter signal arcs, and small external halo pieces. It should read as market sensing, not eye power, and should avoid adding extra noise to the panda's face.
+
+`intuition/particles` is archived and not active. Keep intuition effects on the outer head silhouette, not in the central face.
 
 Allowed sublayers:
 
 | Sublayer | Anchor | Bbox rule |
 |---|---|---|
 | `ear-radar` | future ear anchors; temporarily `headCenter` with side offset | Must stay outside `leftEye` / `rightEye` / `mouth` |
-| `particles` | around `faceRect` outer boundary | Must not draw pupils, eyes, eyebrows, or gaze direction |
 | `halo` | above `headCenter` | Must not cover eyes or mouth |
 
 Forbidden:
@@ -231,13 +230,18 @@ Visual meaning: current facial expression.
 
 Emotions are the only system allowed to alter primary facial semantics.
 
-Production motif: tiny face-edge accents and small facial components, such as stress droplets, blush ticks, micro pulse marks, and controlled eye/brow/mouth marks.
+Production motif: tiny face-edge accents and small facial hardware components. The base panda eye art is the only active eye source; brows and mouth should read as compact black-titanium modules with beveled chrome edges, tiny LED signal lines, stress droplets, micro pulse marks, and controlled expression geometry.
+
+`emotions/eyes` is archived and not active. Do not load or regenerate eye overlays unless a future design explicitly reintroduces a very lightweight eye-glint-only layer.
+
+For `emotions/brows`, do not use flat cartoon eyebrow strokes or blade-like slashes. Use small rounded cyber brow plates that sit above the eye patches and carry emotion through angle, spacing, LED color, and tiny rivet/glow details.
+
+For `emotions/mouth`, do not use flat emoji-style mouth lines. Use a compact cyber mouth grille or small illuminated light port anchored to the mouth rect, with black chrome body and restrained cyan/amber/red signal detail.
 
 Allowed sublayers:
 
 | Sublayer | Anchor | Bbox rule |
 |---|---|---|
-| `eyes` | `leftEye` and `rightEye` | Must stay inside or near eye rects |
 | `brows` | above `leftEye` / `rightEye` | Must stay in upper `faceRect` |
 | `mouth` | `mouth` | Must stay around mouth rect |
 | `extras` | near face, emotion-specific | Tears/sweat/coins must not cover unrelated traits |
@@ -253,19 +257,19 @@ Nose policy: preserve the base nose by default. Only redraw the nose if a specif
 
 ## Bbox Quality Gates
 
-Every final transparent PNG must pass these checks:
+Every final transparent PNG must pass these hard checks:
 
 1. Transparent background.
 2. No text, watermark, or scenery background.
 3. No complete panda except `experience`.
-4. Alpha bbox must be close to the declared anchor target.
-5. Alpha bbox must not cover unrelated landmarks beyond threshold.
-6. Corners must be transparent.
-7. Final asset dimensions must be consistent across the asset set.
+4. Corners must be transparent.
+5. Final asset dimensions must be consistent across the asset set.
+
+Placement-dependent checks are warnings until the placement tab has been manually calibrated. Do not regenerate or reject a PNG only because its current default anchor transform overlaps a landmark.
 
 Recommended thresholds:
 
-| Layer type | Hard fail condition |
+| Layer type | Placement warning condition |
 |---|---|
 | `headband` | Intersects either eye rect by more than 5% |
 | `cape` | Intersects either eye rect by more than 10% |
@@ -273,7 +277,6 @@ Recommended thresholds:
 | `chest-core` | Intersects `faceRect` |
 | `intuition/*` | Intersects eyes or mouth by more than 5% |
 | `patience/ground-prop` | Center is above `bodyRect.y` |
-| `emotions/eyes` | Center not near `leftEye` / `rightEye` |
 | `emotions/mouth` | Center not near `mouth` |
 
 Large alpha bbox is not automatically wrong for `aura`, but the visible pixels must remain visually peripheral and must not hide facial readability at 128px.
@@ -304,15 +307,27 @@ Additional intuition prompt clause:
 ```text
 This is not an eye, pupil, eyebrow, gaze, or eye glow asset.
 Do not alter facial expression.
-Represent intuition using ear radar, head-perimeter signal arcs, ambient particles, halo, or external sensing symbols only.
+Represent intuition using ear radar, head-perimeter signal arcs, halo, or external sensing symbols only.
 ```
 
 Additional emotion prompt clause:
 
 ```text
 This is a facial expression sublayer.
-Only draw the requested eyes, brows, mouth, or small emotion extras.
+Only draw the requested brows, mouth, or small emotion extras.
 Do not draw body, props, aura, or a complete face.
+```
+
+For `emotions/brows`, add:
+
+```text
+Use compact black-titanium cyber brow modules with beveled chrome edges and tiny LED signal lines. They should feel like polished facial hardware, not flat cartoon eyebrow marks or blade-like slashes.
+```
+
+For `emotions/mouth`, add:
+
+```text
+Use a compact black-titanium cyber mouth grille or small illuminated light port. Keep it mouth-anchored, face-safe, and more like hardware than a flat cartoon mouth.
 ```
 
 ### Approved Sample Prompts
@@ -345,7 +360,7 @@ Background: perfectly flat solid #ff00ff chroma-key, no shadow, no gradient, no 
 Create a pair of very small cyber intuition ear-radar charms for a TradingPanda avatar: two crescent-shaped graphite antenna clips floating near the outer ear positions, with three thin teal signal arcs and a few tiny gold-green data sparks around the head perimeter. The effect suggests instinct and market sensing, not eye power. Keep all visible elements outside the eye, eyebrow, nose, and mouth areas.
 
 Style: cyber designer toy, delicate sensor jewelry, teal neon, gold-green micro glints, polished black metal, light dynamic motion.
-Output: accessory particles only, no eyes, no pupils, no gaze beams, no full panda.
+Output: external ear-radar charms and signal arcs only, no eyes, no pupils, no gaze beams, no full panda.
 Background: perfectly flat solid #ff00ff chroma-key, no shadow, no gradient, no text, no watermark.
 ```
 
@@ -385,7 +400,6 @@ Target render order:
 
 ```text
 background
-contrarian/aura
 patience/ground-prop
 experience base
 boldness/cape
@@ -395,12 +409,10 @@ focus/chest-core
 boldness/headband
 focus/headband
 focus/monocle
-emotions/eyes
 emotions/brows
 emotions/mouth
 emotions/extras
 intuition/ear-radar
-intuition/particles
 intuition/halo
 final highlights
 ```

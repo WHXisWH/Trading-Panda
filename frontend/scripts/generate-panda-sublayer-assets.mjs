@@ -8,7 +8,7 @@ const REPO_ROOT = dirname(FRONTEND_ROOT);
 const ROOT = join(FRONTEND_ROOT, "public/assets/panda");
 const TMP_IMAGEGEN_ROOT = join(REPO_ROOT, "tmp/imagegen");
 const WORKSPACE_ROOT = "frontend/public/assets/panda";
-const IMAGE_SIZE = 1254;
+const IMAGE_SIZE = 1024;
 const CANVAS_SIZE = 512;
 const TIERS = Array.from({ length: 10 }, (_, index) => index + 1);
 const SMOKE_TIERS = new Set([1, 5, 10]);
@@ -23,7 +23,6 @@ const ANCHOR_POLICIES = [
   "upperBodyCenter",
   "feetBase",
   "headCenterOffset",
-  "worldAura",
 ];
 
 const BBOX_POLICIES = [
@@ -31,14 +30,12 @@ const BBOX_POLICIES = [
   "headband",
   "cape",
   "weaponSide",
-  "auraPeripheral",
   "bodySideMark",
   "monocle",
   "chestCore",
   "intuitionNoFaceFeatures",
   "groundProp",
   "groundSideProp",
-  "emotionEyes",
   "emotionBrows",
   "emotionMouth",
   "emotionExtras",
@@ -80,17 +77,6 @@ const SUBLAYERS = [
   },
   {
     attribute: "contrarian",
-    sublayer: "aura",
-    anchorPolicy: "worldAura",
-    zIndex: 12,
-    opacityRule: "aura",
-    bboxPolicy: "auraPeripheral",
-    role: "single peripheral reversal aura around the character silhouette",
-    promptSubject: "one asymmetric black ink reversal aura outside the invisible panda silhouette",
-    forbidden: "dense smoke over face, symbols on eyes, full panda, opaque corners, background, text, watermark",
-  },
-  {
-    attribute: "contrarian",
     sublayer: "mark",
     anchorPolicy: "upperBodyCenter",
     anchorOffset: { x: 128, y: -2 },
@@ -114,14 +100,14 @@ const SUBLAYERS = [
   },
   {
     attribute: "focus",
-    sublayer: "headband",
-    anchorPolicy: "faceTopCenter",
-    zIndex: 66,
+    sublayer: "reticle",
+    anchorPolicy: "rightEyeCenter",
+    zIndex: 73,
     opacityRule: "trait",
-    bboxPolicy: "headband",
-    role: "single analytical headband above eye centers",
-    promptSubject: "one precise bamboo-green analytical headband above the forehead",
-    forbidden: "eyes, pupils, eyebrows, mouth, full face, full panda, background, text, watermark",
+    bboxPolicy: "monocle",
+    role: "single analytical targeting reticle near the right-eye focus anchor",
+    promptSubject: "one compact cyan targeting reticle and scan ticks near the right-eye focus anchor",
+    forbidden: "second eye overlay, forehead band, cloth band, blindfold, mouth, full face, full panda, body props, background, text, watermark",
   },
   {
     attribute: "focus",
@@ -144,18 +130,6 @@ const SUBLAYERS = [
     bboxPolicy: "intuitionNoFaceFeatures",
     role: "single external ear-side radar accent; not an eye or gaze asset",
     promptSubject: "one external ear-side sensing arc cluster",
-    forbidden: "eyes, pupils, eyebrows, eye glow, eye rings, gaze beams, facial expression changes, full face, full panda, background, text, watermark",
-  },
-  {
-    attribute: "intuition",
-    sublayer: "particles",
-    anchorPolicy: "headCenterOffset",
-    anchorOffset: { x: 0, y: 0 },
-    zIndex: 89,
-    opacityRule: "trait",
-    bboxPolicy: "intuitionNoFaceFeatures",
-    role: "small ambient sensing particles around face perimeter; not eye-related",
-    promptSubject: "small ambient insight particles around the outside of the face boundary",
     forbidden: "eyes, pupils, eyebrows, eye glow, eye rings, gaze beams, facial expression changes, full face, full panda, background, text, watermark",
   },
   {
@@ -207,26 +181,15 @@ const SUBLAYERS = [
   },
   {
     attribute: "emotion",
-    sublayer: "eyes",
-    anchorPolicy: "eyesMidpoint",
-    zIndex: 80,
-    opacityRule: "emotion",
-    bboxPolicy: "emotionEyes",
-    role: "primary expression eye marks only",
-    promptSubject: "only the eye marks for the requested emotion",
-    forbidden: "body props, aura, full face, full panda, background, text, watermark",
-  },
-  {
-    attribute: "emotion",
     sublayer: "brows",
     anchorPolicy: "eyesMidpoint",
     anchorOffset: { x: 0, y: -34 },
     zIndex: 81,
     opacityRule: "emotion",
     bboxPolicy: "emotionBrows",
-    role: "primary expression brow marks only",
-    promptSubject: "only the brow marks for the requested emotion",
-    forbidden: "body props, aura, full face, full panda, background, text, watermark",
+    role: "compact black-titanium cyber brow modules only; facial hardware, not flat cartoon eyebrows",
+    promptSubject: "only compact black-titanium cyber brow modules for the requested emotion",
+    forbidden: "flat sticker eyebrows, blade-like slashes, body props, aura, full face, full panda, background, text, watermark",
   },
   {
     attribute: "emotion",
@@ -235,9 +198,9 @@ const SUBLAYERS = [
     zIndex: 82,
     opacityRule: "emotion",
     bboxPolicy: "emotionMouth",
-    role: "primary expression mouth mark only",
-    promptSubject: "only the mouth mark for the requested emotion",
-    forbidden: "body props, aura, full face, full panda, background, text, watermark",
+    role: "compact black-titanium cyber mouth module only; small grille or light port around the mouth anchor",
+    promptSubject: "only a compact black-titanium cyber mouth module for the requested emotion",
+    forbidden: "flat sticker mouth, large lips, body props, aura, full face, full panda, background, text, watermark",
   },
   {
     attribute: "emotion",
@@ -481,12 +444,6 @@ function renderSublayer(layer, tier) {
       drawLine(image, { x: 394, y: 292 }, { x: 438, y: 414 }, 7 + growth, dark);
       drawLine(image, { x: 386, y: 306 }, { x: 414, y: 286 }, 5, red);
       break;
-    case "contrarian/aura":
-      drawArc(image, { x: 256, y: 292 }, { x: 188 * medium, y: 220 * medium }, -2.7, -0.2, 5 + growth, dark);
-      drawArc(image, { x: 256, y: 292 }, { x: 174 * medium, y: 204 * medium }, 0.35, 2.45, 5 + growth, dark);
-      drawEllipse(image, { x: 118, y: 318 }, { x: 12, y: 22 }, dark);
-      drawEllipse(image, { x: 404, y: 190 }, { x: 10, y: 18 }, dark);
-      break;
     case "contrarian/mark":
       drawRect(image, { x: 374, y: 292, width: 30 + 4 * growth, height: 30 + 4 * growth }, cinnabarSoft);
       drawLine(image, { x: 382, y: 304 }, { x: 402, y: 316 }, 4, red);
@@ -495,9 +452,12 @@ function renderSublayer(layer, tier) {
       drawEllipse(image, { x: 304, y: 162 }, { x: 31 * medium, y: 25 * medium }, green, { stroke: 5 });
       drawLine(image, { x: 326, y: 182 }, { x: 350, y: 214 }, 3 + growth, green);
       break;
-    case "focus/headband":
-      drawRect(image, { x: 190 - 6 * growth, y: 82 - 2 * growth, width: 120 + 8 * growth, height: 12 + 3 * growth }, green);
-      drawLine(image, { x: 206, y: 82 }, { x: 306, y: 80 }, 2 + growth, pale);
+    case "focus/reticle":
+      drawArc(image, { x: 318, y: 164 }, { x: 38 * medium, y: 31 * medium }, -0.15, Math.PI * 1.65, 3 + growth, green);
+      drawLine(image, { x: 318, y: 132 }, { x: 318, y: 148 }, 2 + growth, pale);
+      drawLine(image, { x: 318, y: 180 }, { x: 318, y: 198 }, 2 + growth, pale);
+      drawLine(image, { x: 286, y: 164 }, { x: 302, y: 164 }, 2 + growth, pale);
+      drawLine(image, { x: 334, y: 164 }, { x: 354, y: 164 }, 2 + growth, pale);
       break;
     case "focus/chest-core":
       drawEllipse(image, { x: 256, y: 318 }, { x: 22 * growth, y: 22 * growth }, amber);
@@ -507,17 +467,6 @@ function renderSublayer(layer, tier) {
       drawArc(image, { x: 140, y: 142 }, { x: 24 * growth, y: 32 * growth }, -1.2, 1.1, 4, amber);
       drawArc(image, { x: 140, y: 142 }, { x: 40 * growth, y: 52 * growth }, -1.15, 1.05, 3, green);
       drawEllipse(image, { x: 134, y: 142 }, { x: 5, y: 5 }, amber);
-      break;
-    case "intuition/particles":
-      for (const point of [
-        { x: 164, y: 118 },
-        { x: 368, y: 116 },
-        { x: 145, y: 222 },
-        { x: 384, y: 222 },
-        { x: 256, y: 66 },
-      ]) {
-        drawEllipse(image, point, { x: 5 + tier / 5, y: 5 + tier / 5 }, amber);
-      }
       break;
     case "intuition/halo":
       drawArc(image, { x: 256, y: 70 }, { x: 72 * medium, y: 20 * medium }, Math.PI, Math.PI * 2, 4 + growth, amber);
@@ -539,17 +488,14 @@ function renderSublayer(layer, tier) {
       drawArc(image, { x: 166, y: 410 }, { x: 18, y: 28 }, -1.4, -0.2, 3, blue);
       drawArc(image, { x: 180, y: 410 }, { x: 18, y: 28 }, -1.3, -0.1, 3, blue);
       break;
-    case "emotion/eyes":
-      renderEmotionEyes(image, tier, { dark, amber, red, blue });
-      break;
     case "emotion/brows":
-      renderEmotionBrows(image, tier, { dark, red });
+      renderEmotionBrows(image, tier, { dark, red, amber, blue, green });
       break;
     case "emotion/mouth":
-      renderEmotionMouth(image, tier, { dark, red });
+      renderEmotionMouth(image, tier, { dark, red, amber, blue, green, pale });
       break;
     case "emotion/extras":
-      renderEmotionExtras(image, tier, { red, amber, blue });
+      renderEmotionExtras(image, tier, { red, amber, blue, green, pale });
       break;
     default:
       throw new Error(`Unhandled sublayer ${layer.attribute}/${layer.sublayer}`);
@@ -558,78 +504,539 @@ function renderSublayer(layer, tier) {
   return image;
 }
 
-function renderEmotionEyes(image, tier, colors) {
-  if (tier <= 2) {
-    drawLine(image, { x: 196, y: 164 }, { x: 232, y: 164 }, 5, colors.dark);
-    drawLine(image, { x: 280, y: 164 }, { x: 316, y: 164 }, 5, colors.dark);
-  } else if (tier === 3) {
-    drawArc(image, { x: 214, y: 158 }, { x: 20, y: 10 }, 0.1, Math.PI - 0.1, 4, colors.dark);
-    drawArc(image, { x: 298, y: 158 }, { x: 20, y: 10 }, 0.1, Math.PI - 0.1, 4, colors.dark);
-  } else if (tier === 4) {
-    drawEllipse(image, { x: 214, y: 160 }, { x: 15, y: 12 }, colors.dark);
-    drawEllipse(image, { x: 300, y: 160 }, { x: 18, y: 12 }, colors.dark);
-  } else if (tier === 6) {
-    drawEllipse(image, { x: 214, y: 160 }, { x: 17, y: 15 }, colors.amber);
-    drawEllipse(image, { x: 300, y: 160 }, { x: 17, y: 15 }, colors.amber);
-    drawEllipse(image, { x: 219, y: 155 }, { x: 4, y: 4 }, colors.dark);
-    drawEllipse(image, { x: 305, y: 155 }, { x: 4, y: 4 }, colors.dark);
-  } else if (tier >= 8) {
-    drawEllipse(image, { x: 214, y: 160 }, { x: 20, y: 17 }, tier === 8 ? colors.amber : colors.blue);
-    drawEllipse(image, { x: 300, y: 160 }, { x: 20, y: 17 }, tier === 8 ? colors.amber : colors.blue);
-    drawEllipse(image, { x: 214, y: 160 }, { x: 8, y: 8 }, colors.dark);
-    drawEllipse(image, { x: 300, y: 160 }, { x: 8, y: 8 }, colors.dark);
-  } else {
-    drawLine(image, { x: 198, y: 166 }, { x: 232, y: 154 }, 6, colors.dark);
-    drawLine(image, { x: 282, y: 154 }, { x: 316, y: 166 }, 6, colors.dark);
+const EMOTION_EYE_CENTERS = [
+  { x: 206, y: 166, side: -1 },
+  { x: 306, y: 166, side: 1 },
+];
+
+const EMOTION_EYE_STYLES = {
+  1: {
+    iris: "#6E7C84",
+    irisAlpha: 95,
+    glow: "#6E7C84",
+    glowAlpha: 36,
+    rx: 11,
+    ry: 13,
+    pupil: 5,
+    pupilAlpha: 150,
+    highlightAlpha: 20,
+    lidAlpha: 72,
+    gazeX: 0,
+    gazeY: 2,
+  },
+  2: {
+    iris: "#7896A5",
+    irisAlpha: 115,
+    glow: "#6FAFC0",
+    glowAlpha: 42,
+    rx: 12,
+    ry: 14,
+    pupil: 5.5,
+    pupilAlpha: 150,
+    highlightAlpha: 36,
+    lidAlpha: 54,
+    gazeX: 0,
+    gazeY: 1,
+  },
+  3: {
+    iris: "#4FC5D5",
+    irisAlpha: 145,
+    glow: "#5DE5F2",
+    glowAlpha: 54,
+    rx: 14,
+    ry: 16,
+    pupil: 6,
+    pupilAlpha: 155,
+    highlightAlpha: 70,
+    lidAlpha: 36,
+    gazeX: 0,
+    gazeY: 0,
+  },
+  4: {
+    iris: "#55AFC3",
+    irisAlpha: 145,
+    glow: "#67D8E5",
+    glowAlpha: 46,
+    rx: 13,
+    ry: 15,
+    pupil: 6,
+    pupilAlpha: 160,
+    highlightAlpha: 58,
+    lidAlpha: 70,
+    gazeX: 2,
+    gazeY: 0,
+  },
+  5: {
+    iris: "#43D8E4",
+    irisAlpha: 165,
+    glow: "#74F0F5",
+    glowAlpha: 58,
+    rx: 12.5,
+    ry: 14.5,
+    pupil: 5.8,
+    pupilAlpha: 170,
+    highlightAlpha: 78,
+    lidAlpha: 40,
+    gazeX: 0,
+    gazeY: 0,
+    reticle: true,
+  },
+  6: {
+    iris: "#64DFEA",
+    irisAlpha: 172,
+    glow: "#96F7FA",
+    glowAlpha: 70,
+    rx: 17,
+    ry: 18,
+    pupil: 6.8,
+    pupilAlpha: 150,
+    highlightAlpha: 112,
+    lidAlpha: 24,
+    gazeX: 0,
+    gazeY: -1,
+    extraGlint: "#D6B15A",
+  },
+  7: {
+    iris: "#5E9FB0",
+    irisAlpha: 145,
+    glow: "#C23A3A",
+    glowAlpha: 38,
+    rx: 13.5,
+    ry: 15.5,
+    pupil: 6.2,
+    pupilAlpha: 175,
+    highlightAlpha: 46,
+    lidAlpha: 96,
+    gazeX: -1,
+    gazeY: 1,
+    outerPulse: "#C23A3A",
+  },
+  8: {
+    iris: "#D4A24A",
+    irisAlpha: 178,
+    glow: "#E6C45F",
+    glowAlpha: 72,
+    rx: 16,
+    ry: 17,
+    pupil: 7,
+    pupilAlpha: 160,
+    highlightAlpha: 94,
+    lidAlpha: 28,
+    gazeX: 1,
+    gazeY: 0,
+    sparkle: "#F2D889",
+  },
+  9: {
+    iris: "#5CCFDC",
+    irisAlpha: 168,
+    glow: "#C23A3A",
+    glowAlpha: 54,
+    rx: 15,
+    ry: 17,
+    pupil: 7.2,
+    pupilAlpha: 180,
+    highlightAlpha: 80,
+    lidAlpha: 58,
+    gazeX: -1,
+    gazeY: 1,
+    stressRing: "#C23A3A",
+  },
+  10: {
+    iris: "#69E6F0",
+    irisAlpha: 188,
+    glow: "#C23A3A",
+    glowAlpha: 70,
+    rx: 18,
+    ry: 19,
+    pupil: 8.8,
+    pupilAlpha: 190,
+    highlightAlpha: 120,
+    lidAlpha: 36,
+    gazeX: 0,
+    gazeY: -1,
+    stressRing: "#C23A3A",
+    extraGlint: "#F2D889",
+  },
+};
+
+function renderEmotionEyes(image, tier) {
+  const style = EMOTION_EYE_STYLES[tier] ?? EMOTION_EYE_STYLES[5];
+  for (const eye of EMOTION_EYE_CENTERS) {
+    renderRoundPandaEye(image, eye, style);
   }
+}
+
+function renderRoundPandaEye(image, eye, style) {
+  const gaze = {
+    x: eye.x + style.gazeX * (eye.side === -1 ? 1 : -1),
+    y: eye.y + style.gazeY,
+  };
+  const shadow = colorFromHex("#05070D", 112);
+  const pupil = colorFromHex("#04070B", style.pupilAlpha);
+  const iris = colorFromHex(style.iris, style.irisAlpha);
+  const glow = colorFromHex(style.glow, style.glowAlpha);
+  const highlight = colorFromHex("#F4FBFF", style.highlightAlpha);
+  const lid = colorFromHex("#05070D", style.lidAlpha);
+
+  drawEllipse(image, gaze, { x: style.rx + 9, y: style.ry + 7 }, glow);
+  drawEllipse(image, gaze, { x: style.rx + 5, y: style.ry + 5 }, shadow);
+  drawEllipse(image, gaze, { x: style.rx, y: style.ry }, iris);
+  drawEllipse(image, { x: gaze.x - eye.side * 1.5, y: gaze.y + 1 }, { x: style.pupil, y: style.pupil + 1.5 }, pupil);
+  drawEllipse(image, { x: gaze.x - eye.side * 5, y: gaze.y - 6 }, { x: 3.8, y: 3.8 }, highlight);
+  drawEllipse(image, { x: gaze.x + eye.side * 5.5, y: gaze.y + 5 }, { x: 2.2, y: 2.2 }, colorFromHex(style.iris, Math.min(150, style.irisAlpha)));
+  drawEllipse(image, { x: gaze.x, y: gaze.y - style.ry - 2 }, { x: style.rx + 11, y: 5.5 }, lid);
+
+  if (style.reticle) {
+    drawArc(image, gaze, { x: style.rx + 5, y: style.ry + 4 }, 0.08, Math.PI * 1.86, 1.6, colorFromHex("#C7FFFF", 104));
+    drawLine(image, { x: gaze.x - 3, y: gaze.y - style.ry - 6 }, { x: gaze.x + 3, y: gaze.y - style.ry - 6 }, 1.4, colorFromHex("#C7FFFF", 94));
+  }
+
+  if (style.stressRing) {
+    drawArc(image, gaze, { x: style.rx + 5, y: style.ry + 3 }, Math.PI * 0.08, Math.PI * 1.55, 2, colorFromHex(style.stressRing, 116));
+  }
+
+  if (style.outerPulse) {
+    const pulseX = gaze.x + eye.side * 23;
+    drawLine(image, { x: pulseX, y: gaze.y - 8 }, { x: pulseX + eye.side * 7, y: gaze.y - 13 }, 2.2, colorFromHex(style.outerPulse, 118));
+    drawLine(image, { x: pulseX, y: gaze.y + 7 }, { x: pulseX + eye.side * 7, y: gaze.y + 12 }, 2.2, colorFromHex(style.outerPulse, 100));
+  }
+
+  if (style.sparkle) {
+    drawSparkle(image, { x: gaze.x - eye.side * 11, y: gaze.y - 12 }, style.sparkle, 120);
+  }
+
+  if (style.extraGlint) {
+    drawSparkle(image, { x: gaze.x + eye.side * 12, y: gaze.y + 10 }, style.extraGlint, 96);
+  }
+}
+
+function drawSparkle(image, center, hex, alphaValue) {
+  const color = colorFromHex(hex, alphaValue);
+  drawLine(image, { x: center.x - 4, y: center.y }, { x: center.x + 4, y: center.y }, 1.5, color);
+  drawLine(image, { x: center.x, y: center.y - 4 }, { x: center.x, y: center.y + 4 }, 1.5, color);
+  drawEllipse(image, center, { x: 2, y: 2 }, color);
+}
+
+function rgbaWithAlpha(rgba, alphaValue) {
+  return [rgba[0], rgba[1], rgba[2], alphaValue];
+}
+
+function mixRgba(a, b, amount, alphaValue) {
+  return [
+    Math.round(a[0] + (b[0] - a[0]) * amount),
+    Math.round(a[1] + (b[1] - a[1]) * amount),
+    Math.round(a[2] + (b[2] - a[2]) * amount),
+    alphaValue,
+  ];
+}
+
+function rgbaLuma(rgba) {
+  return rgba[0] * 0.2126 + rgba[1] * 0.7152 + rgba[2] * 0.0722;
+}
+
+function rgbaChroma(rgba) {
+  return Math.max(rgba[0], rgba[1], rgba[2]) - Math.min(rgba[0], rgba[1], rgba[2]);
+}
+
+function drawPlainCurveStroke(image, points, width, rgba) {
+  for (let index = 0; index < points.length - 1; index += 1) {
+    drawLine(image, points[index], points[index + 1], width, rgba);
+  }
+}
+
+function drawCyberNode(image, center, signalRgba, size = 2.3) {
+  drawEllipse(image, center, { x: size + 1.8, y: size + 1.8 }, colorFromHex("#03060B", 165));
+  drawEllipse(image, center, { x: size + 0.8, y: size + 0.8 }, colorFromHex("#1A2630", 210));
+  drawEllipse(image, center, { x: size * 0.42, y: size * 0.42 }, rgbaWithAlpha(signalRgba, Math.min(175, signalRgba[3])));
+}
+
+function drawCyberMouthPort(image, center, radius, signalRgba, options = {}) {
+  const inner = options.innerRgba ?? colorFromHex("#05080E", 210);
+  drawEllipse(
+    image,
+    center,
+    { x: radius.x + 5, y: radius.y + 4 },
+    rgbaWithAlpha(signalRgba, options.glowAlpha ?? 46)
+  );
+  drawEllipse(image, center, { x: radius.x + 3, y: radius.y + 2.2 }, colorFromHex("#02050A", 225));
+  drawEllipse(image, center, { x: radius.x + 1.1, y: radius.y + 0.9 }, colorFromHex("#18242C", 225));
+  drawEllipse(image, center, radius, rgbaWithAlpha(signalRgba, options.signalAlpha ?? 170), {
+    stroke: options.stroke ?? 3.2,
+  });
+  drawEllipse(image, center, { x: radius.x * 0.58, y: radius.y * 0.5 }, inner);
+  drawLine(
+    image,
+    { x: center.x - radius.x * 0.42, y: center.y - radius.y * 0.62 },
+    { x: center.x + radius.x * 0.42, y: center.y - radius.y * 0.62 },
+    1.5,
+    colorFromHex("#D7FBFF", options.highlightAlpha ?? 82)
+  );
+  if (options.coreRgba) {
+    drawEllipse(image, { x: center.x, y: center.y + radius.y * 0.18 }, { x: radius.x * 0.24, y: radius.y * 0.22 }, options.coreRgba);
+  }
+}
+
+function drawCurveStroke(image, points, width, rgba) {
+  const mouthStroke = points.every(
+    (point) => point.x >= 220 && point.x <= 292 && point.y >= 190 && point.y <= 255
+  );
+  const modulePoints = mouthStroke
+    ? points.map((point) => ({ x: 256 + (point.x - 256) * 1.34, y: point.y + 0.2 }))
+    : points;
+  const moduleWidth = mouthStroke ? width + 1.2 : width;
+  const neutralDark = rgbaLuma(rgba) < 72 && rgbaChroma(rgba) < 32;
+  const signal = neutralDark
+    ? colorFromHex("#6FAFC0", Math.min(145, Math.round(rgba[3] * 0.68)))
+    : rgbaWithAlpha(rgba, Math.min(190, Math.round(rgba[3] * 0.9)));
+  const glow = rgbaWithAlpha(signal, neutralDark ? 24 : 38);
+  const body = mixRgba(
+    colorFromHex("#111820", Math.min(232, rgba[3] + 14)),
+    rgba,
+    neutralDark ? 0.06 : 0.24,
+    Math.min(235, Math.round(rgba[3] * 1.04))
+  );
+  const edge = neutralDark
+    ? colorFromHex("#A9C7CE", 92)
+    : mixRgba(colorFromHex("#D4F5F8", 114), rgba, 0.22, 116);
+  const upperEdgePoints = modulePoints.map((point) => ({ x: point.x, y: point.y - 1.25 }));
+  const signalPoints = modulePoints.map((point) => ({ x: point.x, y: point.y + 0.55 }));
+
+  drawPlainCurveStroke(image, modulePoints, moduleWidth + 6.5, glow);
+  drawPlainCurveStroke(image, modulePoints, moduleWidth + 4, colorFromHex("#02050A", Math.min(232, rgba[3] + 22)));
+  drawPlainCurveStroke(image, modulePoints, moduleWidth + 1.8, body);
+  drawPlainCurveStroke(image, upperEdgePoints, Math.max(1.7, moduleWidth * 0.34), edge);
+  drawPlainCurveStroke(image, signalPoints, Math.max(1.8, moduleWidth * 0.42), signal);
+
+  if (moduleWidth >= 4) {
+    drawCyberNode(image, modulePoints[0], signal, mouthStroke ? 2.45 : 2.25);
+    drawCyberNode(image, modulePoints[modulePoints.length - 1], signal, mouthStroke ? 2.45 : 2.25);
+    if (modulePoints.length > 2) {
+      drawCyberNode(image, modulePoints[Math.floor(modulePoints.length / 2)], signal, mouthStroke ? 1.85 : 1.65);
+    }
+  }
+}
+
+function drawSoftTick(image, from, to, width, rgba) {
+  if (width >= 3.5) {
+    drawCurveStroke(image, [from, to], width, rgba);
+    return;
+  }
+  drawLine(image, from, to, width, rgba);
+  drawEllipse(image, from, { x: width * 0.3, y: width * 0.3 }, rgba);
+  drawEllipse(image, to, { x: width * 0.3, y: width * 0.3 }, rgba);
+}
+
+function drawSweatDrop(image, center, size, rgba, highlightRgba) {
+  drawEllipse(image, center, { x: size * 0.58, y: size * 0.82 }, rgba);
+  drawLine(
+    image,
+    { x: center.x, y: center.y + size * 0.34 },
+    { x: center.x, y: center.y + size * 1.16 },
+    size * 0.22,
+    rgba
+  );
+  if (highlightRgba) {
+    drawEllipse(
+      image,
+      { x: center.x - size * 0.18, y: center.y - size * 0.24 },
+      { x: size * 0.14, y: size * 0.18 },
+      highlightRgba
+    );
+  }
+}
+
+function drawTinyPulse(image, center, colorHex, alphaValue) {
+  const color = colorFromHex(colorHex, alphaValue);
+  drawLine(image, { x: center.x - 4, y: center.y }, { x: center.x + 4, y: center.y }, 1.3, color);
+  drawLine(image, { x: center.x, y: center.y - 4 }, { x: center.x, y: center.y + 4 }, 1.3, color);
+  drawEllipse(image, center, { x: 1.7, y: 1.7 }, color);
 }
 
 function renderEmotionBrows(image, tier, colors) {
-  if (tier === 7 || tier >= 9) {
-    drawLine(image, { x: 192, y: 130 }, { x: 236, y: 142 }, 5, colors.red);
-    drawLine(image, { x: 278, y: 142 }, { x: 322, y: 130 }, 5, colors.red);
-  } else if (tier === 3 || tier === 6 || tier === 8) {
-    drawArc(image, { x: 214, y: 136 }, { x: 18, y: 7 }, Math.PI + 0.1, Math.PI * 2 - 0.1, 3, colors.dark);
-    drawArc(image, { x: 298, y: 136 }, { x: 18, y: 7 }, Math.PI + 0.1, Math.PI * 2 - 0.1, 3, colors.dark);
-  } else if (tier === 4 || tier === 5) {
-    drawLine(image, { x: 194, y: 138 }, { x: 236, y: 132 }, 4, colors.dark);
-    drawLine(image, { x: 278, y: 132 }, { x: 322, y: 138 }, 4, colors.dark);
-  } else if (tier <= 2) {
-    drawLine(image, { x: 198, y: 142 }, { x: 232, y: 142 }, 3, colors.dark);
-    drawLine(image, { x: 284, y: 142 }, { x: 318, y: 142 }, 3, colors.dark);
+  const pale = colorFromHex("#F1F6F9", 130);
+  switch (tier) {
+    case 1:
+      drawCurveStroke(image, [{ x: 189, y: 141 }, { x: 206, y: 139 }, { x: 231, y: 141 }], 4, colors.dark);
+      drawCurveStroke(image, [{ x: 281, y: 141 }, { x: 306, y: 139 }, { x: 323, y: 141 }], 4, colors.dark);
+      break;
+    case 2:
+      drawCurveStroke(image, [{ x: 188, y: 140 }, { x: 206, y: 137 }, { x: 230, y: 139 }], 4.5, colors.dark);
+      drawCurveStroke(image, [{ x: 282, y: 139 }, { x: 306, y: 137 }, { x: 324, y: 140 }], 4.5, colors.dark);
+      break;
+    case 3:
+      drawCurveStroke(image, [{ x: 187, y: 138 }, { x: 206, y: 132 }, { x: 231, y: 137 }], 4.5, colors.green ?? colors.dark);
+      drawCurveStroke(image, [{ x: 281, y: 137 }, { x: 306, y: 132 }, { x: 325, y: 138 }], 4.5, colors.green ?? colors.dark);
+      break;
+    case 4:
+      drawCurveStroke(image, [{ x: 188, y: 140 }, { x: 206, y: 135 }, { x: 231, y: 136 }], 4.5, colors.dark);
+      drawCurveStroke(image, [{ x: 281, y: 136 }, { x: 306, y: 135 }, { x: 324, y: 140 }], 4.5, colors.dark);
+      drawTinyPulse(image, { x: 256, y: 134 }, "#56DDE6", 90);
+      break;
+    case 5:
+      drawCurveStroke(image, [{ x: 188, y: 139 }, { x: 206, y: 133 }, { x: 231, y: 138 }], 4.8, colors.dark);
+      drawCurveStroke(image, [{ x: 281, y: 138 }, { x: 306, y: 133 }, { x: 324, y: 139 }], 4.8, colors.dark);
+      drawTinyPulse(image, { x: 256, y: 135 }, "#C7FFFF", 78);
+      break;
+    case 6:
+      drawCurveStroke(image, [{ x: 187, y: 136 }, { x: 206, y: 129 }, { x: 232, y: 135 }], 5, colors.blue ?? colors.green ?? colors.dark);
+      drawCurveStroke(image, [{ x: 280, y: 135 }, { x: 306, y: 129 }, { x: 325, y: 136 }], 5, colors.blue ?? colors.green ?? colors.dark);
+      drawTinyPulse(image, { x: 255, y: 131 }, "#F2D889", 85);
+      break;
+    case 7:
+      drawCurveStroke(image, [{ x: 188, y: 139 }, { x: 205, y: 145 }, { x: 231, y: 136 }], 5.2, colors.red);
+      drawCurveStroke(image, [{ x: 281, y: 136 }, { x: 307, y: 145 }, { x: 324, y: 139 }], 5.2, colors.red);
+      drawSoftTick(image, { x: 198, y: 142 }, { x: 208, y: 140 }, 2.2, colorFromHex("#F15A5A", 150));
+      break;
+    case 8:
+      drawCurveStroke(image, [{ x: 188, y: 136 }, { x: 206, y: 130 }, { x: 230, y: 134 }], 5, colors.amber);
+      drawCurveStroke(image, [{ x: 282, y: 134 }, { x: 306, y: 129 }, { x: 324, y: 136 }], 5, colors.amber);
+      drawSparkle(image, { x: 333, y: 130 }, "#F2D889", 95);
+      break;
+    case 9:
+      drawCurveStroke(image, [{ x: 187, y: 132 }, { x: 205, y: 126 }, { x: 231, y: 131 }], 5, colors.dark);
+      drawCurveStroke(image, [{ x: 281, y: 131 }, { x: 307, y: 126 }, { x: 325, y: 132 }], 5, colors.dark);
+      drawTinyPulse(image, { x: 255, y: 128 }, "#C23A3A", 95);
+      drawSweatDrop(image, { x: 350, y: 145 }, 9, colorFromHex("#56DDE6", 155), pale);
+      break;
+    case 10:
+      drawCurveStroke(image, [{ x: 186, y: 130 }, { x: 205, y: 123 }, { x: 231, y: 129 }], 5.4, colors.red);
+      drawCurveStroke(image, [{ x: 281, y: 129 }, { x: 307, y: 123 }, { x: 326, y: 130 }], 5.4, colors.red);
+      drawTinyPulse(image, { x: 255, y: 124 }, "#F2D889", 105);
+      drawSweatDrop(image, { x: 350, y: 136 }, 10, colorFromHex("#56DDE6", 170), pale);
+      break;
+    default:
+      break;
   }
 }
 
+const EMOTION_MOUTH_BASE_CENTER = { x: 256, y: 225 };
+const EMOTION_MOUTH_CENTERS = {
+  1: { x: 259.1, y: 209.3 },
+  2: { x: 260.6, y: 228.3 },
+  3: { x: 257.3, y: 251.3 },
+  4: { x: 254.9, y: 227.2 },
+  5: { x: 255, y: 226.8 },
+  6: { x: 257.3, y: 223.4 },
+  7: { x: 254.6, y: 229.6 },
+  8: { x: 257.9, y: 220.2 },
+  9: { x: 255.8, y: 208.4 },
+  10: { x: 258.3, y: 199.8 },
+};
+
 function renderEmotionMouth(image, tier, colors) {
-  if (tier <= 2) {
-    drawLine(image, { x: 238, y: 226 }, { x: 278, y: 226 }, 4, colors.dark);
-  } else if (tier === 3) {
-    drawArc(image, { x: 256, y: 226 }, { x: 26, y: 18 }, 0.15, Math.PI - 0.15, 4, colors.dark);
-  } else if (tier === 6 || tier >= 9) {
-    drawEllipse(image, { x: 256, y: 232 }, { x: 22, y: 15 }, tier >= 9 ? colors.red : colors.dark);
-  } else if (tier === 7) {
-    drawLine(image, { x: 238, y: 230 }, { x: 280, y: 224 }, 5, colors.dark);
-  } else {
-    drawArc(image, { x: 256, y: 236 }, { x: 24, y: 12 }, Math.PI + 0.1, Math.PI * 2 - 0.1, 4, colors.dark);
+  const pale = colorFromHex("#F1F6F9", 130);
+  const target = EMOTION_MOUTH_CENTERS[tier] ?? EMOTION_MOUTH_BASE_CENTER;
+  const offset = {
+    x: target.x - EMOTION_MOUTH_BASE_CENTER.x,
+    y: target.y - EMOTION_MOUTH_BASE_CENTER.y,
+  };
+  const point = (value) => ({ x: value.x + offset.x, y: value.y + offset.y });
+  const points = (values) => values.map(point);
+  const drawMouthCurve = (values, width, rgba) => drawCurveStroke(image, points(values), width, rgba);
+  const drawMouthTick = (from, to, width, rgba) => drawSoftTick(image, point(from), point(to), width, rgba);
+  const drawMouthPulse = (center, colorHex, alphaValue) => drawTinyPulse(image, point(center), colorHex, alphaValue);
+  const drawMouthPort = (center, radius, signalRgba, options = {}) =>
+    drawCyberMouthPort(image, point(center), radius, signalRgba, options);
+
+  switch (tier) {
+    case 1:
+      drawMouthTick({ x: 240, y: 225 }, { x: 272, y: 225 }, 4, colors.dark);
+      break;
+    case 2:
+      drawMouthCurve([{ x: 240, y: 225 }, { x: 256, y: 224 }, { x: 272, y: 225 }], 4, colors.dark);
+      break;
+    case 3:
+      drawMouthCurve([{ x: 240, y: 225 }, { x: 256, y: 218 }, { x: 272, y: 225 }], 4, colors.green ?? colors.blue ?? colors.dark);
+      break;
+    case 4:
+      drawMouthCurve([{ x: 241, y: 223 }, { x: 256, y: 221 }, { x: 271, y: 223 }], 4.2, colors.dark);
+      break;
+    case 5:
+      drawMouthCurve([{ x: 241, y: 224 }, { x: 256, y: 219 }, { x: 271, y: 224 }], 4.4, colors.dark);
+      drawMouthPulse({ x: 256, y: 228 }, "#C7FFFF", 55);
+      break;
+    case 6:
+      drawMouthCurve([{ x: 243, y: 223 }, { x: 256, y: 214 }, { x: 269, y: 223 }], 4.6, colors.blue ?? colors.green ?? colors.dark);
+      drawMouthPort({ x: 256, y: 224 }, { x: 11, y: 7.5 }, colorFromHex("#69E6F0", 165), {
+        innerRgba: colorFromHex("#0A1118", 210),
+        coreRgba: pale,
+        glowAlpha: 38,
+        signalAlpha: 150,
+        stroke: 2.6,
+      });
+      break;
+    case 7:
+      drawMouthCurve([{ x: 242, y: 226 }, { x: 256, y: 230 }, { x: 270, y: 226 }], 4.4, colors.red);
+      break;
+    case 8:
+      drawMouthCurve([{ x: 243, y: 223 }, { x: 256, y: 219 }, { x: 269, y: 223 }], 4.6, colors.amber);
+      drawMouthPulse({ x: 256, y: 228 }, "#F2D889", 72);
+      break;
+    case 9:
+      drawMouthPort({ x: 256, y: 225 }, { x: 12, y: 8 }, colorFromHex("#56DDE6", 170), {
+        innerRgba: colorFromHex("#090D13", 220),
+        coreRgba: colors.red,
+        glowAlpha: 44,
+        signalAlpha: 168,
+      });
+      break;
+    case 10:
+      drawMouthPort({ x: 256, y: 224 }, { x: 14, y: 10 }, colorFromHex("#56DDE6", 185), {
+        innerRgba: colorFromHex("#090D13", 230),
+        coreRgba: colors.red,
+        glowAlpha: 54,
+        signalAlpha: 180,
+        stroke: 3.6,
+      });
+      drawMouthPulse({ x: 258, y: 229 }, "#F2D889", 80);
+      break;
+    default:
+      break;
   }
 }
 
 function renderEmotionExtras(image, tier, colors) {
-  if (tier <= 3 || tier === 5) {
-    drawEllipse(image, { x: 348, y: 198 }, { x: 5, y: 9 }, colors.blue);
-  } else if (tier === 4 || tier >= 9) {
-    drawEllipse(image, { x: 348, y: 190 }, { x: 8, y: 16 }, colors.blue);
-    if (tier >= 9) drawEllipse(image, { x: 366, y: 218 }, { x: 7, y: 13 }, colors.blue);
-  } else if (tier === 6) {
-    drawEllipse(image, { x: 176, y: 214 }, { x: 12, y: 7 }, colors.red);
-    drawEllipse(image, { x: 336, y: 214 }, { x: 12, y: 7 }, colors.red);
-  } else if (tier === 8) {
-    drawEllipse(image, { x: 346, y: 142 }, { x: 7, y: 7 }, colors.amber);
-    drawLine(image, { x: 340, y: 142 }, { x: 352, y: 142 }, 3, colors.amber);
-    drawLine(image, { x: 346, y: 136 }, { x: 346, y: 148 }, 3, colors.amber);
-  } else if (tier === 7) {
-    drawLine(image, { x: 346, y: 128 }, { x: 358, y: 116 }, 4, colors.red);
-    drawLine(image, { x: 354, y: 128 }, { x: 366, y: 116 }, 4, colors.red);
+  const pale = colorFromHex("#F1F6F9", 130);
+  switch (tier) {
+    case 1:
+      drawSweatDrop(image, { x: 349, y: 203 }, 8, colorFromHex("#56DDE6", 150), pale);
+      break;
+    case 2:
+      drawSparkle(image, { x: 348, y: 194 }, "#56DDE6", 112);
+      break;
+    case 3:
+      drawTinyPulse(image, { x: 174, y: 214 }, "#56DDE6", 90);
+      break;
+    case 4:
+      drawSweatDrop(image, { x: 347, y: 191 }, 10, colorFromHex("#56DDE6", 150), pale);
+      break;
+    case 5:
+      drawTinyPulse(image, { x: 176, y: 214 }, "#56DDE6", 95);
+      drawSparkle(image, { x: 367, y: 214 }, "#D4A24A", 70);
+      break;
+    case 6:
+      drawSparkle(image, { x: 176, y: 214 }, "#56DDE6", 110);
+      drawSparkle(image, { x: 336, y: 214 }, "#56DDE6", 110);
+      break;
+    case 7:
+      drawSweatDrop(image, { x: 349, y: 191 }, 10, colorFromHex("#56DDE6", 150), pale);
+      drawTinyPulse(image, { x: 366, y: 124 }, "#C23A3A", 100);
+      break;
+    case 8:
+      drawSparkle(image, { x: 346, y: 142 }, "#D4A24A", 110);
+      drawTinyPulse(image, { x: 352, y: 142 }, "#D4A24A", 90);
+      break;
+    case 9:
+      drawSweatDrop(image, { x: 349, y: 194 }, 10, colorFromHex("#56DDE6", 150), pale);
+      drawTinyPulse(image, { x: 366, y: 218 }, "#D86CF1", 100);
+      break;
+    case 10:
+      drawSweatDrop(image, { x: 349, y: 190 }, 11, colorFromHex("#56DDE6", 160), pale);
+      drawTinyPulse(image, { x: 360, y: 116 }, "#C23A3A", 105);
+      drawSparkle(image, { x: 370, y: 212 }, "#D4A24A", 90);
+      break;
+    default:
+      break;
   }
 }
 
@@ -654,6 +1061,28 @@ function manifestEntries() {
   return layers;
 }
 
+function selectedSublayersForRun() {
+  const onlyArg = process.argv.find((arg) => arg.startsWith("--only="));
+  if (!onlyArg) return SUBLAYERS;
+
+  const requested = new Set(
+    onlyArg
+      .slice("--only=".length)
+      .split(",")
+      .map((entry) => entry.trim())
+      .filter(Boolean)
+  );
+  const selected = SUBLAYERS.filter((sublayer) =>
+    requested.has(`${sublayer.attribute}/${sublayer.sublayer}`)
+  );
+
+  if (selected.length === 0) {
+    throw new Error(`No matching sublayers for --only=${[...requested].join(",")}`);
+  }
+
+  return selected;
+}
+
 function promptJobs() {
   const common =
     "Transparent PNG. Single visual element only. No full panda. No full face. No background. No text or watermark. Designed for 512x512 avatar compositing. Keep alpha bounding box tight around the declared anchor. Do not cover eyes, mouth, or nose unless this is an emotion sublayer.";
@@ -665,9 +1094,17 @@ function promptJobs() {
         sublayer.attribute === "emotion"
           ? `This is a facial expression sublayer for ${EMOTION_LABELS[tier]}. Only draw the requested ${sublayer.sublayer} component. Do not draw body, props, aura, or a complete face.`
           : "";
+      const emotionStyleClause =
+        sublayer.attribute === "emotion" && sublayer.sublayer === "brows"
+          ? "Use compact black-titanium cyber brow modules with beveled chrome edges and tiny LED signal lines. They should feel like polished facial hardware, not flat cartoon eyebrow marks or blade-like slashes."
+          : sublayer.attribute === "emotion" && sublayer.sublayer === "mouth"
+            ? "Use a compact black-titanium cyber mouth grille or small illuminated light port. Keep it mouth-anchored, face-safe, and more like hardware than a flat cartoon mouth."
+            : sublayer.attribute === "emotion" && sublayer.sublayer === "extras"
+              ? "Use tiny face-edge accents only: sweat drops, pulses, and sparkles. Keep them compact and peripheral."
+              : "";
       const intuitionClause =
         sublayer.attribute === "intuition"
-          ? "This is not an eye, pupil, eyebrow, gaze, or eye glow asset. Do not alter facial expression. Represent intuition using ear radar, ambient particles, halo, or external sensing symbols only."
+          ? "This is not an eye, pupil, eyebrow, gaze, or eye glow asset. Do not alter facial expression. Represent intuition using ear radar, head-perimeter signal arcs, halo, or external sensing symbols only."
           : "";
 
       jobs.push({
@@ -678,13 +1115,14 @@ function promptJobs() {
         anchor: sublayer.anchorPolicy,
         anchorOffset: sublayer.anchorOffset ?? { x: 0, y: 0 },
         bboxPolicy: sublayer.bboxPolicy,
-        positive_prompt: `${sublayer.promptSubject}, tier ${tier}/10, Chinese ink wash game avatar accessory, tight transparent alpha bbox, premium brush texture`,
+        positive_prompt: `${sublayer.promptSubject}, tier ${tier}/10, cyber designer-toy avatar accessory, black chrome and precise LED micro-detail, tight transparent alpha bbox`,
         forbidden_terms: sublayer.forbidden.split(", "),
         prompt: [
           common,
           `Attribute: ${sublayer.attribute}. Sublayer: ${sublayer.sublayer}. Tier: ${tier}/10. Element anchor: ${sublayer.anchorPolicy}.`,
           `Positive request: ${sublayer.promptSubject}.`,
           emotionClause,
+          emotionStyleClause,
           intuitionClause,
           `Hard exclusions: ${sublayer.forbidden}.`,
         ]
@@ -698,7 +1136,9 @@ function promptJobs() {
 }
 
 function main() {
-  for (const sublayer of SUBLAYERS) {
+  const selectedSublayers = selectedSublayersForRun();
+
+  for (const sublayer of selectedSublayers) {
     for (const tier of TIERS) {
       const src = publicSrc(sublayer.attribute, sublayer.sublayer, tier);
       writePng(localPathFromSrc(src), renderSublayer(sublayer, tier));
@@ -739,7 +1179,7 @@ function main() {
   );
 
   console.log(
-    `Generated ${SUBLAYERS.length * TIERS.length} sublayer PNGs, ${jobs.length} prompt jobs, and ${WORKSPACE_ROOT}/sublayer-manifest.json`
+    `Generated ${selectedSublayers.length * TIERS.length} sublayer PNGs, ${jobs.length} prompt jobs, and ${WORKSPACE_ROOT}/sublayer-manifest.json`
   );
 }
 

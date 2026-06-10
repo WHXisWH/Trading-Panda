@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { clsx } from "clsx";
 import type { PandaStats } from "@/utils/pandaHelper";
 import sublayerPlacementJson from "../../../public/assets/panda/sublayer-placement.json";
+import sublayerSourceBboxesJson from "../../../public/assets/panda/sublayer-source-bboxes.json";
 import {
   canvasAssetPaths,
   canvasTier,
@@ -27,10 +28,14 @@ import type {
 } from "@/lib/pandaExperienceRig";
 import { experienceTierKeyFromNumber } from "@/lib/pandaExperienceRig";
 import {
+  createEmptySublayerSourceBboxManifest,
   isValidSublayerPlacementManifest,
+  isValidSublayerSourceBboxManifest,
   placementKeyFromSrc,
+  resolveSublayerPlacement,
   type PandaSublayerPlacementManifest,
   type PandaSublayerPlacementRect,
+  type PandaSublayerSourceBboxManifest,
 } from "@/lib/pandaSublayerPlacement";
 
 interface PandaCanvasRendererProps {
@@ -46,7 +51,6 @@ type FailedImageMap = Record<string, true>;
 
 const CANVAS_SIZE = 512;
 const DEFAULT_RENDER_OPTIONS: PandaCanvasRenderOptions = {
-  displayMode: "top2",
   tierMode: "discrete",
 };
 const SUBLAYER_PLACEMENTS: PandaSublayerPlacementManifest =
@@ -57,6 +61,10 @@ const SUBLAYER_PLACEMENTS: PandaSublayerPlacementManifest =
         coordinateSpace: { width: CANVAS_SIZE, height: CANVAS_SIZE, unit: "px" },
         placements: {},
       };
+const SUBLAYER_SOURCE_BBOXES: PandaSublayerSourceBboxManifest =
+  isValidSublayerSourceBboxManifest(sublayerSourceBboxesJson)
+    ? sublayerSourceBboxesJson
+    : createEmptySublayerSourceBboxManifest();
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -96,7 +104,7 @@ function drawAssetLayer(
   if (!image) return false;
   const placement = placementForAsset(asset, experienceTierKey);
   if (placement) {
-    drawPlacementLayer(ctx, image, placement, alpha);
+    drawPlacementLayer(ctx, image, placement.rect, alpha);
     return true;
   }
 
@@ -115,10 +123,15 @@ function drawAssetLayer(
 function placementForAsset(
   asset: PandaCanvasAssetLayer,
   experienceTierKey: ExperienceRigTierKey
-): PandaSublayerPlacementRect | null {
+): ReturnType<typeof resolveSublayerPlacement> {
   if (asset.attribute === "experience" || asset.attribute === "base") return null;
   const assetKey = placementKeyFromSrc(asset.src);
-  return SUBLAYER_PLACEMENTS.placements[assetKey]?.[experienceTierKey] ?? null;
+  return resolveSublayerPlacement(
+    assetKey,
+    experienceTierKey,
+    SUBLAYER_PLACEMENTS,
+    SUBLAYER_SOURCE_BBOXES
+  );
 }
 
 function drawPlacementLayer(
@@ -251,11 +264,6 @@ function anchorForAsset(
         point: pointWithOffset(rig.headCenter, asset.anchorOffset),
         rect: rig.faceRect,
       };
-    case "worldAura":
-      return {
-        point: pointWithOffset(rectCenter(rig.bodyRect), asset.anchorOffset),
-        rect: rig.bodyRect,
-      };
     default:
       if (asset.attribute === "experience" || asset.attribute === "base") {
         return { point: rectCenter(rig.bodyRect), rect: rig.bodyRect };
@@ -328,16 +336,13 @@ function renderPandaCanvas(
   const states = canvasLayerStates(stats, renderOptions);
   const experienceAsset = canvasExperienceAsset(stats);
   const emotionAssets = canvasEmotionAssets(stats);
-  const drawableTraitStates = states.filter(
-    (state) => renderOptions.displayMode === "all" || state.major
-  );
 
   const orderedAssets: Array<{ asset: PandaCanvasAssetLayer; alpha: number }> = [
     { asset: experienceAsset, alpha: 1 },
     ...(debugAssets
       ? debugAssets.map((asset) => ({ asset, alpha: 1 }))
       : [
-          ...drawableTraitStates.flatMap((state) =>
+          ...states.flatMap((state) =>
             canvasTraitAssetsForState(state).map((asset) => ({
               asset,
               alpha: traitAssetOpacity(state, renderOptions),

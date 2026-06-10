@@ -74,6 +74,13 @@ interface PlacementDragState {
   startPlacement: PandaSublayerPlacementRect;
 }
 
+interface PlacementLayerState {
+  asset: PandaCanvasAssetLayer;
+  key: string;
+  placement: PandaSublayerPlacementRect;
+  hasOverride: boolean;
+}
+
 interface ExperienceRigEditorProps {
   initialManifest?: ExperienceRigManifest;
   initialPlacementManifest?: PandaSublayerPlacementManifest;
@@ -91,6 +98,15 @@ const RECT_COLORS: Record<ExperienceRigRectKey, string> = {
 const POINT_COLORS: Record<ExperienceRigPointKey, string> = {
   headCenter: "#facc15",
   feetBase: "#14b8a6",
+};
+
+const ATTRIBUTE_LABELS: Record<PandaCanvasSublayerAttributeKey, string> = {
+  boldness: "Boldness",
+  patience: "Patience",
+  intuition: "Intuition",
+  focus: "Focus",
+  contrarian: "Contrarian",
+  emotion: "Emotion",
 };
 
 const MIN_RECT_SIZE = 6;
@@ -299,11 +315,6 @@ function anchorForPlacementAsset(
         point: pointWithOffset(rig.headCenter, asset.anchorOffset),
         rect: rig.faceRect,
       };
-    case "worldAura":
-      return {
-        point: pointWithOffset(rectCenter(rig.bodyRect), asset.anchorOffset),
-        rect: rig.bodyRect,
-      };
     default:
       return { point: rectBottomCenter(rig.bodyRect), rect: rig.bodyRect };
   }
@@ -326,6 +337,23 @@ function automaticPlacementForAsset(
     rotation: 0,
     opacity: 1,
   });
+}
+
+function placementAssetLabel(asset: PandaCanvasAssetLayer): string {
+  return `${asset.attribute}/${asset.sublayer ?? "layer"}/tier-${String(
+    asset.tier ?? 0
+  ).padStart(2, "0")}`;
+}
+
+function uniquePlacementAttributes(
+  options: Array<{
+    attribute: PandaCanvasSublayerAttributeKey;
+    sublayer: string;
+  }>
+): PandaCanvasSublayerAttributeKey[] {
+  return options
+    .map((item) => item.attribute)
+    .filter((item, index, list) => list.indexOf(item) === index);
 }
 
 function buildTierErrorMap(errors: string[]): Record<ExperienceRigTierKey, string[]> {
@@ -452,14 +480,18 @@ export function ExperienceRigEditor({
   const [referenceTier, setReferenceTier] =
     useState<ExperienceRigTierKey>("tier-05");
   const sublayerOptions = useMemo(() => canvasSublayerOptions(), []);
-  const [placementAttribute, setPlacementAttribute] =
-    useState<PandaCanvasSublayerAttributeKey>(
-      sublayerOptions[0]?.attribute ?? "emotion"
-    );
-  const [placementSublayer, setPlacementSublayer] = useState(
-    sublayerOptions[0]?.sublayer ?? "eyes"
+  const placementAttributeOptions = useMemo(
+    () => uniquePlacementAttributes(sublayerOptions),
+    [sublayerOptions]
   );
-  const [placementAssetTier, setPlacementAssetTier] = useState(1);
+  const [visiblePlacementAttributes, setVisiblePlacementAttributes] = useState<
+    PandaCanvasSublayerAttributeKey[]
+  >(() =>
+    placementAttributeOptions.includes("emotion")
+      ? ["emotion"]
+      : placementAttributeOptions.slice(0, 1)
+  );
+  const [activePlacementAssetKey, setActivePlacementAssetKey] = useState("");
   const [selected, setSelected] =
     useState<ExperienceRigHandleKey>("faceRect");
   const [showOverlay, setShowOverlay] = useState(true);
@@ -477,30 +509,66 @@ export function ExperienceRigEditor({
   const activeTier = manifest.tiers[tier];
   const referenceTierManifest = manifest.tiers[referenceTier];
   const baselineTierManifest = manifest.tiers["tier-05"];
-  const activePlacementAssets = useMemo(
+  const placementAssetTier = tierNumber(tier);
+  const placementAssets = useMemo(
     () =>
-      canvasSublayerAssetsFor(
-        placementAttribute,
-        placementSublayer,
-        placementAssetTier
-      ),
-    [placementAttribute, placementAssetTier, placementSublayer]
+      placementAttributeOptions
+        .flatMap((attribute) =>
+          sublayerOptions
+            .filter((item) => item.attribute === attribute)
+            .flatMap((item) =>
+              canvasSublayerAssetsFor(attribute, item.sublayer, placementAssetTier)
+            )
+        )
+        .sort((a, b) => {
+          if (a.attribute !== b.attribute) {
+            return String(a.attribute).localeCompare(String(b.attribute));
+          }
+          if ((a.sublayer ?? "") !== (b.sublayer ?? "")) {
+            return String(a.sublayer ?? "").localeCompare(String(b.sublayer ?? ""));
+          }
+          return (a.tier ?? 0) - (b.tier ?? 0);
+        }),
+    [placementAssetTier, placementAttributeOptions, sublayerOptions]
   );
-  const activePlacementAsset = activePlacementAssets[0];
+  const visiblePlacementAssets = useMemo(
+    () =>
+      placementAssets
+        .filter((asset) =>
+          visiblePlacementAttributes.includes(
+            asset.attribute as PandaCanvasSublayerAttributeKey
+          )
+        )
+        .sort((a, b) => a.zIndex - b.zIndex),
+    [placementAssets, visiblePlacementAttributes]
+  );
+  const activePlacementAsset =
+    visiblePlacementAssets.find(
+      (asset) => placementKeyFromSrc(asset.src) === activePlacementAssetKey
+    ) ?? visiblePlacementAssets[0];
   const activePlacementKey = activePlacementAsset
     ? placementKeyFromSrc(activePlacementAsset.src)
     : "";
-  const automaticPlacement =
-    activePlacementAsset && activeTier && baselineTierManifest
-      ? automaticPlacementForAsset(
-          activePlacementAsset,
-          activeTier,
-          baselineTierManifest
-        )
-      : null;
-  const activePlacement =
-    (activePlacementKey && placementManifest.placements[activePlacementKey]?.[tier]) ||
-    automaticPlacement;
+  const placementLayers = useMemo<PlacementLayerState[]>(
+    () =>
+      visiblePlacementAssets.map((asset) => {
+        const key = placementKeyFromSrc(asset.src);
+        const override = placementManifest.placements[key]?.[tier];
+        return {
+          asset,
+          key,
+          placement:
+            override ??
+            automaticPlacementForAsset(asset, activeTier, baselineTierManifest),
+          hasOverride: Boolean(override),
+        };
+      }),
+    [activeTier, baselineTierManifest, placementManifest, tier, visiblePlacementAssets]
+  );
+  const activePlacementLayer =
+    placementLayers.find((item) => item.key === activePlacementKey) ??
+    placementLayers[0];
+  const activePlacement = activePlacementLayer?.placement ?? null;
   const jsonPreview = useMemo(
     () => JSON.stringify(activeTier, null, 2),
     [activeTier]
@@ -533,9 +601,21 @@ export function ExperienceRigEditor({
     () => validateSublayerPlacementManifest(placementManifest),
     [placementManifest]
   );
-  const hasActivePlacementOverride = Boolean(
-    activePlacementKey && placementManifest.placements[activePlacementKey]?.[tier]
-  );
+  const hasActivePlacementOverride = Boolean(activePlacementLayer?.hasOverride);
+
+  useEffect(() => {
+    if (visiblePlacementAssets.length === 0) {
+      if (activePlacementAssetKey) setActivePlacementAssetKey("");
+      return;
+    }
+
+    const hasActiveAsset = visiblePlacementAssets.some(
+      (asset) => placementKeyFromSrc(asset.src) === activePlacementAssetKey
+    );
+    if (!hasActiveAsset) {
+      setActivePlacementAssetKey(placementKeyFromSrc(visiblePlacementAssets[0]!.src));
+    }
+  }, [activePlacementAssetKey, visiblePlacementAssets]);
 
   const updateTier = useCallback(
     (
@@ -616,6 +696,19 @@ export function ExperienceRigEditor({
     });
     toast.message("已移除当前 override");
   }, [activePlacementKey, tier]);
+
+  const togglePlacementAttribute = useCallback(
+    (attribute: PandaCanvasSublayerAttributeKey) => {
+      setVisiblePlacementAttributes((current) =>
+        current.includes(attribute)
+          ? current.filter((item) => item !== attribute)
+          : placementAttributeOptions.filter(
+              (item) => item === attribute || current.includes(item)
+            )
+      );
+    },
+    [placementAttributeOptions]
+  );
 
   const copyTierFrom = useCallback(
     (sourceTier: ExperienceRigTierKey) => {
@@ -984,12 +1077,6 @@ export function ExperienceRigEditor({
 
   const activeTierErrors = validationErrorMap[tier];
   const selectedIsRect = isRectKey(selected);
-  const filteredSublayerOptions = sublayerOptions.filter(
-    (item) => item.attribute === placementAttribute
-  );
-  const placementAttributeOptions = sublayerOptions
-    .map((item) => item.attribute)
-    .filter((item, index, list) => list.indexOf(item) === index);
   const activePlacementStatus = hasActivePlacementOverride ? "override" : "default";
 
   return (
@@ -1618,7 +1705,9 @@ export function ExperienceRigEditor({
                   Sublayer Placement
                 </h2>
                 <p className="mt-1 break-all font-mono text-[11px] text-ink-500">
-                  {activePlacementAsset?.src ?? "no asset"}
+                  {activePlacementAsset
+                    ? placementAssetLabel(activePlacementAsset)
+                    : "no visible asset"}
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -1701,7 +1790,52 @@ export function ExperienceRigEditor({
                   />
                 </g>
 
-                {activePlacementAsset && activePlacement && (
+                {placementLayers
+                  .filter((item) => item.key !== activePlacementKey)
+                  .map((item) => (
+                    <g
+                      key={item.key}
+                      transform={`rotate(${item.placement.rotation ?? 0} ${
+                        item.placement.x + item.placement.width / 2
+                      } ${item.placement.y + item.placement.height / 2})`}
+                    >
+                      <image
+                        href={item.asset.src}
+                        x={item.placement.x}
+                        y={item.placement.y}
+                        width={item.placement.width}
+                        height={item.placement.height}
+                        preserveAspectRatio="none"
+                        opacity={(item.placement.opacity ?? 1) * 0.68}
+                        className="cursor-pointer"
+                        onPointerDown={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          setActivePlacementAssetKey(item.key);
+                        }}
+                      />
+                      <rect
+                        x={item.placement.x}
+                        y={item.placement.y}
+                        width={item.placement.width}
+                        height={item.placement.height}
+                        rx="4"
+                        fill="transparent"
+                        stroke={item.hasOverride ? "#0f766e" : "#64748b"}
+                        strokeWidth="1.5"
+                        strokeDasharray={item.hasOverride ? "none" : "6 5"}
+                        opacity="0.72"
+                        className="cursor-pointer"
+                        onPointerDown={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          setActivePlacementAssetKey(item.key);
+                        }}
+                      />
+                    </g>
+                  ))}
+
+                {activePlacementLayer && activePlacementAsset && activePlacement && (
                   <g
                     transform={`rotate(${activePlacement.rotation ?? 0} ${
                       activePlacement.x + activePlacement.width / 2
@@ -1754,80 +1888,144 @@ export function ExperienceRigEditor({
 
           <aside className="flex flex-col gap-4 xl:sticky xl:top-4 xl:self-start">
             <section className="rounded-lg border border-[var(--color-border)] bg-white p-4 shadow-sm">
-              <h2 className="text-sm font-semibold text-ink-900">选择</h2>
-              <div className="mt-3 grid gap-3">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-sm font-semibold text-ink-900">选择</h2>
+                <span className="rounded-full bg-ink-50 px-2 py-0.5 text-[11px] font-medium text-ink-700">
+                  {visiblePlacementAssets.length}
+                </span>
+              </div>
+              <div className="mt-3 grid gap-4">
                 <label className="grid gap-1 text-[12px] text-ink-500">
-                  Attribute
+                  Experience
                   <select
-                    value={placementAttribute}
-                    onChange={(event) => {
-                      const nextAttribute = event.target
-                        .value as PandaCanvasSublayerAttributeKey;
-                      const nextSublayer =
-                        sublayerOptions.find(
-                          (item) => item.attribute === nextAttribute
-                        )?.sublayer ?? "";
-                      setPlacementAttribute(nextAttribute);
-                      setPlacementSublayer(nextSublayer);
-                    }}
+                    value={tier}
+                    onChange={(event) =>
+                      setTier(event.target.value as ExperienceRigTierKey)
+                    }
                     className="rounded-md border border-[var(--color-border)] px-2 py-2 text-[13px] text-ink-900"
                   >
-                    {placementAttributeOptions.map((item) => (
+                    {EXPERIENCE_RIG_TIERS.map((item) => (
                       <option key={item} value={item}>
                         {item}
                       </option>
                     ))}
                   </select>
                 </label>
-                <label className="grid gap-1 text-[12px] text-ink-500">
-                  Sublayer
-                  <select
-                    value={placementSublayer}
-                    onChange={(event) => setPlacementSublayer(event.target.value)}
-                    className="rounded-md border border-[var(--color-border)] px-2 py-2 text-[13px] text-ink-900"
-                  >
-                    {filteredSublayerOptions.map((item) => (
-                      <option
-                        key={`${item.attribute}/${item.sublayer}`}
-                        value={item.sublayer}
+
+                <div className="grid gap-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[12px] text-ink-500">Visible attributes</span>
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setVisiblePlacementAttributes(placementAttributeOptions)
+                        }
+                        className="rounded-md border border-[var(--color-border)] px-2 py-1 text-[11px] text-ink-700 hover:bg-paper-card"
                       >
-                        {item.sublayer}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  <label className="grid gap-1 text-[12px] text-ink-500">
-                    Asset tier
-                    <input
-                      type="number"
-                      min={1}
-                      max={10}
-                      value={placementAssetTier}
-                      onChange={(event) =>
-                        setPlacementAssetTier(
-                          Math.min(10, Math.max(1, Number(event.target.value)))
-                        )
-                      }
-                      className="rounded-md border border-[var(--color-border)] px-2 py-2 text-[13px] text-ink-900"
-                    />
-                  </label>
-                  <label className="grid gap-1 text-[12px] text-ink-500">
-                    Experience
-                    <select
-                      value={tier}
-                      onChange={(event) =>
-                        setTier(event.target.value as ExperienceRigTierKey)
-                      }
-                      className="rounded-md border border-[var(--color-border)] px-2 py-2 text-[13px] text-ink-900"
-                    >
-                      {EXPERIENCE_RIG_TIERS.map((item) => (
-                        <option key={item} value={item}>
-                          {item}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                        全部
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setVisiblePlacementAttributes([])}
+                        className="rounded-md border border-[var(--color-border)] px-2 py-1 text-[11px] text-ink-700 hover:bg-paper-card"
+                      >
+                        清空
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {placementAttributeOptions.map((attribute) => {
+                      const selectedAttribute =
+                        visiblePlacementAttributes.includes(attribute);
+                      const count = placementAssets.filter(
+                        (asset) => asset.attribute === attribute
+                      ).length;
+                      return (
+                        <button
+                          key={attribute}
+                          type="button"
+                          onClick={() => togglePlacementAttribute(attribute)}
+                          className={clsx(
+                            "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-medium transition",
+                            selectedAttribute
+                              ? "border-ink-900 bg-ink-900 text-white"
+                              : "border-[var(--color-border)] bg-white text-ink-700 hover:bg-paper-card"
+                          )}
+                        >
+                          {selectedAttribute ? (
+                            <Eye className="h-3.5 w-3.5" />
+                          ) : (
+                            <EyeOff className="h-3.5 w-3.5" />
+                          )}
+                          {ATTRIBUTE_LABELS[attribute]}
+                          <span
+                            className={clsx(
+                              "rounded-full px-1.5 py-0.5 text-[10px]",
+                              selectedAttribute
+                                ? "bg-white/15 text-white"
+                                : "bg-ink-50 text-ink-500"
+                            )}
+                          >
+                            {count}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="grid gap-2">
+                  <span className="text-[12px] text-ink-500">Layers</span>
+                  <div className="max-h-[280px] overflow-auto rounded-lg border border-[var(--color-border)] bg-paper-card p-2">
+                    {visiblePlacementAssets.length === 0 ? (
+                      <div className="rounded-md bg-white px-3 py-3 text-[12px] text-ink-500">
+                        无可见素材
+                      </div>
+                    ) : (
+                      <div className="grid gap-1.5">
+                        {visiblePlacementAssets.map((asset) => {
+                          const key = placementKeyFromSrc(asset.src);
+                          const selectedAsset = key === activePlacementKey;
+                          const hasOverride = Boolean(
+                            placementManifest.placements[key]?.[tier]
+                          );
+                          return (
+                            <button
+                              key={key}
+                              type="button"
+                              onClick={() => setActivePlacementAssetKey(key)}
+                              className={clsx(
+                                "grid gap-1 rounded-md border px-3 py-2 text-left transition",
+                                selectedAsset
+                                  ? "border-ink-900 bg-white shadow-sm"
+                                  : "border-transparent bg-transparent hover:bg-white"
+                              )}
+                            >
+                              <span className="flex items-center justify-between gap-2">
+                                <span className="truncate text-[12px] font-medium text-ink-900">
+                                  {asset.sublayer}
+                                </span>
+                                <span
+                                  className={clsx(
+                                    "rounded-full px-2 py-0.5 text-[10px] font-medium",
+                                    hasOverride
+                                      ? "bg-teal-50 text-teal-700"
+                                      : "bg-ink-50 text-ink-500"
+                                  )}
+                                >
+                                  {hasOverride ? "override" : "default"}
+                                </span>
+                              </span>
+                              <span className="truncate font-mono text-[11px] text-ink-500">
+                                {placementAssetLabel(asset)}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </section>

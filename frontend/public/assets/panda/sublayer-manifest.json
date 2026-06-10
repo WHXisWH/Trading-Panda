@@ -19,252 +19,33 @@
     "bodyCenter",
     "upperBodyCenter",
     "feetBase",
-    "headCenterOffset",
-    "worldAura"
+    "headCenterOffset"
   ],
   "bboxPolicies": [
     "fullExperience",
     "headband",
     "cape",
     "weaponSide",
-    "auraPeripheral",
     "bodySideMark",
     "monocle",
     "chestCore",
     "intuitionNoFaceFeatures",
     "groundProp",
     "groundSideProp",
-    "emotionEyes",
     "emotionBrows",
     "emotionMouth",
     "emotionExtras"
   ],
   "legacyFallbacks": {
     "status": "temporary-fallback",
-    "compatibilityStrategy": "Official public assets currently contain only generated sublayer PNGs that exist on disk and passed staged QA; legacy broad-layer fallback PNGs are not loaded by the renderer.",
-    "directories": []
+    "compatibilityStrategy": "Old broad-layer directories are retained only as temporary archived assets. Sublayer manifest, renderer, audit, and Panda Lab QA now use sublayer assets only; do not load these broad-layer files in the renderer.",
+    "directories": [
+      "traits/boldness/tier-*.png",
+      "traits/intuition/tier-*.png",
+      "emotions/tier-*.png"
+    ]
   },
   "layers": [
-    {
-      "attribute": "boldness",
-      "sublayer": "headband",
-      "tier": 1,
-      "src": "/assets/panda/traits/boldness/headband/tier-01.png",
-      "anchorPolicy": "faceTopCenter",
-      "zIndex": 64,
-      "opacityRule": "trait",
-      "bboxPolicy": "headband",
-      "role": "single high-forehead cinnabar courage band; must sit above eye centers"
-    },
-    {
-      "attribute": "boldness",
-      "sublayer": "headband",
-      "tier": 2,
-      "src": "/assets/panda/traits/boldness/headband/tier-02.png",
-      "anchorPolicy": "faceTopCenter",
-      "zIndex": 64,
-      "opacityRule": "trait",
-      "bboxPolicy": "headband",
-      "role": "single high-forehead cinnabar courage band; must sit above eye centers"
-    },
-    {
-      "attribute": "boldness",
-      "sublayer": "headband",
-      "tier": 3,
-      "src": "/assets/panda/traits/boldness/headband/tier-03.png",
-      "anchorPolicy": "faceTopCenter",
-      "zIndex": 64,
-      "opacityRule": "trait",
-      "bboxPolicy": "headband",
-      "role": "single high-forehead cinnabar courage band; must sit above eye centers"
-    },
-    {
-      "attribute": "boldness",
-      "sublayer": "headband",
-      "tier": 4,
-      "src": "/assets/panda/traits/boldness/headband/tier-04.png",
-      "anchorPolicy": "faceTopCenter",
-      "zIndex": 64,
-      "opacityRule": "trait",
-      "bboxPolicy": "headband",
-      "role": "single high-forehead cinnabar courage band; must sit above eye centers"
-    },
-    {
-      "attribute": "boldness",
-      "sublayer": "headband",
-      "tier": 5,
-      "src": "/assets/panda/traits/boldness/headband/tier-05.png",
-      "anchorPolicy": "faceTopCenter",
-      "zIndex": 64,
-      "opacityRule": "trait",
-      "bboxPolicy": "headband",
-      "role": "single high-forehead cinnabar courage band; must sit above eye centers"
-    },
-    {
-      "attribute": "boldness",
-      "sublayer": "headband",
-      "tier": 6,
-      "src": "/assets/panda/traits/boldness/headband/tier-06.png",
-      "anchorPolicy": "faceTopCenter",
-      "zIndex": 64,
-      "opacityRule": "trait",
-      "bboxPolicy": "headband",
-      "role": "single high-forehead cinnabar courage band; must sit above eye centers"
-    },
-    {
-      "attribute": "boldness",
-      "sublayer": "headband",
-      "tier": 7,
-      "src": "/assets/panda/traits/boldness/headband/tier-07.png",
-      "anchorPolicy": "faceTopCenter",
-      "zIndex": 64,
-      "opacityRule": "trait",
-      "bboxPolicy": "headband",
-      "role": "single high-forehead cinnabar courage band; must sit above eye centers"
-    },
-    {
-      "attribute": "boldness",
-      "sublayer": "headband",
-      "tier": 8,
-      "src": "/assets/panda/traits/boldness/headband/tier-08.png",
-      "anchorPolicy": "faceTopCenter",
-      "zIndex": 64,
-      "opacityRule": "trait",
-      "bboxPolicy": "headband",
-      "role": "single high-forehead cinnabar courage band; must sit above eye centers"
-    },
-    {
-      "attribute": "boldness",
-      "sublayer": "headband",
-      "tier": 9,
-      "src": "/assets/panda/traits/boldness/headband/tier-09.png",
-      "anchorPolicy": "faceTopCenter",
-      "zIndex": 64,
-      "opacityRule": "trait",
-      "bboxPolicy": "headband",
-      "role": "single high-forehead cinnabar courage band; must sit above eye centers"
-    },
-    {
-      "attribute": "boldness",
-      "sublayer": "headband",
-      "tier": 10,
-      "src": "/assets/panda/traits/boldness/headband/tier-10.png",
-      "anchorPolicy": "faceTopCenter",
-      "zIndex": 64,
-      "opacityRule": "trait",
-      "bboxPolicy": "headband",
-      "role": "single high-forehead cinnabar courage band; must sit above eye centers"
-    },
-    {
-      "attribute": "boldness",
-      "sublayer": "cape",
-      "tier": 1,
-      "src": "/assets/panda/traits/boldness/cape/tier-01.png",
-      "anchorPolicy": "upperBodyCenter",
-      "zIndex": 42,
-      "opacityRule": "trait",
-      "bboxPolicy": "cape",
-      "role": "single shoulder cape brush shape behind upper body"
-    },
-    {
-      "attribute": "boldness",
-      "sublayer": "cape",
-      "tier": 2,
-      "src": "/assets/panda/traits/boldness/cape/tier-02.png",
-      "anchorPolicy": "upperBodyCenter",
-      "zIndex": 42,
-      "opacityRule": "trait",
-      "bboxPolicy": "cape",
-      "role": "single shoulder cape brush shape behind upper body"
-    },
-    {
-      "attribute": "boldness",
-      "sublayer": "cape",
-      "tier": 3,
-      "src": "/assets/panda/traits/boldness/cape/tier-03.png",
-      "anchorPolicy": "upperBodyCenter",
-      "zIndex": 42,
-      "opacityRule": "trait",
-      "bboxPolicy": "cape",
-      "role": "single shoulder cape brush shape behind upper body"
-    },
-    {
-      "attribute": "boldness",
-      "sublayer": "cape",
-      "tier": 4,
-      "src": "/assets/panda/traits/boldness/cape/tier-04.png",
-      "anchorPolicy": "upperBodyCenter",
-      "zIndex": 42,
-      "opacityRule": "trait",
-      "bboxPolicy": "cape",
-      "role": "single shoulder cape brush shape behind upper body"
-    },
-    {
-      "attribute": "boldness",
-      "sublayer": "cape",
-      "tier": 5,
-      "src": "/assets/panda/traits/boldness/cape/tier-05.png",
-      "anchorPolicy": "upperBodyCenter",
-      "zIndex": 42,
-      "opacityRule": "trait",
-      "bboxPolicy": "cape",
-      "role": "single shoulder cape brush shape behind upper body"
-    },
-    {
-      "attribute": "boldness",
-      "sublayer": "cape",
-      "tier": 6,
-      "src": "/assets/panda/traits/boldness/cape/tier-06.png",
-      "anchorPolicy": "upperBodyCenter",
-      "zIndex": 42,
-      "opacityRule": "trait",
-      "bboxPolicy": "cape",
-      "role": "single shoulder cape brush shape behind upper body"
-    },
-    {
-      "attribute": "boldness",
-      "sublayer": "cape",
-      "tier": 7,
-      "src": "/assets/panda/traits/boldness/cape/tier-07.png",
-      "anchorPolicy": "upperBodyCenter",
-      "zIndex": 42,
-      "opacityRule": "trait",
-      "bboxPolicy": "cape",
-      "role": "single shoulder cape brush shape behind upper body"
-    },
-    {
-      "attribute": "boldness",
-      "sublayer": "cape",
-      "tier": 8,
-      "src": "/assets/panda/traits/boldness/cape/tier-08.png",
-      "anchorPolicy": "upperBodyCenter",
-      "zIndex": 42,
-      "opacityRule": "trait",
-      "bboxPolicy": "cape",
-      "role": "single shoulder cape brush shape behind upper body"
-    },
-    {
-      "attribute": "boldness",
-      "sublayer": "cape",
-      "tier": 9,
-      "src": "/assets/panda/traits/boldness/cape/tier-09.png",
-      "anchorPolicy": "upperBodyCenter",
-      "zIndex": 42,
-      "opacityRule": "trait",
-      "bboxPolicy": "cape",
-      "role": "single shoulder cape brush shape behind upper body"
-    },
-    {
-      "attribute": "boldness",
-      "sublayer": "cape",
-      "tier": 10,
-      "src": "/assets/panda/traits/boldness/cape/tier-10.png",
-      "anchorPolicy": "upperBodyCenter",
-      "zIndex": 42,
-      "opacityRule": "trait",
-      "bboxPolicy": "cape",
-      "role": "single shoulder cape brush shape behind upper body"
-    },
     {
       "attribute": "boldness",
       "sublayer": "weapon",
@@ -374,116 +155,6 @@
       "opacityRule": "trait",
       "bboxPolicy": "weaponSide",
       "role": "single side weapon silhouette parked outside face until hand anchors exist"
-    },
-    {
-      "attribute": "contrarian",
-      "sublayer": "aura",
-      "tier": 1,
-      "src": "/assets/panda/traits/contrarian/aura/tier-01.png",
-      "anchorPolicy": "worldAura",
-      "zIndex": 12,
-      "opacityRule": "aura",
-      "bboxPolicy": "auraPeripheral",
-      "role": "single peripheral reversal aura around the character silhouette"
-    },
-    {
-      "attribute": "contrarian",
-      "sublayer": "aura",
-      "tier": 2,
-      "src": "/assets/panda/traits/contrarian/aura/tier-02.png",
-      "anchorPolicy": "worldAura",
-      "zIndex": 12,
-      "opacityRule": "aura",
-      "bboxPolicy": "auraPeripheral",
-      "role": "single peripheral reversal aura around the character silhouette"
-    },
-    {
-      "attribute": "contrarian",
-      "sublayer": "aura",
-      "tier": 3,
-      "src": "/assets/panda/traits/contrarian/aura/tier-03.png",
-      "anchorPolicy": "worldAura",
-      "zIndex": 12,
-      "opacityRule": "aura",
-      "bboxPolicy": "auraPeripheral",
-      "role": "single peripheral reversal aura around the character silhouette"
-    },
-    {
-      "attribute": "contrarian",
-      "sublayer": "aura",
-      "tier": 4,
-      "src": "/assets/panda/traits/contrarian/aura/tier-04.png",
-      "anchorPolicy": "worldAura",
-      "zIndex": 12,
-      "opacityRule": "aura",
-      "bboxPolicy": "auraPeripheral",
-      "role": "single peripheral reversal aura around the character silhouette"
-    },
-    {
-      "attribute": "contrarian",
-      "sublayer": "aura",
-      "tier": 5,
-      "src": "/assets/panda/traits/contrarian/aura/tier-05.png",
-      "anchorPolicy": "worldAura",
-      "zIndex": 12,
-      "opacityRule": "aura",
-      "bboxPolicy": "auraPeripheral",
-      "role": "single peripheral reversal aura around the character silhouette"
-    },
-    {
-      "attribute": "contrarian",
-      "sublayer": "aura",
-      "tier": 6,
-      "src": "/assets/panda/traits/contrarian/aura/tier-06.png",
-      "anchorPolicy": "worldAura",
-      "zIndex": 12,
-      "opacityRule": "aura",
-      "bboxPolicy": "auraPeripheral",
-      "role": "single peripheral reversal aura around the character silhouette"
-    },
-    {
-      "attribute": "contrarian",
-      "sublayer": "aura",
-      "tier": 7,
-      "src": "/assets/panda/traits/contrarian/aura/tier-07.png",
-      "anchorPolicy": "worldAura",
-      "zIndex": 12,
-      "opacityRule": "aura",
-      "bboxPolicy": "auraPeripheral",
-      "role": "single peripheral reversal aura around the character silhouette"
-    },
-    {
-      "attribute": "contrarian",
-      "sublayer": "aura",
-      "tier": 8,
-      "src": "/assets/panda/traits/contrarian/aura/tier-08.png",
-      "anchorPolicy": "worldAura",
-      "zIndex": 12,
-      "opacityRule": "aura",
-      "bboxPolicy": "auraPeripheral",
-      "role": "single peripheral reversal aura around the character silhouette"
-    },
-    {
-      "attribute": "contrarian",
-      "sublayer": "aura",
-      "tier": 9,
-      "src": "/assets/panda/traits/contrarian/aura/tier-09.png",
-      "anchorPolicy": "worldAura",
-      "zIndex": 12,
-      "opacityRule": "aura",
-      "bboxPolicy": "auraPeripheral",
-      "role": "single peripheral reversal aura around the character silhouette"
-    },
-    {
-      "attribute": "contrarian",
-      "sublayer": "aura",
-      "tier": 10,
-      "src": "/assets/panda/traits/contrarian/aura/tier-10.png",
-      "anchorPolicy": "worldAura",
-      "zIndex": 12,
-      "opacityRule": "aura",
-      "bboxPolicy": "auraPeripheral",
-      "role": "single peripheral reversal aura around the character silhouette"
     },
     {
       "attribute": "contrarian",
@@ -747,113 +418,113 @@
     },
     {
       "attribute": "focus",
-      "sublayer": "headband",
+      "sublayer": "reticle",
       "tier": 1,
-      "src": "/assets/panda/traits/focus/headband/tier-01.png",
-      "anchorPolicy": "faceTopCenter",
-      "zIndex": 66,
+      "src": "/assets/panda/traits/focus/reticle/tier-01.png",
+      "anchorPolicy": "rightEyeCenter",
+      "zIndex": 73,
       "opacityRule": "trait",
-      "bboxPolicy": "headband",
-      "role": "single analytical headband above eye centers"
+      "bboxPolicy": "monocle",
+      "role": "single analytical targeting reticle near the right-eye focus anchor"
     },
     {
       "attribute": "focus",
-      "sublayer": "headband",
+      "sublayer": "reticle",
       "tier": 2,
-      "src": "/assets/panda/traits/focus/headband/tier-02.png",
-      "anchorPolicy": "faceTopCenter",
-      "zIndex": 66,
+      "src": "/assets/panda/traits/focus/reticle/tier-02.png",
+      "anchorPolicy": "rightEyeCenter",
+      "zIndex": 73,
       "opacityRule": "trait",
-      "bboxPolicy": "headband",
-      "role": "single analytical headband above eye centers"
+      "bboxPolicy": "monocle",
+      "role": "single analytical targeting reticle near the right-eye focus anchor"
     },
     {
       "attribute": "focus",
-      "sublayer": "headband",
+      "sublayer": "reticle",
       "tier": 3,
-      "src": "/assets/panda/traits/focus/headband/tier-03.png",
-      "anchorPolicy": "faceTopCenter",
-      "zIndex": 66,
+      "src": "/assets/panda/traits/focus/reticle/tier-03.png",
+      "anchorPolicy": "rightEyeCenter",
+      "zIndex": 73,
       "opacityRule": "trait",
-      "bboxPolicy": "headband",
-      "role": "single analytical headband above eye centers"
+      "bboxPolicy": "monocle",
+      "role": "single analytical targeting reticle near the right-eye focus anchor"
     },
     {
       "attribute": "focus",
-      "sublayer": "headband",
+      "sublayer": "reticle",
       "tier": 4,
-      "src": "/assets/panda/traits/focus/headband/tier-04.png",
-      "anchorPolicy": "faceTopCenter",
-      "zIndex": 66,
+      "src": "/assets/panda/traits/focus/reticle/tier-04.png",
+      "anchorPolicy": "rightEyeCenter",
+      "zIndex": 73,
       "opacityRule": "trait",
-      "bboxPolicy": "headband",
-      "role": "single analytical headband above eye centers"
+      "bboxPolicy": "monocle",
+      "role": "single analytical targeting reticle near the right-eye focus anchor"
     },
     {
       "attribute": "focus",
-      "sublayer": "headband",
+      "sublayer": "reticle",
       "tier": 5,
-      "src": "/assets/panda/traits/focus/headband/tier-05.png",
-      "anchorPolicy": "faceTopCenter",
-      "zIndex": 66,
+      "src": "/assets/panda/traits/focus/reticle/tier-05.png",
+      "anchorPolicy": "rightEyeCenter",
+      "zIndex": 73,
       "opacityRule": "trait",
-      "bboxPolicy": "headband",
-      "role": "single analytical headband above eye centers"
+      "bboxPolicy": "monocle",
+      "role": "single analytical targeting reticle near the right-eye focus anchor"
     },
     {
       "attribute": "focus",
-      "sublayer": "headband",
+      "sublayer": "reticle",
       "tier": 6,
-      "src": "/assets/panda/traits/focus/headband/tier-06.png",
-      "anchorPolicy": "faceTopCenter",
-      "zIndex": 66,
+      "src": "/assets/panda/traits/focus/reticle/tier-06.png",
+      "anchorPolicy": "rightEyeCenter",
+      "zIndex": 73,
       "opacityRule": "trait",
-      "bboxPolicy": "headband",
-      "role": "single analytical headband above eye centers"
+      "bboxPolicy": "monocle",
+      "role": "single analytical targeting reticle near the right-eye focus anchor"
     },
     {
       "attribute": "focus",
-      "sublayer": "headband",
+      "sublayer": "reticle",
       "tier": 7,
-      "src": "/assets/panda/traits/focus/headband/tier-07.png",
-      "anchorPolicy": "faceTopCenter",
-      "zIndex": 66,
+      "src": "/assets/panda/traits/focus/reticle/tier-07.png",
+      "anchorPolicy": "rightEyeCenter",
+      "zIndex": 73,
       "opacityRule": "trait",
-      "bboxPolicy": "headband",
-      "role": "single analytical headband above eye centers"
+      "bboxPolicy": "monocle",
+      "role": "single analytical targeting reticle near the right-eye focus anchor"
     },
     {
       "attribute": "focus",
-      "sublayer": "headband",
+      "sublayer": "reticle",
       "tier": 8,
-      "src": "/assets/panda/traits/focus/headband/tier-08.png",
-      "anchorPolicy": "faceTopCenter",
-      "zIndex": 66,
+      "src": "/assets/panda/traits/focus/reticle/tier-08.png",
+      "anchorPolicy": "rightEyeCenter",
+      "zIndex": 73,
       "opacityRule": "trait",
-      "bboxPolicy": "headband",
-      "role": "single analytical headband above eye centers"
+      "bboxPolicy": "monocle",
+      "role": "single analytical targeting reticle near the right-eye focus anchor"
     },
     {
       "attribute": "focus",
-      "sublayer": "headband",
+      "sublayer": "reticle",
       "tier": 9,
-      "src": "/assets/panda/traits/focus/headband/tier-09.png",
-      "anchorPolicy": "faceTopCenter",
-      "zIndex": 66,
+      "src": "/assets/panda/traits/focus/reticle/tier-09.png",
+      "anchorPolicy": "rightEyeCenter",
+      "zIndex": 73,
       "opacityRule": "trait",
-      "bboxPolicy": "headband",
-      "role": "single analytical headband above eye centers"
+      "bboxPolicy": "monocle",
+      "role": "single analytical targeting reticle near the right-eye focus anchor"
     },
     {
       "attribute": "focus",
-      "sublayer": "headband",
+      "sublayer": "reticle",
       "tier": 10,
-      "src": "/assets/panda/traits/focus/headband/tier-10.png",
-      "anchorPolicy": "faceTopCenter",
-      "zIndex": 66,
+      "src": "/assets/panda/traits/focus/reticle/tier-10.png",
+      "anchorPolicy": "rightEyeCenter",
+      "zIndex": 73,
       "opacityRule": "trait",
-      "bboxPolicy": "headband",
-      "role": "single analytical headband above eye centers"
+      "bboxPolicy": "monocle",
+      "role": "single analytical targeting reticle near the right-eye focus anchor"
     },
     {
       "attribute": "focus",
@@ -1114,156 +785,6 @@
       "opacityRule": "trait",
       "bboxPolicy": "intuitionNoFaceFeatures",
       "role": "single external ear-side radar accent; not an eye or gaze asset"
-    },
-    {
-      "attribute": "intuition",
-      "sublayer": "particles",
-      "tier": 1,
-      "src": "/assets/panda/traits/intuition/particles/tier-01.png",
-      "anchorPolicy": "headCenterOffset",
-      "anchorOffset": {
-        "x": 0,
-        "y": 0
-      },
-      "zIndex": 89,
-      "opacityRule": "trait",
-      "bboxPolicy": "intuitionNoFaceFeatures",
-      "role": "small ambient sensing particles around face perimeter; not eye-related"
-    },
-    {
-      "attribute": "intuition",
-      "sublayer": "particles",
-      "tier": 2,
-      "src": "/assets/panda/traits/intuition/particles/tier-02.png",
-      "anchorPolicy": "headCenterOffset",
-      "anchorOffset": {
-        "x": 0,
-        "y": 0
-      },
-      "zIndex": 89,
-      "opacityRule": "trait",
-      "bboxPolicy": "intuitionNoFaceFeatures",
-      "role": "small ambient sensing particles around face perimeter; not eye-related"
-    },
-    {
-      "attribute": "intuition",
-      "sublayer": "particles",
-      "tier": 3,
-      "src": "/assets/panda/traits/intuition/particles/tier-03.png",
-      "anchorPolicy": "headCenterOffset",
-      "anchorOffset": {
-        "x": 0,
-        "y": 0
-      },
-      "zIndex": 89,
-      "opacityRule": "trait",
-      "bboxPolicy": "intuitionNoFaceFeatures",
-      "role": "small ambient sensing particles around face perimeter; not eye-related"
-    },
-    {
-      "attribute": "intuition",
-      "sublayer": "particles",
-      "tier": 4,
-      "src": "/assets/panda/traits/intuition/particles/tier-04.png",
-      "anchorPolicy": "headCenterOffset",
-      "anchorOffset": {
-        "x": 0,
-        "y": 0
-      },
-      "zIndex": 89,
-      "opacityRule": "trait",
-      "bboxPolicy": "intuitionNoFaceFeatures",
-      "role": "small ambient sensing particles around face perimeter; not eye-related"
-    },
-    {
-      "attribute": "intuition",
-      "sublayer": "particles",
-      "tier": 5,
-      "src": "/assets/panda/traits/intuition/particles/tier-05.png",
-      "anchorPolicy": "headCenterOffset",
-      "anchorOffset": {
-        "x": 0,
-        "y": 0
-      },
-      "zIndex": 89,
-      "opacityRule": "trait",
-      "bboxPolicy": "intuitionNoFaceFeatures",
-      "role": "small ambient sensing particles around face perimeter; not eye-related"
-    },
-    {
-      "attribute": "intuition",
-      "sublayer": "particles",
-      "tier": 6,
-      "src": "/assets/panda/traits/intuition/particles/tier-06.png",
-      "anchorPolicy": "headCenterOffset",
-      "anchorOffset": {
-        "x": 0,
-        "y": 0
-      },
-      "zIndex": 89,
-      "opacityRule": "trait",
-      "bboxPolicy": "intuitionNoFaceFeatures",
-      "role": "small ambient sensing particles around face perimeter; not eye-related"
-    },
-    {
-      "attribute": "intuition",
-      "sublayer": "particles",
-      "tier": 7,
-      "src": "/assets/panda/traits/intuition/particles/tier-07.png",
-      "anchorPolicy": "headCenterOffset",
-      "anchorOffset": {
-        "x": 0,
-        "y": 0
-      },
-      "zIndex": 89,
-      "opacityRule": "trait",
-      "bboxPolicy": "intuitionNoFaceFeatures",
-      "role": "small ambient sensing particles around face perimeter; not eye-related"
-    },
-    {
-      "attribute": "intuition",
-      "sublayer": "particles",
-      "tier": 8,
-      "src": "/assets/panda/traits/intuition/particles/tier-08.png",
-      "anchorPolicy": "headCenterOffset",
-      "anchorOffset": {
-        "x": 0,
-        "y": 0
-      },
-      "zIndex": 89,
-      "opacityRule": "trait",
-      "bboxPolicy": "intuitionNoFaceFeatures",
-      "role": "small ambient sensing particles around face perimeter; not eye-related"
-    },
-    {
-      "attribute": "intuition",
-      "sublayer": "particles",
-      "tier": 9,
-      "src": "/assets/panda/traits/intuition/particles/tier-09.png",
-      "anchorPolicy": "headCenterOffset",
-      "anchorOffset": {
-        "x": 0,
-        "y": 0
-      },
-      "zIndex": 89,
-      "opacityRule": "trait",
-      "bboxPolicy": "intuitionNoFaceFeatures",
-      "role": "small ambient sensing particles around face perimeter; not eye-related"
-    },
-    {
-      "attribute": "intuition",
-      "sublayer": "particles",
-      "tier": 10,
-      "src": "/assets/panda/traits/intuition/particles/tier-10.png",
-      "anchorPolicy": "headCenterOffset",
-      "anchorOffset": {
-        "x": 0,
-        "y": 0
-      },
-      "zIndex": 89,
-      "opacityRule": "trait",
-      "bboxPolicy": "intuitionNoFaceFeatures",
-      "role": "small ambient sensing particles around face perimeter; not eye-related"
     },
     {
       "attribute": "intuition",
@@ -1827,116 +1348,6 @@
     },
     {
       "attribute": "emotion",
-      "sublayer": "eyes",
-      "tier": 1,
-      "src": "/assets/panda/emotions/eyes/tier-01.png",
-      "anchorPolicy": "eyesMidpoint",
-      "zIndex": 80,
-      "opacityRule": "emotion",
-      "bboxPolicy": "emotionEyes",
-      "role": "primary expression eye marks only"
-    },
-    {
-      "attribute": "emotion",
-      "sublayer": "eyes",
-      "tier": 2,
-      "src": "/assets/panda/emotions/eyes/tier-02.png",
-      "anchorPolicy": "eyesMidpoint",
-      "zIndex": 80,
-      "opacityRule": "emotion",
-      "bboxPolicy": "emotionEyes",
-      "role": "primary expression eye marks only"
-    },
-    {
-      "attribute": "emotion",
-      "sublayer": "eyes",
-      "tier": 3,
-      "src": "/assets/panda/emotions/eyes/tier-03.png",
-      "anchorPolicy": "eyesMidpoint",
-      "zIndex": 80,
-      "opacityRule": "emotion",
-      "bboxPolicy": "emotionEyes",
-      "role": "primary expression eye marks only"
-    },
-    {
-      "attribute": "emotion",
-      "sublayer": "eyes",
-      "tier": 4,
-      "src": "/assets/panda/emotions/eyes/tier-04.png",
-      "anchorPolicy": "eyesMidpoint",
-      "zIndex": 80,
-      "opacityRule": "emotion",
-      "bboxPolicy": "emotionEyes",
-      "role": "primary expression eye marks only"
-    },
-    {
-      "attribute": "emotion",
-      "sublayer": "eyes",
-      "tier": 5,
-      "src": "/assets/panda/emotions/eyes/tier-05.png",
-      "anchorPolicy": "eyesMidpoint",
-      "zIndex": 80,
-      "opacityRule": "emotion",
-      "bboxPolicy": "emotionEyes",
-      "role": "primary expression eye marks only"
-    },
-    {
-      "attribute": "emotion",
-      "sublayer": "eyes",
-      "tier": 6,
-      "src": "/assets/panda/emotions/eyes/tier-06.png",
-      "anchorPolicy": "eyesMidpoint",
-      "zIndex": 80,
-      "opacityRule": "emotion",
-      "bboxPolicy": "emotionEyes",
-      "role": "primary expression eye marks only"
-    },
-    {
-      "attribute": "emotion",
-      "sublayer": "eyes",
-      "tier": 7,
-      "src": "/assets/panda/emotions/eyes/tier-07.png",
-      "anchorPolicy": "eyesMidpoint",
-      "zIndex": 80,
-      "opacityRule": "emotion",
-      "bboxPolicy": "emotionEyes",
-      "role": "primary expression eye marks only"
-    },
-    {
-      "attribute": "emotion",
-      "sublayer": "eyes",
-      "tier": 8,
-      "src": "/assets/panda/emotions/eyes/tier-08.png",
-      "anchorPolicy": "eyesMidpoint",
-      "zIndex": 80,
-      "opacityRule": "emotion",
-      "bboxPolicy": "emotionEyes",
-      "role": "primary expression eye marks only"
-    },
-    {
-      "attribute": "emotion",
-      "sublayer": "eyes",
-      "tier": 9,
-      "src": "/assets/panda/emotions/eyes/tier-09.png",
-      "anchorPolicy": "eyesMidpoint",
-      "zIndex": 80,
-      "opacityRule": "emotion",
-      "bboxPolicy": "emotionEyes",
-      "role": "primary expression eye marks only"
-    },
-    {
-      "attribute": "emotion",
-      "sublayer": "eyes",
-      "tier": 10,
-      "src": "/assets/panda/emotions/eyes/tier-10.png",
-      "anchorPolicy": "eyesMidpoint",
-      "zIndex": 80,
-      "opacityRule": "emotion",
-      "bboxPolicy": "emotionEyes",
-      "role": "primary expression eye marks only"
-    },
-    {
-      "attribute": "emotion",
       "sublayer": "brows",
       "tier": 1,
       "src": "/assets/panda/emotions/brows/tier-01.png",
@@ -1948,7 +1359,7 @@
       "zIndex": 81,
       "opacityRule": "emotion",
       "bboxPolicy": "emotionBrows",
-      "role": "primary expression brow marks only"
+      "role": "compact black-titanium cyber brow modules only; facial hardware, not flat cartoon eyebrows"
     },
     {
       "attribute": "emotion",
@@ -1963,7 +1374,7 @@
       "zIndex": 81,
       "opacityRule": "emotion",
       "bboxPolicy": "emotionBrows",
-      "role": "primary expression brow marks only"
+      "role": "compact black-titanium cyber brow modules only; facial hardware, not flat cartoon eyebrows"
     },
     {
       "attribute": "emotion",
@@ -1978,7 +1389,7 @@
       "zIndex": 81,
       "opacityRule": "emotion",
       "bboxPolicy": "emotionBrows",
-      "role": "primary expression brow marks only"
+      "role": "compact black-titanium cyber brow modules only; facial hardware, not flat cartoon eyebrows"
     },
     {
       "attribute": "emotion",
@@ -1993,7 +1404,7 @@
       "zIndex": 81,
       "opacityRule": "emotion",
       "bboxPolicy": "emotionBrows",
-      "role": "primary expression brow marks only"
+      "role": "compact black-titanium cyber brow modules only; facial hardware, not flat cartoon eyebrows"
     },
     {
       "attribute": "emotion",
@@ -2008,7 +1419,7 @@
       "zIndex": 81,
       "opacityRule": "emotion",
       "bboxPolicy": "emotionBrows",
-      "role": "primary expression brow marks only"
+      "role": "compact black-titanium cyber brow modules only; facial hardware, not flat cartoon eyebrows"
     },
     {
       "attribute": "emotion",
@@ -2023,7 +1434,327 @@
       "zIndex": 81,
       "opacityRule": "emotion",
       "bboxPolicy": "emotionBrows",
-      "role": "primary expression brow marks only"
+      "role": "compact black-titanium cyber brow modules only; facial hardware, not flat cartoon eyebrows"
+    },
+    {
+      "attribute": "emotion",
+      "sublayer": "brows",
+      "tier": 7,
+      "src": "/assets/panda/emotions/brows/tier-07.png",
+      "anchorPolicy": "eyesMidpoint",
+      "anchorOffset": {
+        "x": 0,
+        "y": -34
+      },
+      "zIndex": 81,
+      "opacityRule": "emotion",
+      "bboxPolicy": "emotionBrows",
+      "role": "compact black-titanium cyber brow modules only; facial hardware, not flat cartoon eyebrows"
+    },
+    {
+      "attribute": "emotion",
+      "sublayer": "brows",
+      "tier": 8,
+      "src": "/assets/panda/emotions/brows/tier-08.png",
+      "anchorPolicy": "eyesMidpoint",
+      "anchorOffset": {
+        "x": 0,
+        "y": -34
+      },
+      "zIndex": 81,
+      "opacityRule": "emotion",
+      "bboxPolicy": "emotionBrows",
+      "role": "compact black-titanium cyber brow modules only; facial hardware, not flat cartoon eyebrows"
+    },
+    {
+      "attribute": "emotion",
+      "sublayer": "brows",
+      "tier": 9,
+      "src": "/assets/panda/emotions/brows/tier-09.png",
+      "anchorPolicy": "eyesMidpoint",
+      "anchorOffset": {
+        "x": 0,
+        "y": -34
+      },
+      "zIndex": 81,
+      "opacityRule": "emotion",
+      "bboxPolicy": "emotionBrows",
+      "role": "compact black-titanium cyber brow modules only; facial hardware, not flat cartoon eyebrows"
+    },
+    {
+      "attribute": "emotion",
+      "sublayer": "brows",
+      "tier": 10,
+      "src": "/assets/panda/emotions/brows/tier-10.png",
+      "anchorPolicy": "eyesMidpoint",
+      "anchorOffset": {
+        "x": 0,
+        "y": -34
+      },
+      "zIndex": 81,
+      "opacityRule": "emotion",
+      "bboxPolicy": "emotionBrows",
+      "role": "compact black-titanium cyber brow modules only; facial hardware, not flat cartoon eyebrows"
+    },
+    {
+      "attribute": "emotion",
+      "sublayer": "mouth",
+      "tier": 1,
+      "src": "/assets/panda/emotions/mouth/tier-01.png",
+      "anchorPolicy": "mouthCenter",
+      "zIndex": 82,
+      "opacityRule": "emotion",
+      "bboxPolicy": "emotionMouth",
+      "role": "compact black-titanium cyber mouth module only; small grille or light port around the mouth anchor"
+    },
+    {
+      "attribute": "emotion",
+      "sublayer": "mouth",
+      "tier": 2,
+      "src": "/assets/panda/emotions/mouth/tier-02.png",
+      "anchorPolicy": "mouthCenter",
+      "zIndex": 82,
+      "opacityRule": "emotion",
+      "bboxPolicy": "emotionMouth",
+      "role": "compact black-titanium cyber mouth module only; small grille or light port around the mouth anchor"
+    },
+    {
+      "attribute": "emotion",
+      "sublayer": "mouth",
+      "tier": 3,
+      "src": "/assets/panda/emotions/mouth/tier-03.png",
+      "anchorPolicy": "mouthCenter",
+      "zIndex": 82,
+      "opacityRule": "emotion",
+      "bboxPolicy": "emotionMouth",
+      "role": "compact black-titanium cyber mouth module only; small grille or light port around the mouth anchor"
+    },
+    {
+      "attribute": "emotion",
+      "sublayer": "mouth",
+      "tier": 4,
+      "src": "/assets/panda/emotions/mouth/tier-04.png",
+      "anchorPolicy": "mouthCenter",
+      "zIndex": 82,
+      "opacityRule": "emotion",
+      "bboxPolicy": "emotionMouth",
+      "role": "compact black-titanium cyber mouth module only; small grille or light port around the mouth anchor"
+    },
+    {
+      "attribute": "emotion",
+      "sublayer": "mouth",
+      "tier": 5,
+      "src": "/assets/panda/emotions/mouth/tier-05.png",
+      "anchorPolicy": "mouthCenter",
+      "zIndex": 82,
+      "opacityRule": "emotion",
+      "bboxPolicy": "emotionMouth",
+      "role": "compact black-titanium cyber mouth module only; small grille or light port around the mouth anchor"
+    },
+    {
+      "attribute": "emotion",
+      "sublayer": "mouth",
+      "tier": 6,
+      "src": "/assets/panda/emotions/mouth/tier-06.png",
+      "anchorPolicy": "mouthCenter",
+      "zIndex": 82,
+      "opacityRule": "emotion",
+      "bboxPolicy": "emotionMouth",
+      "role": "compact black-titanium cyber mouth module only; small grille or light port around the mouth anchor"
+    },
+    {
+      "attribute": "emotion",
+      "sublayer": "mouth",
+      "tier": 7,
+      "src": "/assets/panda/emotions/mouth/tier-07.png",
+      "anchorPolicy": "mouthCenter",
+      "zIndex": 82,
+      "opacityRule": "emotion",
+      "bboxPolicy": "emotionMouth",
+      "role": "compact black-titanium cyber mouth module only; small grille or light port around the mouth anchor"
+    },
+    {
+      "attribute": "emotion",
+      "sublayer": "mouth",
+      "tier": 8,
+      "src": "/assets/panda/emotions/mouth/tier-08.png",
+      "anchorPolicy": "mouthCenter",
+      "zIndex": 82,
+      "opacityRule": "emotion",
+      "bboxPolicy": "emotionMouth",
+      "role": "compact black-titanium cyber mouth module only; small grille or light port around the mouth anchor"
+    },
+    {
+      "attribute": "emotion",
+      "sublayer": "mouth",
+      "tier": 9,
+      "src": "/assets/panda/emotions/mouth/tier-09.png",
+      "anchorPolicy": "mouthCenter",
+      "zIndex": 82,
+      "opacityRule": "emotion",
+      "bboxPolicy": "emotionMouth",
+      "role": "compact black-titanium cyber mouth module only; small grille or light port around the mouth anchor"
+    },
+    {
+      "attribute": "emotion",
+      "sublayer": "mouth",
+      "tier": 10,
+      "src": "/assets/panda/emotions/mouth/tier-10.png",
+      "anchorPolicy": "mouthCenter",
+      "zIndex": 82,
+      "opacityRule": "emotion",
+      "bboxPolicy": "emotionMouth",
+      "role": "compact black-titanium cyber mouth module only; small grille or light port around the mouth anchor"
+    },
+    {
+      "attribute": "emotion",
+      "sublayer": "extras",
+      "tier": 1,
+      "src": "/assets/panda/emotions/extras/tier-01.png",
+      "anchorPolicy": "eyesMidpoint",
+      "anchorOffset": {
+        "x": 112,
+        "y": 20
+      },
+      "zIndex": 83,
+      "opacityRule": "emotion",
+      "bboxPolicy": "emotionExtras",
+      "role": "small emotion extras near face edge only"
+    },
+    {
+      "attribute": "emotion",
+      "sublayer": "extras",
+      "tier": 2,
+      "src": "/assets/panda/emotions/extras/tier-02.png",
+      "anchorPolicy": "eyesMidpoint",
+      "anchorOffset": {
+        "x": 112,
+        "y": 20
+      },
+      "zIndex": 83,
+      "opacityRule": "emotion",
+      "bboxPolicy": "emotionExtras",
+      "role": "small emotion extras near face edge only"
+    },
+    {
+      "attribute": "emotion",
+      "sublayer": "extras",
+      "tier": 3,
+      "src": "/assets/panda/emotions/extras/tier-03.png",
+      "anchorPolicy": "eyesMidpoint",
+      "anchorOffset": {
+        "x": 112,
+        "y": 20
+      },
+      "zIndex": 83,
+      "opacityRule": "emotion",
+      "bboxPolicy": "emotionExtras",
+      "role": "small emotion extras near face edge only"
+    },
+    {
+      "attribute": "emotion",
+      "sublayer": "extras",
+      "tier": 4,
+      "src": "/assets/panda/emotions/extras/tier-04.png",
+      "anchorPolicy": "eyesMidpoint",
+      "anchorOffset": {
+        "x": 112,
+        "y": 20
+      },
+      "zIndex": 83,
+      "opacityRule": "emotion",
+      "bboxPolicy": "emotionExtras",
+      "role": "small emotion extras near face edge only"
+    },
+    {
+      "attribute": "emotion",
+      "sublayer": "extras",
+      "tier": 5,
+      "src": "/assets/panda/emotions/extras/tier-05.png",
+      "anchorPolicy": "eyesMidpoint",
+      "anchorOffset": {
+        "x": 112,
+        "y": 20
+      },
+      "zIndex": 83,
+      "opacityRule": "emotion",
+      "bboxPolicy": "emotionExtras",
+      "role": "small emotion extras near face edge only"
+    },
+    {
+      "attribute": "emotion",
+      "sublayer": "extras",
+      "tier": 6,
+      "src": "/assets/panda/emotions/extras/tier-06.png",
+      "anchorPolicy": "eyesMidpoint",
+      "anchorOffset": {
+        "x": 112,
+        "y": 20
+      },
+      "zIndex": 83,
+      "opacityRule": "emotion",
+      "bboxPolicy": "emotionExtras",
+      "role": "small emotion extras near face edge only"
+    },
+    {
+      "attribute": "emotion",
+      "sublayer": "extras",
+      "tier": 7,
+      "src": "/assets/panda/emotions/extras/tier-07.png",
+      "anchorPolicy": "eyesMidpoint",
+      "anchorOffset": {
+        "x": 112,
+        "y": 20
+      },
+      "zIndex": 83,
+      "opacityRule": "emotion",
+      "bboxPolicy": "emotionExtras",
+      "role": "small emotion extras near face edge only"
+    },
+    {
+      "attribute": "emotion",
+      "sublayer": "extras",
+      "tier": 8,
+      "src": "/assets/panda/emotions/extras/tier-08.png",
+      "anchorPolicy": "eyesMidpoint",
+      "anchorOffset": {
+        "x": 112,
+        "y": 20
+      },
+      "zIndex": 83,
+      "opacityRule": "emotion",
+      "bboxPolicy": "emotionExtras",
+      "role": "small emotion extras near face edge only"
+    },
+    {
+      "attribute": "emotion",
+      "sublayer": "extras",
+      "tier": 9,
+      "src": "/assets/panda/emotions/extras/tier-09.png",
+      "anchorPolicy": "eyesMidpoint",
+      "anchorOffset": {
+        "x": 112,
+        "y": 20
+      },
+      "zIndex": 83,
+      "opacityRule": "emotion",
+      "bboxPolicy": "emotionExtras",
+      "role": "small emotion extras near face edge only"
+    },
+    {
+      "attribute": "emotion",
+      "sublayer": "extras",
+      "tier": 10,
+      "src": "/assets/panda/emotions/extras/tier-10.png",
+      "anchorPolicy": "eyesMidpoint",
+      "anchorOffset": {
+        "x": 112,
+        "y": 20
+      },
+      "zIndex": 83,
+      "opacityRule": "emotion",
+      "bboxPolicy": "emotionExtras",
+      "role": "small emotion extras near face edge only"
     }
   ]
 }
