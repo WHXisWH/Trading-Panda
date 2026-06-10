@@ -200,6 +200,7 @@ class PandaActor:
             "asset": event.asset,
             "price": event.price,
             "timestamp": event.timestamp,
+            "entry_threshold": round(result.entry_threshold, 4),
         }
 
         if self._publisher:
@@ -334,7 +335,11 @@ class PandaActor:
                     self.state.active_strategy.get("proficiency", 0)
                 ),
                 pnl_pct=Decimal(str(round(pnl_pct, 6))),
-                decision_details={"steps": result.steps, "zone": result.zone},
+                decision_details={
+                    "steps": result.steps,
+                    "zone": result.zone,
+                    "entry_threshold": round(result.entry_threshold, 4),
+                },
             )
             session.add(trade)
             await session.flush()

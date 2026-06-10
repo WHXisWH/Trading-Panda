@@ -58,7 +58,7 @@ export function DashboardStrategySection({
       )}
 
       {pandaReaction && (
-        <p className="rounded-lg border border-bamboo-200 bg-bamboo-50 px-3 py-2 text-[12px] text-bamboo-800">
+        <p className="rounded-lg border border-bamboo-100 bg-bamboo-50 px-3 py-2 text-[12px] text-bamboo-600">
           🐼 {pandaReaction}
         </p>
       )}

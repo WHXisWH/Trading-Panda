@@ -28,6 +28,8 @@ function mapDecisionPayload(raw: Record<string, unknown>): DecisionLog {
     asset: raw.asset as string | undefined,
     price: raw.price as number | undefined,
     steps: (raw.steps as DecisionLog["steps"]) ?? [],
+    entry_threshold:
+      raw.entry_threshold != null ? Number(raw.entry_threshold) : undefined,
   };
 }
 
