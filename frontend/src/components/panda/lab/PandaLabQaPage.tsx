@@ -92,7 +92,7 @@ const COMPOSITE_CASES: Array<{ label: string; stats: PandaStats }> = [
     },
   },
   {
-    label: "高专注 / cautious / monocle",
+    label: "高专注 / cautious / reticle",
     stats: {
       boldness: 34,
       patience: 50,

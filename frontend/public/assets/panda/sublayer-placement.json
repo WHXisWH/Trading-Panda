@@ -458,10 +458,10 @@
     },
     "traits/focus/reticle/tier-02": {
       "tier-02": {
-        "x": 140.2,
-        "y": 59.9,
-        "width": 276.2,
-        "height": 225.8,
+        "x": 170.4,
+        "y": 70.1,
+        "width": 222.2,
+        "height": 208.9,
         "rotation": 0,
         "opacity": 1
       }
@@ -928,10 +928,10 @@
     },
     "traits/focus/reticle/tier-06": {
       "tier-06": {
-        "x": 158.1,
-        "y": 86.1,
-        "width": 250.6,
-        "height": 200.7,
+        "x": 167.7,
+        "y": 78.8,
+        "width": 224.5,
+        "height": 216.8,
         "rotation": 0,
         "opacity": 1
       }
@@ -1018,8 +1018,8 @@
     },
     "traits/focus/chest-core/tier-07": {
       "tier-07": {
-        "x": 20.8,
-        "y": 74.2,
+        "x": 22.7,
+        "y": 75.6,
         "width": 471.9,
         "height": 471.9,
         "rotation": 0,
@@ -1038,8 +1038,8 @@
     },
     "traits/focus/reticle/tier-07": {
       "tier-07": {
-        "x": 147.2,
-        "y": 63.6,
+        "x": 143.3,
+        "y": 63.5,
         "width": 250.1,
         "height": 258.3,
         "rotation": 0,
@@ -1168,10 +1168,10 @@
     },
     "traits/focus/reticle/tier-08": {
       "tier-08": {
-        "x": 125.2,
-        "y": 79.9,
-        "width": 298.8,
-        "height": 202.6,
+        "x": 164,
+        "y": 69.5,
+        "width": 224.5,
+        "height": 229.6,
         "rotation": 0,
         "opacity": 1
       }
@@ -1298,10 +1298,10 @@
     },
     "traits/focus/reticle/tier-09": {
       "tier-09": {
-        "x": 142.2,
-        "y": 62.3,
-        "width": 262.4,
-        "height": 179.4,
+        "x": 167.9,
+        "y": 42.5,
+        "width": 218.7,
+        "height": 227.1,
         "rotation": 0,
         "opacity": 1
       }
@@ -1408,10 +1408,10 @@
     },
     "traits/focus/reticle/tier-10": {
       "tier-10": {
-        "x": 160,
-        "y": 63.4,
-        "width": 213.9,
-        "height": 187.8,
+        "x": 153.8,
+        "y": 55.1,
+        "width": 220.8,
+        "height": 208.6,
         "rotation": 0,
         "opacity": 1
       }

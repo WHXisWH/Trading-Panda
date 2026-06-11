@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-06-10T18:26:15.074Z",
+  "generatedAt": "2026-06-11T10:22:18.769Z",
   "root": "public/assets/panda",
-  "expected": 140,
-  "ok": 140,
+  "expected": 130,
+  "ok": 130,
   "missing": [],
   "hardFailures": [],
   "placementWarnings": [],
@@ -28,9 +28,9 @@
       "bboxPolicy": "weaponSide",
       "alphaBbox": {
         "x": 418.156884765625,
-        "y": 164.43208007812498,
+        "y": 164.528466796875,
         "width": 51.27890624999998,
-        "height": 136.86943359375002
+        "height": 137.36572265625003
       },
       "sourceAlphaBbox": {
         "x": 358,
@@ -45,14 +45,13 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
         "face": 0,
-        "body": 0.25222995177329177
+        "body": 0.25397977038965475
       },
       "status": "pass",
       "failures": [],
@@ -67,9 +66,9 @@
       "bboxPolicy": "weaponSide",
       "alphaBbox": {
         "x": 419.59580078125,
-        "y": 173.95693359375002,
+        "y": 174.78579101562502,
         "width": 75.55371093750006,
-        "height": 139.68222656249998
+        "height": 164.81318359374995
       },
       "sourceAlphaBbox": {
         "x": 338.5,
@@ -84,14 +83,13 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
         "face": 0,
-        "body": 0.33309374679125164
+        "body": 0.4607762603963446
       },
       "status": "pass",
       "failures": [],
@@ -123,7 +121,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -144,9 +141,9 @@
       "anchorPolicy": "bodyCenter",
       "bboxPolicy": "weaponSide",
       "alphaBbox": {
-        "x": 427.530419921875,
+        "x": 431.806298828125,
         "y": 155.66547851562498,
-        "width": 43.58164062499998,
+        "width": 46.12460937499998,
         "height": 133.20517578125
       },
       "sourceAlphaBbox": {
@@ -162,14 +159,13 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
         "face": 0,
-        "body": 0.14132110856428423
+        "body": 0.0803500729318608
       },
       "status": "pass",
       "failures": [],
@@ -184,9 +180,9 @@
       "bboxPolicy": "weaponSide",
       "alphaBbox": {
         "x": 384.07744140625005,
-        "y": 217.50654296875007,
+        "y": 232.16157226562507,
         "width": 120.35917968749999,
-        "height": 29.432812499999955
+        "height": 34.546093749999955
       },
       "sourceAlphaBbox": {
         "x": 332.5,
@@ -201,14 +197,13 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
         "face": 0.15703252983852095,
-        "body": 0
+        "body": 0.10905686871050783
       },
       "status": "pass",
       "failures": [],
@@ -222,9 +217,9 @@
       "anchorPolicy": "bodyCenter",
       "bboxPolicy": "weaponSide",
       "alphaBbox": {
-        "x": 446.2044921875,
+        "x": 446.632080078125,
         "y": 173.69628906249997,
-        "width": 39.74882812499999,
+        "width": 39.96826171875,
         "height": 140.792578125
       },
       "sourceAlphaBbox": {
@@ -240,14 +235,13 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
         "face": 0,
-        "body": 0.20807627593942793
+        "body": 0.20101888203402504
       },
       "status": "pass",
       "failures": [],
@@ -262,9 +256,9 @@
       "bboxPolicy": "weaponSide",
       "alphaBbox": {
         "x": 409.39990234375,
-        "y": 134.64970703125,
+        "y": 134.28979492187497,
         "width": 84.0673828125,
-        "height": 141.233203125
+        "height": 144.2232421875
       },
       "sourceAlphaBbox": {
         "x": 333.5,
@@ -279,14 +273,13 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
         "face": 0,
-        "body": 0.10738950276243094
+        "body": 0.11661404893449093
       },
       "status": "pass",
       "failures": [],
@@ -301,9 +294,9 @@
       "bboxPolicy": "weaponSide",
       "alphaBbox": {
         "x": 424.207470703125,
-        "y": 138.146826171875,
+        "y": 135.522314453125,
         "width": 60.552734375,
-        "height": 133.42724609374997
+        "height": 149.34228515624997
       },
       "sourceAlphaBbox": {
         "x": 349,
@@ -318,14 +311,13 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
         "face": 0,
-        "body": 0.08172865558779566
+        "body": 0.1587092235997538
       },
       "status": "pass",
       "failures": [],
@@ -340,9 +332,9 @@
       "bboxPolicy": "weaponSide",
       "alphaBbox": {
         "x": 415.723779296875,
-        "y": 119.182275390625,
+        "y": 116.20078124999998,
         "width": 72.73916015625002,
-        "height": 145.86318359375
+        "height": 161.66718750000007
       },
       "sourceAlphaBbox": {
         "x": 342.5,
@@ -357,14 +349,13 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
         "face": 0,
-        "body": 0.1568619740464019
+        "body": 0.20633110499410146
       },
       "status": "pass",
       "failures": [],
@@ -379,9 +370,9 @@
       "bboxPolicy": "weaponSide",
       "alphaBbox": {
         "x": 408.638037109375,
-        "y": 103.35366210937501,
+        "y": 103.28920898437501,
         "width": 87.28388671875007,
-        "height": 130.35410156249998
+        "height": 134.36191406249998
       },
       "sourceAlphaBbox": {
         "x": 333,
@@ -396,14 +387,13 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
         "face": 0,
-        "body": 0.033497615899346876
+        "body": 0.053291661658051846
       },
       "status": "pass",
       "failures": [],
@@ -418,9 +408,9 @@
       "bboxPolicy": "bodySideMark",
       "alphaBbox": {
         "x": 322.579345703125,
-        "y": 290.31645507812505,
+        "y": 296.86816406250006,
         "width": 164.12880859375002,
-        "height": 150.40566406250002
+        "height": 183.34453125000005
       },
       "sourceAlphaBbox": {
         "x": 277,
@@ -435,14 +425,13 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
         "face": 0,
-        "body": 0.7953804924132878
+        "body": 0.7488383750747103
       },
       "status": "pass",
       "failures": [],
@@ -457,9 +446,9 @@
       "bboxPolicy": "bodySideMark",
       "alphaBbox": {
         "x": 294.724755859375,
-        "y": 327.790283203125,
+        "y": 329.506591796875,
         "width": 204.83251953125,
-        "height": 169.20947265625
+        "height": 178.13427734375
       },
       "sourceAlphaBbox": {
         "x": 275,
@@ -474,14 +463,13 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
         "face": 0,
-        "body": 0.9592433519144659
+        "body": 0.9340674403728411
       },
       "status": "pass",
       "failures": [],
@@ -495,9 +483,9 @@
       "anchorPolicy": "upperBodyCenter",
       "bboxPolicy": "bodySideMark",
       "alphaBbox": {
-        "x": 339.093994140625,
+        "x": 339.6978515625,
         "y": 356.65366210937503,
-        "width": 139.1484375,
+        "width": 141.09375,
         "height": 161.76005859375
       },
       "sourceAlphaBbox": {
@@ -513,14 +501,13 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
         "face": 0,
-        "body": 0.7616984865500829
+        "body": 0.745253756885395
       },
       "status": "pass",
       "failures": [],
@@ -534,9 +521,9 @@
       "anchorPolicy": "upperBodyCenter",
       "bboxPolicy": "bodySideMark",
       "alphaBbox": {
-        "x": 319.108642578125,
+        "x": 322.359716796875,
         "y": 312.47934570312503,
-        "width": 151.951953125,
+        "width": 163.532421875,
         "height": 173.74833984375
       },
       "sourceAlphaBbox": {
@@ -552,14 +539,13 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
         "face": 0,
-        "body": 0.9434470377019749
+        "body": 0.9106686252108155
       },
       "status": "pass",
       "failures": [],
@@ -574,9 +560,9 @@
       "bboxPolicy": "bodySideMark",
       "alphaBbox": {
         "x": 313.40175781249997,
-        "y": 316.32636718749995,
+        "y": 326.82939453125,
         "width": 199.60585937500008,
-        "height": 126.17226562500002
+        "height": 156.47871093749995
       },
       "sourceAlphaBbox": {
         "x": 275,
@@ -591,14 +577,13 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
         "face": 0,
-        "body": 0.8881918418336864
+        "body": 0.8326000760414969
       },
       "status": "pass",
       "failures": [],
@@ -612,9 +597,9 @@
       "anchorPolicy": "upperBodyCenter",
       "bboxPolicy": "bodySideMark",
       "alphaBbox": {
-        "x": 330.4796875,
+        "x": 330.73994140625,
         "y": 357.8109375,
-        "width": 167.253125,
+        "width": 169.6474609375,
         "height": 114.11249999999995
       },
       "sourceAlphaBbox": {
@@ -630,14 +615,13 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
         "face": 0,
-        "body": 0.7203214739276305
+        "body": 0.7067498151904013
       },
       "status": "pass",
       "failures": [],
@@ -652,9 +636,9 @@
       "bboxPolicy": "bodySideMark",
       "alphaBbox": {
         "x": 300.729248046875,
-        "y": 319.13100585937497,
+        "y": 317.82255859375,
         "width": 174.45791015624997,
-        "height": 167.26376953125003
+        "height": 173.0126953125
       },
       "sourceAlphaBbox": {
         "x": 277,
@@ -669,14 +653,13 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
         "face": 0,
-        "body": 0.7548785795108365
+        "body": 0.737157280877361
       },
       "status": "pass",
       "failures": [],
@@ -690,9 +673,9 @@
       "anchorPolicy": "upperBodyCenter",
       "bboxPolicy": "bodySideMark",
       "alphaBbox": {
-        "x": 311.06049804687495,
+        "x": 311.81704101562497,
         "y": 317.907470703125,
-        "width": 177.71650390625,
+        "width": 180.77841796875003,
         "height": 192.92958984375002
       },
       "sourceAlphaBbox": {
@@ -708,14 +691,13 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
         "face": 0,
-        "body": 0.8748560800637676
+        "body": 0.8711658252885779
       },
       "status": "pass",
       "failures": [],
@@ -729,9 +711,9 @@
       "anchorPolicy": "upperBodyCenter",
       "bboxPolicy": "bodySideMark",
       "alphaBbox": {
-        "x": 337.833740234375,
+        "x": 340.69765624999997,
         "y": 339.77241210937495,
-        "width": 145.42304687499995,
+        "width": 155.93125000000003,
         "height": 166.28291015625
       },
       "sourceAlphaBbox": {
@@ -747,14 +729,13 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
         "face": 0,
-        "body": 0.9310320335251083
+        "body": 0.8983355825461089
       },
       "status": "pass",
       "failures": [],
@@ -769,9 +750,9 @@
       "bboxPolicy": "bodySideMark",
       "alphaBbox": {
         "x": 327.69169921875,
-        "y": 323.55517578125,
+        "y": 323.92373046875,
         "width": 177.8232421875,
-        "height": 129.0556640625
+        "height": 138.4646484375
       },
       "sourceAlphaBbox": {
         "x": 275.5,
@@ -786,404 +767,13 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
         "face": 0,
-        "body": 0.8249632420510935
-      },
-      "status": "pass",
-      "failures": [],
-      "placementWarnings": []
-    },
-    {
-      "src": "/assets/panda/traits/focus/monocle/tier-01.png",
-      "attribute": "focus",
-      "sublayer": "monocle",
-      "tier": 1,
-      "anchorPolicy": "rightEyeCenter",
-      "bboxPolicy": "monocle",
-      "alphaBbox": {
-        "x": 274.27250976562505,
-        "y": 133.512353515625,
-        "width": 87.60781250000002,
-        "height": 53.912499999999994
-      },
-      "sourceAlphaBbox": {
-        "x": 261,
-        "y": 177,
-        "width": 104.5,
-        "height": 64.5
-      },
-      "anchor": {
-        "x": 269.85,
-        "y": 199.85
-      },
-      "placementSource": "exact",
-      "placementTemplateAssetKey": null,
-      "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
-      "overlapRatios": {
-        "leftEye": 0,
-        "rightEye": 0.24373299739466786,
-        "eyes": 0.12271018591568696,
-        "mouth": 0,
-        "face": 1,
-        "body": 0
-      },
-      "status": "pass",
-      "failures": [],
-      "placementWarnings": []
-    },
-    {
-      "src": "/assets/panda/traits/focus/monocle/tier-02.png",
-      "attribute": "focus",
-      "sublayer": "monocle",
-      "tier": 2,
-      "anchorPolicy": "rightEyeCenter",
-      "bboxPolicy": "monocle",
-      "alphaBbox": {
-        "x": 278.41660156250003,
-        "y": 127.25683593750001,
-        "width": 101.71523437500002,
-        "height": 63.630078125
-      },
-      "sourceAlphaBbox": {
-        "x": 252,
-        "y": 137.5,
-        "width": 110,
-        "height": 69
-      },
-      "anchor": {
-        "x": 281.90000000000003,
-        "y": 237.10000000000002
-      },
-      "placementSource": "exact",
-      "placementTemplateAssetKey": null,
-      "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
-      "overlapRatios": {
-        "leftEye": 0,
-        "rightEye": 0.18731389685204997,
-        "eyes": 0.09429426488434837,
-        "mouth": 0,
-        "face": 1,
-        "body": 0
-      },
-      "status": "pass",
-      "failures": [],
-      "placementWarnings": []
-    },
-    {
-      "src": "/assets/panda/traits/focus/monocle/tier-03.png",
-      "attribute": "focus",
-      "sublayer": "monocle",
-      "tier": 3,
-      "anchorPolicy": "rightEyeCenter",
-      "bboxPolicy": "monocle",
-      "alphaBbox": {
-        "x": 275.40878906250003,
-        "y": 158.2302734375,
-        "width": 100.00429687500002,
-        "height": 68.952734375
-      },
-      "sourceAlphaBbox": {
-        "x": 247,
-        "y": 154.5,
-        "width": 110,
-        "height": 76
-      },
-      "anchor": {
-        "x": 283.40000000000003,
-        "y": 250.7
-      },
-      "placementSource": "exact",
-      "placementTemplateAssetKey": null,
-      "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
-      "overlapRatios": {
-        "leftEye": 0,
-        "rightEye": 0.19713051923596092,
-        "eyes": 0.09876313239019684,
-        "mouth": 0,
-        "face": 1,
-        "body": 0
-      },
-      "status": "pass",
-      "failures": [],
-      "placementWarnings": []
-    },
-    {
-      "src": "/assets/panda/traits/focus/monocle/tier-04.png",
-      "attribute": "focus",
-      "sublayer": "monocle",
-      "tier": 4,
-      "anchorPolicy": "rightEyeCenter",
-      "bboxPolicy": "monocle",
-      "alphaBbox": {
-        "x": 276.780712890625,
-        "y": 142.17426757812498,
-        "width": 101.59160156249999,
-        "height": 63.35820312499999
-      },
-      "sourceAlphaBbox": {
-        "x": 255,
-        "y": 118,
-        "width": 93.5,
-        "height": 58.5
-      },
-      "anchor": {
-        "x": 277.6,
-        "y": 292.65
-      },
-      "placementSource": "exact",
-      "placementTemplateAssetKey": null,
-      "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
-      "overlapRatios": {
-        "leftEye": 0,
-        "rightEye": 0.23232407306989195,
-        "eyes": 0.11289149645069185,
-        "mouth": 0,
-        "face": 1,
-        "body": 0
-      },
-      "status": "pass",
-      "failures": [],
-      "placementWarnings": []
-    },
-    {
-      "src": "/assets/panda/traits/focus/monocle/tier-05.png",
-      "attribute": "focus",
-      "sublayer": "monocle",
-      "tier": 5,
-      "anchorPolicy": "rightEyeCenter",
-      "bboxPolicy": "monocle",
-      "alphaBbox": {
-        "x": 277.284521484375,
-        "y": 168.35561523437502,
-        "width": 97.15986328125007,
-        "height": 49.689062500000006
-      },
-      "sourceAlphaBbox": {
-        "x": 255,
-        "y": 147,
-        "width": 110,
-        "height": 56.5
-      },
-      "anchor": {
-        "x": 277.95,
-        "y": 264.85
-      },
-      "placementSource": "exact",
-      "placementTemplateAssetKey": null,
-      "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
-      "overlapRatios": {
-        "leftEye": 0,
-        "rightEye": 0.16871527360823488,
-        "eyes": 0.08251744115291117,
-        "mouth": 0,
-        "face": 1,
-        "body": 0
-      },
-      "status": "pass",
-      "failures": [],
-      "placementWarnings": []
-    },
-    {
-      "src": "/assets/panda/traits/focus/monocle/tier-06.png",
-      "attribute": "focus",
-      "sublayer": "monocle",
-      "tier": 6,
-      "anchorPolicy": "rightEyeCenter",
-      "bboxPolicy": "monocle",
-      "alphaBbox": {
-        "x": 272.3595703125,
-        "y": 178.5810546875,
-        "width": 98.29335937500002,
-        "height": 51.615234375
-      },
-      "sourceAlphaBbox": {
-        "x": 241,
-        "y": 82.5,
-        "width": 110,
-        "height": 58
-      },
-      "anchor": {
-        "x": 285.6,
-        "y": 334.1
-      },
-      "placementSource": "exact",
-      "placementTemplateAssetKey": null,
-      "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
-      "overlapRatios": {
-        "leftEye": 0,
-        "rightEye": 0.1323390770494994,
-        "eyes": 0.06830941142994659,
-        "mouth": 0.00156792252328001,
-        "face": 1,
-        "body": 0
-      },
-      "status": "pass",
-      "failures": [],
-      "placementWarnings": []
-    },
-    {
-      "src": "/assets/panda/traits/focus/monocle/tier-07.png",
-      "attribute": "focus",
-      "sublayer": "monocle",
-      "tier": 7,
-      "anchorPolicy": "rightEyeCenter",
-      "bboxPolicy": "monocle",
-      "alphaBbox": {
-        "x": 268.173388671875,
-        "y": 134.01508789062498,
-        "width": 115.85185546875005,
-        "height": 85.6986328125
-      },
-      "sourceAlphaBbox": {
-        "x": 241.5,
-        "y": 75,
-        "width": 110,
-        "height": 81.5
-      },
-      "anchor": {
-        "x": 283.25,
-        "y": 325.25
-      },
-      "placementSource": "exact",
-      "placementTemplateAssetKey": null,
-      "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
-      "overlapRatios": {
-        "leftEye": 0,
-        "rightEye": 0.22056402641092662,
-        "eyes": 0.10827797862612766,
-        "mouth": 0,
-        "face": 1,
-        "body": 0
-      },
-      "status": "pass",
-      "failures": [],
-      "placementWarnings": []
-    },
-    {
-      "src": "/assets/panda/traits/focus/monocle/tier-08.png",
-      "attribute": "focus",
-      "sublayer": "monocle",
-      "tier": 8,
-      "anchorPolicy": "rightEyeCenter",
-      "bboxPolicy": "monocle",
-      "alphaBbox": {
-        "x": 257.16328124999995,
-        "y": 159.91484374999996,
-        "width": 134.8046875,
-        "height": 63.935937499999994
-      },
-      "sourceAlphaBbox": {
-        "x": 253,
-        "y": 95.5,
-        "width": 88,
-        "height": 42
-      },
-      "anchor": {
-        "x": 261.4,
-        "y": 406.79999999999995
-      },
-      "placementSource": "exact",
-      "placementTemplateAssetKey": null,
-      "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
-      "overlapRatios": {
-        "leftEye": 0,
-        "rightEye": 0.15144508082406866,
-        "eyes": 0.07657437353551387,
-        "mouth": 0,
-        "face": 1,
-        "body": 0
-      },
-      "status": "pass",
-      "failures": [],
-      "placementWarnings": []
-    },
-    {
-      "src": "/assets/panda/traits/focus/monocle/tier-09.png",
-      "attribute": "focus",
-      "sublayer": "monocle",
-      "tier": 9,
-      "anchorPolicy": "rightEyeCenter",
-      "bboxPolicy": "monocle",
-      "alphaBbox": {
-        "x": 264.580078125,
-        "y": 159.744140625,
-        "width": 91.87734375000002,
-        "height": 42.79218750000001
-      },
-      "sourceAlphaBbox": {
-        "x": 245,
-        "y": 70,
-        "width": 110,
-        "height": 51.5
-      },
-      "anchor": {
-        "x": 273.6,
-        "y": 315.6
-      },
-      "placementSource": "exact",
-      "placementTemplateAssetKey": null,
-      "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
-      "overlapRatios": {
-        "leftEye": 0,
-        "rightEye": 0.09855301483182356,
-        "eyes": 0.04803353123041734,
-        "mouth": 0,
-        "face": 1,
-        "body": 0
-      },
-      "status": "pass",
-      "failures": [],
-      "placementWarnings": []
-    },
-    {
-      "src": "/assets/panda/traits/focus/monocle/tier-10.png",
-      "attribute": "focus",
-      "sublayer": "monocle",
-      "tier": 10,
-      "anchorPolicy": "rightEyeCenter",
-      "bboxPolicy": "monocle",
-      "alphaBbox": {
-        "x": 272.62666015625,
-        "y": 133.38154296875,
-        "width": 96.2158203125,
-        "height": 56.080078125
-      },
-      "sourceAlphaBbox": {
-        "x": 251.5,
-        "y": 111,
-        "width": 88,
-        "height": 51.5
-      },
-      "anchor": {
-        "x": 277.3,
-        "y": 292.55
-      },
-      "placementSource": "exact",
-      "placementTemplateAssetKey": null,
-      "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
-      "overlapRatios": {
-        "leftEye": 0,
-        "rightEye": 0.2133251498014897,
-        "eyes": 0.10650935581779081,
-        "mouth": 0,
-        "face": 1,
-        "body": 0
+        "body": 0.822091527292777
       },
       "status": "pass",
       "failures": [],
@@ -1197,9 +787,9 @@
       "anchorPolicy": "rightEyeCenter",
       "bboxPolicy": "monocle",
       "alphaBbox": {
-        "x": 277.33906249999995,
+        "x": 277.33686523437495,
         "y": 133.7734375,
-        "width": 63.67812500000002,
+        "width": 64.93935546875002,
         "height": 50.58749999999998
       },
       "sourceAlphaBbox": {
@@ -1215,11 +805,10 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
-        "rightEye": 0.156660653003922,
-        "eyes": 0.07887261085398178,
+        "rightEye": 0.1608971939467749,
+        "eyes": 0.08100554620657621,
         "mouth": 0,
         "face": 1,
         "body": 0
@@ -1236,10 +825,10 @@
       "anchorPolicy": "rightEyeCenter",
       "bboxPolicy": "monocle",
       "alphaBbox": {
-        "x": 277.74873046874995,
-        "y": 130.79326171875,
-        "width": 70.34199218750001,
-        "height": 55.567968750000034
+        "x": 280.95751953125,
+        "y": 135.687255859375,
+        "width": 69.22050781249999,
+        "height": 51.40898437500002
       },
       "sourceAlphaBbox": {
         "x": 254.5,
@@ -1248,17 +837,16 @@
         "height": 126.5
       },
       "anchor": {
-        "x": 278.29999999999995,
-        "y": 172.8
+        "x": 281.5,
+        "y": 174.55
       },
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
-        "rightEye": 0.10110550140029784,
-        "eyes": 0.05089675187225813,
+        "rightEye": 0.10041485548455184,
+        "eyes": 0.05054907906199096,
         "mouth": 0,
         "face": 1,
         "body": 0
@@ -1275,9 +863,9 @@
       "anchorPolicy": "rightEyeCenter",
       "bboxPolicy": "monocle",
       "alphaBbox": {
-        "x": 275.8650390625,
+        "x": 275.945556640625,
         "y": 164.28183593749998,
-        "width": 67.18359375000006,
+        "width": 69.7412109375,
         "height": 53.00039062500002
       },
       "sourceAlphaBbox": {
@@ -1293,11 +881,10 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
-        "rightEye": 0.15381964399876777,
-        "eyes": 0.0770642208184878,
+        "rightEye": 0.16112782678691062,
+        "eyes": 0.08072564791275297,
         "mouth": 0,
         "face": 1,
         "body": 0
@@ -1314,9 +901,9 @@
       "anchorPolicy": "rightEyeCenter",
       "bboxPolicy": "monocle",
       "alphaBbox": {
-        "x": 280.342138671875,
+        "x": 280.53330078125,
         "y": 146.11928710937502,
-        "width": 63.05947265625002,
+        "width": 66.89589843750002,
         "height": 52.87460937499998
       },
       "sourceAlphaBbox": {
@@ -1332,11 +919,10 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
-        "rightEye": 0.12994192433238438,
-        "eyes": 0.063141705875449,
+        "rightEye": 0.13784735911601295,
+        "eyes": 0.06698313457900266,
         "mouth": 0,
         "face": 1,
         "body": 0
@@ -1353,9 +939,9 @@
       "anchorPolicy": "rightEyeCenter",
       "bboxPolicy": "monocle",
       "alphaBbox": {
-        "x": 279.70463867187505,
+        "x": 279.54912109375005,
         "y": 148.796142578125,
-        "width": 68.2548828125,
+        "width": 70.025390625,
         "height": 54.05048828125001
       },
       "sourceAlphaBbox": {
@@ -1371,11 +957,10 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
-        "rightEye": 0.13020471104779785,
-        "eyes": 0.06368219872414708,
+        "rightEye": 0.1335821757599959,
+        "eyes": 0.06533409270905086,
         "mouth": 0,
         "face": 1,
         "body": 0
@@ -1392,10 +977,10 @@
       "anchorPolicy": "rightEyeCenter",
       "bboxPolicy": "monocle",
       "alphaBbox": {
-        "x": 281.73403320312497,
-        "y": 150.876708984375,
-        "width": 62.71875,
-        "height": 49.58701171874998
+        "x": 278.086474609375,
+        "y": 148.77304687499998,
+        "width": 70.15625,
+        "height": 53.56484375000002
       },
       "sourceAlphaBbox": {
         "x": 251.5,
@@ -1404,17 +989,16 @@
         "height": 127
       },
       "anchor": {
-        "x": 283.4,
-        "y": 186.45
+        "x": 279.95,
+        "y": 187.2
       },
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
-        "rightEye": 0.15653926036273183,
-        "eyes": 0.08080081091284766,
+        "rightEye": 0.18912003266089833,
+        "eyes": 0.09761801584762608,
         "mouth": 0,
         "face": 1,
         "body": 0
@@ -1431,10 +1015,10 @@
       "anchorPolicy": "rightEyeCenter",
       "bboxPolicy": "monocle",
       "alphaBbox": {
-        "x": 275.547216796875,
-        "y": 141.337841796875,
+        "x": 271.647216796875,
+        "y": 139.552197265625,
         "width": 88.90273437500002,
-        "height": 70.58486328124997
+        "height": 72.89912109374998
       },
       "sourceAlphaBbox": {
         "x": 262.5,
@@ -1443,17 +1027,16 @@
         "height": 145
       },
       "anchor": {
-        "x": 272.25,
-        "y": 192.75
+        "x": 268.35,
+        "y": 192.65
       },
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
-        "rightEye": 0.32030371332464613,
-        "eyes": 0.15724159188416606,
+        "rightEye": 0.31450118384935116,
+        "eyes": 0.1543930486619231,
         "mouth": 0,
         "face": 1,
         "body": 0
@@ -1470,10 +1053,10 @@
       "anchorPolicy": "rightEyeCenter",
       "bboxPolicy": "monocle",
       "alphaBbox": {
-        "x": 275.88603515625005,
-        "y": 144.10283203125,
-        "width": 68.45664062499998,
-        "height": 52.4306640625
+        "x": 277.675048828125,
+        "y": 142.258984375,
+        "width": 75.8564453125,
+        "height": 59.41796875
       },
       "sourceAlphaBbox": {
         "x": 259,
@@ -1482,17 +1065,16 @@
         "height": 133
       },
       "anchor": {
-        "x": 274.6,
-        "y": 181.2
+        "x": 276.25,
+        "y": 184.3
       },
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
-        "rightEye": 0.1350731186214437,
-        "eyes": 0.06829630506084688,
+        "rightEye": 0.17135067478417468,
+        "eyes": 0.08663913350693966,
         "mouth": 0,
         "face": 1,
         "body": 0
@@ -1509,10 +1091,10 @@
       "anchorPolicy": "rightEyeCenter",
       "bboxPolicy": "monocle",
       "alphaBbox": {
-        "x": 270.15888671874995,
-        "y": 121.25322265624999,
-        "width": 57.11367187500002,
-        "height": 45.375585937500006
+        "x": 273.298876953125,
+        "y": 117.12807617187501,
+        "width": 69.62519531250001,
+        "height": 57.44033203124998
       },
       "sourceAlphaBbox": {
         "x": 246.5,
@@ -1521,17 +1103,16 @@
         "height": 130
       },
       "anchor": {
-        "x": 273.4,
-        "y": 152
+        "x": 277.25,
+        "y": 156.05
       },
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
-        "rightEye": 0.13165175487320735,
-        "eyes": 0.06416545135663856,
+        "rightEye": 0.23231753749859102,
+        "eyes": 0.11322871970841913,
         "mouth": 0,
         "face": 1,
         "body": 0
@@ -1548,10 +1129,10 @@
       "anchorPolicy": "rightEyeCenter",
       "bboxPolicy": "monocle",
       "alphaBbox": {
-        "x": 271.44326171875,
-        "y": 117.04404296875,
-        "width": 59.78789062499993,
-        "height": 52.635351562500006
+        "x": 269.4828125,
+        "y": 114.68544921875001,
+        "width": 70.29375000000005,
+        "height": 58.4650390625
       },
       "sourceAlphaBbox": {
         "x": 268,
@@ -1560,17 +1141,16 @@
         "height": 144
       },
       "anchor": {
-        "x": 266.95,
-        "y": 157.3
+        "x": 264.20000000000005,
+        "y": 159.4
       },
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
-        "rightEye": 0.18483082813228427,
-        "eyes": 0.0922826608018673,
+        "rightEye": 0.23407845565619856,
+        "eyes": 0.11687110284917243,
         "mouth": 0,
         "face": 1,
         "body": 0
@@ -1605,7 +1185,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -1644,7 +1223,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -1683,7 +1261,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -1722,7 +1299,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -1744,9 +1320,9 @@
       "bboxPolicy": "chestCore",
       "alphaBbox": {
         "x": 221.150341796875,
-        "y": 330.72368164062493,
+        "y": 330.929541015625,
         "width": 65.74111328124997,
-        "height": 57.24824218750007
+        "height": 61.65605468749993
       },
       "sourceAlphaBbox": {
         "x": 202.5,
@@ -1761,7 +1337,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -1800,7 +1375,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -1821,8 +1395,8 @@
       "anchorPolicy": "upperBodyCenter",
       "bboxPolicy": "chestCore",
       "alphaBbox": {
-        "x": 207.670556640625,
-        "y": 278.121630859375,
+        "x": 209.57055664062497,
+        "y": 279.52163085937497,
         "width": 96.31552734375,
         "height": 78.3427734375
       },
@@ -1833,13 +1407,12 @@
         "height": 85.5
       },
       "anchor": {
-        "x": 256.75,
-        "y": 310.15
+        "x": 258.65,
+        "y": 311.54999999999995
       },
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -1878,7 +1451,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -1917,7 +1489,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -1956,7 +1527,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -1977,9 +1547,9 @@
       "anchorPolicy": "headCenterOffset",
       "bboxPolicy": "intuitionNoFaceFeatures",
       "alphaBbox": {
-        "x": 148.25043945312495,
+        "x": 117.08452148437493,
         "y": 62.18374023437502,
-        "width": 216.22705078125,
+        "width": 275.96943359375,
         "height": 60.2490234375
       },
       "sourceAlphaBbox": {
@@ -1995,13 +1565,12 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
-        "face": 1,
+        "face": 0.9537448088214234,
         "body": 0
       },
       "status": "pass",
@@ -2016,9 +1585,9 @@
       "anchorPolicy": "headCenterOffset",
       "bboxPolicy": "intuitionNoFaceFeatures",
       "alphaBbox": {
-        "x": 128.19868164062504,
+        "x": 116.14492187500005,
         "y": 55.70268554687499,
-        "width": 253.92939453124998,
+        "width": 277.38359375000005,
         "height": 69.31777343750002
       },
       "sourceAlphaBbox": {
@@ -2034,7 +1603,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -2055,9 +1623,9 @@
       "anchorPolicy": "headCenterOffset",
       "bboxPolicy": "intuitionNoFaceFeatures",
       "alphaBbox": {
-        "x": 119.16484374999999,
+        "x": 114.68305664062498,
         "y": 43.23359375000001,
-        "width": 260.8359375,
+        "width": 270.05634765624995,
         "height": 48.6796875
       },
       "sourceAlphaBbox": {
@@ -2073,7 +1641,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -2094,9 +1661,9 @@
       "anchorPolicy": "headCenterOffset",
       "bboxPolicy": "intuitionNoFaceFeatures",
       "alphaBbox": {
-        "x": 101.25327148437503,
+        "x": 86.205078125,
         "y": 55.01127929687499,
-        "width": 299.51035156250003,
+        "width": 329.1921875,
         "height": 60.236718749999966
       },
       "sourceAlphaBbox": {
@@ -2112,13 +1679,12 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
-        "face": 0.9965295852854416,
+        "face": 0.941870553531147,
         "body": 0
       },
       "status": "pass",
@@ -2133,9 +1699,9 @@
       "anchorPolicy": "headCenterOffset",
       "bboxPolicy": "intuitionNoFaceFeatures",
       "alphaBbox": {
-        "x": 112.918798828125,
+        "x": 90.95971679687497,
         "y": 44.69204101562502,
-        "width": 282.0591796875,
+        "width": 326.10175781249995,
         "height": 61.35185546874999
       },
       "sourceAlphaBbox": {
@@ -2151,13 +1717,12 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
-        "face": 1,
+        "face": 0.9921246923707957,
         "body": 0
       },
       "status": "pass",
@@ -2173,9 +1738,9 @@
       "bboxPolicy": "intuitionNoFaceFeatures",
       "alphaBbox": {
         "x": 109.30263671875002,
-        "y": 47.727441406249966,
+        "y": 40.74531250000001,
         "width": 296.8060546875,
-        "height": 85.15605468750005
+        "height": 86.58437500000002
       },
       "sourceAlphaBbox": {
         "x": 160.5,
@@ -2190,7 +1755,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -2211,9 +1775,9 @@
       "anchorPolicy": "headCenterOffset",
       "bboxPolicy": "intuitionNoFaceFeatures",
       "alphaBbox": {
-        "x": 124.53447265624996,
+        "x": 114.73276367187498,
         "y": 61.21064453125001,
-        "width": 261.577734375,
+        "width": 280.9111328125,
         "height": 57.72246093749999
       },
       "sourceAlphaBbox": {
@@ -2229,13 +1793,12 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
-        "face": 1,
+        "face": 0.9993835721991062,
         "body": 0
       },
       "status": "pass",
@@ -2250,9 +1813,9 @@
       "anchorPolicy": "headCenterOffset",
       "bboxPolicy": "intuitionNoFaceFeatures",
       "alphaBbox": {
-        "x": 164.26718750000003,
+        "x": 136.55849609374997,
         "y": 49.34843749999999,
-        "width": 179.30624999999998,
+        "width": 232.88320312500008,
         "height": 72.54374999999999
       },
       "sourceAlphaBbox": {
@@ -2268,7 +1831,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -2290,9 +1852,9 @@
       "bboxPolicy": "intuitionNoFaceFeatures",
       "alphaBbox": {
         "x": 135.853857421875,
-        "y": 42.369873046875,
+        "y": 29.560302734375,
         "width": 233.10458984375,
-        "height": 60.38642578125001
+        "height": 62.74775390625001
       },
       "sourceAlphaBbox": {
         "x": 161.5,
@@ -2307,7 +1869,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -2328,9 +1889,9 @@
       "anchorPolicy": "headCenterOffset",
       "bboxPolicy": "intuitionNoFaceFeatures",
       "alphaBbox": {
-        "x": 161.60366210937502,
+        "x": 102.42397460937502,
         "y": 25.775537109375023,
-        "width": 186.3193359375,
+        "width": 305.8505859375,
         "height": 67.58642578125
       },
       "sourceAlphaBbox": {
@@ -2346,13 +1907,12 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
-        "face": 0.9333333333333333,
+        "face": 0.858950201884253,
         "body": 0
       },
       "status": "pass",
@@ -2385,7 +1945,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -2407,9 +1966,9 @@
       "bboxPolicy": "intuitionNoFaceFeatures",
       "alphaBbox": {
         "x": 183.559033203125,
-        "y": 49.74399414062498,
+        "y": 35.208398437499994,
         "width": 145.52822265625002,
-        "height": 53.103613281250006
+        "height": 56.95429687499998
       },
       "sourceAlphaBbox": {
         "x": 163.5,
@@ -2424,7 +1983,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -2463,7 +2021,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -2502,7 +2059,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -2541,7 +2097,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -2580,7 +2135,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -2619,7 +2173,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -2658,7 +2211,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -2697,7 +2249,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -2736,7 +2287,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -2775,7 +2325,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -2797,9 +2346,9 @@
       "bboxPolicy": "groundProp",
       "alphaBbox": {
         "x": 105.7076171875,
-        "y": 439.81230468750005,
+        "y": 460.78642578125,
         "width": 235.11210937500002,
-        "height": 47.13203125000001
+        "height": 51.75117187500001
       },
       "sourceAlphaBbox": {
         "x": 145,
@@ -2814,14 +2363,13 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
         "face": 0,
-        "body": 1
+        "body": 0.5012227786188425
       },
       "status": "pass",
       "failures": [],
@@ -2835,9 +2383,9 @@
       "anchorPolicy": "feetBase",
       "bboxPolicy": "groundProp",
       "alphaBbox": {
-        "x": 141.49248046875,
+        "x": 136.6072265625,
         "y": 456.57646484374993,
-        "width": 214.4162109375,
+        "width": 224.051953125,
         "height": 58.97695312500002
       },
       "sourceAlphaBbox": {
@@ -2853,7 +2401,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -2874,9 +2421,9 @@
       "anchorPolicy": "feetBase",
       "bboxPolicy": "groundProp",
       "alphaBbox": {
-        "x": 136.748388671875,
+        "x": 130.110595703125,
         "y": 448.97114257812507,
-        "width": 241.35439453125,
+        "width": 255.01201171875005,
         "height": 52.88417968750002
       },
       "sourceAlphaBbox": {
@@ -2892,7 +2439,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -2913,9 +2459,9 @@
       "anchorPolicy": "feetBase",
       "bboxPolicy": "groundProp",
       "alphaBbox": {
-        "x": 106.17490234374998,
+        "x": 105.29189453125,
         "y": 449.72724609375,
-        "width": 248.26699218750002,
+        "width": 250.11035156250003,
         "height": 49.76914062499998
       },
       "sourceAlphaBbox": {
@@ -2931,7 +2477,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -2952,9 +2497,9 @@
       "anchorPolicy": "feetBase",
       "bboxPolicy": "groundProp",
       "alphaBbox": {
-        "x": 110.481591796875,
+        "x": 101.76064453125,
         "y": 441.92788085937497,
-        "width": 233.31064453125,
+        "width": 250.2779296875,
         "height": 65.80556640624997
       },
       "sourceAlphaBbox": {
@@ -2970,7 +2515,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -2991,9 +2535,9 @@
       "anchorPolicy": "feetBase",
       "bboxPolicy": "groundProp",
       "alphaBbox": {
-        "x": 115.21269531249999,
+        "x": 113.26201171874999,
         "y": 448.96464843750005,
-        "width": 221.03554687500002,
+        "width": 224.9736328125,
         "height": 45.85585937500002
       },
       "sourceAlphaBbox": {
@@ -3009,7 +2553,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -3031,9 +2574,9 @@
       "bboxPolicy": "groundProp",
       "alphaBbox": {
         "x": 121.044677734375,
-        "y": 422.87016601562505,
+        "y": 449.6571289062501,
         "width": 238.92451171874995,
-        "height": 48.45322265624992
+        "height": 54.56191406250002
       },
       "sourceAlphaBbox": {
         "x": 149,
@@ -3048,14 +2591,13 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
         "face": 0,
-        "body": 0.8758640146706165
+        "body": 0.2756383128791085
       },
       "status": "pass",
       "failures": [],
@@ -3070,9 +2612,9 @@
       "bboxPolicy": "groundProp",
       "alphaBbox": {
         "x": 147.33232421875,
-        "y": 429.44130859374997,
+        "y": 446.71376953124997,
         "width": 201.17226562499997,
-        "height": 75.28144531249995
+        "height": 80.6271484374999
       },
       "sourceAlphaBbox": {
         "x": 175,
@@ -3087,14 +2629,13 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
         "face": 0,
-        "body": 0.8828305851347983
+        "body": 0.5395491292424944
       },
       "status": "pass",
       "failures": [],
@@ -3109,9 +2650,9 @@
       "bboxPolicy": "groundProp",
       "alphaBbox": {
         "x": 99.02509765625001,
-        "y": 417.78681640625,
+        "y": 440.453759765625,
         "width": 266.0302734375,
-        "height": 51.4697265625
+        "height": 56.179003906250045
       },
       "sourceAlphaBbox": {
         "x": 149.5,
@@ -3126,14 +2667,13 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
         "face": 0,
-        "body": 0.7800992966487381
+        "body": 0.3001654944145635
       },
       "status": "pass",
       "failures": [],
@@ -3147,9 +2687,9 @@
       "anchorPolicy": "feetBase",
       "bboxPolicy": "groundSideProp",
       "alphaBbox": {
-        "x": 261.011865234375,
+        "x": 263.318212890625,
         "y": 378.31303710937505,
-        "width": 67.84267578124997,
+        "width": 75.96591796875003,
         "height": 87.95683593749999
       },
       "sourceAlphaBbox": {
@@ -3165,7 +2705,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -3187,9 +2726,9 @@
       "bboxPolicy": "groundSideProp",
       "alphaBbox": {
         "x": 237.1662109375,
-        "y": 400.68535156250005,
+        "y": 408.48808593750005,
         "width": 63.19804687499999,
-        "height": 80.34726562499998
+        "height": 89.63710937500002
       },
       "sourceAlphaBbox": {
         "x": 287.5,
@@ -3204,14 +2743,13 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
         "face": 0,
-        "body": 1
+        "body": 0.8343473335291403
       },
       "status": "pass",
       "failures": [],
@@ -3226,9 +2764,9 @@
       "bboxPolicy": "groundSideProp",
       "alphaBbox": {
         "x": 278.0017578125,
-        "y": 390.4716796875,
+        "y": 396.52490234375,
         "width": 58.378515625000034,
-        "height": 86.83437499999997
+        "height": 96.14218750000003
       },
       "sourceAlphaBbox": {
         "x": 289.5,
@@ -3243,7 +2781,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -3265,9 +2802,9 @@
       "bboxPolicy": "groundSideProp",
       "alphaBbox": {
         "x": 285.162890625,
-        "y": 376.977734375,
+        "y": 383.910595703125,
         "width": 46.89921874999999,
-        "height": 83.76796875000002
+        "height": 94.78212890625002
       },
       "sourceAlphaBbox": {
         "x": 300.5,
@@ -3282,14 +2819,13 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
         "face": 0,
-        "body": 0.9546856146936586
+        "body": 0.7055905617374983
       },
       "status": "pass",
       "failures": [],
@@ -3304,9 +2840,9 @@
       "bboxPolicy": "groundSideProp",
       "alphaBbox": {
         "x": 258.36372070312495,
-        "y": 378.680615234375,
+        "y": 390.063671875,
         "width": 56.104785156250045,
-        "height": 77.24980468749999
+        "height": 93.97343749999999
       },
       "sourceAlphaBbox": {
         "x": 295.5,
@@ -3321,14 +2857,13 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
         "face": 0,
-        "body": 1
+        "body": 0.7356336366700371
       },
       "status": "pass",
       "failures": [],
@@ -3343,9 +2878,9 @@
       "bboxPolicy": "groundSideProp",
       "alphaBbox": {
         "x": 262.681640625,
-        "y": 381.45664062500003,
+        "y": 400.157666015625,
         "width": 52.39296875000002,
-        "height": 64.24062500000002
+        "height": 84.56601562499998
       },
       "sourceAlphaBbox": {
         "x": 288,
@@ -3360,14 +2895,13 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
         "face": 0,
-        "body": 1
+        "body": 0.6652312533642499
       },
       "status": "pass",
       "failures": [],
@@ -3382,9 +2916,9 @@
       "bboxPolicy": "groundSideProp",
       "alphaBbox": {
         "x": 268.13505859375,
-        "y": 349.28857421875,
+        "y": 362.50849609375,
         "width": 31.947265625,
-        "height": 89.74277343749998
+        "height": 110.7451171875
       },
       "sourceAlphaBbox": {
         "x": 314,
@@ -3399,14 +2933,13 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
         "face": 0,
-        "body": 1
+        "body": 0.8814814814814815
       },
       "status": "pass",
       "failures": [],
@@ -3421,9 +2954,9 @@
       "bboxPolicy": "groundSideProp",
       "alphaBbox": {
         "x": 273.31044921875,
-        "y": 359.35146484375,
+        "y": 379.614892578125,
         "width": 43.7255859375,
-        "height": 67.0166015625
+        "height": 101.83544921875
       },
       "sourceAlphaBbox": {
         "x": 291.5,
@@ -3438,14 +2971,13 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
         "face": 0,
-        "body": 1
+        "body": 0.7824621836153961
       },
       "status": "pass",
       "failures": [],
@@ -3460,9 +2992,9 @@
       "bboxPolicy": "groundSideProp",
       "alphaBbox": {
         "x": 281.842138671875,
-        "y": 363.330712890625,
+        "y": 378.032177734375,
         "width": 58.213964843750034,
-        "height": 94.17861328125002
+        "height": 117.53466796875
       },
       "sourceAlphaBbox": {
         "x": 291.5,
@@ -3477,14 +3009,13 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
         "face": 0,
-        "body": 1
+        "body": 0.7973598888374247
       },
       "status": "pass",
       "failures": [],
@@ -3499,9 +3030,9 @@
       "bboxPolicy": "groundSideProp",
       "alphaBbox": {
         "x": 260.387841796875,
-        "y": 368.42475585937495,
+        "y": 376.72504882812495,
         "width": 70.09697265624999,
-        "height": 86.65253906249995
+        "height": 95.82949218749997
       },
       "sourceAlphaBbox": {
         "x": 292,
@@ -3516,14 +3047,13 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
         "face": 0,
-        "body": 1
+        "body": 0.7651315474193703
       },
       "status": "pass",
       "failures": [],
@@ -3537,9 +3067,9 @@
       "anchorPolicy": "feetBase",
       "bboxPolicy": "groundSideProp",
       "alphaBbox": {
-        "x": 201.94462890625,
+        "x": 201.649462890625,
         "y": 374.07431640625,
-        "width": 72.63886718750001,
+        "width": 72.88388671875003,
         "height": 91.45722656250001
       },
       "sourceAlphaBbox": {
@@ -3555,7 +3085,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -3577,9 +3106,9 @@
       "bboxPolicy": "groundSideProp",
       "alphaBbox": {
         "x": 152.46806640625,
-        "y": 403.38369140625,
+        "y": 435.4462890625,
         "width": 79.90664062500002,
-        "height": 48.346874999999955
+        "height": 63.168750000000045
       },
       "sourceAlphaBbox": {
         "x": 131.5,
@@ -3594,14 +3123,13 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
         "face": 0,
-        "body": 1
+        "body": 0.8999551535989236
       },
       "status": "pass",
       "failures": [],
@@ -3615,9 +3143,9 @@
       "anchorPolicy": "feetBase",
       "bboxPolicy": "groundSideProp",
       "alphaBbox": {
-        "x": 213.89052734375002,
+        "x": 211.38051757812502,
         "y": 393.89833984375,
-        "width": 77.13671875,
+        "width": 79.337890625,
         "height": 99.962890625
       },
       "sourceAlphaBbox": {
@@ -3633,7 +3161,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -3654,9 +3181,9 @@
       "anchorPolicy": "feetBase",
       "bboxPolicy": "groundSideProp",
       "alphaBbox": {
-        "x": 204.981884765625,
+        "x": 194.218798828125,
         "y": 401.324072265625,
-        "width": 82.27294921875,
+        "width": 93.19599609375001,
         "height": 83.64990234375
       },
       "sourceAlphaBbox": {
@@ -3672,7 +3199,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -3693,9 +3219,9 @@
       "anchorPolicy": "feetBase",
       "bboxPolicy": "groundSideProp",
       "alphaBbox": {
-        "x": 147.81865234375,
+        "x": 145.1294921875,
         "y": 357.54873046875,
-        "width": 94.46660156250002,
+        "width": 96.861328125,
         "height": 131.11757812500002
       },
       "sourceAlphaBbox": {
@@ -3711,7 +3237,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -3733,9 +3258,9 @@
       "bboxPolicy": "groundSideProp",
       "alphaBbox": {
         "x": 185.35190429687498,
-        "y": 361.46791992187497,
+        "y": 365.59340820312497,
         "width": 86.85546875,
-        "height": 110.30644531249999
+        "height": 114.52324218749999
       },
       "sourceAlphaBbox": {
         "x": 142,
@@ -3750,14 +3275,13 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
         "face": 0,
-        "body": 0.8228184102005024
+        "body": 0.679954495899891
       },
       "status": "pass",
       "failures": [],
@@ -3771,9 +3295,9 @@
       "anchorPolicy": "feetBase",
       "bboxPolicy": "groundSideProp",
       "alphaBbox": {
-        "x": 164.016943359375,
+        "x": 163.68955078125,
         "y": 368.311474609375,
-        "width": 85.5181640625,
+        "width": 85.819921875,
         "height": 105.44472656250002
       },
       "sourceAlphaBbox": {
@@ -3789,7 +3313,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -3810,9 +3333,9 @@
       "anchorPolicy": "feetBase",
       "bboxPolicy": "groundSideProp",
       "alphaBbox": {
-        "x": 207.22246093750005,
+        "x": 198.40205078125004,
         "y": 348.7302734375,
-        "width": 79.39453125,
+        "width": 86.16210937500003,
         "height": 134.44140625
       },
       "sourceAlphaBbox": {
@@ -3828,7 +3351,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -3850,9 +3372,9 @@
       "bboxPolicy": "groundSideProp",
       "alphaBbox": {
         "x": 214.338623046875,
-        "y": 377.639501953125,
+        "y": 382.05620117187505,
         "width": 76.50615234375005,
-        "height": 106.18886718750002
+        "height": 110.70332031249995
       },
       "sourceAlphaBbox": {
         "x": 147.5,
@@ -3867,14 +3389,13 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
         "face": 0,
-        "body": 1
+        "body": 0.9404368501652293
       },
       "status": "pass",
       "failures": [],
@@ -3889,9 +3410,9 @@
       "bboxPolicy": "groundSideProp",
       "alphaBbox": {
         "x": 192.33178710937497,
-        "y": 370.94819335937495,
+        "y": 373.892822265625,
         "width": 90.62861328124998,
-        "height": 91.0078125
+        "height": 93.6796875
       },
       "sourceAlphaBbox": {
         "x": 136,
@@ -3906,14 +3427,13 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
         "eyes": 0,
         "mouth": 0,
         "face": 0,
-        "body": 0.9753326406810336
+        "body": 0.9158762610181989
       },
       "status": "pass",
       "failures": [],
@@ -3945,7 +3465,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0.0025477322790499533,
         "rightEye": 0.0008973923890132192,
@@ -3984,7 +3503,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -4023,7 +3541,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -4044,10 +3561,10 @@
       "anchorPolicy": "eyesMidpoint",
       "bboxPolicy": "emotionBrows",
       "alphaBbox": {
-        "x": 204.59506548713236,
-        "y": 137.7097292432598,
-        "width": 110.7853094362745,
-        "height": 20.592064950980415
+        "x": 189.475341796875,
+        "y": 134.87832031249997,
+        "width": 141.25126953125005,
+        "height": 26.25488281250003
       },
       "sourceAlphaBbox": {
         "x": 189,
@@ -4057,16 +3574,15 @@
       },
       "anchor": {
         "x": 259.57587890625,
-        "y": 263.52724609375
+        "y": 295.295654296875
       },
       "placementSource": "template-normalized",
       "placementTemplateAssetKey": "emotions/brows/tier-03",
       "placementTemplateExperienceTierKey": "tier-03",
-      "placementFitMode": "contain",
       "overlapRatios": {
-        "leftEye": 0.03686718763690871,
-        "rightEye": 0.0506598049500605,
-        "eyes": 0.04356933084522359,
+        "leftEye": 0.07241453916006492,
+        "rightEye": 0.08882095135018904,
+        "eyes": 0.08038678413259857,
         "mouth": 0,
         "face": 1,
         "body": 0
@@ -4084,7 +3600,7 @@
       "bboxPolicy": "emotionBrows",
       "alphaBbox": {
         "x": 189.78549804687498,
-        "y": 179.96475219726562,
+        "y": 129.64306640625,
         "width": 132.79248046875,
         "height": 23.20166015625
       },
@@ -4096,16 +3612,15 @@
       },
       "anchor": {
         "x": 258.15634765625,
-        "y": 306.5865783691406
+        "y": 256.264892578125
       },
       "placementSource": "template-normalized",
       "placementTemplateAssetKey": "emotions/brows/tier-06",
       "placementTemplateExperienceTierKey": "tier-06",
-      "placementFitMode": "contain",
       "overlapRatios": {
-        "leftEye": 0.04695176281208216,
-        "rightEye": 0.05007366046485089,
-        "eyes": 0.0484786607646999,
+        "leftEye": 0.024518816623576852,
+        "rightEye": 0.018952346038010066,
+        "eyes": 0.021796295424692944,
         "mouth": 0,
         "face": 1,
         "body": 0
@@ -4140,7 +3655,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0.028221717704992735,
         "rightEye": 0.039604178864902,
@@ -4179,7 +3693,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0.07051536659356095,
         "rightEye": 0.06262933779051258,
@@ -4218,7 +3731,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0.04395747521286815,
         "rightEye": 0.05093865076248793,
@@ -4257,7 +3769,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0.004021732532022097,
         "rightEye": 0,
@@ -4296,7 +3807,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0.04304388463791708,
         "rightEye": 0.047148126969177126,
@@ -4335,7 +3845,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -4374,7 +3883,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -4413,7 +3921,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -4452,7 +3959,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -4491,7 +3997,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -4530,7 +4035,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -4569,7 +4073,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -4608,7 +4111,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -4647,7 +4149,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -4686,7 +4187,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -4725,7 +4225,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0.020204421202757308,
@@ -4764,7 +4263,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0.012804097311139566,
@@ -4803,7 +4301,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -4842,7 +4339,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -4881,7 +4377,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -4920,7 +4415,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -4959,7 +4453,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -4998,7 +4491,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0.01432649552694973,
@@ -5037,7 +4529,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
@@ -5076,7 +4567,6 @@
       "placementSource": "exact",
       "placementTemplateAssetKey": null,
       "placementTemplateExperienceTierKey": null,
-      "placementFitMode": "contain",
       "overlapRatios": {
         "leftEye": 0,
         "rightEye": 0,
