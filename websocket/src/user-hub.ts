@@ -288,7 +288,11 @@ export class UserHub implements DurableObject {
     await this.stopRedisSubscriber();
 
     const redis = Redis.fromEnv(this.env);
-    const sub = redis.subscribe(channels);
+    // @upstash/redis SSE subscribe does not URL-encode channel names; raw "/"
+    // (e.g. "market:tick:DEEP/SUI") breaks the REST path and silently
+    // subscribes to the wrong channel. Pre-encode; the server decodes and the
+    // message callback still reports the raw channel name.
+    const sub = redis.subscribe(channels.map((ch) => encodeURIComponent(ch)));
     sub.on("message", (data: unknown) => {
       void this.onRedisMessage(data);
     });
