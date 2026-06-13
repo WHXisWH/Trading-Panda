@@ -117,6 +117,32 @@
   .animate-fade-up {
     animation: fadeUp 400ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
+
+  /* Shared hover-lift for cards/tiles — one motion language across the app */
+  .lift {
+    transition: transform var(--duration-normal) var(--ease-out-expo),
+      box-shadow var(--duration-normal) var(--ease-out-expo),
+      border-color var(--duration-fast) var(--ease-in-out);
+  }
+  .lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+}
+
+/* Respect reduced-motion: kill non-essential motion globally (a11y) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .lift:hover {
+    transform: none;
+  }
 }
 
 @keyframes scaleIn {
@@ -196,64 +222,10 @@
   --dapp-kit-radii-xlarge: 18px;
 }
 
-/* ── ConnectModal wallet list items ── */
-[data-dapp-kit] [class*="WalletListItem_walletItem"] {
-  border-radius: 12px;
-  padding: 10px 14px;
-  margin-bottom: 2px;
-  transition: background-color 0.15s ease, transform 0.1s ease;
-}
-[data-dapp-kit] [class*="WalletListItem_walletItem"]:hover {
-  transform: translateX(2px);
-}
-[data-dapp-kit] [class*="WalletListItem_walletItem"]:active {
-  transform: translateX(0) scale(0.985);
-}
-[data-dapp-kit] [class*="WalletListItem_selectedWalletItem"] {
-  border-radius: 12px;
-  box-shadow: 0 0 0 1.5px #0f973d, 0 2px 8px rgba(15, 151, 61, 0.1);
-}
-[data-dapp-kit] [class*="WalletListItem_walletIcon"] {
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-/* ── ConnectModal content ── */
-[data-dapp-kit] [class*="ConnectModal_content"] {
-  border-radius: 18px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
-}
-[data-dapp-kit] [class*="ConnectModal_title"] {
-  font-weight: 600;
-  font-size: 18px;
-  letter-spacing: -0.01em;
-}
-[data-dapp-kit] [class*="ConnectModal_overlay"] {
-  animation: fadeIn 200ms ease-out;
-}
-[data-dapp-kit] [class*="ConnectModal_whatIsAWalletButton"] {
-  border-radius: 8px;
-  font-size: 13px;
-  color: #6b7280;
-  transition: color 0.15s;
-}
-[data-dapp-kit] [class*="ConnectModal_whatIsAWalletButton"]:hover {
-  color: #0f973d;
-}
-
-/* ── Connection status view ── */
-[data-dapp-kit] [class*="ConnectionStatus_container"] {
-  border-radius: 14px;
-  padding: 20px;
-}
-
-/* ── Getting started / install view ── */
-[data-dapp-kit] [class*="GettingStarted_container"] {
-  border-radius: 14px;
-}
-[data-dapp-kit] [class*="GettingStarted_installButtonContainer"] a {
-  border-radius: 10px;
-}
+/* Connect flow now uses the in-app ConnectWalletModal (Radix Dialog),
+   so dapp-kit ConnectModal class-targeting overrides were removed.
+   The [data-dapp-kit] variable block above still themes any other
+   dapp-kit surfaces (e.g. account dropdowns) without fragile selectors. */
 
 @keyframes fadeIn {
   from { opacity: 0; }

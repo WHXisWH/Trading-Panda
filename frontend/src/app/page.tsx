@@ -26,25 +26,21 @@ const FEATURES = [
     icon: Dice5,
     title: "On-chain Personality",
     desc: "Five personality axes permanently minted by sui::random. Every panda is provably unique and immutable.",
-    color: "#0f973d",
   },
   {
     icon: Brain,
     title: "Strategy Engine",
     desc: "Feed your panda trading rules with a visual builder or natural language. It trades autonomously.",
-    color: "#6366f1",
   },
   {
     icon: TrendingUp,
     title: "Verifiable Growth",
     desc: "Every 50 trades produce a Merkle Root on Sui. Your panda's track record is on-chain and auditable.",
-    color: "#f59e0b",
   },
   {
     icon: GitBranch,
     title: "Strategy Memory",
     desc: "Old strategies decay through ghost weight, giving your panda realistic behavioral memory and adaptation.",
-    color: "#ec4899",
   },
 ];
 
@@ -90,15 +86,8 @@ export default function LandingPage() {
       <section className="relative overflow-hidden bg-white">
         {/* Background decoration */}
         <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-          {/* Main gradient */}
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "radial-gradient(ellipse 90% 60% at 30% -10%, #0f973d0d 0%, transparent 50%), " +
-                "radial-gradient(ellipse 60% 50% at 90% 90%, #0f973d06 0%, transparent 50%)",
-            }}
-          />
+          {/* Main gradient (brand-tinted, token-driven) */}
+          <div className="absolute inset-0 bg-hero" />
           {/* Decorative grid lines */}
           <div
             className="absolute inset-0 opacity-[0.03]"
@@ -190,7 +179,7 @@ export default function LandingPage() {
               style={{ backgroundColor: "#0f973d15" }}
             />
             {/* Logo card */}
-            <div className="relative rounded-3xl border border-neutral-100 bg-white p-10 shadow-xl shadow-neutral-200/50">
+            <div className="lift relative rounded-3xl border border-neutral-200 bg-brand-soft p-10 shadow-lg">
               <Image
                 src="/assets/ui-logo.svg"
                 alt="TradingPanda"
@@ -199,10 +188,6 @@ export default function LandingPage() {
                 className="h-40 w-40"
                 priority
               />
-              {/* Decorative dots */}
-              <div className="absolute -right-3 -top-3 h-6 w-6 rounded-full bg-primary-100" />
-              <div className="absolute -bottom-2 -left-2 h-4 w-4 rounded-full bg-amber-100" />
-              <div className="absolute -right-2 bottom-4 h-3 w-3 rounded-full bg-primary-50" />
             </div>
           </div>
         </PageContainer>
@@ -259,24 +244,15 @@ export default function LandingPage() {
           </div>
 
           <div className="mx-auto grid max-w-5xl gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {FEATURES.map(({ icon: Icon, title, desc, color }) => (
+            {FEATURES.map(({ icon: Icon, title, desc }) => (
               <Card
                 key={title}
                 variant="default"
-                className="group relative space-y-3 overflow-hidden border-neutral-200 shadow-sm transition-all hover:-translate-y-1 hover:border-neutral-300 hover:shadow-md"
+                className="lift group relative space-y-3 overflow-hidden hover:border-neutral-300"
               >
-                {/* Color accent bar at top — always visible */}
-                <div
-                  className="absolute left-0 right-0 top-0 h-0.5"
-                  style={{ backgroundColor: color }}
-                />
-                <div
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-xl transition-colors"
-                  style={{
-                    backgroundColor: color + "18",
-                    color: color,
-                  }}
-                >
+                {/* Brand accent bar at top */}
+                <div className="absolute inset-x-0 top-0 h-0.5 bg-brand" />
+                <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-primary-50 text-primary-600 transition-colors group-hover:bg-primary-100">
                   <Icon className="h-5 w-5" />
                 </div>
                 <h3 className="font-semibold text-neutral-900">{title}</h3>
@@ -288,7 +264,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── CTA Banner ── */}
-      <section className="border-t border-neutral-100 bg-neutral-900">
+      <section className="border-t border-neutral-100 bg-dark-panel">
         <PageContainer className="py-16 text-center">
           <div className="mx-auto max-w-lg space-y-5">
             <h2 className="text-2xl font-bold text-white sm:text-3xl">
@@ -309,7 +285,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Footer ── */}
-      <footer className="border-t border-neutral-800 bg-neutral-900">
+      <footer className="border-t border-neutral-800 bg-dark-panel">
         <div className="mx-auto flex max-w-page flex-col items-center gap-4 px-6 py-8 text-center text-xs text-neutral-500">
           <div className="flex items-center gap-2">
             <Image
