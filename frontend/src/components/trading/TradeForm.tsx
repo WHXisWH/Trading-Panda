@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { clsx } from "clsx";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 
 interface Props {
   symbol?: string;
@@ -65,9 +66,9 @@ export function TradeForm({
       {orderType === "limit" && (
         <label className="block text-[11px]">
           <span className="text-neutral-500">价格</span>
-          <input
+          <Input
             type="text"
-            className="mt-1 w-full rounded-lg bg-[var(--color-bg-primary)] px-3 py-2 font-mono text-[13px]"
+            className="mt-1 font-mono"
             defaultValue={price.toLocaleString()}
           />
         </label>
@@ -75,9 +76,9 @@ export function TradeForm({
 
       <label className="block text-[11px]">
         <span className="text-neutral-500">数量</span>
-        <input
+        <Input
           type="text"
-          className="mt-1 w-full rounded-lg bg-[var(--color-bg-primary)] px-3 py-2 font-mono text-[13px]"
+          className="mt-1 font-mono"
           value={quantity}
           onChange={(e) => setQuantity(e.target.value)}
         />

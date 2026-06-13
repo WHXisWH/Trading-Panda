@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { Textarea } from "@/components/ui/Textarea";
 
 const EXAMPLES = [
   { title: "RSI 超卖", text: "当 RSI 低于 30 时Buy，高于 70 时Sell。止损 5%，止盈 15%。趋势跟踪。" },
@@ -45,8 +46,8 @@ export function StrategyTextInput({ value, onChange, onParse, loading }: Props) 
               </button>
             ))}
           </div>
-          <textarea
-            className="w-full resize-none rounded-lg border border-[var(--color-border)] bg-white p-2 text-[12px]"
+          <Textarea
+            className="resize-none"
             rows={3}
             placeholder="用自然语言描述策略…"
             value={value}

@@ -2,6 +2,8 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { Select } from "@/components/ui/Select";
+import { Slider } from "@/components/ui/Slider";
 import { StrategyRuleRow } from "@/components/trading/StrategyRuleRow";
 import { StrategyTemplates } from "@/components/trading/StrategyTemplates";
 import { StrategyTextInput } from "@/components/trading/StrategyTextInput";
@@ -103,17 +105,13 @@ export function StrategyBuilder({
 
       <label className="flex flex-col gap-1 text-[11px] text-neutral-500">
         交易哲学
-        <select
-          className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] px-2 py-1.5 text-[13px]"
+        <Select
+          size="sm"
+          aria-label="交易哲学"
           value={philosophy}
-          onChange={(e) => setPhilosophy(e.target.value as Philosophy)}
-        >
-          {PHILOSOPHY_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
+          onValueChange={(v) => setPhilosophy(v as Philosophy)}
+          options={PHILOSOPHY_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+        />
       </label>
 
       <StrategyTemplates
@@ -154,44 +152,44 @@ export function StrategyBuilder({
           compact ? "grid-cols-1" : "grid-cols-2"
         }`}
       >
-        <label className="flex flex-col gap-1">
+        <label className="flex flex-col gap-1.5">
           单笔仓位 {(positionPct * 100).toFixed(0)}%
-          <input
-            type="range"
+          <Slider
+            aria-label="单笔仓位"
             min={1}
             max={25}
             value={Math.round(positionPct * 100)}
-            onChange={(e) => setPositionPct(Number(e.target.value) / 100)}
+            onValueChange={(v) => setPositionPct(v / 100)}
           />
         </label>
-        <label className="flex flex-col gap-1">
+        <label className="flex flex-col gap-1.5">
           止损 {(stopLossPct * 100).toFixed(0)}%
-          <input
-            type="range"
+          <Slider
+            aria-label="止损"
             min={1}
             max={30}
             value={Math.round(stopLossPct * 100)}
-            onChange={(e) => setStopLossPct(Number(e.target.value) / 100)}
+            onValueChange={(v) => setStopLossPct(v / 100)}
           />
         </label>
-        <label className="flex flex-col gap-1">
+        <label className="flex flex-col gap-1.5">
           止盈 {(takeProfitPct * 100).toFixed(0)}%
-          <input
-            type="range"
+          <Slider
+            aria-label="止盈"
             min={5}
             max={50}
             value={Math.round(takeProfitPct * 100)}
-            onChange={(e) => setTakeProfitPct(Number(e.target.value) / 100)}
+            onValueChange={(v) => setTakeProfitPct(v / 100)}
           />
         </label>
-        <label className="flex flex-col gap-1">
+        <label className="flex flex-col gap-1.5">
           最大回撤 {(maxDrawdownPct * 100).toFixed(0)}%
-          <input
-            type="range"
+          <Slider
+            aria-label="最大回撤"
             min={5}
             max={50}
             value={Math.round(maxDrawdownPct * 100)}
-            onChange={(e) => setMaxDrawdownPct(Number(e.target.value) / 100)}
+            onValueChange={(v) => setMaxDrawdownPct(v / 100)}
           />
         </label>
       </div>

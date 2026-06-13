@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
+import { Textarea } from "@/components/ui/Textarea";
 
 const EXAMPLES = [
   { title: "RSI 超卖", text: "当 RSI 低于 30 时Buy，高于 70 时Sell" },
@@ -43,8 +44,8 @@ export function StrategyInput({
           ))}
         </div>
       )}
-      <textarea
-        className="w-full resize-none rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] p-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-primary-500"
+      <Textarea
+        className="resize-none"
         rows={3}
         placeholder="当 RSI 低于 30 时Buy..."
         value={value}
