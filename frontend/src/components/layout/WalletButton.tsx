@@ -7,6 +7,7 @@ import { useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import { ConnectWalletModal } from "@/components/layout/ConnectWalletModal";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { useWalletLogin } from "@/hooks/useWalletLogin";
 import { resetWalletLoginState } from "@/lib/auth/walletLoginSession";
@@ -115,12 +116,11 @@ export function WalletButton() {
                 {user?.displayName ?? "User"}
               </p>
               {user?.walletAddress && (
-                <p
-                  className="truncate text-xs text-neutral-400"
-                  title={user.walletAddress}
-                >
-                  {formatShortAddress(user.walletAddress)}
-                </p>
+                <Tooltip content={user.walletAddress}>
+                  <p className="truncate text-xs text-neutral-400">
+                    {formatShortAddress(user.walletAddress)}
+                  </p>
+                </Tooltip>
               )}
             </div>
 
@@ -182,12 +182,11 @@ export function WalletButton() {
     <div className="flex items-center gap-2">
       {/* ── network mismatch warning ── */}
       {needsWalletSignIn && networkMismatch && !walletLoginLoading && (
-        <span
-          className="max-w-[140px] text-xs leading-tight text-amber-600"
-          title={networkMismatchHint()}
-        >
-          Switch to Testnet
-        </span>
+        <Tooltip content={networkMismatchHint()}>
+          <span className="max-w-[140px] text-xs leading-tight text-amber-600">
+            Switch to Testnet
+          </span>
+        </Tooltip>
       )}
 
       {/* ── wallet connect / sign-in ── */}

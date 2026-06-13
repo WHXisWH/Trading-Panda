@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { clsx } from "clsx";
 import { SimulationControls } from "@/components/trading/SimulationControls";
+import { Tooltip } from "@/components/ui/Tooltip";
 import type { SessionPhase } from "@/hooks/useSimulationSession";
 import type { WsConnectionStatus } from "@/types/ws";
 import type { DeepbookPool } from "@/lib/constants/deepbookPools";
@@ -323,13 +324,14 @@ export function SimulationStatusBar({
           )}
         </div>
 
-        <Link
-          href={`/pools?panda=${pandaId}`}
-          className="text-[11px] text-ink-500 transition-colors hover:text-bamboo-600"
-          title="管理交易池"
-        >
-          {subscribedPools.join(" · ")}
-        </Link>
+        <Tooltip content="管理交易池">
+          <Link
+            href={`/pools?panda=${pandaId}`}
+            className="text-[11px] text-ink-500 transition-colors hover:text-bamboo-600"
+          >
+            {subscribedPools.join(" · ")}
+          </Link>
+        </Tooltip>
       </div>
     </div>
   );
