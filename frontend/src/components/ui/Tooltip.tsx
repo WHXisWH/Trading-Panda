@@ -37,7 +37,7 @@ export function Tooltip({
             align={align}
             sideOffset={6}
             className={clsx(
-              "z-[var(--z-toast)] max-w-xs rounded-lg bg-neutral-900 px-2.5 py-1.5 text-xs leading-snug text-white shadow-md animate-scale-in",
+              "z-[var(--z-toast)] max-w-xs rounded-lg bg-neutral-900 px-2.5 py-1.5 text-xs leading-snug text-white shadow-md animate-[fadeIn_120ms_ease-out]",
               className,
             )}
           >

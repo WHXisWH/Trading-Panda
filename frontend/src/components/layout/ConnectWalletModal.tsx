@@ -64,7 +64,7 @@ export function ConnectWalletModal({ open, onOpenChange }: ConnectWalletModalPro
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-[var(--z-modal)] bg-neutral-900/45 backdrop-blur-sm animate-[fadeIn_200ms_ease-out]" />
         <Dialog.Content
-          className="fixed left-1/2 top-1/2 z-[var(--z-modal)] w-[min(760px,92vw)] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl bg-white shadow-lg animate-scale-in focus:outline-none"
+          className="fixed left-1/2 top-1/2 z-[var(--z-modal)] w-[min(760px,92vw)] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl bg-white shadow-lg animate-modal-in focus:outline-none"
           aria-describedby="connect-desc"
         >
           <Dialog.Description id="connect-desc" className="sr-only">
