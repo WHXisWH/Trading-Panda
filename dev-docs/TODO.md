@@ -293,18 +293,19 @@
 
 ### 6.1 排行榜
 
-- `GET /api/leaderboard` 胜率/收益/等级维度
-- `/leaderboard` 页 + RankDimensionTabs
+- [x] `GET /leaderboard` 胜率/收益/等级维度（链下聚合）+ `/api/leaderboard` BFF
+- [x] `/leaderboard` 页 + 维度 Tabs（接真实数据）
 
 ### 6.2 成就
 
-- 成就条件检测（服务端）· 链上 dynamic_field 记录（可选 batch）
-- `/achievements` 页
+- [x] 成就条件检测（服务端，9 项目录 `evaluate_unlocked`）+ 懒持久化 `user_achievements`
+- [-] 链上 dynamic_field 记录（合约侧，延后）
+- [x] `/achievements` 页（解锁/未解锁 + 进度）
 
 ### 6.3 签到
 
-- `POST /api/profile/checkin` · 连续签到加成
-- `/profile` 签到日历
+- [x] `POST/GET /checkin` 连续签到 streak/reward（注：路径为 `/api/checkin`，非 `/profile/checkin`）
+- [x] `/profile` 签到卡（streak + 7 日格 + 领取）
 
 ---
 
@@ -316,27 +317,26 @@
 
 ### 7.0 数据库迁移（前置阻塞）
 
-- Alembic `003`：迁移 `experience_patterns` · `experience_mastery` · `experience_mistakes` · `experience_cycles` · `emotions_log` · `merkle_roots` 等剩余 12 表（见 `docs/database-schema.md`）
-- `scripts/verify_db.py` 覆盖新表；本地 `alembic upgrade head` 绿
+- [x] Alembic `003`：迁移其余 12 表（经验×4/`emotions_log`/`merkle_roots`/成就×2/`checkins`/缓存×2/`panda_diary`）
+- [x] `scripts/verify_db.py` 覆盖全 18 表；no-DB `test_migration_003` 绿（本地仍需 `alembic upgrade head` 实跑）
 
 ### 7.1 Merkle Worker
 
-- `compute_merkle_root` 树算法（`merkle_worker.py`，SHA-256 配对，奇数补尾）
-- Actor batch 触发骨架：`trade_count % merkle_batch_size(50) == 0`（`panda_actor.py:383`）
-- **leaf 收集**：当前 `compute_merkle_root([])` 传空数组 → 改为收集本批 trade 记录哈希为 leaves
-- **链上提交**：`submit_merkle_root` 现为 `pass` 空壳 → pysui 调 `trust_proof::submit_merkle_root`
-- `merkle_roots` 表写入 + `chain_status` pending→submitted→confirmed
-- 前端展示「最近 Merkle root」状态（可选）
+- [x] `compute_merkle_root` 树算法（`merkle_worker.py`，SHA-256 配对，奇数补尾）
+- [x] Actor batch 触发：`trade_count % merkle_batch_size(50) == 0`
+- [x] **leaf 收集**：`trade_leaf`/`build_leaves` 收集本批 trade 哈希（不再传空数组）
+- [x] `merkle_roots` 表写入（`persist_merkle_batch`，`batch_index`）
+- [-] **链上提交**：`submit_merkle_root` → `trust_proof::submit_merkle_root`（合约侧，留 stub）
+- [ ] 前端展示「最近 Merkle root」状态（可选）
 
 ### 7.2 经验引擎 PostgreSQL
 
-- `ExperienceEngine.load` 读 4 张经验表（表缺失时降级返回空，`experience_engine.py`）
-- `pattern_correction` + `mastery_correction` 接入 `decision_pipeline` Step5（line 189-190）
-- `record_trade` 最小 mastery upsert 接入 `panda_actor`（line 355）
-- **写回补全**：patterns / mistakes / cycles 的 post-trade 写回（当前仅 mastery）
-- **修正汇入**：`mistake_penalty` · `cycle_bonus` 已实现但未汇入管线 correction → 接入 Step5
-- 依赖 7.0 迁移后端到端验证（无表降级 → 有表实读写）
-- 换策 ghost 与 experience 不冲突（联调验证）
+- [x] `ExperienceEngine.load` 读 4 张经验表（表缺失降级）
+- [x] `pattern/mastery/mistake/cycle` 修正全汇入 `decision_pipeline` Step5
+- [x] **写回补全**：`record_trade` 写回 patterns/mistakes/cycles（各自 savepoint）
+- [x] 纯逻辑单测（`merge_pattern`/`mistake_penalty_for`/`is_mistake`）
+- [ ] 依赖 7.0 迁移后端到端实跑验证（本地 DB）
+- [ ] 换策 ghost 与 experience 不冲突（联调验证）
 
 ### 7.3 持仓与 PnL 账本（猎手）
 
