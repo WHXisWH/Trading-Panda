@@ -28,21 +28,21 @@ export function TradeForm({
           type="button"
           className={clsx(
             "flex-1 py-2 text-sm font-medium",
-            side === "buy" ? "bg-bamboo-500 text-white" : "bg-white text-ink-500"
+            side === "buy" ? "bg-primary-500 text-white" : "bg-white text-neutral-500"
           )}
           onClick={() => setSide("buy")}
         >
-          买入
+          Buy
         </button>
         <button
           type="button"
           className={clsx(
             "flex-1 py-2 text-sm font-medium",
-            side === "sell" ? "bg-vermillion text-white" : "bg-white text-ink-500"
+            side === "sell" ? "bg-red-600 text-white" : "bg-white text-neutral-500"
           )}
           onClick={() => setSide("sell")}
         >
-          卖出
+          Sell
         </button>
       </div>
 
@@ -54,7 +54,7 @@ export function TradeForm({
             onClick={() => setOrderType(t)}
             className={clsx(
               "rounded px-2 py-1 text-[11px]",
-              orderType === t ? "bg-bamboo-50 text-bamboo-500" : "text-ink-500"
+              orderType === t ? "bg-primary-50 text-primary-500" : "text-neutral-500"
             )}
           >
             {t === "limit" ? "限价" : "市价"}
@@ -64,7 +64,7 @@ export function TradeForm({
 
       {orderType === "limit" && (
         <label className="block text-[11px]">
-          <span className="text-ink-500">价格</span>
+          <span className="text-neutral-500">价格</span>
           <input
             type="text"
             className="mt-1 w-full rounded-lg bg-[var(--color-bg-primary)] px-3 py-2 font-mono text-[13px]"
@@ -74,7 +74,7 @@ export function TradeForm({
       )}
 
       <label className="block text-[11px]">
-        <span className="text-ink-500">数量</span>
+        <span className="text-neutral-500">数量</span>
         <input
           type="text"
           className="mt-1 w-full rounded-lg bg-[var(--color-bg-primary)] px-3 py-2 font-mono text-[13px]"
@@ -88,7 +88,7 @@ export function TradeForm({
           <button
             key={pct}
             type="button"
-            className="flex-1 rounded border border-[var(--color-border)] py-1 text-[10px] hover:bg-bamboo-50"
+            className="flex-1 rounded border border-[var(--color-border)] py-1 text-[10px] hover:bg-primary-50"
             onClick={() => {
               const mult = parseInt(pct, 10) / 100;
               setQuantity((0.04 * mult).toFixed(3));
@@ -100,10 +100,10 @@ export function TradeForm({
       </div>
 
       <div className="flex justify-between text-[11px]">
-        <span className="text-ink-500">总计</span>
+        <span className="text-neutral-500">总计</span>
         <span className="font-mono text-lg font-bold">${total.toFixed(2)}</span>
       </div>
-      <div className="flex justify-between text-[10px] text-ink-500">
+      <div className="flex justify-between text-[10px] text-neutral-500">
         <span>可用</span>
         <span>{available}</span>
       </div>
@@ -112,7 +112,7 @@ export function TradeForm({
         className="w-full"
         variant={side === "buy" ? "primary" : "danger"}
       >
-        {side === "buy" ? "买入" : "卖出"} {quantity} {symbol}
+        {side === "buy" ? "Buy" : "Sell"} {quantity} {symbol}
       </Button>
     </div>
   );

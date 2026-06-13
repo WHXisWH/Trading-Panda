@@ -117,8 +117,8 @@ function PoolSelectionContent() {
 
   const subtitle = useMemo(
     () =>
-      `DeepBook Testnet · 最多可选 ${maxPools} 个池` +
-      (focusParam ? `（专注 ${focusParam}）` : ""),
+      `DeepBook Testnet · Up to ${maxPools} pools` +
+      (focusParam ? ` (Focus ${focusParam})` : ""),
     [focusParam, maxPools],
   );
 
@@ -126,19 +126,19 @@ function PoolSelectionContent() {
     <>
       <PageContainer className="pb-24 pt-8">
         <div className="mb-8 text-center">
-          <h1 className="font-serif text-[22px] font-bold">选择交易池</h1>
-          <p className="mt-2 text-[13px] text-ink-500">{subtitle}</p>
+          <h1 className="font-sans text-[22px] font-bold">Pools</h1>
+          <p className="mt-2 text-[13px] text-neutral-500">{subtitle}</p>
           {!jwt && (
-            <p className="mt-2 text-[12px] text-vermillion">
-              未登录：选择仅保存在本机；连接钱包后可同步到熊猫
+            <p className="mt-2 text-xs text-red-600">
+              Not logged in — selections saved locally. Connect wallet to sync with your panda.
             </p>
           )}
           {pandaId && (
             <Link
               href={`/dashboard/${pandaId}`}
-              className="mt-2 inline-block text-[12px] text-bamboo-500 hover:underline"
+              className="mt-2 inline-block text-[12px] text-primary-500 hover:underline"
             >
-              ← 返回训练室
+              ← Back to Dashboard
             </Link>
           )}
         </div>
@@ -150,7 +150,7 @@ function PoolSelectionContent() {
             ))}
           </div>
         ) : pools.length === 0 ? (
-          <p className="text-center text-ink-500">暂无可用 DeepBook 交易池</p>
+          <p className="text-center text-neutral-500">No DeepBook pools available</p>
         ) : (
           <div className="mx-auto max-w-3xl space-y-2.5">
             {pools.map((pool) => (

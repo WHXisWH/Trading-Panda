@@ -7,7 +7,7 @@ export const TALENT_META: Record<
   2: { name: "反向嗅觉", emoji: "🦊", desc: "逆向信号权重 +15%" },
   3: { name: "铁手腕", emoji: "🪨", desc: "止损触发阈值收紧 20%" },
   4: { name: "快手", emoji: "⚡", desc: "决策延迟 -30ms" },
-  5: { name: "深度学习", emoji: "🧠", desc: "经验积累速率 +20%" },
+  5: { name: "深度学习", emoji: "", desc: "经验积累速率 +20%" },
   6: { name: "情绪免疫", emoji: "🛡️", desc: "情绪偏差系数 ×0.5" },
 };
 

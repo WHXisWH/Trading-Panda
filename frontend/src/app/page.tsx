@@ -1,33 +1,71 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import {
+  Dice5,
+  Brain,
+  TrendingUp,
+  GitBranch,
+  Sparkles,
+  BarChart3,
+  ArrowRight,
+  Shield,
+  Zap,
+  ChevronRight,
+} from "lucide-react";
 import type { Panda } from "@/types";
 
 const FEATURES = [
   {
-    emoji: "🎲",
-    title: "链上随机性格",
-    desc: "5轴人格由 sui::random 永久刻入链上，铸造后不可更改，稀缺性真实可查。",
+    icon: Dice5,
+    title: "On-chain Personality",
+    desc: "Five personality axes permanently minted by sui::random. Every panda is provably unique and immutable.",
+    color: "#0f973d",
   },
   {
-    emoji: "🧠",
-    title: "AI 决策引擎",
-    desc: "8步决策管道：信号 → 情绪偏差 → 策略残影 → 最终评分。每笔交易决策可视化展开。",
+    icon: Brain,
+    title: "Strategy Engine",
+    desc: "Feed your panda trading rules with a visual builder or natural language. It trades autonomously.",
+    color: "#6366f1",
   },
   {
-    emoji: "📈",
-    title: "可验证经验",
-    desc: "每50笔交易生成 Merkle Root 并提交 Sui 链，NFT 的成长历史有据可查。",
+    icon: TrendingUp,
+    title: "Verifiable Growth",
+    desc: "Every 50 trades produce a Merkle Root on Sui. Your panda's track record is on-chain and auditable.",
+    color: "#f59e0b",
   },
   {
-    emoji: "🌿",
-    title: "策略残影",
-    desc: "换策略时，旧策略通过 ghost_weight 衰减影响行为，熊猫的记忆是真实的。",
+    icon: GitBranch,
+    title: "Strategy Memory",
+    desc: "Old strategies decay through ghost weight, giving your panda realistic behavioral memory and adaptation.",
+    color: "#ec4899",
+  },
+];
+
+const STEPS = [
+  {
+    step: "01",
+    icon: Sparkles,
+    title: "Mint Your Panda",
+    desc: "Connect your wallet, take a quick survey, and mint a panda with unique on-chain personality. Gas is just ~0.03 SUI on Testnet.",
+  },
+  {
+    step: "02",
+    icon: BarChart3,
+    title: "Teach It to Trade",
+    desc: "Build trading strategies with visual blocks — pick indicators like RSI, MACD, or moving averages, set entry and exit rules.",
+  },
+  {
+    step: "03",
+    icon: Zap,
+    title: "Watch It Grow",
+    desc: "Your panda trades autonomously in simulation. Track its P&L, watch its emotions change, and level up through experience.",
   },
 ];
 
@@ -48,99 +86,245 @@ export default function LandingPage() {
 
   return (
     <>
-      {/* Hero */}
-      <section className="relative overflow-hidden">
-        {/* Background ink wash */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 -z-10"
-          style={{
-            background:
-              "radial-gradient(ellipse 80% 60% at 50% -10%, #4a7c5918 0%, transparent 70%)",
-          }}
-        />
+      {/* ── Hero ── */}
+      <section className="relative overflow-hidden bg-white">
+        {/* Background decoration */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
+          {/* Main gradient */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(ellipse 90% 60% at 30% -10%, #0f973d0d 0%, transparent 50%), " +
+                "radial-gradient(ellipse 60% 50% at 90% 90%, #0f973d06 0%, transparent 50%)",
+            }}
+          />
+          {/* Decorative grid lines */}
+          <div
+            className="absolute inset-0 opacity-[0.03]"
+            style={{
+              backgroundImage:
+                "linear-gradient(#0f973d 1px, transparent 1px), linear-gradient(90deg, #0f973d 1px, transparent 1px)",
+              backgroundSize: "60px 60px",
+            }}
+          />
+        </div>
 
-        <PageContainer className="flex min-h-[calc(100dvh-var(--navbar-height))] flex-col items-center justify-center gap-8 py-24 text-center">
-          {/* Panda mascot */}
-          <div className="relative">
-            <span className="text-[96px] leading-none animate-panda-breathe inline-block">
-              🐼
+        <PageContainer className="flex min-h-[calc(100dvh-var(--navbar-height))] flex-col items-center justify-center gap-6 py-20 lg:flex-row lg:gap-16 lg:text-left">
+          {/* Left: Text + CTA */}
+          <div className="flex max-w-xl flex-col items-center gap-6 text-center lg:items-start lg:text-left">
+            {/* Badge */}
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary-200 bg-primary-50 px-3 py-1 text-xs font-medium text-primary-600">
+              <Shield className="h-3 w-3" />
+              Live on Sui Testnet
             </span>
-          </div>
 
-          <div className="space-y-4 max-w-2xl">
-            <h1 className="font-serif text-5xl font-bold text-bamboo-900 leading-tight">
-              TradingPanda
-            </h1>
-            <p className="text-xl text-ink-500 font-light">
-              养一只会交易的 AI 熊猫
-            </p>
-            <p className="text-base text-ink-500 max-w-lg mx-auto leading-relaxed">
-              铸造你的专属熊猫 NFT，喂给它交易策略，看它在模拟盘上自主成长。
-              性格由链上随机决定，经验 Merkle Root 上链存证。
-            </p>
-          </div>
+            <div className="space-y-4">
+              <h1 className="text-4xl font-bold leading-tight tracking-tight text-neutral-900 sm:text-5xl lg:text-6xl">
+                Raise an AI panda
+                <br />
+                <span className="text-primary-500">that trades for you</span>
+              </h1>
+              <p className="max-w-md text-base leading-relaxed text-neutral-500 sm:text-lg">
+                Mint your panda NFT with on-chain personality. Teach it trading
+                strategies. Watch it grow through autonomous simulated trading —
+                every decision verifiable on Sui.
+              </p>
+            </div>
 
-          {/* CTA */}
-          {account && jwt ? (
-            <div className="flex flex-wrap gap-3 justify-center">
-              <Link href="/mint">
-                <Button size="lg">🐾 铸造熊猫</Button>
-              </Link>
-              {hasPandas && (
-                <Link href={`/dashboard/${pandas[0].id}`}>
-                  <Button size="lg" variant="outline">
-                    🏠 我的熊猫 ({pandas.length})
-                  </Button>
-                </Link>
+            {/* CTA */}
+            <div className="flex flex-col items-center gap-4 sm:flex-row">
+              {account && jwt ? (
+                <>
+                  <Link href="/mint">
+                    <Button size="lg" className="shadow-lg shadow-primary-500/25">
+                      Mint a Panda
+                      <ChevronRight className="ml-1 h-4 w-4" />
+                    </Button>
+                  </Link>
+                  {hasPandas && (
+                    <Link href={`/dashboard/${pandas[0].id}`}>
+                      <Button size="lg" variant="outline">
+                        Go to Dashboard
+                        <ArrowRight className="ml-1 h-4 w-4" />
+                      </Button>
+                    </Link>
+                  )}
+                </>
+              ) : (
+                <div className="space-y-3">
+                  <Link href="/mint">
+                    <Button size="lg" className="shadow-lg shadow-primary-500/25">
+                      Get Started
+                      <ChevronRight className="ml-1 h-4 w-4" />
+                    </Button>
+                  </Link>
+                  <p className="text-xs text-neutral-400">
+                    Connect your wallet to mint your first panda
+                  </p>
+                </div>
               )}
             </div>
-          ) : (
-            <p className="text-sm text-ink-500 mt-2">
-              连接钱包后即可铸造你的第一只熊猫
-            </p>
-          )}
 
-          {/* Stats strip */}
-          <div className="mt-8 flex flex-wrap gap-8 justify-center text-center">
-            {[
-              { value: "5轴", label: "链上性格" },
-              { value: "8步", label: "决策管道" },
-              { value: "7态", label: "情绪系统" },
-              { value: "Testnet", label: "Sui 网络" },
-            ].map(({ value, label }) => (
-              <div key={label}>
-                <div className="font-serif text-2xl font-bold text-bamboo-500">{value}</div>
-                <div className="text-xs text-ink-500 mt-0.5">{label}</div>
+            {/* Stats row */}
+            <div className="flex flex-wrap items-center gap-6 border-t border-neutral-100 pt-6">
+              {[
+                { value: "On-chain", label: "Personality" },
+                { value: "8-step", label: "Decision Pipeline" },
+                { value: "7-state", label: "Emotion System" },
+                { value: "~0.03 SUI", label: "Mint Gas" },
+              ].map(({ value, label }) => (
+                <div key={label}>
+                  <div className="text-lg font-bold text-neutral-900">{value}</div>
+                  <div className="text-xs text-neutral-400">{label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right: Panda illustration */}
+          <div className="relative flex shrink-0 items-center justify-center">
+            {/* Glow behind logo */}
+            <div
+              className="absolute h-48 w-48 rounded-full blur-3xl"
+              style={{ backgroundColor: "#0f973d15" }}
+            />
+            {/* Logo card */}
+            <div className="relative rounded-3xl border border-neutral-100 bg-white p-10 shadow-xl shadow-neutral-200/50">
+              <Image
+                src="/assets/ui-logo.svg"
+                alt="TradingPanda"
+                width={160}
+                height={160}
+                className="h-40 w-40"
+                priority
+              />
+              {/* Decorative dots */}
+              <div className="absolute -right-3 -top-3 h-6 w-6 rounded-full bg-primary-100" />
+              <div className="absolute -bottom-2 -left-2 h-4 w-4 rounded-full bg-amber-100" />
+              <div className="absolute -right-2 bottom-4 h-3 w-3 rounded-full bg-primary-50" />
+            </div>
+          </div>
+        </PageContainer>
+      </section>
+
+      {/* ── How it Works ── */}
+      <section className="border-t border-neutral-100 bg-neutral-50/50">
+        <PageContainer className="py-20">
+          <div className="mx-auto mb-14 max-w-lg text-center">
+            <span className="text-xs font-semibold uppercase tracking-widest text-primary-500">
+              How it Works
+            </span>
+            <h2 className="mt-3 text-2xl font-bold text-neutral-900 sm:text-3xl">
+              From wallet to trading panda in minutes
+            </h2>
+          </div>
+
+          <div className="mx-auto grid max-w-4xl gap-8 md:grid-cols-3">
+            {STEPS.map(({ step, icon: Icon, title, desc }, i) => (
+              <div key={step} className="group relative">
+                {/* Connector line (desktop) */}
+                {i < STEPS.length - 1 && (
+                  <div className="absolute left-full top-10 hidden h-px w-8 bg-neutral-200 md:block lg:w-16" />
+                )}
+                <div className="relative z-10 flex flex-col items-center text-center">
+                  <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-500 text-white shadow-lg shadow-primary-500/25 ring-4 ring-primary-50 group-hover:scale-110 transition-transform">
+                    <Icon className="h-6 w-6" />
+                  </div>
+                  <span className="mb-2 text-xs font-bold tracking-widest text-primary-400">
+                    {step}
+                  </span>
+                  <h3 className="mb-2 font-semibold text-neutral-900">{title}</h3>
+                  <p className="text-sm leading-relaxed text-neutral-500">{desc}</p>
+                </div>
               </div>
             ))}
           </div>
         </PageContainer>
       </section>
 
-      {/* Features */}
-      <section className="border-t border-ink-100 bg-white">
+      {/* ── Features ── */}
+      <section className="border-t border-neutral-100 bg-white">
         <PageContainer className="py-20">
-          <h2 className="font-serif text-3xl font-bold text-bamboo-900 text-center mb-12">
-            为什么选择 TradingPanda
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {FEATURES.map(({ emoji, title, desc }) => (
-              <Card key={title} variant="ink" className="space-y-3">
-                <div className="text-3xl">{emoji}</div>
-                <h3 className="font-semibold text-bamboo-900">{title}</h3>
-                <p className="text-sm text-ink-500 leading-relaxed">{desc}</p>
+          <div className="mx-auto mb-14 max-w-lg text-center">
+            <span className="text-xs font-semibold uppercase tracking-widest text-primary-500">
+              Why TradingPanda
+            </span>
+            <h2 className="mt-3 text-2xl font-bold text-neutral-900 sm:text-3xl">
+              Built different from the ground up
+            </h2>
+            <p className="mt-3 text-sm text-neutral-500">
+              Part trading bot, part digital pet — every aspect is verifiable on-chain.
+            </p>
+          </div>
+
+          <div className="mx-auto grid max-w-5xl gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {FEATURES.map(({ icon: Icon, title, desc, color }) => (
+              <Card
+                key={title}
+                variant="default"
+                className="group relative space-y-3 overflow-hidden border-neutral-200 shadow-sm transition-all hover:-translate-y-1 hover:border-neutral-300 hover:shadow-md"
+              >
+                {/* Color accent bar at top — always visible */}
+                <div
+                  className="absolute left-0 right-0 top-0 h-0.5"
+                  style={{ backgroundColor: color }}
+                />
+                <div
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-xl transition-colors"
+                  style={{
+                    backgroundColor: color + "18",
+                    color: color,
+                  }}
+                >
+                  <Icon className="h-5 w-5" />
+                </div>
+                <h3 className="font-semibold text-neutral-900">{title}</h3>
+                <p className="text-sm leading-relaxed text-neutral-500">{desc}</p>
               </Card>
             ))}
           </div>
         </PageContainer>
       </section>
 
-      {/* Footer strip */}
-      <footer className="border-t border-ink-100 py-8 text-center text-xs text-ink-500">
-        <p>
-          TradingPanda · Sui Overflow 2026 · 模拟交易，非真实下单
-        </p>
+      {/* ── CTA Banner ── */}
+      <section className="border-t border-neutral-100 bg-neutral-900">
+        <PageContainer className="py-16 text-center">
+          <div className="mx-auto max-w-lg space-y-5">
+            <h2 className="text-2xl font-bold text-white sm:text-3xl">
+              Ready to raise your trading panda?
+            </h2>
+            <p className="text-neutral-400">
+              Mint your first panda in under a minute. Gas is just ~0.03 SUI on Testnet.
+            </p>
+            <Link
+              href="/mint"
+              className="group inline-flex items-center gap-2 rounded-lg bg-white px-7 py-3.5 text-sm font-semibold text-neutral-900 shadow-lg shadow-black/20 transition-all hover:scale-105 hover:shadow-xl active:scale-100"
+            >
+              Get Started Free
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </Link>
+          </div>
+        </PageContainer>
+      </section>
+
+      {/* ── Footer ── */}
+      <footer className="border-t border-neutral-800 bg-neutral-900">
+        <div className="mx-auto flex max-w-page flex-col items-center gap-4 px-6 py-8 text-center text-xs text-neutral-500">
+          <div className="flex items-center gap-2">
+            <Image
+              src="/assets/ui-logo.svg"
+              alt=""
+              width={18}
+              height={18}
+              className="h-4.5 w-4.5 opacity-50"
+            />
+            <span className="text-neutral-400">TradingPanda</span>
+          </div>
+          <p>
+            Sui Testnet · Simulated trading, not real orders · Built for Sui Overflow 2026
+          </p>
+        </div>
       </footer>
     </>
   );

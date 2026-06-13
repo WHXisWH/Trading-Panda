@@ -34,7 +34,7 @@ const STAGE_LABEL: Record<string, string> = {
 
 export function DashboardPandaPanel({
   pandaId,
-  name = "我的熊猫",
+  name = "My Panda",
   boldness,
   patience,
   intuition,
@@ -58,7 +58,7 @@ export function DashboardPandaPanel({
   const prof = experienceLevel % 100;
 
   return (
-    <div className="flex min-w-0 max-w-full flex-col gap-3 rounded-xl bg-paper-card p-3">
+    <div className="flex min-w-0 max-w-full flex-col gap-3 rounded-xl bg-neutral-50 p-3">
       <div className="flex flex-col items-center gap-3">
         <PandaAvatar
           panda={{
@@ -74,8 +74,8 @@ export function DashboardPandaPanel({
           size="lg"
         />
         <div className="text-center">
-          <h2 className="font-serif text-[15px] font-semibold">{name}</h2>
-          <p className="text-[11px] text-ink-500">
+          <h2 className="font-sans text-[15px] font-semibold">{name}</h2>
+          <p className="text-[11px] text-neutral-500">
             {stage} · 熟练度 {prof}%
           </p>
         </div>
@@ -93,14 +93,14 @@ export function DashboardPandaPanel({
       <div className="space-y-2 border-t border-[var(--color-border)] pt-3">
         <button
           type="button"
-          className="w-full rounded-lg border border-[var(--color-border)] px-3 py-2 text-[13px] transition-colors hover:bg-bamboo-50"
+          className="w-full rounded-lg border border-[var(--color-border)] px-3 py-2 text-[13px] transition-colors hover:bg-primary-50"
         >
-          🎋 冷静竹 · 今日剩余 {calmBambooRemaining} 次
+          冷静竹 · 今日剩余 {calmBambooRemaining} 次
         </button>
 
         {pandas.length > 1 && (
           <div>
-            <label className="mb-1 block text-[10px] text-ink-500">🐾 我的熊猫</label>
+            <label className="mb-1 block text-[10px] text-neutral-500">My Pandas</label>
             <select
               className="w-full rounded-lg border border-[var(--color-border)] bg-white px-2 py-1.5 text-[13px]"
               defaultValue={pandaId}

@@ -48,42 +48,6 @@ export function PandaAvatar({
   const resolvedStats =
     stats ?? (panda ? statsFromPanda(panda) : null);
 
-  if (variant === "silhouette") {
-    return (
-      <div
-        className={clsx(
-          "relative overflow-hidden rounded-full bg-panda-black/10",
-          animate && "animate-panda-breathe",
-          className
-        )}
-        style={{ width: px, height: px }}
-        aria-label="熊猫剪影"
-      >
-        <div
-          className="absolute inset-[18%] rounded-full panda-silhouette"
-          style={{ background: `radial-gradient(circle, ${meta.color}44 0%, #1a1a1a 70%)` }}
-        />
-        <span className="absolute inset-0 flex items-center justify-center text-3xl opacity-40">
-          🐼
-        </span>
-      </div>
-    );
-  }
-
-  if (variant === "loading") {
-    return (
-      <div
-        className={clsx(
-          "relative flex items-center justify-center overflow-hidden rounded-full bg-paper-card",
-          className
-        )}
-        style={{ width: px, height: px }}
-      >
-        <span className="h-8 w-8 animate-spin rounded-full border-2 border-bamboo-500 border-t-transparent" />
-      </div>
-    );
-  }
-
   const defaultStats: PandaStats = {
     boldness: 50,
     patience: 50,
@@ -94,11 +58,47 @@ export function PandaAvatar({
     experience: 15,
   };
 
+  if (variant === "silhouette") {
+    return (
+      <div
+        className={clsx(
+          "relative overflow-hidden rounded-full bg-neutral-900/10",
+          className
+        )}
+        style={{ width: px, height: px }}
+        aria-label="Panda silhouette"
+      >
+        <div
+          className="absolute inset-[18%] rounded-full"
+          style={{ background: `radial-gradient(circle, ${meta.color}44 0%, #1a1a1a 70%)` }}
+        />
+        <PandaSvgRenderer
+          stats={panda ? statsFromPanda(panda) : defaultStats}
+          showBackground
+          className="h-full w-full opacity-40"
+        />
+      </div>
+    );
+  }
+
+  if (variant === "loading") {
+    return (
+      <div
+        className={clsx(
+          "relative flex items-center justify-center overflow-hidden rounded-full bg-neutral-50",
+          className
+        )}
+        style={{ width: px, height: px }}
+      >
+        <span className="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
+      </div>
+    );
+  }
+
   return (
     <div
       className={clsx(
-        "relative overflow-hidden rounded-full ring-2 ring-paper-card",
-        animate && "animate-panda-breathe",
+        "relative overflow-hidden rounded-full ring-2 ring-neutral-100",
         className
       )}
       style={{ width: px, height: px }}
@@ -109,12 +109,10 @@ export function PandaAvatar({
         className="h-full w-full"
       />
       <span
-        className="absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full text-xs shadow-sm"
-        style={{ backgroundColor: meta.color + "33" }}
+        className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full shadow-sm"
+        style={{ backgroundColor: meta.color }}
         title={meta.label}
-      >
-        {meta.emoji}
-      </span>
+      />
     </div>
   );
 }

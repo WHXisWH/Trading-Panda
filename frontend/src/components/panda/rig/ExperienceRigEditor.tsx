@@ -405,7 +405,7 @@ function TierAtlas({
     <section className="rounded-lg border border-[var(--color-border)] bg-white p-4 shadow-sm">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-sm font-semibold text-ink-900">Tiers</h2>
+          <h2 className="text-sm font-semibold text-neutral-900">Tiers</h2>
         </div>
         <StatusPill count={validationErrorMap[activeTier].length} />
       </div>
@@ -421,11 +421,11 @@ function TierAtlas({
               className={clsx(
                 "group flex flex-col gap-2 rounded-lg border p-2 text-left transition",
                 isActive
-                  ? "border-ink-900 bg-ink-50 shadow-sm"
-                  : "border-[var(--color-border)] bg-paper-card hover:border-ink-300 hover:bg-white"
+                  ? "border-neutral-900 bg-ink-50 shadow-sm"
+                  : "border-[var(--color-border)] bg-neutral-100 hover:border-ink-300 hover:bg-white"
               )}
             >
-              <div className="relative aspect-square overflow-hidden rounded-md bg-paper">
+              <div className="relative aspect-square overflow-hidden rounded-md neutral-50">
                 <NextImage
                   src={manifest.tiers[item].image}
                   alt={item}
@@ -443,12 +443,12 @@ function TierAtlas({
                   <StatusPill count={errors.length} />
                 </div>
                 {isActive && (
-                  <div className="absolute inset-0 rounded-md ring-2 ring-ink-900" />
+                  <div className="absolute inset-0 rounded-md ring-2 ring-neutral-900" />
                 )}
               </div>
               <div className="flex items-center justify-between gap-2">
                 <span className="font-mono text-[11px] text-ink-600">{item}</span>
-                <span className="text-[11px] text-ink-500">
+                <span className="text-[11px] text-neutral-500">
                   {isActive ? "当前" : `${errors.length} issues`}
                 </span>
               </div>
@@ -1083,10 +1083,10 @@ export function ExperienceRigEditor({
     <div className="flex flex-col gap-5">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="font-serif text-2xl font-bold text-ink-900">
+          <h1 className="font-serif text-2xl font-bold text-neutral-900">
             Experience Rig 标注台
           </h1>
-          <div className="mt-1 flex flex-wrap items-center gap-2 text-[13px] text-ink-500">
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-[13px] text-neutral-500">
             <span>512x512</span>
             <span className="h-1 w-1 rounded-full bg-ink-300" />
             <span>{tier}</span>
@@ -1104,8 +1104,8 @@ export function ExperienceRigEditor({
                 className={clsx(
                   "rounded-md px-3 py-1.5 text-[13px] font-medium transition",
                   mode === item
-                    ? "bg-ink-900 text-white"
-                    : "text-ink-600 hover:bg-paper-card"
+                    ? "bg-neutral-900 text-white"
+                    : "text-ink-600 hover:bg-neutral-100"
                 )}
               >
                 {item === "base" ? "Base Rig" : "Placement"}
@@ -1124,7 +1124,7 @@ export function ExperienceRigEditor({
               <button
                 type="button"
                 onClick={() => downloadJson(manifest)}
-                className="inline-flex items-center gap-2 rounded-lg border border-[var(--color-border)] px-3 py-2 text-[13px] text-ink-700 hover:bg-paper-card"
+                className="inline-flex items-center gap-2 rounded-lg border border-[var(--color-border)] px-3 py-2 text-[13px] text-ink-700 hover:bg-neutral-100"
               >
                 <FileDown className="h-4 w-4" />
                 导出
@@ -1133,7 +1133,7 @@ export function ExperienceRigEditor({
                 type="button"
                 onClick={saveManifest}
                 disabled={isSaving}
-                className="inline-flex items-center gap-2 rounded-lg bg-bamboo-500 px-3 py-2 text-[13px] font-medium text-white hover:bg-bamboo-600 disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-lg bg-primary-500 px-3 py-2 text-[13px] font-medium text-white hover:bg-primary-600 disabled:opacity-50"
               >
                 <Save className="h-4 w-4" />
                 {isSaving ? "保存中" : "保存 JSON"}
@@ -1144,7 +1144,7 @@ export function ExperienceRigEditor({
               <button
                 type="button"
                 onClick={() => downloadPlacementJson(placementManifest)}
-                className="inline-flex items-center gap-2 rounded-lg border border-[var(--color-border)] px-3 py-2 text-[13px] text-ink-700 hover:bg-paper-card"
+                className="inline-flex items-center gap-2 rounded-lg border border-[var(--color-border)] px-3 py-2 text-[13px] text-ink-700 hover:bg-neutral-100"
               >
                 <FileDown className="h-4 w-4" />
                 导出
@@ -1153,7 +1153,7 @@ export function ExperienceRigEditor({
                 type="button"
                 onClick={savePlacementManifest}
                 disabled={isSavingPlacement}
-                className="inline-flex items-center gap-2 rounded-lg bg-bamboo-500 px-3 py-2 text-[13px] font-medium text-white hover:bg-bamboo-600 disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-lg bg-primary-500 px-3 py-2 text-[13px] font-medium text-white hover:bg-primary-600 disabled:opacity-50"
               >
                 <Save className="h-4 w-4" />
                 {isSavingPlacement ? "保存中" : "保存 Placement"}
@@ -1177,10 +1177,10 @@ export function ExperienceRigEditor({
         <div className="rounded-lg border border-[var(--color-border)] bg-white p-4 shadow-sm">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-sm font-semibold text-ink-900">
+              <h2 className="text-sm font-semibold text-neutral-900">
                 Tier {String(tierNumber(tier)).padStart(2, "0")}
               </h2>
-              <p className="mt-1 break-all font-mono text-[11px] text-ink-500">
+              <p className="mt-1 break-all font-mono text-[11px] text-neutral-500">
                 {activeTier.image}
               </p>
             </div>
@@ -1189,7 +1189,7 @@ export function ExperienceRigEditor({
                 type="button"
                 onClick={copyPreviousTier}
                 disabled={!previousTier}
-                className="inline-flex items-center gap-2 rounded-md border border-[var(--color-border)] px-3 py-2 text-[12px] text-ink-700 hover:bg-paper-card disabled:opacity-40"
+                className="inline-flex items-center gap-2 rounded-md border border-[var(--color-border)] px-3 py-2 text-[12px] text-ink-700 hover:bg-neutral-100 disabled:opacity-40"
               >
                 <ChevronsLeftRight className="h-4 w-4" />
                 上一档
@@ -1201,7 +1201,7 @@ export function ExperienceRigEditor({
                   onChange={(event) =>
                     setReferenceTier(event.target.value as ExperienceRigTierKey)
                   }
-                  className="bg-transparent font-mono text-[12px] text-ink-900 outline-none"
+                  className="bg-transparent font-mono text-[12px] text-neutral-900 outline-none"
                 >
                   {EXPERIENCE_RIG_TIERS.map((item) => (
                     <option key={item} value={item}>
@@ -1214,7 +1214,7 @@ export function ExperienceRigEditor({
                 type="button"
                 onClick={copyReferenceTier}
                 disabled={referenceTier === tier}
-                className="inline-flex items-center gap-2 rounded-md border border-[var(--color-border)] px-3 py-2 text-[12px] text-ink-700 hover:bg-paper-card disabled:opacity-40"
+                className="inline-flex items-center gap-2 rounded-md border border-[var(--color-border)] px-3 py-2 text-[12px] text-ink-700 hover:bg-neutral-100 disabled:opacity-40"
               >
                 <Copy className="h-4 w-4" />
                 复制基准
@@ -1403,7 +1403,7 @@ export function ExperienceRigEditor({
           </div>
 
           <div className="mt-4 grid gap-3 md:grid-cols-2">
-            <div className="rounded-lg border border-[var(--color-border)] bg-paper-card p-3">
+            <div className="rounded-lg border border-[var(--color-border)] bg-neutral-100 p-3">
               <div className="flex items-center justify-between gap-2 text-[12px] text-ink-600">
                 <span>当前</span>
                 <span className="font-mono">{tier}</span>
@@ -1419,7 +1419,7 @@ export function ExperienceRigEditor({
                 />
               </div>
             </div>
-            <div className="rounded-lg border border-[var(--color-border)] bg-paper-card p-3">
+            <div className="rounded-lg border border-[var(--color-border)] bg-neutral-100 p-3">
               <div className="flex items-center justify-between gap-2 text-[12px] text-ink-600">
                 <span>基准</span>
                 <span className="font-mono">{referenceTier}</span>
@@ -1441,8 +1441,8 @@ export function ExperienceRigEditor({
         <aside className="flex flex-col gap-4 xl:sticky xl:top-4 xl:self-start">
           <section className="rounded-lg border border-[var(--color-border)] bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="text-sm font-semibold text-ink-900">显示</h2>
-              <span className="font-mono text-[11px] text-ink-500">
+              <h2 className="text-sm font-semibold text-neutral-900">显示</h2>
+              <span className="font-mono text-[11px] text-neutral-500">
                 {Math.round(imageOpacity * 100)}%
               </span>
             </div>
@@ -1460,7 +1460,7 @@ export function ExperienceRigEditor({
                   type="checkbox"
                   checked={showOverlay}
                   onChange={(event) => setShowOverlay(event.target.checked)}
-                  className="accent-bamboo-600"
+                  className="accent-primary-600"
                 />
               </label>
               <label className="grid gap-2">
@@ -1475,7 +1475,7 @@ export function ExperienceRigEditor({
                   step="0.01"
                   value={imageOpacity}
                   onChange={(event) => setImageOpacity(Number(event.target.value))}
-                  className="accent-bamboo-600"
+                  className="accent-primary-600"
                 />
               </label>
               <label className="flex items-center justify-between gap-3">
@@ -1486,7 +1486,7 @@ export function ExperienceRigEditor({
                   onChange={(event) =>
                     setShowMaskPreview(event.target.checked)
                   }
-                  className="accent-bamboo-600"
+                  className="accent-primary-600"
                 />
               </label>
               <label className="flex items-center justify-between gap-3">
@@ -1497,7 +1497,7 @@ export function ExperienceRigEditor({
                   onChange={(event) =>
                     setShowEmotionPreview(event.target.checked)
                   }
-                  className="accent-bamboo-600"
+                  className="accent-primary-600"
                 />
               </label>
             </div>
@@ -1505,7 +1505,7 @@ export function ExperienceRigEditor({
 
           <section className="rounded-lg border border-[var(--color-border)] bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="text-sm font-semibold text-ink-900">Landmark</h2>
+              <h2 className="text-sm font-semibold text-neutral-900">Landmark</h2>
               <span className="rounded-full bg-ink-50 px-2 py-0.5 text-[11px] font-medium text-ink-700">
                 {EXPERIENCE_RIG_LABELS[selected]}
               </span>
@@ -1519,8 +1519,8 @@ export function ExperienceRigEditor({
                   className={clsx(
                     "rounded-md px-3 py-2 text-left text-[12px] transition",
                     selected === key
-                      ? "bg-ink-900 text-white"
-                      : "border border-[var(--color-border)] text-ink-700 hover:bg-paper-card"
+                      ? "bg-neutral-900 text-white"
+                      : "border border-[var(--color-border)] text-ink-700 hover:bg-neutral-100"
                   )}
                 >
                   {EXPERIENCE_RIG_LABELS[key]}
@@ -1528,14 +1528,14 @@ export function ExperienceRigEditor({
               ))}
             </div>
 
-            <div className="mt-4 rounded-lg border border-[var(--color-border)] bg-paper-card p-3">
+            <div className="mt-4 rounded-lg border border-[var(--color-border)] bg-neutral-100 p-3">
               <div className="grid grid-cols-3 justify-items-center gap-2">
                 <span />
                 <button
                   type="button"
                   aria-label="move up"
                   onClick={() => moveHandle(selected, 0, -1)}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[var(--color-border)] bg-white text-ink-700 hover:bg-paper"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[var(--color-border)] bg-white text-ink-700 hover:neutral-50"
                 >
                   <ArrowUp className="h-4 w-4" />
                 </button>
@@ -1544,7 +1544,7 @@ export function ExperienceRigEditor({
                   type="button"
                   aria-label="move left"
                   onClick={() => moveHandle(selected, -1, 0)}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[var(--color-border)] bg-white text-ink-700 hover:bg-paper"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[var(--color-border)] bg-white text-ink-700 hover:neutral-50"
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </button>
@@ -1552,7 +1552,7 @@ export function ExperienceRigEditor({
                   type="button"
                   aria-label="move down"
                   onClick={() => moveHandle(selected, 0, 1)}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[var(--color-border)] bg-white text-ink-700 hover:bg-paper"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[var(--color-border)] bg-white text-ink-700 hover:neutral-50"
                 >
                   <ArrowDown className="h-4 w-4" />
                 </button>
@@ -1560,7 +1560,7 @@ export function ExperienceRigEditor({
                   type="button"
                   aria-label="move right"
                   onClick={() => moveHandle(selected, 1, 0)}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[var(--color-border)] bg-white text-ink-700 hover:bg-paper"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[var(--color-border)] bg-white text-ink-700 hover:neutral-50"
                 >
                   <ArrowRight className="h-4 w-4" />
                 </button>
@@ -1573,7 +1573,7 @@ export function ExperienceRigEditor({
                   onClick={() => {
                     if (isRectKey(selected)) resizeRect(selected, -1, -1);
                   }}
-                  className="inline-flex items-center justify-center gap-2 rounded-md border border-[var(--color-border)] bg-white px-3 py-2 text-[12px] text-ink-700 hover:bg-paper disabled:opacity-40"
+                  className="inline-flex items-center justify-center gap-2 rounded-md border border-[var(--color-border)] bg-white px-3 py-2 text-[12px] text-ink-700 hover:neutral-50 disabled:opacity-40"
                 >
                   <Minus className="h-4 w-4" />
                   尺寸
@@ -1585,7 +1585,7 @@ export function ExperienceRigEditor({
                   onClick={() => {
                     if (isRectKey(selected)) resizeRect(selected, 1, 1);
                   }}
-                  className="inline-flex items-center justify-center gap-2 rounded-md border border-[var(--color-border)] bg-white px-3 py-2 text-[12px] text-ink-700 hover:bg-paper disabled:opacity-40"
+                  className="inline-flex items-center justify-center gap-2 rounded-md border border-[var(--color-border)] bg-white px-3 py-2 text-[12px] text-ink-700 hover:neutral-50 disabled:opacity-40"
                 >
                   <Plus className="h-4 w-4" />
                   尺寸
@@ -1595,7 +1595,7 @@ export function ExperienceRigEditor({
 
             <div className="mt-4 grid grid-cols-2 gap-3">
               {(["x", "y"] as const).map((field) => (
-                <label key={field} className="grid gap-1 text-[12px] text-ink-500">
+                <label key={field} className="grid gap-1 text-[12px] text-neutral-500">
                   {field.toUpperCase()}
                   <input
                     type="number"
@@ -1607,7 +1607,7 @@ export function ExperienceRigEditor({
                         Number(event.target.value)
                       )
                     }
-                    className="rounded-md border border-[var(--color-border)] px-2 py-1.5 text-[13px] text-ink-900"
+                    className="rounded-md border border-[var(--color-border)] px-2 py-1.5 text-[13px] text-neutral-900"
                   />
                 </label>
               ))}
@@ -1615,7 +1615,7 @@ export function ExperienceRigEditor({
                 (["width", "height"] as const).map((field) => (
                   <label
                     key={field}
-                    className="grid gap-1 text-[12px] text-ink-500"
+                    className="grid gap-1 text-[12px] text-neutral-500"
                   >
                     {field === "width" ? "W" : "H"}
                     <input
@@ -1628,7 +1628,7 @@ export function ExperienceRigEditor({
                           Number(event.target.value)
                         )
                       }
-                      className="rounded-md border border-[var(--color-border)] px-2 py-1.5 text-[13px] text-ink-900"
+                      className="rounded-md border border-[var(--color-border)] px-2 py-1.5 text-[13px] text-neutral-900"
                     />
                   </label>
                 ))}
@@ -1637,7 +1637,7 @@ export function ExperienceRigEditor({
 
           <section className="rounded-lg border border-[var(--color-border)] bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="text-sm font-semibold text-ink-900">校验</h2>
+              <h2 className="text-sm font-semibold text-neutral-900">校验</h2>
               <StatusPill
                 count={activeTierErrors.length + globalValidationErrors.length}
               />
@@ -1670,12 +1670,12 @@ export function ExperienceRigEditor({
 
           <section className="rounded-lg border border-[var(--color-border)] bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="text-sm font-semibold text-ink-900">JSON</h2>
+              <h2 className="text-sm font-semibold text-neutral-900">JSON</h2>
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={copyCurrentTierJson}
-                  className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] px-2 py-1 text-[12px] text-ink-700 hover:bg-paper-card"
+                  className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] px-2 py-1 text-[12px] text-ink-700 hover:bg-neutral-100"
                 >
                   <Copy className="h-3.5 w-3.5" />
                   当前
@@ -1683,14 +1683,14 @@ export function ExperienceRigEditor({
                 <button
                   type="button"
                   onClick={copyFullJson}
-                  className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] px-2 py-1 text-[12px] text-ink-700 hover:bg-paper-card"
+                  className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] px-2 py-1 text-[12px] text-ink-700 hover:bg-neutral-100"
                 >
                   <ArrowDownToLine className="h-3.5 w-3.5" />
                   全量
                 </button>
               </div>
             </div>
-            <pre className="mt-3 max-h-[360px] overflow-auto rounded-md bg-ink-900 p-3 text-[11px] leading-5 text-paper">
+            <pre className="mt-3 max-h-[360px] overflow-auto rounded-md bg-neutral-900 p-3 text-[11px] leading-5 text-paper">
               {jsonPreview}
             </pre>
           </section>
@@ -1701,10 +1701,10 @@ export function ExperienceRigEditor({
           <div className="rounded-lg border border-[var(--color-border)] bg-white p-4 shadow-sm">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="text-sm font-semibold text-ink-900">
+                <h2 className="text-sm font-semibold text-neutral-900">
                   Sublayer Placement
                 </h2>
-                <p className="mt-1 break-all font-mono text-[11px] text-ink-500">
+                <p className="mt-1 break-all font-mono text-[11px] text-neutral-500">
                   {activePlacementAsset
                     ? placementAssetLabel(activePlacementAsset)
                     : "no visible asset"}
@@ -1725,7 +1725,7 @@ export function ExperienceRigEditor({
                   type="button"
                   onClick={resetPlacement}
                   disabled={!hasActivePlacementOverride}
-                  className="rounded-md border border-[var(--color-border)] px-3 py-2 text-[12px] text-ink-700 hover:bg-paper-card disabled:opacity-40"
+                  className="rounded-md border border-[var(--color-border)] px-3 py-2 text-[12px] text-ink-700 hover:bg-neutral-100 disabled:opacity-40"
                 >
                   重置
                 </button>
@@ -1889,20 +1889,20 @@ export function ExperienceRigEditor({
           <aside className="flex flex-col gap-4 xl:sticky xl:top-4 xl:self-start">
             <section className="rounded-lg border border-[var(--color-border)] bg-white p-4 shadow-sm">
               <div className="flex items-center justify-between gap-3">
-                <h2 className="text-sm font-semibold text-ink-900">选择</h2>
+                <h2 className="text-sm font-semibold text-neutral-900">选择</h2>
                 <span className="rounded-full bg-ink-50 px-2 py-0.5 text-[11px] font-medium text-ink-700">
                   {visiblePlacementAssets.length}
                 </span>
               </div>
               <div className="mt-3 grid gap-4">
-                <label className="grid gap-1 text-[12px] text-ink-500">
+                <label className="grid gap-1 text-[12px] text-neutral-500">
                   Experience
                   <select
                     value={tier}
                     onChange={(event) =>
                       setTier(event.target.value as ExperienceRigTierKey)
                     }
-                    className="rounded-md border border-[var(--color-border)] px-2 py-2 text-[13px] text-ink-900"
+                    className="rounded-md border border-[var(--color-border)] px-2 py-2 text-[13px] text-neutral-900"
                   >
                     {EXPERIENCE_RIG_TIERS.map((item) => (
                       <option key={item} value={item}>
@@ -1914,21 +1914,21 @@ export function ExperienceRigEditor({
 
                 <div className="grid gap-2">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[12px] text-ink-500">Visible attributes</span>
+                    <span className="text-[12px] text-neutral-500">Visible attributes</span>
                     <div className="flex gap-1">
                       <button
                         type="button"
                         onClick={() =>
                           setVisiblePlacementAttributes(placementAttributeOptions)
                         }
-                        className="rounded-md border border-[var(--color-border)] px-2 py-1 text-[11px] text-ink-700 hover:bg-paper-card"
+                        className="rounded-md border border-[var(--color-border)] px-2 py-1 text-[11px] text-ink-700 hover:bg-neutral-100"
                       >
                         全部
                       </button>
                       <button
                         type="button"
                         onClick={() => setVisiblePlacementAttributes([])}
-                        className="rounded-md border border-[var(--color-border)] px-2 py-1 text-[11px] text-ink-700 hover:bg-paper-card"
+                        className="rounded-md border border-[var(--color-border)] px-2 py-1 text-[11px] text-ink-700 hover:bg-neutral-100"
                       >
                         清空
                       </button>
@@ -1949,8 +1949,8 @@ export function ExperienceRigEditor({
                           className={clsx(
                             "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-medium transition",
                             selectedAttribute
-                              ? "border-ink-900 bg-ink-900 text-white"
-                              : "border-[var(--color-border)] bg-white text-ink-700 hover:bg-paper-card"
+                              ? "border-neutral-900 bg-neutral-900 text-white"
+                              : "border-[var(--color-border)] bg-white text-ink-700 hover:bg-neutral-100"
                           )}
                         >
                           {selectedAttribute ? (
@@ -1964,7 +1964,7 @@ export function ExperienceRigEditor({
                               "rounded-full px-1.5 py-0.5 text-[10px]",
                               selectedAttribute
                                 ? "bg-white/15 text-white"
-                                : "bg-ink-50 text-ink-500"
+                                : "bg-ink-50 text-neutral-500"
                             )}
                           >
                             {count}
@@ -1976,10 +1976,10 @@ export function ExperienceRigEditor({
                 </div>
 
                 <div className="grid gap-2">
-                  <span className="text-[12px] text-ink-500">Layers</span>
-                  <div className="max-h-[280px] overflow-auto rounded-lg border border-[var(--color-border)] bg-paper-card p-2">
+                  <span className="text-[12px] text-neutral-500">Layers</span>
+                  <div className="max-h-[280px] overflow-auto rounded-lg border border-[var(--color-border)] bg-neutral-100 p-2">
                     {visiblePlacementAssets.length === 0 ? (
-                      <div className="rounded-md bg-white px-3 py-3 text-[12px] text-ink-500">
+                      <div className="rounded-md bg-white px-3 py-3 text-[12px] text-neutral-500">
                         无可见素材
                       </div>
                     ) : (
@@ -1998,12 +1998,12 @@ export function ExperienceRigEditor({
                               className={clsx(
                                 "grid gap-1 rounded-md border px-3 py-2 text-left transition",
                                 selectedAsset
-                                  ? "border-ink-900 bg-white shadow-sm"
+                                  ? "border-neutral-900 bg-white shadow-sm"
                                   : "border-transparent bg-transparent hover:bg-white"
                               )}
                             >
                               <span className="flex items-center justify-between gap-2">
-                                <span className="truncate text-[12px] font-medium text-ink-900">
+                                <span className="truncate text-[12px] font-medium text-neutral-900">
                                   {asset.sublayer}
                                 </span>
                                 <span
@@ -2011,13 +2011,13 @@ export function ExperienceRigEditor({
                                     "rounded-full px-2 py-0.5 text-[10px] font-medium",
                                     hasOverride
                                       ? "bg-teal-50 text-teal-700"
-                                      : "bg-ink-50 text-ink-500"
+                                      : "bg-ink-50 text-neutral-500"
                                   )}
                                 >
                                   {hasOverride ? "override" : "default"}
                                 </span>
                               </span>
-                              <span className="truncate font-mono text-[11px] text-ink-500">
+                              <span className="truncate font-mono text-[11px] text-neutral-500">
                                 {placementAssetLabel(asset)}
                               </span>
                             </button>
@@ -2032,13 +2032,13 @@ export function ExperienceRigEditor({
 
             <section className="rounded-lg border border-[var(--color-border)] bg-white p-4 shadow-sm">
               <div className="flex items-center justify-between gap-3">
-                <h2 className="text-sm font-semibold text-ink-900">位置</h2>
-                <span className="font-mono text-[11px] text-ink-500">
+                <h2 className="text-sm font-semibold text-neutral-900">位置</h2>
+                <span className="font-mono text-[11px] text-neutral-500">
                   {activePlacementKey || "none"}
                 </span>
               </div>
 
-              <div className="mt-4 rounded-lg border border-[var(--color-border)] bg-paper-card p-3">
+              <div className="mt-4 rounded-lg border border-[var(--color-border)] bg-neutral-100 p-3">
                 <div className="grid grid-cols-3 justify-items-center gap-2">
                   <span />
                   <button
@@ -2046,7 +2046,7 @@ export function ExperienceRigEditor({
                     aria-label="move placement up"
                     onClick={() => movePlacement(0, -1)}
                     disabled={!activePlacementAsset}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[var(--color-border)] bg-white text-ink-700 hover:bg-paper disabled:opacity-40"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[var(--color-border)] bg-white text-ink-700 hover:neutral-50 disabled:opacity-40"
                   >
                     <ArrowUp className="h-4 w-4" />
                   </button>
@@ -2056,7 +2056,7 @@ export function ExperienceRigEditor({
                     aria-label="move placement left"
                     onClick={() => movePlacement(-1, 0)}
                     disabled={!activePlacementAsset}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[var(--color-border)] bg-white text-ink-700 hover:bg-paper disabled:opacity-40"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[var(--color-border)] bg-white text-ink-700 hover:neutral-50 disabled:opacity-40"
                   >
                     <ArrowLeft className="h-4 w-4" />
                   </button>
@@ -2065,7 +2065,7 @@ export function ExperienceRigEditor({
                     aria-label="move placement down"
                     onClick={() => movePlacement(0, 1)}
                     disabled={!activePlacementAsset}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[var(--color-border)] bg-white text-ink-700 hover:bg-paper disabled:opacity-40"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[var(--color-border)] bg-white text-ink-700 hover:neutral-50 disabled:opacity-40"
                   >
                     <ArrowDown className="h-4 w-4" />
                   </button>
@@ -2074,7 +2074,7 @@ export function ExperienceRigEditor({
                     aria-label="move placement right"
                     onClick={() => movePlacement(1, 0)}
                     disabled={!activePlacementAsset}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[var(--color-border)] bg-white text-ink-700 hover:bg-paper disabled:opacity-40"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[var(--color-border)] bg-white text-ink-700 hover:neutral-50 disabled:opacity-40"
                   >
                     <ArrowRight className="h-4 w-4" />
                   </button>
@@ -2085,7 +2085,7 @@ export function ExperienceRigEditor({
                     aria-label="shrink placement"
                     onClick={() => resizePlacement(-1, -1)}
                     disabled={!activePlacementAsset}
-                    className="inline-flex items-center justify-center gap-2 rounded-md border border-[var(--color-border)] bg-white px-3 py-2 text-[12px] text-ink-700 hover:bg-paper disabled:opacity-40"
+                    className="inline-flex items-center justify-center gap-2 rounded-md border border-[var(--color-border)] bg-white px-3 py-2 text-[12px] text-ink-700 hover:neutral-50 disabled:opacity-40"
                   >
                     <Minus className="h-4 w-4" />
                     尺寸
@@ -2095,7 +2095,7 @@ export function ExperienceRigEditor({
                     aria-label="grow placement"
                     onClick={() => resizePlacement(1, 1)}
                     disabled={!activePlacementAsset}
-                    className="inline-flex items-center justify-center gap-2 rounded-md border border-[var(--color-border)] bg-white px-3 py-2 text-[12px] text-ink-700 hover:bg-paper disabled:opacity-40"
+                    className="inline-flex items-center justify-center gap-2 rounded-md border border-[var(--color-border)] bg-white px-3 py-2 text-[12px] text-ink-700 hover:neutral-50 disabled:opacity-40"
                   >
                     <Plus className="h-4 w-4" />
                     尺寸
@@ -2109,7 +2109,7 @@ export function ExperienceRigEditor({
                     (field) => (
                       <label
                         key={field}
-                        className="grid gap-1 text-[12px] text-ink-500"
+                        className="grid gap-1 text-[12px] text-neutral-500"
                       >
                         {field}
                         <input
@@ -2122,7 +2122,7 @@ export function ExperienceRigEditor({
                               Number(event.target.value)
                             )
                           }
-                          className="rounded-md border border-[var(--color-border)] px-2 py-1.5 text-[13px] text-ink-900"
+                          className="rounded-md border border-[var(--color-border)] px-2 py-1.5 text-[13px] text-neutral-900"
                         />
                       </label>
                     )
@@ -2133,7 +2133,7 @@ export function ExperienceRigEditor({
 
             <section className="rounded-lg border border-[var(--color-border)] bg-white p-4 shadow-sm">
               <div className="flex items-center justify-between gap-3">
-                <h2 className="text-sm font-semibold text-ink-900">校验</h2>
+                <h2 className="text-sm font-semibold text-neutral-900">校验</h2>
                 <StatusPill count={placementValidationErrors.length} />
               </div>
               <div className="mt-3 grid gap-2">
@@ -2155,12 +2155,12 @@ export function ExperienceRigEditor({
 
             <section className="rounded-lg border border-[var(--color-border)] bg-white p-4 shadow-sm">
               <div className="flex items-center justify-between gap-3">
-                <h2 className="text-sm font-semibold text-ink-900">JSON</h2>
+                <h2 className="text-sm font-semibold text-neutral-900">JSON</h2>
                 <div className="flex gap-2">
                   <button
                     type="button"
                     onClick={copyPlacementJson}
-                    className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] px-2 py-1 text-[12px] text-ink-700 hover:bg-paper-card"
+                    className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] px-2 py-1 text-[12px] text-ink-700 hover:bg-neutral-100"
                   >
                     <Copy className="h-3.5 w-3.5" />
                     当前
@@ -2168,14 +2168,14 @@ export function ExperienceRigEditor({
                   <button
                     type="button"
                     onClick={copyFullPlacementJson}
-                    className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] px-2 py-1 text-[12px] text-ink-700 hover:bg-paper-card"
+                    className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] px-2 py-1 text-[12px] text-ink-700 hover:bg-neutral-100"
                   >
                     <ArrowDownToLine className="h-3.5 w-3.5" />
                     全量
                   </button>
                 </div>
               </div>
-              <pre className="mt-3 max-h-[320px] overflow-auto rounded-md bg-ink-900 p-3 text-[11px] leading-5 text-paper">
+              <pre className="mt-3 max-h-[320px] overflow-auto rounded-md bg-neutral-900 p-3 text-[11px] leading-5 text-paper">
                 {placementJsonPreview}
               </pre>
             </section>

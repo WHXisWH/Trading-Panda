@@ -30,7 +30,7 @@ function PandaLabContent() {
 
   if (!hydrated) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center text-ink-500">
+      <div className="flex min-h-[40vh] items-center justify-center text-neutral-500">
         加载试装配置…
       </div>
     );
@@ -40,19 +40,19 @@ function PandaLabContent() {
     <div className="flex flex-col gap-6">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="font-serif text-2xl font-bold text-ink-900">熊猫试装实验室</h1>
-          <p className="mt-1 max-w-xl text-[13px] text-ink-500">
-            无需连接钱包或铸造，实时调试由 PNG 素材分层合成的 Canvas 熊猫。调整滑条后 URL 自动同步，可分享链接。
+          <h1 className="font-sans text-2xl font-bold text-neutral-900">Panda Lab</h1>
+          <p className="mt-1 max-w-xl text-[13px] text-neutral-500">
+            无需Connect Wallet或铸造，实时调试由 PNG 素材分层合成的 Canvas 熊猫。调整滑条后 URL 自动同步，可分享链接。
           </p>
         </div>
         <div className="flex gap-3 text-[13px]">
-          <Link href="/panda-lab/rig" className="text-ink-500 hover:underline">
+          <Link href="/panda-lab/rig" className="text-neutral-500 hover:underline">
             Rig 标注
           </Link>
-          <Link href="/panda-lab/qa" className="text-ink-500 hover:underline">
+          <Link href="/panda-lab/qa" className="text-neutral-500 hover:underline">
             视觉验收
           </Link>
-          <Link href="/mint" className="text-bamboo-600 hover:underline">
+          <Link href="/mint" className="text-primary-600 hover:underline">
             去铸造 →
           </Link>
         </div>
@@ -64,7 +64,7 @@ function PandaLabContent() {
             type="checkbox"
             checked={mintPreview}
             onChange={(e) => setMintPreview(e.target.checked)}
-            className="accent-bamboo-600"
+            className="accent-primary-600"
           />
           显示 Mint 圆预览
         </label>
@@ -74,7 +74,7 @@ function PandaLabContent() {
             snapshotCompare();
             toast.message("已固定当前造型为对比 A");
           }}
-          className="rounded-lg border border-bamboo-400 px-3 py-1 text-bamboo-700 hover:bg-bamboo-50"
+          className="rounded-lg border border-primary-500 px-3 py-1 text-primary-600 hover:bg-primary-50"
         >
           固定对比 A
         </button>
@@ -82,7 +82,7 @@ function PandaLabContent() {
           <button
             type="button"
             onClick={() => setShowCompare(false)}
-            className="text-ink-500 hover:underline"
+            className="text-neutral-500 hover:underline"
           >
             关闭对比
           </button>
@@ -123,7 +123,7 @@ export function PandaLabPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-[40vh] items-center justify-center text-ink-500">
+        <div className="flex min-h-[40vh] items-center justify-center text-neutral-500">
           加载中…
         </div>
       }

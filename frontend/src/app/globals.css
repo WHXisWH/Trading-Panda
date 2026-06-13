@@ -1,8 +1,6 @@
-@import "@fontsource/noto-sans-sc/400.css";
-@import "@fontsource/noto-sans-sc/700.css";
-@import "@fontsource/noto-serif-sc/400.css";
-@import "@fontsource/noto-serif-sc/700.css";
 @import "@fontsource/inter/400.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
 @import "../styles/tokens.css";
 
 @tailwind base;
@@ -16,21 +14,9 @@
     color: var(--color-text-primary);
     font-family: var(--font-body);
   }
-
-  h1,
-  h2,
-  h3 {
-    font-family: var(--font-heading);
-  }
 }
 
 @layer components {
-  .card-paper {
-    background-color: var(--color-bg-card);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
-  }
-
   .card-white {
     background-color: var(--color-bg-white);
     border: 1px solid var(--color-border);
@@ -38,54 +24,7 @@
     box-shadow: var(--shadow-sm);
   }
 
-  .btn-accent {
-    background-color: var(--color-accent);
-    color: var(--color-text-inverse);
-  }
-
-  .btn-accent:hover {
-    background-color: var(--color-accent-hover);
-  }
-
-  .text-profit {
-    color: var(--color-success);
-  }
-
-  .text-loss {
-    color: var(--color-danger);
-  }
-
-  .glow-rare {
-    box-shadow: var(--shadow-glow-rare);
-    border: 2px solid var(--color-warning);
-  }
-
-  .panda-silhouette {
-    background: radial-gradient(
-      circle at 50% 40%,
-      #1a1a1a 0%,
-      #1a1a1a 35%,
-      transparent 36%
-    );
-    opacity: 0.85;
-    animation: breathe 3s ease-in-out infinite;
-  }
-
-  /* Dashboard v1（遗留类名，新页用 dashboard-layout-v2） */
-  .dashboard-layout {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-lg);
-  }
-
-  @media (min-width: 1024px) {
-    .dashboard-layout {
-      flex-direction: row;
-      align-items: flex-start;
-    }
-  }
-
-  /* Dashboard v2：Grid + minmax(0) 防止横向撑破视口 */
+  /* Dashboard v2: 2-column grid layout */
   .dashboard-page {
     width: 100%;
     max-width: 100%;
@@ -103,8 +42,7 @@
   }
 
   .dashboard-col-left,
-  .dashboard-col-main,
-  .dashboard-col-right {
+  .dashboard-col-main {
     min-width: 0;
     max-width: 100%;
   }
@@ -113,6 +51,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--spacing-md);
+    flex: 1;
   }
 
   .dashboard-strategy-scroll {
@@ -128,12 +67,12 @@
     min-width: 0;
   }
 
-  /* 平板：左栏 + 主栏（账户在主栏内） */
+  /* Tablet: left sidebar + main */
   @media (min-width: 1024px) and (max-width: 1279.98px) {
     .dashboard-layout-v2 {
       display: grid;
       align-items: start;
-      grid-template-columns: minmax(0, clamp(200px, 20vw, 220px)) minmax(0, 1fr);
+      grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
       column-gap: var(--spacing-md);
       min-height: calc(100dvh - var(--navbar-height) - 2rem);
     }
@@ -146,28 +85,19 @@
     }
   }
 
-  /* 桌面：三栏（左熊猫 · 主区 · 右账户+策略） */
+  /* Desktop: left sidebar + main (2 columns) */
   @media (min-width: 1280px) {
     .dashboard-layout-v2 {
       display: grid;
       align-items: start;
-      grid-template-columns:
-        minmax(0, clamp(220px, 20vw, 280px))
-        minmax(0, 1fr)
-        minmax(0, clamp(260px, 24vw, 300px));
+      grid-template-columns: minmax(0, clamp(220px, 20vw, 280px)) minmax(0, 1fr);
       column-gap: var(--spacing-md);
       min-height: calc(100dvh - var(--navbar-height) - 2rem);
     }
 
-    .dashboard-col-left,
-    .dashboard-col-right {
+    .dashboard-col-left {
       max-height: calc(100dvh - var(--navbar-height) - 2rem);
       overflow: hidden;
-    }
-
-    .dashboard-col-right {
-      display: flex;
-      flex-direction: column;
     }
   }
 
@@ -179,47 +109,13 @@
 }
 
 @layer utilities {
-  .emotion-focused {
-    @apply text-emotion-focused;
-  }
-  .emotion-excited {
-    @apply text-emotion-excited;
-  }
-  .emotion-greedy {
-    @apply text-emotion-greedy;
-  }
-  .emotion-cautious {
-    @apply text-emotion-cautious;
-  }
-  .emotion-panicking {
-    @apply text-emotion-panicking;
-  }
-  .emotion-numb {
-    @apply text-emotion-numb;
-  }
-
+  /* Keep minimal animation utilities */
   .animate-scale-in {
     animation: scaleIn 200ms ease-out forwards;
   }
 
-  .animate-spring-up {
-    animation: springUp 600ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-  }
-
-  .animate-radar-reveal {
-    animation: radarReveal 500ms ease-out forwards;
-  }
-}
-
-@keyframes breathe {
-  0%,
-  100% {
-    opacity: 0.8;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.02);
+  .animate-fade-up {
+    animation: fadeUp 400ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 }
 
@@ -234,10 +130,10 @@
   }
 }
 
-@keyframes springUp {
+@keyframes fadeUp {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -245,32 +141,121 @@
   }
 }
 
-@keyframes radarReveal {
-  from {
-    opacity: 0;
-    transform: scale(0.6);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+/* ── dapp-kit theme overrides ── */
+/* Full visual integration into TradingPanda design system */
+[data-dapp-kit] {
+  /* ── primary buttons → green ── */
+  --dapp-kit-backgroundColors-primaryButton: #0f973d;
+  --dapp-kit-backgroundColors-primaryButtonHover: #0a7a31;
+  --dapp-kit-colors-primaryButton: #ffffff;
+  --dapp-kit-shadows-primaryButton: 0 2px 8px rgba(15, 151, 61, 0.25);
+
+  /* ── outline buttons ── */
+  --dapp-kit-backgroundColors-outlineButtonHover: #f0fdf4;
+  --dapp-kit-borderColors-outlineButton: #d1d5db;
+  --dapp-kit-colors-outlineButton: #374151;
+
+  /* ── modal surfaces ── */
+  --dapp-kit-backgroundColors-modalPrimary: #ffffff;
+  --dapp-kit-backgroundColors-modalSecondary: #f8f9fa;
+  --dapp-kit-backgroundColors-modalOverlay: rgba(15, 23, 42, 0.35);
+  --dapp-kit-blurs-modalOverlay: blur(4px);
+
+  /* ── dropdown menu ── */
+  --dapp-kit-backgroundColors-dropdownMenu: #ffffff;
+  --dapp-kit-backgroundColors-dropdownMenuSeparator: #e5e7eb;
+
+  /* ── wallet list items ── */
+  --dapp-kit-backgroundColors-walletItemHover: #f0fdf4;
+  --dapp-kit-backgroundColors-walletItemSelected: #ffffff;
+  --dapp-kit-shadows-walletItemSelected: 0 1px 3px rgba(15, 151, 61, 0.12);
+
+  /* ── text ── */
+  --dapp-kit-colors-body: #111827;
+  --dapp-kit-colors-bodyMuted: #6b7280;
+  --dapp-kit-colors-bodyDanger: #dc2626;
+  --dapp-kit-colors-iconButton: #4b5563;
+
+  /* ── icon buttons ── */
+  --dapp-kit-backgroundColors-iconButton: transparent;
+  --dapp-kit-backgroundColors-iconButtonHover: #f3f4f6;
+
+  /* ── typography ── */
+  --dapp-kit-typography-fontFamily: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --dapp-kit-fontSizes-small: 13px;
+  --dapp-kit-fontSizes-medium: 14px;
+  --dapp-kit-fontSizes-large: 16px;
+  --dapp-kit-fontSizes-xlarge: 20px;
+  --dapp-kit-fontWeights-medium: 500;
+  --dapp-kit-fontWeights-bold: 600;
+
+  /* ── radii ── */
+  --dapp-kit-radii-small: 6px;
+  --dapp-kit-radii-medium: 10px;
+  --dapp-kit-radii-large: 14px;
+  --dapp-kit-radii-xlarge: 18px;
 }
 
-@keyframes glowPulse {
-  0%,
-  100% {
-    box-shadow: 0 0 12px rgba(232, 184, 75, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 28px rgba(232, 184, 75, 0.55);
-  }
+/* ── ConnectModal wallet list items ── */
+[data-dapp-kit] [class*="WalletListItem_walletItem"] {
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 2px;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+[data-dapp-kit] [class*="WalletListItem_walletItem"]:hover {
+  transform: translateX(2px);
+}
+[data-dapp-kit] [class*="WalletListItem_walletItem"]:active {
+  transform: translateX(0) scale(0.985);
+}
+[data-dapp-kit] [class*="WalletListItem_selectedWalletItem"] {
+  border-radius: 12px;
+  box-shadow: 0 0 0 1.5px #0f973d, 0 2px 8px rgba(15, 151, 61, 0.1);
+}
+[data-dapp-kit] [class*="WalletListItem_walletIcon"] {
+  border-radius: 10px;
+  overflow: hidden;
 }
 
-.animate-glow-pulse {
-  animation: glowPulse 2s ease-in-out infinite;
+/* ── ConnectModal content ── */
+[data-dapp-kit] [class*="ConnectModal_content"] {
+  border-radius: 18px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+[data-dapp-kit] [class*="ConnectModal_title"] {
+  font-weight: 600;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+}
+[data-dapp-kit] [class*="ConnectModal_overlay"] {
+  animation: fadeIn 200ms ease-out;
+}
+[data-dapp-kit] [class*="ConnectModal_whatIsAWalletButton"] {
+  border-radius: 8px;
+  font-size: 13px;
+  color: #6b7280;
+  transition: color 0.15s;
+}
+[data-dapp-kit] [class*="ConnectModal_whatIsAWalletButton"]:hover {
+  color: #0f973d;
 }
 
-.pixel-panda svg {
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
+/* ── Connection status view ── */
+[data-dapp-kit] [class*="ConnectionStatus_container"] {
+  border-radius: 14px;
+  padding: 20px;
+}
+
+/* ── Getting started / install view ── */
+[data-dapp-kit] [class*="GettingStarted_container"] {
+  border-radius: 14px;
+}
+[data-dapp-kit] [class*="GettingStarted_installButtonContainer"] a {
+  border-radius: 10px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }

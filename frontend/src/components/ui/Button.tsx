@@ -24,15 +24,15 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       ref={ref}
       disabled={disabled || loading}
       className={clsx(
-        "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bamboo-500 disabled:pointer-events-none disabled:opacity-50",
+        "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:pointer-events-none disabled:opacity-50",
         variant === "primary" &&
-          "bg-bamboo-500 text-white hover:bg-bamboo-600 active:scale-[.98]",
+          "bg-primary-500 text-white hover:bg-primary-600",
         variant === "outline" &&
-          "border border-bamboo-500 text-bamboo-500 hover:bg-bamboo-50 active:scale-[.98]",
+          "border border-primary-500 text-primary-500 hover:bg-primary-50",
         variant === "ghost" &&
-          "text-ink-500 hover:bg-paper-card active:scale-[.98]",
+          "text-neutral-500 hover:bg-neutral-100",
         variant === "danger" &&
-          "bg-vermillion text-white hover:opacity-90 active:scale-[.98]",
+          "bg-red-600 text-white hover:opacity-90",
         size === "sm" && "px-3 py-1.5 text-sm",
         size === "md" && "px-5 py-2.5 text-base",
         size === "lg" && "px-7 py-3.5 text-lg",

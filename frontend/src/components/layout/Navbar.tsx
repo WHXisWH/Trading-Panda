@@ -6,24 +6,18 @@ import { usePathname } from "next/navigation";
 import { clsx } from "clsx";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { PandaSelector } from "@/components/panda/PandaSelector";
 import { WalletButton } from "@/components/layout/WalletButton";
-import { APP_SUI_NETWORK } from "@/lib/sui/network";
 import { isPandaLabEnabled } from "@/lib/pandaLab";
 
 const NAV_LINKS = [
-  { href: "/", label: "首页" },
-  { href: "/mint", label: "铸造" },
-  { href: "/market", label: "市场" },
-  { href: "/leaderboard", label: "排行榜" },
-  { href: "/achievements", label: "成就" },
+  { href: "/", label: "Home" },
+  { href: "/mint", label: "Mint" },
+  { href: "/market", label: "Market" },
 ];
 
-const LAB_NAV = { href: "/panda-lab", label: "试装实验室" } as const;
+const LAB_NAV = { href: "/panda-lab", label: "Lab" } as const;
 
-const NETWORK_LABEL = APP_SUI_NETWORK === "testnet" ? "Testnet" : "Mainnet";
-
-/** Routes that need the full panda list in the nav (not /pools — that page uses /api/pools). */
+/** Routes that need the full panda list in the nav. */
 function needsPandaListRoute(pathname: string): boolean {
   return (
     pathname === "/" ||
@@ -53,83 +47,71 @@ export function Navbar() {
   const currentPandaId = dashMatch?.[1];
 
   return (
-    <header className="sticky top-0 z-[var(--z-navbar)] h-navbar shrink-0 border-b border-[var(--color-border)] bg-paper/90 backdrop-blur-sm">
+    <header className="sticky top-0 z-[var(--z-navbar)] h-navbar shrink-0 border-b border-[var(--color-border)] bg-white">
       <div className="mx-auto flex h-full max-w-page items-center justify-between gap-4 px-4 md:px-6">
+        {/* Logo */}
         <Link
           href="/"
-          className="flex shrink-0 items-center gap-2 font-serif text-lg font-bold text-bamboo-900 transition-colors hover:text-bamboo-500"
-          aria-label="TradingPanda 首页"
+          className="flex shrink-0 items-center gap-2 font-semibold text-lg text-neutral-900 transition-colors hover:text-primary-500"
+          aria-label="TradingPanda Home"
         >
           <Image
-            src="/assets/ui-logo.png"
+            src="/assets/ui-logo.svg"
             alt=""
-            width={32}
-            height={32}
-            className="h-8 w-8 rounded-md object-contain"
+            width={28}
+            height={28}
+            className="h-7 w-7"
             priority
           />
           <span>TradingPanda</span>
         </Link>
 
+        {/* Primary nav */}
         <nav className="hidden items-center gap-0.5 md:flex">
-          {[...NAV_LINKS, ...(isPandaLabEnabled() ? [LAB_NAV] : [])].map(
-            ({ href, label }) => (
+          {NAV_LINKS.map(({ href, label }) => (
             <Link
               key={href}
               href={href}
               className={clsx(
-                "rounded-lg px-3 py-1.5 text-[length:var(--text-body)] font-medium transition-colors",
+                "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
                 pathname === href
-                  ? "bg-bamboo-50 text-bamboo-500"
-                  : "text-ink-500 hover:bg-paper-card hover:text-ink-900",
+                  ? "bg-primary-50 text-primary-600 font-semibold"
+                  : "text-neutral-500 hover:bg-primary-50 hover:text-primary-500",
               )}
             >
               {label}
             </Link>
-          )
-          )}
+          ))}
           {isAuthed && pandas && pandas.length > 0 && (
             <Link
               href={`/dashboard/${currentPandaId ?? pandas[0].id}`}
               className={clsx(
-                "rounded-lg px-3 py-1.5 text-[length:var(--text-body)] font-medium transition-colors",
+                "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
                 pathname.startsWith("/dashboard")
-                  ? "bg-bamboo-50 text-bamboo-500"
-                  : "text-ink-500 hover:bg-paper-card hover:text-ink-900",
+                  ? "bg-primary-50 text-primary-600 font-semibold"
+                  : "text-neutral-500 hover:bg-primary-50 hover:text-primary-500",
               )}
             >
-              模拟盘
+              Dashboard
             </Link>
           )}
-          {isAuthed && (
+          {isPandaLabEnabled() && (
             <Link
-              href="/profile"
+              href={LAB_NAV.href}
               className={clsx(
-                "rounded-lg px-3 py-1.5 text-[length:var(--text-body)] font-medium transition-colors",
-                pathname === "/profile"
-                  ? "bg-bamboo-50 text-bamboo-500"
-                  : "text-ink-500 hover:bg-paper-card hover:text-ink-900",
+                "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                pathname === LAB_NAV.href
+                  ? "bg-primary-50 text-primary-600 font-semibold"
+                  : "text-neutral-500 hover:bg-primary-50 hover:text-primary-500",
               )}
             >
-              我的
+              {LAB_NAV.label}
             </Link>
           )}
         </nav>
 
-        <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
-          <span
-            className="hidden rounded-md bg-bamboo-50 px-2 py-0.5 text-[length:var(--text-small)] font-medium text-bamboo-700 sm:inline"
-            title="DApp 使用的链网络"
-          >
-            {NETWORK_LABEL}
-          </span>
-          {currentPandaId && pandas && pandas.length > 1 && (
-            <PandaSelector
-              pandas={pandas}
-              currentId={currentPandaId}
-              className="hidden lg:flex"
-            />
-          )}
+        {/* Right section */}
+        <div className="flex items-center gap-2">
           <WalletButton />
         </div>
       </div>

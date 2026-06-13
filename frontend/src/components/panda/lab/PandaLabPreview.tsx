@@ -32,7 +32,7 @@ export function PandaLabPreview({
         )}
       >
         <div className="flex flex-col items-center gap-2">
-          <span className="text-[11px] font-medium text-ink-500">主预览 · 384px</span>
+          <span className="text-[11px] font-medium text-neutral-500">主预览 · 384px</span>
           <div className="w-full max-w-[384px] rounded-xl border border-[var(--color-border)] bg-[#efece3] p-4 shadow-sm">
             <PandaCanvasRenderer
               stats={stats}
@@ -45,8 +45,8 @@ export function PandaLabPreview({
 
         {showCompare && compareStats && (
           <div className="flex flex-col items-center gap-2">
-            <span className="text-[11px] font-medium text-ink-500">对比快照 A</span>
-            <div className="w-full max-w-[384px] rounded-xl border border-dashed border-bamboo-400 bg-[#efece3] p-4">
+            <span className="text-[11px] font-medium text-neutral-500">对比快照 A</span>
+            <div className="w-full max-w-[384px] rounded-xl border border-dashed border-primary-500 bg-[#efece3] p-4">
               <PandaCanvasRenderer
                 stats={compareStats}
                 showBackground={false}
@@ -60,10 +60,10 @@ export function PandaLabPreview({
 
       {mintPreview && (
         <div className="flex flex-col items-center gap-2">
-          <span className="text-[11px] font-medium text-ink-500">
+          <span className="text-[11px] font-medium text-neutral-500">
             Mint 圆预览 · 120px
           </span>
-          <div className="h-[120px] w-[120px] overflow-hidden rounded-full ring-4 ring-bamboo-500/30">
+          <div className="h-[120px] w-[120px] overflow-hidden rounded-full ring-4 ring-primary-500/30">
             <PandaCanvasRenderer
               stats={stats}
               showBackground

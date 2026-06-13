@@ -96,7 +96,7 @@ export default function OnboardingPage() {
 
   async function handleSubmit() {
     if (!jwt || answers.trading_exp === null) {
-      toast.error("请先连接钱包并登录");
+      toast.error("请先Connect Wallet并登录");
       return;
     }
     if (answers.style.length === 0 || answers.indicators.length === 0) {
@@ -136,33 +136,33 @@ export default function OnboardingPage() {
             key={i}
             className={clsx(
               "h-1 flex-1 rounded-full transition-colors",
-              i + 1 <= step ? "bg-bamboo-600" : "bg-ink-200",
+              i + 1 <= step ? "bg-primary-600" : "bg-neutral-200",
             )}
           />
         ))}
       </div>
 
       {resultTags ? (
-        <div className="card-white animate-spring-up space-y-4 p-6 text-center">
-          <h2 className="font-serif text-xl font-bold">了解你了！</h2>
-          <p className="text-[13px] text-ink-500">推荐策略方向</p>
+        <div className="card-white animate-fade-up space-y-4 p-6 text-center">
+          <h2 className="font-sans text-xl font-bold">了解你了！</h2>
+          <p className="text-[13px] text-neutral-500">推荐策略方向</p>
           <div className="flex flex-wrap justify-center gap-2">
             {resultTags.map((tag) => (
               <span
                 key={tag}
-                className="rounded-full bg-bamboo-100 px-3 py-1 text-[12px] text-bamboo-800"
+                className="rounded-full bg-primary-100 px-3 py-1 text-[12px] text-primary-600"
               >
                 {tag}
               </span>
             ))}
           </div>
-          <p className="text-[11px] text-ink-500">2 秒后前往铸造页…</p>
+          <p className="text-[11px] text-neutral-500">2 秒后前往铸造页…</p>
         </div>
       ) : (
         <>
           {step === 1 && (
             <section className="space-y-4">
-              <h1 className="font-serif text-[22px] font-bold">你有多少交易经验？</h1>
+              <h1 className="font-sans text-[22px] font-bold">你有多少交易经验？</h1>
               <div className="grid gap-2">
                 {EXP_OPTIONS.map((opt) => (
                   <button
@@ -177,8 +177,8 @@ export default function OnboardingPage() {
                     className={clsx(
                       "rounded-lg border px-4 py-3 text-left text-[14px] transition",
                       answers.trading_exp === opt.value
-                        ? "border-bamboo-600 bg-bamboo-50 scale-[1.02]"
-                        : "border-ink-200 hover:border-bamboo-400",
+                        ? "border-primary-600 bg-primary-50 scale-[1.02]"
+                        : "border-neutral-200 hover:border-primary-500",
                     )}
                   >
                     {opt.label}
@@ -190,8 +190,8 @@ export default function OnboardingPage() {
 
           {step === 2 && (
             <section className="space-y-4">
-              <h1 className="font-serif text-[22px] font-bold">你偏好什么交易风格？</h1>
-              <p className="text-[13px] text-ink-500">可多选</p>
+              <h1 className="font-sans text-[22px] font-bold">你偏好什么交易风格？</h1>
+              <p className="text-[13px] text-neutral-500">可多选</p>
               <div className="grid grid-cols-2 gap-2">
                 {STYLE_OPTIONS.map((opt) => {
                   const on = answers.style.includes(opt.value);
@@ -210,8 +210,8 @@ export default function OnboardingPage() {
                       className={clsx(
                         "rounded-lg border px-3 py-2 text-[13px] transition",
                         on
-                          ? "border-bamboo-600 bg-bamboo-50"
-                          : "border-ink-200",
+                          ? "border-primary-600 bg-primary-50"
+                          : "border-neutral-200",
                       )}
                     >
                       {opt.label}
@@ -224,7 +224,7 @@ export default function OnboardingPage() {
 
           {step === 3 && (
             <section className="space-y-4">
-              <h1 className="font-serif text-[22px] font-bold">
+              <h1 className="font-sans text-[22px] font-bold">
                 单笔最多能接受亏多少？
               </h1>
               <div className="flex flex-wrap gap-2">
@@ -236,8 +236,8 @@ export default function OnboardingPage() {
                     className={clsx(
                       "min-w-[64px] rounded-lg border px-4 py-2 text-[14px]",
                       answers.max_loss === pct
-                        ? "border-bamboo-600 bg-bamboo-600 text-white"
-                        : "border-ink-200",
+                        ? "border-primary-600 bg-primary-600 text-white"
+                        : "border-neutral-200",
                     )}
                   >
                     {pct}%
@@ -252,8 +252,8 @@ export default function OnboardingPage() {
 
           {step === 4 && (
             <section className="space-y-4">
-              <h1 className="font-serif text-[22px] font-bold">你熟悉哪些技术指标？</h1>
-              <p className="text-[13px] text-ink-500">不熟悉也没关系</p>
+              <h1 className="font-sans text-[22px] font-bold">你熟悉哪些技术指标？</h1>
+              <p className="text-[13px] text-neutral-500">不熟悉也没关系</p>
               <div className="grid grid-cols-2 gap-2">
                 {INDICATOR_OPTIONS.map((opt) => {
                   const on = answers.indicators.includes(opt.value);
@@ -271,7 +271,7 @@ export default function OnboardingPage() {
                       }
                       className={clsx(
                         "rounded-lg border px-3 py-2 text-[13px]",
-                        on ? "border-bamboo-600 bg-bamboo-50" : "border-ink-200",
+                        on ? "border-primary-600 bg-primary-50" : "border-neutral-200",
                       )}
                     >
                       {opt.label}
@@ -284,7 +284,7 @@ export default function OnboardingPage() {
 
           {step === 5 && (
             <section className="space-y-4">
-              <h1 className="font-serif text-[22px] font-bold">你希望熊猫多自主？</h1>
+              <h1 className="font-sans text-[22px] font-bold">你希望熊猫多自主？</h1>
               <input
                 type="range"
                 min={1}
@@ -296,9 +296,9 @@ export default function OnboardingPage() {
                     panda_autonomy: Number(e.target.value) as Answers["panda_autonomy"],
                   }))
                 }
-                className="w-full accent-bamboo-600"
+                className="w-full accent-primary-600"
               />
-              <p className="text-center text-[14px] text-ink-600">
+              <p className="text-center text-[14px] text-neutral-600">
                 {AUTONOMY_LABELS[answers.panda_autonomy]}
               </p>
             </section>

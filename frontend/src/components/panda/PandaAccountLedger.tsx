@@ -49,11 +49,11 @@ export function PandaAccountLedger({ snapshot }: Props) {
   return (
     <section className="border-t border-[var(--color-border)] pt-3">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <h3 className="text-[11px] font-medium text-ink-500">模拟账户</h3>
-        <span className="flex items-center gap-1.5 text-[10px] text-ink-500">
+        <h3 className="text-[11px] font-medium text-neutral-500">模拟账户</h3>
+        <span className="flex items-center gap-1.5 text-[10px] text-neutral-500">
           <span
             className={`h-1.5 w-1.5 shrink-0 rounded-full ${
-              training ? "bg-bamboo-500" : "bg-ink-300"
+              training ? "bg-primary-500" : "bg-neutral-300"
             }`}
             aria-hidden
           />
@@ -62,14 +62,14 @@ export function PandaAccountLedger({ snapshot }: Props) {
       </div>
 
       <div className="mb-1 flex items-baseline justify-between gap-2">
-        <span className="text-[11px] text-ink-500">权益</span>
+        <span className="text-[11px] text-neutral-500">权益</span>
         <div className="text-right">
           <p className="font-mono text-[16px] font-semibold leading-tight">
             {formatUsd(equity)}
           </p>
           <p
             className={`font-mono text-[11px] font-medium ${
-              isProfit ? "text-profit" : "text-loss"
+              isProfit ? "text-primary-500" : "text-red-600"
             }`}
           >
             {isProfit ? "+" : ""}
@@ -81,16 +81,16 @@ export function PandaAccountLedger({ snapshot }: Props) {
 
       <div className="space-y-1.5 text-[12px]">
         <div className="flex justify-between gap-2">
-          <span className="text-ink-500">持仓 ({pool})</span>
+          <span className="text-neutral-500">持仓 ({pool})</span>
           <span className="min-w-0 truncate text-right font-mono">
             {positionLabel}
             {qty > 0 && entryHint !== "—" ? (
-              <span className="text-ink-500"> {entryHint}</span>
+              <span className="text-neutral-500"> {entryHint}</span>
             ) : null}
           </span>
         </div>
         <div className="flex justify-between">
-          <span className="text-ink-500">成交笔数</span>
+          <span className="text-neutral-500">成交笔数</span>
           <span className="font-mono">{tradeCount}</span>
         </div>
       </div>
@@ -98,7 +98,7 @@ export function PandaAccountLedger({ snapshot }: Props) {
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
-        className="mt-2 text-[11px] text-bamboo-500 hover:underline"
+        className="mt-2 text-[11px] text-primary-500 hover:underline"
       >
         {expanded ? "收起详情 ▲" : "展开详情 ▼"}
       </button>
@@ -106,15 +106,15 @@ export function PandaAccountLedger({ snapshot }: Props) {
       {expanded && (
         <div className="mt-2 space-y-1.5 border-t border-[var(--color-border)] pt-2 text-[12px]">
           <div className="flex justify-between">
-            <span className="text-ink-500">初始资金</span>
-            <span className="font-mono text-ink-500">{formatUsd(initialCapital)}</span>
+            <span className="text-neutral-500">初始资金</span>
+            <span className="font-mono text-neutral-500">{formatUsd(initialCapital)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-ink-500">参考价</span>
-            <span className="font-mono text-ink-500">{entryHint}</span>
+            <span className="text-neutral-500">参考价</span>
+            <span className="font-mono text-neutral-500">{entryHint}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-ink-500">仓位占比</span>
+            <span className="text-neutral-500">仓位占比</span>
             <span>{positionPct}</span>
           </div>
         </div>

@@ -104,8 +104,8 @@ export function TradeHistory({
                 className={clsx(
                   "px-1.5 py-0.5 text-[10px] transition-colors",
                   filter === f.key
-                    ? "bg-bamboo-500 text-white"
-                    : "text-ink-500 hover:bg-bamboo-50",
+                    ? "bg-primary-500 text-white"
+                    : "text-neutral-500 hover:bg-primary-50",
                 )}
               >
                 {f.label}
@@ -115,14 +115,14 @@ export function TradeHistory({
         )}
       </div>
 
-      {loading && <p className="mt-1 text-[10px] text-ink-500">加载中…</p>}
+      {loading && <p className="mt-1 text-[10px] text-neutral-500">加载中…</p>}
       {!loading && items.length === 0 && (
-        <p className="mt-1 text-[10px] text-ink-500">
+        <p className="mt-1 text-[10px] text-neutral-500">
           尚无成交记录 — 开始训练后熊猫的成交会出现在这里
         </p>
       )}
       {!loading && items.length > 0 && filtered.length === 0 && (
-        <p className="mt-1 text-[10px] text-ink-500">当前筛选下没有匹配记录</p>
+        <p className="mt-1 text-[10px] text-neutral-500">当前筛选下没有匹配记录</p>
       )}
 
       <ul
@@ -142,7 +142,7 @@ export function TradeHistory({
                 onClick={() => onSelect?.(item)}
                 className={clsx(
                   "w-full rounded px-2 py-1.5 text-left",
-                  selected ? "bg-bamboo-50 ring-1 ring-bamboo-500" : "hover:bg-paper-card",
+                  selected ? "bg-primary-50 ring-1 ring-primary-500" : "hover:bg-neutral-100",
                 )}
               >
                 <span className="flex flex-wrap items-center justify-between gap-1">
@@ -151,14 +151,14 @@ export function TradeHistory({
                       className={clsx(
                         "rounded px-1 py-px text-[9px] font-semibold",
                         isBuy
-                          ? "bg-bamboo-50 text-profit"
+                          ? "bg-primary-50 text-profit"
                           : "bg-[var(--color-seal-bg)] text-loss",
                       )}
                     >
                       {actionLabel(item.action)}
                     </span>
                     <span className="font-mono text-[10px] text-ink-700">{item.asset}</span>
-                    <span className="text-[10px] text-ink-500">
+                    <span className="text-[10px] text-neutral-500">
                       {formatTradeTime(item.created_at)}
                     </span>
                   </span>
@@ -176,7 +176,7 @@ export function TradeHistory({
                     <span className="text-[10px] text-ink-400">持仓中</span>
                   )}
                 </span>
-                <span className="mt-0.5 flex flex-wrap items-center justify-between gap-1 text-[10px] text-ink-500">
+                <span className="mt-0.5 flex flex-wrap items-center justify-between gap-1 text-[10px] text-neutral-500">
                   <span className="font-mono">
                     @{formatTradePrice(item.price)} × {formatQuantity(item.quantity)}
                   </span>

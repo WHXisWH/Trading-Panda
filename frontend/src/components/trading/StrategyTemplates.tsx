@@ -16,7 +16,7 @@ export function StrategyTemplates({ hasExistingRules, onApply }: Props) {
         <button
           key={tpl.id}
           type="button"
-          className="rounded-full border border-dashed border-bamboo-400 px-3 py-1 text-[11px] text-bamboo-600 hover:bg-bamboo-50"
+          className="rounded-full border border-dashed border-primary-500 px-3 py-1 text-[11px] text-primary-600 hover:bg-primary-50"
           onClick={() => {
             const rows = tpl.rules.map((r) => newRuleRow({ ...r, id: crypto.randomUUID() }));
             onApply(

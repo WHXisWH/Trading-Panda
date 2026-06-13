@@ -10,17 +10,15 @@ export function EmotionIndicator({ state, showDesc = false }: Props) {
   return (
     <div className="flex items-center gap-2">
       <span
-        className="flex h-8 w-8 items-center justify-center rounded-full text-lg"
-        style={{ backgroundColor: meta.color + "22" }}
+        className="h-2.5 w-2.5 shrink-0 rounded-full"
+        style={{ backgroundColor: meta.color }}
         title={meta.desc}
-      >
-        {meta.emoji}
-      </span>
+      />
       <div>
         <p className="text-sm font-semibold" style={{ color: meta.color }}>
           {meta.label}
         </p>
-        {showDesc && <p className="text-xs text-ink-500">{meta.desc}</p>}
+        {showDesc && <p className="text-xs text-neutral-500">{meta.desc}</p>}
       </div>
     </div>
   );

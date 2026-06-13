@@ -1,73 +1,64 @@
 /**
- * TradingPanda design tokens — Obsidian design-spec
+ * TradingPanda design tokens — clean modern Web3 style
  * Imported by globals.css; Tailwind extends spacing/maxWidth from these vars.
  */
 :root {
-  /* ========== 颜色 — 水墨中国风 ========== */
-  --color-bg-primary: #f5f0e6;
-  --color-bg-card: #ede8dc;
+  /* ========== Backgrounds ========== */
+  --color-bg-primary: #f8f9fa;
+  --color-bg-card: #ffffff;
   --color-bg-white: #ffffff;
-  --color-bg-input: #e8e2d4;
-  --color-bg-hover: #e2dccf;
-  --color-bg-overlay: rgba(245, 240, 230, 0.85);
-  --color-bg-ink-wash: rgba(30, 30, 28, 0.04);
+  --color-bg-input: #f1f3f5;
+  --color-bg-hover: #e9ecef;
+  --color-bg-overlay: rgba(0, 0, 0, 0.04);
 
-  --color-accent: #2d5a3d;
-  --color-accent-hover: #1e4a2e;
-  --color-accent-glow: rgba(45, 90, 61, 0.3);
-  --color-accent-muted: rgba(45, 90, 61, 0.08);
-  --color-accent-light: #f0f8f0;
+  /* ========== Accent ========== */
+  --color-accent: #0f973d;
+  --color-accent-hover: #0a7a31;
+  --color-accent-muted: rgba(15, 151, 61, 0.08);
+  --color-accent-light: #f0fdf4;
 
-  --color-text-primary: #1a1a1a;
-  --color-text-secondary: #888888;
-  --color-text-tertiary: #999999;
-  --color-text-placeholder: #bbbbbb;
-  --color-text-muted: #9a9a8e;
+  /* ========== Text ========== */
+  --color-text-primary: #111827;
+  --color-text-secondary: #6b7280;
+  --color-text-tertiary: #9ca3af;
+  --color-text-placeholder: #d1d5db;
   --color-text-inverse: #ffffff;
 
-  --color-success: #2d5a3d;
-  --color-success-bg: rgba(45, 90, 61, 0.08);
-  --color-danger: #c23a3a;
-  --color-danger-bg: rgba(194, 58, 58, 0.06);
-  --color-warning: #e8b84b;
-  --color-warning-bg: rgba(232, 184, 75, 0.12);
-  --color-excited: #d4727a;
-  --color-info: #4a6d8c;
+  /* ========== Semantic ========== */
+  --color-success: #0f973d;
+  --color-success-bg: rgba(15, 151, 61, 0.08);
+  --color-danger: #dc2626;
+  --color-danger-bg: rgba(220, 38, 38, 0.06);
+  --color-warning: #f59e0b;
+  --color-warning-bg: rgba(245, 158, 11, 0.12);
+  --color-info: #3b82f6;
 
-  --color-panda-fur: #1a1a1a;
-  --color-panda-white: #f5f5f0;
-  --color-panda-eye: #2d5a3d;
+  /* ========== Panda ========== */
+  --color-panda-fur: #111827;
+  --color-neutral-50: #f8f9fa;
 
-  --color-border: #d4cfc4;
-  --color-border-light: #ede8dc;
-  --color-border-hover: #bfb5a0;
-  --color-border-accent: #2d5a3d;
-  --color-overlay: rgba(245, 240, 230, 0.85);
+  /* ========== Borders ========== */
+  --color-border: #e5e7eb;
+  --color-border-light: #f3f4f6;
+  --color-border-hover: #d1d5db;
+  --color-border-accent: #0f973d;
+  --color-overlay: rgba(0, 0, 0, 0.04);
 
-  --color-seal: #c23a3a;
-  --color-seal-bg: rgba(194, 58, 58, 0.08);
-
-  --color-rarity-common: #9a9a8e;
-  --color-rarity-rare: #4a6d8c;
-  --color-rarity-epic: #6b4c8a;
-  --color-rarity-legendary: #c23a3a;
-
-  /* ========== 字体 ========== */
-  --font-heading: "Noto Serif SC", "ZCOOL XiaoWei", serif;
-  --font-body: "Noto Sans SC", "Inter", -apple-system, sans-serif;
-  --font-display: "Noto Sans SC", "Inter", sans-serif;
+  /* ========== Typography ========== */
+  --font-heading: "Inter", -apple-system, sans-serif;
+  --font-body: "Inter", -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
-  --text-h1: 22px;
-  --text-h2: 18px;
-  --text-h3: 15px;
-  --text-body: 13px;
-  --text-small: 11px;
-  --text-tiny: 10px;
+  --text-h1: 24px;
+  --text-h2: 20px;
+  --text-h3: 16px;
+  --text-body: 14px;
+  --text-small: 12px;
+  --text-tiny: 11px;
   --text-price: 20px;
   --text-price-lg: 28px;
 
-  /* ========== 间距 ========== */
+  /* ========== Spacing ========== */
   --spacing-xs: 4px;
   --spacing-sm: 8px;
   --spacing-md: 12px;
@@ -76,23 +67,19 @@
   --spacing-2xl: 32px;
   --spacing-3xl: 48px;
 
-  /* ========== 圆角 ========== */
+  /* ========== Border Radius ========== */
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 12px;
   --radius-xl: 16px;
   --radius-full: 9999px;
 
-  /* ========== 阴影 ========== */
-  --shadow-sm: 0 1px 3px rgba(26, 26, 26, 0.08);
-  --shadow-md: 0 4px 12px rgba(26, 26, 26, 0.1);
-  --shadow-lg: 0 8px 24px rgba(26, 26, 26, 0.12);
-  --shadow-glow: 0 0 20px rgba(45, 90, 61, 0.2);
-  --shadow-glow-rare: 0 0 40px rgba(232, 184, 75, 0.35);
-  --shadow-glow-strong: var(--shadow-glow-rare);
-  --shadow-ink: 0 2px 8px rgba(26, 26, 24, 0.06);
+  /* ========== Shadows ========== */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
 
-  /* ========== 过渡 ========== */
+  /* ========== Transitions ========== */
   --duration-fast: 150ms;
   --duration-normal: 300ms;
   --duration-slow: 500ms;
@@ -108,27 +95,12 @@
   --z-modal: 50;
   --z-toast: 60;
 
-  /* ========== 布局（Obsidian） ========== */
-  --navbar-height: 44px;
+  /* ========== Layout ========== */
+  --navbar-height: 48px;
   --page-max-width: 1440px;
   --page-mint-max-width: 800px;
-  --sidebar-width: 180px;
-  --sidebar-width-wide: 260px;
-  --dashboard-left-min: 220px;
-  --dashboard-left-max: 280px;
-  --account-panel-width: 220px;
-  --account-panel-max: 240px;
-  --decision-panel-width: 170px;
-  --trading-positions-width: 220px;
-  --trading-orderbook-width: 320px;
-  --trading-form-width: 224px;
-  --modal-width-lg: 800px;
-  --modal-width-sm: 400px;
+  --sidebar-width: 220px;
   --panda-avatar-dashboard: 80px;
   --panda-avatar-mint: 120px;
   --panda-avatar-card: 80px;
-  --market-card-width: 183px;
-  --market-card-height: 210px;
-  --pool-list-item-height: 72px;
-  --confirm-bar-height: 50px;
 }

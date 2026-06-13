@@ -14,10 +14,10 @@ export default function TradingPage({ params }: { params: { id: string } }) {
   return (
     <PageContainer className="py-4">
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="font-serif text-[18px] font-bold">交易界面</h1>
+        <h1 className="font-sans text-[18px] font-bold">交易界面</h1>
         <Link
           href={`/dashboard/${params.id}`}
-          className="text-[13px] text-bamboo-500 hover:underline"
+          className="text-[13px] text-primary-500 hover:underline"
         >
           ← 返回模拟盘
         </Link>
@@ -27,7 +27,7 @@ export default function TradingPage({ params }: { params: { id: string } }) {
         <aside className="card-white p-4 lg:max-w-[220px]">
           <PositionList positions={MOCK_POSITIONS} />
           <div className="mt-4 border-t pt-4">
-            <p className="text-[11px] font-medium text-ink-500">策略选择</p>
+            <p className="text-[11px] font-medium text-neutral-500">策略选择</p>
             <select className="mt-1 w-full rounded border border-[var(--color-border)] px-2 py-1.5 text-[12px]">
               <option>RSI 超卖反弹</option>
               <option>趋势跟踪</option>
@@ -37,27 +37,27 @@ export default function TradingPage({ params }: { params: { id: string } }) {
 
         <section className="card-white space-y-4 p-4">
           <div className="flex items-baseline gap-3">
-            <h2 className="font-mono text-sm text-ink-500">📊 订单簿 · BTC/USD</h2>
+            <h2 className="font-mono text-sm text-neutral-500"> 订单簿 · BTC/USD</h2>
             <span className="font-mono text-xl font-bold">$59,500</span>
-            <span className="text-profit text-sm">+2.3%</span>
+            <span className="text-primary-500 text-sm">+2.3%</span>
           </div>
           <OrderBook asks={asks} bids={bids} />
           <div className="border-t pt-3">
-            <p className="mb-2 text-[11px] font-medium text-ink-500">最新成交</p>
+            <p className="mb-2 text-[11px] font-medium text-neutral-500">最新成交</p>
             <ul className="space-y-1 font-mono text-[12px]">
               <li>
-                <span className="text-ink-500">15:23</span>{" "}
-                <span className="text-profit">BUY 🟢</span> $59,500
+                <span className="text-neutral-500">15:23</span>{" "}
+                <span className="text-primary-500">BUY 🟢</span> $59,500
               </li>
               <li>
-                <span className="text-ink-500">15:22</span>{" "}
-                <span className="text-loss">SELL 🔴</span> $59,480
+                <span className="text-neutral-500">15:22</span>{" "}
+                <span className="text-red-600">SELL 🔴</span> $59,480
               </li>
             </ul>
           </div>
-          <div className="rounded-lg bg-paper-card p-3 text-[11px] text-ink-500">
+          <div className="rounded-lg bg-neutral-50 p-3 text-[11px] text-neutral-500">
             <p className="font-medium">交易日志</p>
-            <p>15:23 RSI=28 → 买入</p>
+            <p>15:23 RSI=28 → Buy</p>
             <p>14:50 RSI=45 → 无视</p>
           </div>
         </section>

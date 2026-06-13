@@ -35,8 +35,8 @@ function StatSlider({
   return (
     <label className="block">
       <div className="mb-1 flex justify-between text-[12px]">
-        <span className="text-ink-700">{label}</span>
-        <span className="font-mono text-ink-500">{value}</span>
+        <span className="text-neutral-700">{label}</span>
+        <span className="font-mono text-neutral-500">{value}</span>
       </div>
       <input
         type="range"
@@ -44,7 +44,7 @@ function StatSlider({
         max={100}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full accent-bamboo-600"
+        className="w-full accent-primary-600"
       />
     </label>
   );
@@ -62,7 +62,7 @@ export function PandaLabControls({
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h2 className="mb-3 text-[13px] font-semibold text-ink-900">性格五维</h2>
+        <h2 className="mb-3 text-[13px] font-semibold text-neutral-900">性格五维</h2>
         <div className="flex flex-col gap-3">
           {PERSONALITY_AXES.map((axis) => (
             <StatSlider
@@ -82,7 +82,7 @@ export function PandaLabControls({
       />
 
       <div>
-        <label className="mb-1 block text-[12px] text-ink-700">情绪（眼嘴层）</label>
+        <label className="mb-1 block text-[12px] text-neutral-700">情绪（眼嘴层）</label>
         <select
           value={stats.emotion}
           onChange={(e) => onEmotionChange(e.target.value as PandaEmotion)}
@@ -97,7 +97,7 @@ export function PandaLabControls({
       </div>
 
       <div>
-        <h2 className="mb-2 text-[13px] font-semibold text-ink-900">预设</h2>
+        <h2 className="mb-2 text-[13px] font-semibold text-neutral-900">预设</h2>
         <div className="flex flex-wrap gap-2">
           {PANDA_LAB_PRESETS.map((preset) => (
             <button
@@ -107,7 +107,7 @@ export function PandaLabControls({
               onClick={() => onPreset(preset.id)}
               className={clsx(
                 "rounded-full border border-[var(--color-border)] px-3 py-1 text-[11px]",
-                "hover:border-bamboo-500 hover:bg-bamboo-50"
+                "hover:border-primary-500 hover:bg-primary-50"
               )}
             >
               {preset.label}
@@ -120,14 +120,14 @@ export function PandaLabControls({
         <button
           type="button"
           onClick={onRandom}
-          className="rounded-lg border border-bamboo-400 px-3 py-1.5 text-[12px] text-bamboo-700 hover:bg-bamboo-50"
+          className="rounded-lg border border-primary-500 px-3 py-1.5 text-[12px] text-primary-600 hover:bg-primary-50"
         >
           随机
         </button>
         <button
           type="button"
           onClick={onReset}
-          className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-[12px] text-ink-600 hover:bg-paper-card"
+          className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-[12px] text-neutral-600 hover:bg-primary-50"
         >
           重置
         </button>

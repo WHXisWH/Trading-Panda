@@ -10,17 +10,17 @@ import { PurchaseConfirmModal } from "@/components/market/PurchaseConfirmModal";
 import { MOCK_MARKET_LISTINGS, type MarketListing } from "@/lib/mockData";
 
 const SORT_OPTIONS = [
-  "最新上架",
-  "价格低→高",
-  "价格高→低",
-  "经验高→低",
-  "胜率高→低",
+  "Newest",
+  "Price: Low → High",
+  "Price: High → Low",
+  "XP: High → Low",
+  "Win Rate: High → Low",
 ] as const;
 
 export default function MarketPage() {
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<(typeof SORT_OPTIONS)[number]>("最新上架");
-  const [talent, setTalent] = useState("全部");
+  const [sort, setSort] = useState<(typeof SORT_OPTIONS)[number]>("Newest");
+  const [talent, setTalent] = useState("All");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10]);
   const [page, setPage] = useState(1);
   const [detail, setDetail] = useState<MarketListing | null>(null);
@@ -39,11 +39,11 @@ export default function MarketPage() {
     list = list.filter(
       (l) => l.priceSui >= priceRange[0] && l.priceSui <= priceRange[1]
     );
-    if (sort === "价格低→高") list.sort((a, b) => a.priceSui - b.priceSui);
-    if (sort === "价格高→低") list.sort((a, b) => b.priceSui - a.priceSui);
-    if (sort === "经验高→低")
+    if (sort === "Price: Low → High") list.sort((a, b) => a.priceSui - b.priceSui);
+    if (sort === "Price: High → Low") list.sort((a, b) => b.priceSui - a.priceSui);
+    if (sort === "XP: High → Low")
       list.sort((a, b) => b.experienceLevel - a.experienceLevel);
-    if (sort === "胜率高→低") list.sort((a, b) => b.winRate - a.winRate);
+    if (sort === "Win Rate: High → Low") list.sort((a, b) => b.winRate - a.winRate);
     return list;
   }, [search, sort, priceRange]);
 
@@ -55,13 +55,13 @@ export default function MarketPage() {
     <PageContainer className="space-y-6 py-8">
       <div className="flex flex-wrap items-center gap-4">
         <div className="relative flex-1 min-w-[240px] max-w-xl">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-500">
-            🔍
-          </span>
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
           <input
             type="search"
-            placeholder="搜索熊猫名 / NFT ID..."
-            className="w-full rounded-lg border border-[var(--color-border)] bg-white py-2.5 pl-10 pr-10 text-[13px]"
+            placeholder="Search by name or ID..."
+            className="w-full rounded-lg border border-[var(--color-border)] bg-white py-2.5 pl-10 pr-10 text-sm"
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
@@ -71,10 +71,10 @@ export default function MarketPage() {
           {search && (
             <button
               type="button"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-500"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500"
               onClick={() => setSearch("")}
             >
-              ✕
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           )}
         </div>
@@ -85,7 +85,7 @@ export default function MarketPage() {
         >
           {SORT_OPTIONS.map((o) => (
             <option key={o} value={o}>
-              📊 {o}
+               {o}
             </option>
           ))}
         </select>
@@ -97,7 +97,7 @@ export default function MarketPage() {
         priceRange={priceRange}
         onPriceRangeChange={setPriceRange}
         onClear={() => {
-          setTalent("全部");
+          setTalent("All");
           setPriceRange([0, 10]);
           setSearch("");
         }}
@@ -126,21 +126,21 @@ export default function MarketPage() {
         <button
           type="button"
           disabled={page <= 1}
-          className="text-bamboo-500 disabled:opacity-40"
+          className="text-primary-500 disabled:opacity-40"
           onClick={() => setPage((p) => p - 1)}
         >
-          ← 上一页
+          ← Prev
         </button>
-        <span>
-          第 {page}/{totalPages} 页
+        <span className="text-neutral-500">
+          {page} / {totalPages}
         </span>
         <button
           type="button"
           disabled={page >= totalPages}
-          className="text-bamboo-500 disabled:opacity-40"
+          className="text-primary-500 disabled:opacity-40"
           onClick={() => setPage((p) => p + 1)}
         >
-          下一页 →
+          Next →
         </button>
       </div>
 

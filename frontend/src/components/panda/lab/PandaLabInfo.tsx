@@ -40,8 +40,8 @@ export function PandaLabInfo({ stats, shareUrl, onCopyLink }: PandaLabInfoProps)
   return (
     <div className="flex flex-col gap-4 text-[12px]">
       <div>
-        <h2 className="mb-2 text-[13px] font-semibold text-ink-900">映射信息</h2>
-        <dl className="space-y-1 text-ink-600">
+        <h2 className="mb-2 text-[13px] font-semibold text-neutral-900">映射信息</h2>
+        <dl className="space-y-1 text-neutral-600">
           <div className="flex justify-between gap-2">
             <dt>成长阶段</dt>
             <dd className="font-mono">{growth}</dd>
@@ -54,8 +54,8 @@ export function PandaLabInfo({ stats, shareUrl, onCopyLink }: PandaLabInfoProps)
       </div>
 
       <div>
-        <h3 className="mb-1 font-medium text-ink-800">性格 → Tier / 视觉档</h3>
-        <ul className="space-y-1 font-mono text-[11px] text-ink-500">
+        <h3 className="mb-1 font-medium text-neutral-700">性格 → Tier / 视觉档</h3>
+        <ul className="space-y-1 font-mono text-[11px] text-neutral-500">
           {PERSONALITY_AXES.map((axis) => {
             const tier = getTraitTier(stats[axis.key]);
             const visual = getVisualTier(tier);
@@ -72,8 +72,8 @@ export function PandaLabInfo({ stats, shareUrl, onCopyLink }: PandaLabInfoProps)
       </div>
 
       <div>
-        <h3 className="mb-1 font-medium text-ink-800">PandaStats</h3>
-        <pre className="max-h-40 overflow-auto rounded-lg bg-paper-card p-2 text-[10px] leading-relaxed">
+        <h3 className="mb-1 font-medium text-neutral-700">PandaStats</h3>
+        <pre className="max-h-40 overflow-auto rounded-lg bg-neutral-50 p-2 text-[10px] leading-relaxed">
           {JSON.stringify(stats, null, 2)}
         </pre>
       </div>
@@ -82,20 +82,20 @@ export function PandaLabInfo({ stats, shareUrl, onCopyLink }: PandaLabInfoProps)
         <button
           type="button"
           onClick={handleCopyLink}
-          className="rounded-lg bg-bamboo-600 px-3 py-2 text-[12px] text-white hover:bg-bamboo-700"
+          className="rounded-lg bg-primary-600 px-3 py-2 text-[12px] text-white hover:bg-primary-600"
         >
           复制分享链接
         </button>
         <button
           type="button"
           onClick={handleCopyJson}
-          className="rounded-lg border border-[var(--color-border)] px-3 py-2 text-[12px] hover:bg-paper-card"
+          className="rounded-lg border border-[var(--color-border)] px-3 py-2 text-[12px] hover:bg-primary-50"
         >
           {copied ? "已复制" : "复制 JSON"}
         </button>
       </div>
 
-      <p className="break-all text-[10px] text-ink-400" title={shareUrl}>
+      <p className="break-all text-[10px] text-neutral-400" title={shareUrl}>
         {shareUrl}
       </p>
     </div>
