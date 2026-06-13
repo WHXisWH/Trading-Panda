@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { clsx } from "clsx";
+import { Select } from "@/components/ui/Select";
 
 interface PandaOption {
   id: string;
@@ -19,20 +19,18 @@ export function PandaSelector({ pandas, currentId, className }: Props) {
 
   return (
     <div className={clsx("flex items-center gap-2", className)}>
-      <span className="text-sm text-neutral-500"></span>
-      <select
-        className="rounded-lg border border-[var(--color-border)] bg-white px-2 py-1 text-sm"
+      <Select
+        size="sm"
+        aria-label="选择熊猫"
         value={currentId}
-        onChange={(e) => {
-          window.location.href = `/dashboard/${e.target.value}`;
+        onValueChange={(v) => {
+          window.location.href = `/dashboard/${v}`;
         }}
-      >
-        {pandas.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.name ?? `熊猫 ${p.id.slice(0, 8)}`}
-          </option>
-        ))}
-      </select>
+        options={pandas.map((p) => ({
+          value: p.id,
+          label: p.name ?? `熊猫 ${p.id.slice(0, 8)}`,
+        }))}
+      />
     </div>
   );
 }

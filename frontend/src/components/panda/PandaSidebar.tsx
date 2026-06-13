@@ -8,6 +8,7 @@ import { ExperienceBar } from "./ExperienceBar";
 import { EmotionIndicator } from "./EmotionIndicator";
 import { PERSONALITY_AXES, type PersonalityKey } from "@/lib/personality";
 import { getGrowthStage } from "@/utils/pandaHelper";
+import { Select } from "@/components/ui/Select";
 
 interface Props {
   variant?: "default" | "dashboard-left";
@@ -118,19 +119,18 @@ export function PandaSidebar({
       {pandas.length > 1 && (
         <div className="border-t border-[var(--color-border)] pt-3">
           <label className="mb-1 block text-[10px] text-neutral-500">My Pandas</label>
-          <select
-            className="w-full rounded-lg border border-[var(--color-border)] bg-white px-2 py-1.5 text-[13px]"
-            defaultValue={pandaId}
-            onChange={(e) => {
-              window.location.href = `/dashboard/${e.target.value}`;
+          <Select
+            size="sm"
+            aria-label="My Pandas"
+            value={pandaId}
+            onValueChange={(v) => {
+              window.location.href = `/dashboard/${v}`;
             }}
-          >
-            {pandas.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name ?? `熊猫 ${p.id.slice(0, 6)}`}
-              </option>
-            ))}
-          </select>
+            options={pandas.map((p) => ({
+              value: p.id,
+              label: p.name ?? `熊猫 ${p.id.slice(0, 6)}`,
+            }))}
+          />
         </div>
       )}
 

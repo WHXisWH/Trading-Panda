@@ -20,6 +20,7 @@ import {
   DEEPBOOK_MVP_POOLS,
   type DeepbookPool,
 } from "@/lib/constants/deepbookPools";
+import { Select } from "@/components/ui/Select";
 import { tradesToChartMarkers } from "@/lib/chart/tradeMarkers";
 import type { TradeRecordApi } from "@/types/trading";
 import type { CandlesResponse, MarketInterval, MarketTickPayload, WsConnectionStatus } from "@/types/ws";
@@ -457,18 +458,14 @@ export function CandlestickChart({
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           <div className="flex items-center gap-2">
             {canSwitchPools ? (
-              <select
-                value={pool}
-                onChange={(e) => onPoolChange!(e.target.value as DeepbookPool)}
-                className="h-8 rounded border border-[var(--color-border)] bg-white px-2 font-mono text-sm text-neutral-900"
+              <Select
+                size="sm"
                 aria-label="交易池"
-              >
-                {poolOptions.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </select>
+                className="w-auto font-mono"
+                value={pool}
+                onValueChange={(v) => onPoolChange!(v as DeepbookPool)}
+                options={poolOptions.map((p) => ({ value: p, label: p }))}
+              />
             ) : (
               <span className="font-mono text-sm font-medium text-neutral-900">{pool}</span>
             )}
