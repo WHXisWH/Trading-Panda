@@ -354,7 +354,8 @@ class PandaActor:
 
             await self._experience_engine.record_trade(
                 session,
-                {"asset": event.asset, "pnl_pct": pnl_pct},
+                {"asset": event.asset, "pnl_pct": pnl_pct, "trade_id": trade.id},
+                market=event.to_market_dict(),
             )
             await session.commit()
 

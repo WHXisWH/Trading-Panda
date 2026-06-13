@@ -43,7 +43,7 @@ def upgrade() -> None:
         sa.Column("id", _UUID, **_PK),
         sa.Column("panda_id", _UUID, sa.ForeignKey("pandas.id", ondelete="CASCADE"), nullable=False),
         sa.Column("asset", sa.String(10), nullable=False),
-        sa.Column("mastery_score", sa.Numeric(5, 4), nullable=False, server_default="0"),
+        sa.Column("mastery_score", sa.Numeric(6, 2), nullable=False, server_default="0"),  # 0–100 scale
         sa.Column("trade_count", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
         sa.UniqueConstraint("panda_id", "asset", name="uq_exp_mastery_panda_asset"),
