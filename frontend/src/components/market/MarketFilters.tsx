@@ -3,7 +3,7 @@
 import * as Slider from "@radix-ui/react-slider";
 import { clsx } from "clsx";
 
-const TALENTS = ["全部", "竹林禅心", "黑白视界", "冬眠反弹", "趋势猎手"];
+const TALENTS = ["All", "Bamboo Zen", "Black & White", "Hibernate", "Trend Hunter"];
 
 interface Props {
   talent: string;
@@ -21,25 +21,25 @@ export function MarketFilters({
   onClear,
 }: Props) {
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-xl bg-paper-card p-4">
-      <span className="text-[11px] text-ink-500">天赋</span>
+    <div className="flex flex-wrap items-center gap-3 rounded-xl border border-neutral-200 bg-white p-4">
+      <span className="text-xs font-medium text-neutral-500">Talent</span>
       {TALENTS.map((t) => (
         <button
           key={t}
           type="button"
           onClick={() => onTalentChange(t)}
           className={clsx(
-            "rounded-full px-3 py-1 text-[11px] font-medium transition-colors",
+            "rounded-full px-3 py-1 text-xs font-medium transition-colors",
             talent === t
-              ? "bg-bamboo-500 text-white"
-              : "border border-[var(--color-border)] bg-white text-ink-500 hover:bg-bamboo-50"
+              ? "bg-primary-500 text-white"
+              : "border border-[var(--color-border)] bg-white text-neutral-500 hover:border-primary-200 hover:text-primary-500"
           )}
         >
           {t}
         </button>
       ))}
       <div className="ml-auto flex min-w-[200px] flex-1 items-center gap-3 sm:max-w-xs">
-        <span className="shrink-0 text-[11px] text-ink-500">价格 0–10 SUI</span>
+        <span className="shrink-0 text-xs text-neutral-500">Price</span>
         <Slider.Root
           className="relative flex h-5 flex-1 touch-none items-center"
           min={0}
@@ -48,22 +48,22 @@ export function MarketFilters({
           value={priceRange}
           onValueChange={(v) => onPriceRangeChange(v as [number, number])}
         >
-          <Slider.Track className="relative h-1 grow rounded-full bg-ink-100">
-            <Slider.Range className="absolute h-full rounded-full bg-bamboo-500" />
+          <Slider.Track className="relative h-1 grow rounded-full bg-neutral-200">
+            <Slider.Range className="absolute h-full rounded-full bg-primary-500" />
           </Slider.Track>
-          <Slider.Thumb className="block h-4 w-4 rounded-full border-2 border-bamboo-500 bg-white shadow" />
-          <Slider.Thumb className="block h-4 w-4 rounded-full border-2 border-bamboo-500 bg-white shadow" />
+          <Slider.Thumb className="block h-4 w-4 rounded-full border-2 border-primary-500 bg-white shadow-sm" />
+          <Slider.Thumb className="block h-4 w-4 rounded-full border-2 border-primary-500 bg-white shadow-sm" />
         </Slider.Root>
-        <span className="font-mono text-[11px]">
-          {priceRange[0]}–{priceRange[1]}
+        <span className="font-mono text-xs text-neutral-500">
+          {priceRange[0]}–{priceRange[1]} SUI
         </span>
       </div>
       <button
         type="button"
         onClick={onClear}
-        className="text-[11px] text-vermillion hover:underline"
+        className="text-xs text-neutral-400 transition-colors hover:text-neutral-600"
       >
-        清空
+        Clear
       </button>
     </div>
   );

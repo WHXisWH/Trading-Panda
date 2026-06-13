@@ -25,7 +25,7 @@ const Panda3DCanvas = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex aspect-square w-full items-center justify-center rounded-xl bg-[#111215] text-[12px] text-ink-500">
+      <div className="flex aspect-square w-full items-center justify-center rounded-xl bg-[#111215] text-[12px] text-neutral-500">
         加载 3D 赛博引擎...
       </div>
     ),
@@ -38,7 +38,7 @@ const PandaRiveCanvas = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex aspect-square w-full items-center justify-center rounded-xl bg-[#111215] text-[12px] text-ink-500">
+      <div className="flex aspect-square w-full items-center justify-center rounded-xl bg-[#111215] text-[12px] text-neutral-500">
         启动 Rive 骨骼引擎...
       </div>
     ),

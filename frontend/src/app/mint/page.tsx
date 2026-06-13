@@ -79,7 +79,7 @@ export default function MintPage() {
       className="flex min-h-[calc(100dvh-var(--navbar-height))] flex-col items-center justify-center gap-8 py-12"
     >
       {existingPandas && existingPandas.length > 0 && effectiveStatus === "idle" && (
-        <div className="rounded-lg border border-bamboo-200 bg-bamboo-50/80 px-4 py-2 text-[12px] text-bamboo-800">
+        <div className="rounded-lg border border-neutral-200 bg-primary-50/80 px-4 py-2 text-[12px] text-primary-600">
           你已拥有 {existingPandas.length} 只熊猫 ·{" "}
           <Link href={`/dashboard/${existingPandas[0].id}`} className="underline">
             进入模拟盘
@@ -88,10 +88,10 @@ export default function MintPage() {
       )}
 
       <div className="max-w-lg space-y-2 text-center">
-        <h1 className="font-serif text-[22px] font-bold md:text-3xl">
+        <h1 className="font-sans text-[22px] font-bold md:text-3xl">
           铸造你的 AI 交易熊猫
         </h1>
-        <p className="text-[13px] text-ink-500">
+        <p className="text-[13px] text-neutral-500">
           {effectiveStatus === "connecting"
             ? "连接 Sui Wallet 并登录，铸造独一无二的链上性格"
             : "每只熊猫的性格由链上随机数永久决定"}
@@ -100,7 +100,7 @@ export default function MintPage() {
 
       <div className="flex flex-col items-center gap-6">
         {showRevealedAvatar ? (
-          <div className="h-[120px] w-[120px] overflow-hidden rounded-full ring-4 ring-bamboo-500/30 animate-scale-in">
+          <div className="h-[120px] w-[120px] overflow-hidden rounded-full ring-4 ring-primary-500/30 animate-scale-in">
             <PandaSvgRenderer stats={statsFromPanda(minted)} />
           </div>
         ) : (
@@ -118,7 +118,7 @@ export default function MintPage() {
 
         {effectiveStatus === "connecting" && (
           <Button size="lg" disabled>
-            🔗 连接钱包
+            🔗 Connect Wallet
           </Button>
         )}
 
@@ -129,9 +129,9 @@ export default function MintPage() {
               onClick={() => void handleMint()}
               className="min-w-[200px]"
             >
-              🐼 铸造熊猫
+              Mint Panda
             </Button>
-            <p className="text-[11px] text-ink-500">Gas ~0.03 SUI</p>
+            <p className="text-[11px] text-neutral-500">Gas ~0.03 SUI</p>
           </>
         )}
 
@@ -145,12 +145,12 @@ export default function MintPage() {
           <div className="max-w-sm space-y-2 text-center">
             <p className="text-[13px] text-red-600">{errorMessage}</p>
             {errorKind === "insufficient_gas" && (
-              <p className="text-[11px] text-ink-500">
+              <p className="text-[11px] text-neutral-500">
                 <a
                   href="https://faucet.testnet.sui.io/"
                   target="_blank"
                   rel="noreferrer"
-                  className="text-bamboo-700 underline"
+                  className="text-primary-600 underline"
                 >
                   领取 Testnet SUI
                 </a>
@@ -163,9 +163,9 @@ export default function MintPage() {
         )}
 
         {showRadar && personalityScores && minted && (
-          <div className="card-white animate-radar-reveal w-full max-w-sm p-4">
+          <div className="bg-white border border-\[var(--color-border)\] rounded-xl shadow-sm animate-scale-in w-full max-w-sm p-4">
             <PersonalityRadar scores={personalityScores} animated />
-            <div className="mt-3 grid grid-cols-2 gap-1 text-[11px] text-ink-500">
+            <div className="mt-3 grid grid-cols-2 gap-1 text-[11px] text-neutral-500">
               <span>胆识 {minted.boldness}</span>
               <span>耐性 {minted.patience}</span>
               <span>直觉 {minted.intuition}</span>
@@ -178,10 +178,10 @@ export default function MintPage() {
         )}
 
         {showTalent && minted && (
-          <div className="animate-spring-up">
+          <div className="animate-fade-up">
             <TalentBadge talentId={minted.talent} reveal />
             {!minted.talent && (
-              <p className="mt-2 text-center text-[11px] text-ink-500">
+              <p className="mt-2 text-center text-[11px] text-neutral-500">
                 普通熊猫，靠努力成长
               </p>
             )}
@@ -190,15 +190,15 @@ export default function MintPage() {
 
         {isSuccess && result && (
           <div className="flex flex-wrap justify-center gap-3">
-            <h2 className="w-full text-center font-serif text-lg">
-              🎉 欢迎{result.name ? ` ${result.name}` : ""} 加入你的战队
+            <h2 className="w-full text-center font-sans text-lg">
+              Welcome{result.name ? ` ${result.name}` : ""} 加入你的战队
             </h2>
             <Link href={`/dashboard/${result.pandaId}`}>
               <Button size="lg">🎮 进入模拟盘</Button>
             </Link>
             <Link href="/pools">
               <Button size="lg" variant="outline">
-                选择交易池
+                Pools
               </Button>
             </Link>
             <Button size="lg" variant="ghost" onClick={reset}>

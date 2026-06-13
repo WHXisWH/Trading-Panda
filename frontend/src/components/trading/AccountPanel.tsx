@@ -51,36 +51,36 @@ export function AccountPanel({ snapshot }: Props) {
       : "—";
 
   return (
-    <div className="min-w-0 max-w-full space-y-2 rounded-lg bg-paper-card p-3 text-[13px]">
+    <div className="min-w-0 max-w-full space-y-2 rounded-lg bg-neutral-50 p-3 text-[13px]">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-ink-900">账户</h3>
-        <span className="text-[10px] text-ink-500">
+        <h3 className="font-semibold text-neutral-900">账户</h3>
+        <span className="text-[10px] text-neutral-500">
           {training ? "训练中" : "未训练"}
         </span>
       </div>
       <div className="flex justify-between">
-        <span className="text-ink-500">权益</span>
+        <span className="text-neutral-500">权益</span>
         <span className="font-mono font-medium">{formatUsd(equity)}</span>
       </div>
       <div className="flex justify-between">
-        <span className="text-ink-500">初始资金</span>
-        <span className="font-mono text-ink-500">{formatUsd(initialCapital)}</span>
+        <span className="text-neutral-500">初始资金</span>
+        <span className="font-mono text-neutral-500">{formatUsd(initialCapital)}</span>
       </div>
       <div className="flex justify-between">
-        <span className="text-ink-500">持仓 ({pool})</span>
+        <span className="text-neutral-500">持仓 ({pool})</span>
         <span className="font-mono">{positionLabel}</span>
       </div>
       <div className="flex justify-between">
-        <span className="text-ink-500">参考价</span>
-        <span className="font-mono text-ink-500">{entryHint}</span>
+        <span className="text-neutral-500">参考价</span>
+        <span className="font-mono text-neutral-500">{entryHint}</span>
       </div>
       <div className="flex justify-between">
-        <span className="text-ink-500">盈亏</span>
+        <span className="text-neutral-500">盈亏</span>
         <span
           className={
             isProfit
-              ? "font-mono font-semibold text-profit"
-              : "font-mono font-semibold text-loss"
+              ? "font-mono font-semibold text-primary-500"
+              : "font-mono font-semibold text-red-600"
           }
         >
           {isProfit ? "+" : ""}
@@ -89,11 +89,11 @@ export function AccountPanel({ snapshot }: Props) {
         </span>
       </div>
       <div className="flex justify-between">
-        <span className="text-ink-500">成交笔数</span>
+        <span className="text-neutral-500">成交笔数</span>
         <span className="font-mono">{tradeCount}</span>
       </div>
       <div className="flex justify-between">
-        <span className="text-ink-500">仓位占比</span>
+        <span className="text-neutral-500">仓位占比</span>
         <span>{positionPct}</span>
       </div>
     </div>

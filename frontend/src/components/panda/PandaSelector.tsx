@@ -19,7 +19,7 @@ export function PandaSelector({ pandas, currentId, className }: Props) {
 
   return (
     <div className={clsx("flex items-center gap-2", className)}>
-      <span className="text-sm text-ink-500">🐾</span>
+      <span className="text-sm text-neutral-500"></span>
       <select
         className="rounded-lg border border-[var(--color-border)] bg-white px-2 py-1 text-sm"
         value={currentId}

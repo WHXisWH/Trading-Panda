@@ -32,7 +32,7 @@ export function StrategyRuleRow({ row, invalid, compact = false, onChange, onRem
   return (
     <div
       className={`rounded-lg border p-2 ${
-        invalid ? "border-vermillion bg-red-50/50" : "border-[var(--color-border)]"
+        invalid ? "border-red-600 bg-red-50/50" : "border-[var(--color-border)]"
       }`}
     >
       <div
@@ -42,7 +42,7 @@ export function StrategyRuleRow({ row, invalid, compact = false, onChange, onRem
             : "grid grid-cols-2 gap-2 xl:grid-cols-4"
         }
       >
-        <label className="flex flex-col gap-1 text-[10px] text-ink-500">
+        <label className="flex flex-col gap-1 text-[10px] text-neutral-500">
           指标
           <select
             className="rounded border border-[var(--color-border)] bg-white px-2 py-1 text-[12px]"
@@ -58,7 +58,7 @@ export function StrategyRuleRow({ row, invalid, compact = false, onChange, onRem
           </select>
         </label>
 
-        <label className="flex flex-col gap-1 text-[10px] text-ink-500">
+        <label className="flex flex-col gap-1 text-[10px] text-neutral-500">
           条件
           <select
             className="rounded border border-[var(--color-border)] bg-white px-2 py-1 text-[12px]"
@@ -81,7 +81,7 @@ export function StrategyRuleRow({ row, invalid, compact = false, onChange, onRem
         </label>
 
         {needsThreshold ? (
-          <label className="flex flex-col gap-1 text-[10px] text-ink-500">
+          <label className="flex flex-col gap-1 text-[10px] text-neutral-500">
             阈值
             <input
               type="number"
@@ -96,7 +96,7 @@ export function StrategyRuleRow({ row, invalid, compact = false, onChange, onRem
           !compact && <div className="hidden xl:block" />
         )}
 
-        <label className="flex flex-col gap-1 text-[10px] text-ink-500">
+        <label className="flex flex-col gap-1 text-[10px] text-neutral-500">
           动作
           <select
             className="rounded border border-[var(--color-border)] bg-white px-2 py-1 text-[12px]"
@@ -105,17 +105,17 @@ export function StrategyRuleRow({ row, invalid, compact = false, onChange, onRem
               onChange({ ...row, action: e.target.value as SignalRuleRow["action"] })
             }
           >
-            <option value="BUY">买入</option>
-            <option value="SELL">卖出</option>
+            <option value="BUY">Buy</option>
+            <option value="SELL">Sell</option>
           </select>
         </label>
       </div>
 
       <div className="mt-2 flex min-w-0 items-start justify-between gap-2">
-        <p className="min-w-0 break-words text-[11px] text-ink-500">{rulePreviewText(row)}</p>
+        <p className="min-w-0 break-words text-[11px] text-neutral-500">{rulePreviewText(row)}</p>
         <button
           type="button"
-          className="text-[11px] text-vermillion hover:underline"
+          className="text-[11px] text-red-600 hover:underline"
           onClick={onRemove}
         >
           删除

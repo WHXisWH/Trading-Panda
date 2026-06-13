@@ -216,16 +216,16 @@ export function generateOrderBook(mid = 59500): { asks: OrderBookRow[]; bids: Or
 
 export interface TradeHistoryItem {
   time: string;
-  action: "买入" | "卖出";
+  action: "Buy" | "Sell";
   quantity: string;
   price: string;
   pnl?: string;
 }
 
 export const MOCK_TRADE_HISTORY: TradeHistoryItem[] = [
-  { time: "15:23", action: "买入", quantity: "0.010 BTC", price: "$59,500", pnl: "+$12" },
-  { time: "15:00", action: "卖出", quantity: "0.008 BTC", price: "$59,200", pnl: "-$8" },
-  { time: "14:30", action: "买入", quantity: "0.015 BTC", price: "$58,900" },
+  { time: "15:23", action: "Buy", quantity: "0.010 BTC", price: "$59,500", pnl: "+$12" },
+  { time: "15:00", action: "Sell", quantity: "0.008 BTC", price: "$59,200", pnl: "-$8" },
+  { time: "14:30", action: "Buy", quantity: "0.015 BTC", price: "$58,900" },
 ];
 
 export interface DecisionSummary {
@@ -236,7 +236,7 @@ export interface DecisionSummary {
 }
 
 export const MOCK_DECISIONS: DecisionSummary[] = [
-  { time: "15:23", signal: "RSI=28", action: "买入", score: 0.72 },
+  { time: "15:23", signal: "RSI=28", action: "Buy", score: 0.72 },
   { time: "14:50", signal: "RSI=45", action: "观望", score: 0.52 },
-  { time: "14:10", signal: "MACD金叉", action: "买入", score: 0.68 },
+  { time: "14:10", signal: "MACD金叉", action: "Buy", score: 0.68 },
 ];

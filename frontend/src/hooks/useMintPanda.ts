@@ -69,7 +69,7 @@ export function useMintPanda(jwt: string | null) {
   const mint = useCallback(
     async (options?: { name?: string }) => {
       if (!account || !jwt) {
-        setErrorMessage("请先连接钱包并登录");
+        setErrorMessage("请先Connect Wallet并登录");
         setStatus("error");
         return;
       }

@@ -31,7 +31,7 @@ export const EMOTION_META: Record<
   },
   cautious: {
     label: "谨慎",
-    emoji: "🌿",
+    emoji: "",
     color: "#7c7c4a",
     desc: "偏保守，等待确认信号",
   },

@@ -51,14 +51,14 @@ export function DashboardStrategySection({
       />
 
       {strategy && (
-        <p className="rounded-lg bg-paper-card px-3 py-2 text-[12px] italic text-ink-500">
+        <p className="rounded-lg bg-neutral-100 px-3 py-2 text-[12px] italic text-neutral-500">
           当前策略：{strategy.raw_text.slice(0, 120)}
           {strategy.raw_text.length > 120 ? "…" : ""}
         </p>
       )}
 
       {pandaReaction && (
-        <p className="rounded-lg border border-bamboo-100 bg-bamboo-50 px-3 py-2 text-[12px] text-bamboo-600">
+        <p className="rounded-lg border border-primary-100 bg-primary-50 px-3 py-2 text-[12px] text-primary-600">
           🐼 {pandaReaction}
         </p>
       )}

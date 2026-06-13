@@ -167,10 +167,10 @@ function statusLabel(status: WsConnectionStatus | undefined): string {
 }
 
 function statusClass(status: WsConnectionStatus | undefined): string {
-  if (status === "open") return "bg-bamboo-50 text-bamboo-600";
-  if (status === "connecting") return "bg-[var(--color-warning-bg)] text-ink-900";
+  if (status === "open") return "bg-primary-50 text-primary-600";
+  if (status === "connecting") return "bg-[var(--color-warning-bg)] text-neutral-900";
   if (status === "error") return "bg-[var(--color-seal-bg)] text-loss";
-  return "bg-paper-card text-ink-500";
+  return "bg-neutral-100 text-neutral-500";
 }
 
 function isCandlestickData(data: unknown): data is CandlestickData {
@@ -453,14 +453,14 @@ export function CandlestickChart({
 
   return (
     <section className={clsx("flex min-w-0 max-w-full flex-col overflow-hidden rounded-lg border border-[var(--color-border)] bg-white", className)}>
-      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-[var(--color-border)] bg-paper-card px-3 py-2">
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-[var(--color-border)] bg-neutral-100 px-3 py-2">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           <div className="flex items-center gap-2">
             {canSwitchPools ? (
               <select
                 value={pool}
                 onChange={(e) => onPoolChange!(e.target.value as DeepbookPool)}
-                className="h-8 rounded border border-[var(--color-border)] bg-white px-2 font-mono text-sm text-ink-900"
+                className="h-8 rounded border border-[var(--color-border)] bg-white px-2 font-mono text-sm text-neutral-900"
                 aria-label="交易池"
               >
                 {poolOptions.map((p) => (
@@ -470,13 +470,13 @@ export function CandlestickChart({
                 ))}
               </select>
             ) : (
-              <span className="font-mono text-sm font-medium text-ink-900">{pool}</span>
+              <span className="font-mono text-sm font-medium text-neutral-900">{pool}</span>
             )}
             <span className={clsx("rounded px-2 py-1 text-[10px]", statusClass(marketStatus))}>
               {statusLabel(marketStatus)}
             </span>
           </div>
-          <span className="font-mono text-[24px] font-bold leading-none text-ink-900">
+          <span className="font-mono text-[24px] font-bold leading-none text-neutral-900">
             {formatPrice(displayPrice)}
           </span>
           <span
@@ -489,12 +489,12 @@ export function CandlestickChart({
             {changePct.toFixed(2)}%
           </span>
           {lastTickAgeSec != null && (
-            <span className="text-[10px] text-ink-500">
+            <span className="text-[10px] text-neutral-500">
               tick {lastTickAgeSec}s 前
             </span>
           )}
           {lastTick?.stale && (
-            <span className="rounded bg-[var(--color-warning-bg)] px-2 py-0.5 text-[10px] text-ink-900">
+            <span className="rounded bg-[var(--color-warning-bg)] px-2 py-0.5 text-[10px] text-neutral-900">
               行情延迟
             </span>
           )}
@@ -510,8 +510,8 @@ export function CandlestickChart({
                 className={clsx(
                   "h-8 px-2.5 font-mono text-[11px]",
                   item === interval
-                    ? "bg-bamboo-500 text-white"
-                    : "text-ink-500 hover:bg-bamboo-50",
+                    ? "bg-primary-500 text-white"
+                    : "text-neutral-500 hover:bg-primary-50",
                 )}
               >
                 {item}
@@ -523,7 +523,7 @@ export function CandlestickChart({
             onClick={() => {
               chartRef.current?.timeScale().fitContent();
             }}
-            className="h-8 rounded border border-[var(--color-border)] bg-white px-2 text-[11px] text-ink-600 hover:bg-bamboo-50"
+            className="h-8 rounded border border-[var(--color-border)] bg-white px-2 text-[11px] text-ink-600 hover:bg-primary-50"
           >
             适配
           </button>
@@ -533,8 +533,8 @@ export function CandlestickChart({
             className={clsx(
               "h-8 rounded border px-2 text-[11px]",
               showMa
-                ? "border-bamboo-500 bg-bamboo-50 text-bamboo-600"
-                : "border-[var(--color-border)] bg-white text-ink-500 hover:bg-bamboo-50",
+                ? "border-primary-500 bg-primary-50 text-primary-600"
+                : "border-[var(--color-border)] bg-white text-neutral-500 hover:bg-primary-50",
             )}
           >
             MA
@@ -545,8 +545,8 @@ export function CandlestickChart({
             className={clsx(
               "h-8 rounded border px-2 text-[11px]",
               followRealtime
-                ? "border-bamboo-500 bg-bamboo-50 text-bamboo-600"
-                : "border-[var(--color-border)] bg-white text-ink-500 hover:bg-bamboo-50",
+                ? "border-primary-500 bg-primary-50 text-primary-600"
+                : "border-[var(--color-border)] bg-white text-neutral-500 hover:bg-primary-50",
             )}
           >
             实时
@@ -555,20 +555,20 @@ export function CandlestickChart({
             type="button"
             onClick={onRefresh}
             disabled={historyLoading}
-            className="h-8 rounded border border-[var(--color-border)] bg-white px-2 text-[11px] text-ink-600 hover:bg-bamboo-50 disabled:opacity-50"
+            className="h-8 rounded border border-[var(--color-border)] bg-white px-2 text-[11px] text-ink-600 hover:bg-primary-50 disabled:opacity-50"
           >
             刷新
           </button>
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-[var(--color-border)] px-3 py-2 text-[11px] text-ink-500">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-[var(--color-border)] px-3 py-2 text-[11px] text-neutral-500">
         <span>{visibleCandle?.time ?? "等待数据"}</span>
-        <span>O <b className="font-mono text-ink-900">{formatPrice(visibleCandle?.open)}</b></span>
+        <span>O <b className="font-mono text-neutral-900">{formatPrice(visibleCandle?.open)}</b></span>
         <span>H <b className="font-mono text-profit">{formatPrice(visibleCandle?.high)}</b></span>
         <span>L <b className="font-mono text-loss">{formatPrice(visibleCandle?.low)}</b></span>
-        <span>C <b className="font-mono text-ink-900">{formatPrice(visibleCandle?.close)}</b></span>
-        <span>V <b className="font-mono text-ink-900">{formatVolume(visibleCandle?.volume)}</b></span>
+        <span>C <b className="font-mono text-neutral-900">{formatPrice(visibleCandle?.close)}</b></span>
+        <span>V <b className="font-mono text-neutral-900">{formatVolume(visibleCandle?.volume)}</b></span>
         {showMa && maLegend && (
           <>
             <span style={{ color: MA_FAST_COLOR }}>
@@ -594,7 +594,7 @@ export function CandlestickChart({
                     ? "K 线数据不可用"
                     : "等待 DeepBook K 线"}
               </p>
-              <p className="mt-1 text-[11px] leading-5 text-ink-500">
+              <p className="mt-1 text-[11px] leading-5 text-neutral-500">
                 {historyLoading
                   ? "正在从 market-monitor 拉取历史 candles。"
                   : historyError
@@ -607,7 +607,7 @@ export function CandlestickChart({
       </div>
 
       {(historyError || trades.length > 0) && (
-        <div className="flex flex-wrap items-center gap-3 border-t border-[var(--color-border)] px-3 py-2 text-[10px] text-ink-500">
+        <div className="flex flex-wrap items-center gap-3 border-t border-[var(--color-border)] px-3 py-2 text-[10px] text-neutral-500">
           {historyError && <span className="text-loss">REST candles: error</span>}
           {trades.length > 0 && <span>K 线标记：{trades.length} 笔 Panda 成交</span>}
         </div>

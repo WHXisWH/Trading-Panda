@@ -115,11 +115,11 @@ export function PandaRiveCanvas({ stats, showBackground = true }: PandaRiveCanva
       </div>
 
       {/* Overlay status indicator */}
-      <div className="absolute bottom-3 left-3 z-20 rounded-md bg-black/60 px-2 py-1 text-[10px] font-mono text-ink-400 backdrop-blur-sm">
+      <div className="absolute bottom-3 left-3 z-20 rounded-md bg-black/60 px-2 py-1 text-[10px] font-mono text-neutral-400 backdrop-blur-sm">
         {isFallback ? (
           <span className="text-[#f1c40f]">RIVE FALLBACK (TEDDY BEAR)</span>
         ) : (
-          <span className="text-bamboo-500">RIVE ENGINE ACTIVE</span>
+          <span className="text-primary-500">RIVE ENGINE ACTIVE</span>
         )}
       </div>
     </div>

@@ -33,7 +33,7 @@ export function StrategyMobileDrawer({
         <button
           type="button"
           onClick={() => onOpenChange(true)}
-          className="fixed bottom-4 left-1/2 z-40 -translate-x-1/2 rounded-full border border-bamboo-500 bg-bamboo-500 px-5 py-2.5 text-sm font-medium text-white shadow-lg xl:hidden"
+          className="fixed bottom-4 left-1/2 z-40 -translate-x-1/2 rounded-full border border-primary-500 bg-primary-500 px-5 py-2.5 text-sm font-medium text-white shadow-lg xl:hidden"
           aria-expanded={open}
           aria-controls="strategy-drawer"
         >
@@ -53,7 +53,7 @@ export function StrategyMobileDrawer({
             id="strategy-drawer"
             className={clsx(
               "absolute bottom-0 left-0 right-0 flex max-h-[85dvh] flex-col",
-              "rounded-t-2xl border border-[var(--color-border)] bg-paper-card shadow-xl",
+              "rounded-t-2xl border border-[var(--color-border)] bg-neutral-100 shadow-xl",
               "xl:bottom-auto xl:left-auto xl:right-5 xl:top-[calc(var(--navbar-height)+1rem)] xl:h-[calc(100dvh-var(--navbar-height)-2rem)] xl:w-[420px] xl:rounded-lg",
             )}
           >
@@ -62,7 +62,7 @@ export function StrategyMobileDrawer({
               <button
                 type="button"
                 onClick={() => onOpenChange(false)}
-                className="rounded-lg px-2 py-1 text-[13px] text-ink-500 hover:bg-bamboo-50"
+                className="rounded-lg px-2 py-1 text-[13px] text-neutral-500 hover:bg-primary-50"
               >
                 收起
               </button>

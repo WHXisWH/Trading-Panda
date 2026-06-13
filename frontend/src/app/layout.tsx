@@ -6,12 +6,15 @@ import { AppShell } from "@/components/layout/AppShell";
 import { Navbar } from "@/components/layout/Navbar";
 
 export const metadata: Metadata = {
-  title: "TradingPanda — 养一只会交易的 AI 熊猫",
+  title: "TradingPanda — AI Trading Companion on Sui",
   description:
-    "Sui 链上 AI 交易宠物养成系统。铸造熊猫 NFT，喂给它交易策略，让它在模拟盘自主成长。",
+    "Mint your panda NFT with on-chain personality. Teach it trading strategies and watch it grow through autonomous simulated trading on Sui.",
+  icons: {
+    icon: "/favicon.svg",
+  },
   openGraph: {
     title: "TradingPanda",
-    description: "养一只会交易的 AI 熊猫",
+    description: "AI trading companion on Sui",
     siteName: "TradingPanda",
   },
 };

@@ -28,7 +28,7 @@ export default function ZkLoginCallbackPage() {
 
   return (
     <main className="mx-auto flex min-h-[50vh] max-w-md flex-col items-center justify-center gap-4 px-6 text-center">
-      <p className="text-ink-700">{message}</p>
+      <p className="text-neutral-700">{message}</p>
     </main>
   );
 }

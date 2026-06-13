@@ -27,8 +27,8 @@ export function PoolListItem({ pool, selected, disabled, onToggle }: Props) {
       className={clsx(
         "flex w-full min-h-[72px] flex-wrap items-center gap-4 rounded-xl border-2 px-4 py-3 text-left transition-colors",
         selected
-          ? "border-bamboo-500 bg-bamboo-50"
-          : "border-[var(--color-border)] bg-white hover:border-bamboo-500/50",
+          ? "border-primary-500 bg-primary-50"
+          : "border-[var(--color-border)] bg-white hover:border-primary-500/50",
         disabled && !selected && "cursor-not-allowed opacity-60",
       )}
     >
@@ -36,7 +36,7 @@ export function PoolListItem({ pool, selected, disabled, onToggle }: Props) {
         className={clsx(
           "flex h-5 w-5 shrink-0 items-center justify-center rounded border text-xs",
           selected
-            ? "border-bamboo-500 bg-bamboo-500 text-white"
+            ? "border-primary-500 bg-primary-500 text-white"
             : "border-[var(--color-text-placeholder)]",
         )}
       >
@@ -47,15 +47,15 @@ export function PoolListItem({ pool, selected, disabled, onToggle }: Props) {
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-[15px] font-semibold">{pool.name}</span>
           {pool.recommended && (
-            <span className="rounded bg-bamboo-500 px-1.5 py-0.5 text-[10px] text-white">
+            <span className="rounded bg-primary-500 px-1.5 py-0.5 text-[10px] text-white">
               推荐
             </span>
           )}
-          <span className="text-[10px] text-ink-500">{statusLabel}</span>
+          <span className="text-[10px] text-neutral-500">{statusLabel}</span>
         </div>
-        <p className="text-[11px] text-ink-500">{pool.description}</p>
+        <p className="text-[11px] text-neutral-500">{pool.description}</p>
         {pool.healthError && (
-          <p className="text-[10px] text-loss">{pool.healthError}</p>
+          <p className="text-[10px] text-red-600">{pool.healthError}</p>
         )}
       </div>
 
@@ -63,13 +63,13 @@ export function PoolListItem({ pool, selected, disabled, onToggle }: Props) {
         <p>
           来源 <span className="font-medium">{pool.liquidity ?? "DeepBook"}</span>
         </p>
-        <p className="text-ink-500">成交量 {pool.volume24h ?? "—"}</p>
+        <p className="text-neutral-500">成交量 {pool.volume24h ?? "—"}</p>
       </div>
 
       <div className="text-center">
         <p className="font-mono text-[15px] font-semibold">{pool.price ?? "—"}</p>
         {pool.change24h != null && pool.price !== "—" && (
-          <p className={clsx("text-[12px] font-medium", up ? "text-profit" : "text-loss")}>
+          <p className={clsx("text-[12px] font-medium", up ? "text-primary-500" : "text-red-600")}>
             {up ? "+" : ""}
             {pool.change24h.toFixed(2)}% 区间
           </p>

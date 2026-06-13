@@ -18,13 +18,13 @@ export function TalentBadge({ talentId, size = "md", reveal = false }: Props) {
   return (
     <Badge
       className={clsx(
-        isRare && "animate-glow-pulse border-2 border-[var(--color-warning)]",
-        reveal && "animate-spring-up",
+        isRare && " border border-[var(--color-warning)]",
+        reveal && "animate-fade-up",
         size === "sm" && "text-[10px]"
       )}
       color={isRare ? "var(--color-warning)" : "var(--color-accent)"}
     >
-      🎋 {meta.name}
+      {meta.name}
     </Badge>
   );
 }

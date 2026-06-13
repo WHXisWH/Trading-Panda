@@ -437,7 +437,7 @@ export function PandaCanvasRenderer({
         aria-label="Trading Panda canvas avatar"
       />
       {loadFailed && (
-        <div className="flex h-full w-full items-center justify-center rounded-lg bg-paper-card text-[12px] text-ink-500">
+        <div className="flex h-full w-full items-center justify-center rounded-lg bg-neutral-50 text-[12px] text-neutral-500">
           熊猫素材加载失败
         </div>
       )}

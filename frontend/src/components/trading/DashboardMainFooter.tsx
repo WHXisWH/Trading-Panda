@@ -31,18 +31,18 @@ export function DashboardMainFooter({
   return (
     <section
       className={clsx(
-        "dashboard-main-footer flex flex-col overflow-hidden rounded-xl border border-[var(--color-border)] bg-paper-card",
+        "dashboard-main-footer flex flex-col overflow-hidden rounded-xl border border-[var(--color-border)] bg-neutral-50",
         className,
       )}
     >
       <div className="shrink-0 border-b border-[var(--color-border)] p-4">
         {reviewDecision && onClearReview && (
           <div className="mb-2 flex items-center justify-between gap-2">
-            <span className="text-[11px] text-ink-500">复盘模式</span>
+            <span className="text-[11px] text-neutral-500">Review</span>
             <button
               type="button"
               onClick={onClearReview}
-              className="text-[11px] text-bamboo-500 hover:underline"
+              className="text-[11px] text-primary-500 hover:underline"
             >
               返回实时
             </button>

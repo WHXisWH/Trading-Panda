@@ -93,15 +93,15 @@ export function StrategyBuilder({
       }`}
     >
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-[15px] font-semibold">策略积木</h3>
+        <h3 className="text-[15px] font-semibold">Strategy</h3>
         {matchScore != null && (
-          <span className="text-[12px] font-medium text-bamboo-500">
+          <span className="text-[12px] font-medium text-primary-500">
             匹配度 {matchScore}/100
           </span>
         )}
       </div>
 
-      <label className="flex flex-col gap-1 text-[11px] text-ink-500">
+      <label className="flex flex-col gap-1 text-[11px] text-neutral-500">
         交易哲学
         <select
           className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] px-2 py-1.5 text-[13px]"
@@ -141,16 +141,16 @@ export function StrategyBuilder({
         {rules.length < 8 && (
           <button
             type="button"
-            className="w-full rounded-lg border border-dashed border-bamboo-400 py-2 text-[12px] text-bamboo-600 hover:bg-bamboo-50"
+            className="w-full rounded-lg border border-dashed border-primary-500 py-2 text-[12px] text-primary-600 hover:bg-primary-50"
             onClick={() => setRules((prev) => [...prev, newRuleRow()])}
           >
-            + 添加规则
+            + Add Rule
           </button>
         )}
       </div>
 
       <div
-        className={`grid gap-3 text-[11px] text-ink-500 ${
+        className={`grid gap-3 text-[11px] text-neutral-500 ${
           compact ? "grid-cols-1" : "grid-cols-2"
         }`}
       >
@@ -230,7 +230,7 @@ export function StrategyBuilder({
           loading={loading}
           onClick={handleSubmit}
         >
-          🐼 教给熊猫
+          🐼 Build Strategy
         </Button>
       </div>
     </div>

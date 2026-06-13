@@ -99,7 +99,7 @@ export function rulePreviewText(row: SignalRuleRow): string {
   const cond =
     CONDITION_OPTIONS[row.indicator].find((c) => c.value === row.condition)?.label ??
     row.condition;
-  const action = row.action === "BUY" ? "买入" : "卖出";
+  const action = row.action === "BUY" ? "Buy" : "Sell";
   return `${row.indicator} ${cond} → ${action}`;
 }
 

@@ -16,7 +16,7 @@ export function PoolConfirmBar({
   onConfirm,
 }: Props) {
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 flex h-[50px] items-center justify-between border-t border-[var(--color-border)] bg-paper-card px-6">
+    <div className="fixed bottom-0 left-0 right-0 z-40 flex h-[50px] items-center justify-between border-t border-[var(--color-border)] bg-neutral-50 px-6">
       <span className="text-[13px] font-medium">
         已选 {count} 个池子
       </span>

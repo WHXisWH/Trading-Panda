@@ -252,7 +252,7 @@ function SublayerOverlay({
       className="pointer-events-none absolute inset-0 h-full w-full text-bamboo-700"
       aria-hidden="true"
     >
-      {rectMarkup(rig.faceRect, "fill-transparent stroke-bamboo-500", "face")}
+      {rectMarkup(rig.faceRect, "fill-transparent stroke-primary-500", "face")}
       {rectMarkup(rig.leftEye, "fill-transparent stroke-red-500", "leftEye")}
       {rectMarkup(rig.rightEye, "fill-transparent stroke-red-500", "rightEye")}
       {rectMarkup(rig.mouth, "fill-transparent stroke-amber-500", "mouth")}
@@ -264,7 +264,7 @@ function SublayerOverlay({
             ? "fill-red-500/10 stroke-red-600"
             : reportItem?.status === "warning"
               ? "fill-amber-500/10 stroke-amber-600"
-            : "fill-bamboo-500/10 stroke-bamboo-700",
+            : "fill-primary-500/10 stroke-bamboo-700",
           "alpha"
         )}
       <line
@@ -272,7 +272,7 @@ function SublayerOverlay({
         y1={anchor.y}
         x2={anchor.x + 10}
         y2={anchor.y}
-        className="stroke-ink-900"
+        className="stroke-neutral-900"
         vectorEffect="non-scaling-stroke"
       />
       <line
@@ -280,14 +280,14 @@ function SublayerOverlay({
         y1={anchor.y - 10}
         x2={anchor.x}
         y2={anchor.y + 10}
-        className="stroke-ink-900"
+        className="stroke-neutral-900"
         vectorEffect="non-scaling-stroke"
       />
       <circle
         cx={anchor.x}
         cy={anchor.y}
         r={4}
-        className="fill-white stroke-ink-900"
+        className="fill-white stroke-neutral-900"
         vectorEffect="non-scaling-stroke"
       />
     </svg>
@@ -307,8 +307,8 @@ function MetricGrid({ item }: { item?: QaReportItem }) {
     <div className="grid gap-2 sm:grid-cols-4">
       {rows.map(([label, value]) => (
         <div key={label} className="border border-[var(--color-border)] bg-white px-3 py-2">
-          <div className="text-[11px] text-ink-500">{label}</div>
-          <div className="mt-1 font-mono text-sm text-ink-900">{pct(value)}</div>
+          <div className="text-[11px] text-neutral-500">{label}</div>
+          <div className="mt-1 font-mono text-sm text-neutral-900">{pct(value)}</div>
         </div>
       ))}
     </div>
@@ -371,17 +371,17 @@ export function PandaLabQaPage() {
     <div className="flex flex-col gap-6">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="font-serif text-2xl font-bold text-ink-900">
+          <h1 className="font-serif text-2xl font-bold text-neutral-900">
             Panda Lab 子层验收
           </h1>
-          <p className="mt-1 max-w-3xl text-[13px] text-ink-500">
+          <p className="mt-1 max-w-3xl text-[13px] text-neutral-500">
             按 attribute / sublayer / tier / experience tier 单独检查挂载效果、锚点、alpha bbox 与 landmark overlap。
           </p>
         </div>
         <div
           className={
             report
-              ? "border border-bamboo-500 bg-bamboo-50 px-3 py-2 text-[12px] text-bamboo-700"
+              ? "border border-primary-500 bg-primary-50 px-3 py-2 text-[12px] text-bamboo-700"
               : "border border-amber-400 bg-amber-50 px-3 py-2 text-[12px] text-amber-700"
           }
         >
@@ -393,14 +393,14 @@ export function PandaLabQaPage() {
 
       <section className="grid gap-4 border border-[var(--color-border)] bg-white p-4 lg:grid-cols-[260px_1fr]">
         <div className="grid content-start gap-3">
-          <label className="grid gap-1 text-[12px] text-ink-500">
+          <label className="grid gap-1 text-[12px] text-neutral-500">
             Attribute
             <select
               value={attribute}
               onChange={(event) =>
                 onAttributeChange(event.target.value as PandaCanvasSublayerAttributeKey)
               }
-              className="border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-ink-900"
+              className="border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-neutral-900"
             >
               {options
                 .map((item) => item.attribute)
@@ -412,12 +412,12 @@ export function PandaLabQaPage() {
               ))}
             </select>
           </label>
-          <label className="grid gap-1 text-[12px] text-ink-500">
+          <label className="grid gap-1 text-[12px] text-neutral-500">
             Sublayer
             <select
               value={sublayer}
               onChange={(event) => setSublayer(event.target.value)}
-              className="border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-ink-900"
+              className="border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-neutral-900"
             >
               {sublayerOptions.map((item) => (
                 <option key={`${item.attribute}/${item.sublayer}`} value={item.sublayer}>
@@ -426,12 +426,12 @@ export function PandaLabQaPage() {
               ))}
             </select>
           </label>
-          <label className="grid gap-1 text-[12px] text-ink-500">
+          <label className="grid gap-1 text-[12px] text-neutral-500">
             Tier
             <select
               value={tier}
               onChange={(event) => setTier(Number(event.target.value))}
-              className="border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-ink-900"
+              className="border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-neutral-900"
             >
               {Array.from({ length: 10 }, (_, index) => index + 1).map((item) => (
                 <option key={item} value={item}>
@@ -443,12 +443,12 @@ export function PandaLabQaPage() {
               ))}
             </select>
           </label>
-          <label className="grid gap-1 text-[12px] text-ink-500">
+          <label className="grid gap-1 text-[12px] text-neutral-500">
             Experience Tier
             <select
               value={experienceTier}
               onChange={(event) => setExperienceTier(Number(event.target.value))}
-              className="border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-ink-900"
+              className="border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-neutral-900"
             >
               {Array.from({ length: 10 }, (_, index) => index + 1).map((item) => (
                 <option key={item} value={item}>
@@ -459,8 +459,8 @@ export function PandaLabQaPage() {
           </label>
 
           {selectedAsset && (
-            <div className="grid gap-1 border border-[var(--color-border)] bg-paper px-3 py-2 text-[12px] text-ink-600">
-              <div className="font-mono text-[11px] text-ink-900">{selectedAsset.src}</div>
+            <div className="grid gap-1 border border-[var(--color-border)] neutral-50 px-3 py-2 text-[12px] text-ink-600">
+              <div className="font-mono text-[11px] text-neutral-900">{selectedAsset.src}</div>
               <div>anchor: {selectedAsset.anchorPolicy}</div>
               <div>bbox: {selectedAsset.bboxPolicy}</div>
               <div>zIndex: {selectedAsset.zIndex}</div>
@@ -496,7 +496,7 @@ export function PandaLabQaPage() {
 
           <div className="grid gap-5 lg:grid-cols-[384px_120px_128px]">
             <div>
-              <div className="mb-2 text-[11px] font-medium text-ink-500">
+              <div className="mb-2 text-[11px] font-medium text-neutral-500">
                 单子层挂载 · 384px
               </div>
               <div className="relative w-[384px] max-w-full bg-[#efece3] p-3">
@@ -519,7 +519,7 @@ export function PandaLabQaPage() {
             </div>
 
             <div>
-              <div className="mb-2 text-[11px] font-medium text-ink-500">
+              <div className="mb-2 text-[11px] font-medium text-neutral-500">
                 Mint · 120px
               </div>
               <div className="h-[120px] w-[120px] overflow-hidden rounded-full bg-[#efece3]">
@@ -536,7 +536,7 @@ export function PandaLabQaPage() {
             </div>
 
             <div>
-              <div className="mb-2 text-[11px] font-medium text-ink-500">
+              <div className="mb-2 text-[11px] font-medium text-neutral-500">
                 Dashboard · 128px
               </div>
               <div className="h-[128px] w-[128px] overflow-hidden rounded-full bg-[#efece3]">
@@ -556,7 +556,7 @@ export function PandaLabQaPage() {
       </section>
 
       <section className="grid gap-4">
-        <h2 className="text-sm font-semibold text-ink-900">最终组合验收</h2>
+        <h2 className="text-sm font-semibold text-neutral-900">最终组合验收</h2>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {COMPOSITE_CASES.map((testCase) => (
             <div
@@ -564,8 +564,8 @@ export function PandaLabQaPage() {
               className="border border-[var(--color-border)] bg-white p-4 shadow-sm"
             >
               <div className="mb-3 flex items-center justify-between gap-2">
-                <h3 className="text-sm font-semibold text-ink-900">{testCase.label}</h3>
-                <span className="text-[11px] text-ink-500">
+                <h3 className="text-sm font-semibold text-neutral-900">{testCase.label}</h3>
+                <span className="text-[11px] text-neutral-500">
                   exp {testCase.stats.experience} / {testCase.stats.emotion}
                 </span>
               </div>

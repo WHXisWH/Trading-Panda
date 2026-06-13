@@ -169,7 +169,7 @@ export default function DashboardPage({ params }: { params: { id: string } }) {
         variant="dashboard"
         className="flex min-h-[calc(100dvh-var(--navbar-height))] items-center justify-center"
       >
-        <p className="text-ink-500">请先连接钱包</p>
+        <p className="text-neutral-500">请先连接钱包</p>
       </PageContainer>
     );
   }

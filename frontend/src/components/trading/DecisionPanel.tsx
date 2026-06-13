@@ -6,9 +6,9 @@ import type { DecisionLog, DecisionStep } from "@/types/trading";
 import { formatPrice } from "@/lib/trading/performanceMetrics";
 
 const ZONE_CONFIG: Record<string, { label: string; class: string }> = {
-  EXECUTE: { label: "执行", class: "bg-bamboo-50 text-bamboo-700 ring-1 ring-bamboo-200" },
+  EXECUTE: { label: "执行", class: "bg-primary-50 text-bamboo-700 ring-1 ring-bamboo-200" },
   OBSERVE: { label: "观望", class: "bg-yellow-50 text-yellow-700 ring-1 ring-yellow-200" },
-  IGNORE: { label: "忽视", class: "bg-paper-card text-ink-500 ring-1 ring-[var(--color-border)]" },
+  IGNORE: { label: "忽视", class: "bg-neutral-100 text-neutral-500 ring-1 ring-[var(--color-border)]" },
 };
 
 const STEP_NAMES: Record<number, { name: string; desc: string }> = {
@@ -76,7 +76,7 @@ export function DecisionPanel({
     <section className={clsx("flex min-h-0 min-w-0 flex-col", className)}>
       {/* Header */}
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-[14px] font-semibold text-ink-900">决策链</h3>
+        <h3 className="text-[14px] font-semibold text-neutral-900">决策链</h3>
         {zoneConfig && (
           <span className={clsx("rounded-full px-2.5 py-0.5 text-[10px] font-semibold", zoneConfig.class)}>
             {zoneConfig.label}
@@ -85,14 +85,14 @@ export function DecisionPanel({
       </div>
 
       {!training && !active && (
-        <p className="mt-2 text-[11px] text-ink-500">训练未开始，暂无决策数据</p>
+        <p className="mt-2 text-[11px] text-neutral-500">训练未开始，暂无决策数据</p>
       )}
 
       {/* Decision summary card */}
       {active ? (
         <div className="mt-2 rounded-xl border border-[var(--color-border)] bg-white p-3 text-[11px]">
           {reviewDecision && (
-            <p className="mb-2 rounded-full bg-bamboo-50 px-2 py-0.5 text-center text-[10px] font-medium text-bamboo-700">
+            <p className="mb-2 rounded-full bg-primary-50 px-2 py-0.5 text-center text-[10px] font-medium text-bamboo-700">
               历史回顾模式
             </p>
           )}
@@ -100,14 +100,14 @@ export function DecisionPanel({
           {/* Action & Score */}
           <div className="flex items-center justify-between gap-2">
             <div>
-              <p className="text-[10px] text-ink-500">{formatTime(active.timestamp)}</p>
+              <p className="text-[10px] text-neutral-500">{formatTime(active.timestamp)}</p>
               <p className="mt-0.5 text-[11px] text-ink-600">{stepOneDetail(steps)}</p>
             </div>
             <div className="text-right">
               <p className={clsx("font-mono text-[18px] font-bold", actionColor(active.action))}>
                 {active.action}
               </p>
-              <p className="font-mono text-[11px] text-ink-500">
+              <p className="font-mono text-[11px] text-neutral-500">
                 {active.final_score.toFixed(3)}
               </p>
             </div>
@@ -122,7 +122,7 @@ export function DecisionPanel({
 
           {/* Threshold explanation */}
           {active.entry_threshold != null && (
-            <p className="mt-2 text-[10px] text-ink-500">
+            <p className="mt-2 text-[10px] text-neutral-500">
               分数 {Math.abs(active.final_score).toFixed(2)} {Math.abs(active.final_score) > active.entry_threshold ? ">" : "\u2264"} 阈值 {active.entry_threshold.toFixed(2)}
               {" \u2192 "}
               <span className={clsx("font-semibold", zoneConfig?.class)}>
@@ -133,21 +133,21 @@ export function DecisionPanel({
 
           {/* Dominant step highlight */}
           {maxScoreStep && (
-            <div className="mt-2 rounded-lg bg-paper-card px-2.5 py-1.5 text-[10px]">
-              <span className="text-ink-500">主导步骤：</span>
+            <div className="mt-2 rounded-lg bg-neutral-100 px-2.5 py-1.5 text-[10px]">
+              <span className="text-neutral-500">主导步骤：</span>
               <span className="font-semibold text-ink-800">
                 {maxScoreStep.step}. {STEP_NAMES[maxScoreStep.step]?.name ?? maxScoreStep.name}
               </span>
-              <span className="ml-1 font-mono text-ink-500">
+              <span className="ml-1 font-mono text-neutral-500">
                 ({maxScoreStep.score >= 0 ? "+" : ""}{maxScoreStep.score.toFixed(3)})
               </span>
             </div>
           )}
         </div>
       ) : training ? (
-        <div className="mt-2 flex items-center gap-2 rounded-xl border border-dashed border-[var(--color-border)] bg-paper-card px-3 py-4">
-          <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-bamboo-500" />
-          <span className="text-[11px] text-ink-500">等待行情数据…</span>
+        <div className="mt-2 flex items-center gap-2 rounded-xl border border-dashed border-[var(--color-border)] bg-neutral-100 px-3 py-4">
+          <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-primary-500" />
+          <span className="text-[11px] text-neutral-500">等待行情数据…</span>
         </div>
       ) : null}
 
@@ -156,7 +156,7 @@ export function DecisionPanel({
         <>
           <button
             type="button"
-            className="mt-2 text-left text-[11px] font-medium text-bamboo-600 transition-colors hover:text-bamboo-700"
+            className="mt-2 text-left text-[11px] font-medium text-primary-600 transition-colors hover:text-bamboo-700"
             onClick={() => setExpanded(!expanded)}
           >
             8步决策详情 {expanded ? "\u2191" : "\u2193"}
@@ -174,7 +174,7 @@ export function DecisionPanel({
                     className={clsx(
                       "rounded-lg border px-2.5 py-2 text-[10px]",
                       isMax
-                        ? "border-bamboo-200 bg-bamboo-50"
+                        ? "border-bamboo-200 bg-primary-50"
                         : "border-[var(--color-border)] bg-white",
                     )}
                   >
@@ -182,7 +182,7 @@ export function DecisionPanel({
                       <div className="flex items-center gap-1.5">
                         <span className={clsx(
                           "inline-flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold",
-                          isMax ? "bg-bamboo-500 text-white" : "bg-paper-card text-ink-500",
+                          isMax ? "bg-primary-500 text-white" : "bg-neutral-100 text-neutral-500",
                         )}>
                           {step.step}
                         </span>
@@ -190,7 +190,7 @@ export function DecisionPanel({
                           {meta?.name ?? step.name}
                         </span>
                         {isMax && (
-                          <span className="rounded-full bg-bamboo-100 px-1.5 py-0.5 text-[8px] font-semibold text-bamboo-700">
+                          <span className="rounded-full bg-primary-100 px-1.5 py-0.5 text-[8px] font-semibold text-bamboo-700">
                             主导
                           </span>
                         )}
@@ -203,21 +203,21 @@ export function DecisionPanel({
                       </span>
                     </div>
                     {meta?.desc && (
-                      <p className="mt-0.5 pl-6 text-[9px] text-ink-500">{meta.desc}</p>
+                      <p className="mt-0.5 pl-6 text-[9px] text-neutral-500">{meta.desc}</p>
                     )}
                     {/* Score bar */}
-                    <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-paper-card">
+                    <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-neutral-100">
                       <div
                         className={clsx(
                           "h-full rounded-full transition-all",
-                          isPositive ? "bg-bamboo-500" : "bg-red-400",
+                          isPositive ? "bg-primary-500" : "bg-red-400",
                         )}
                         style={{ width: scoreBarWidth(step.score ?? 0) }}
                       />
                     </div>
                     {/* Step 1 rule hits detail */}
                     {step.step === 1 && step.rule_hits && (
-                      <div className="mt-1 flex gap-3 pl-6 text-[9px] text-ink-500">
+                      <div className="mt-1 flex gap-3 pl-6 text-[9px] text-neutral-500">
                         <span>买入命中 <b className="text-profit">{step.rule_hits.buy_hits}</b></span>
                         <span>卖出命中 <b className="text-loss">{step.rule_hits.sell_hits}</b></span>
                         <span>总规则 {step.rule_hits.total_compiled}</span>
@@ -236,8 +236,8 @@ export function DecisionPanel({
 
 function MetricPill({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg bg-paper-card px-2 py-1 text-center">
-      <p className="text-[9px] text-ink-500">{label}</p>
+    <div className="rounded-lg bg-neutral-100 px-2 py-1 text-center">
+      <p className="text-[9px] text-neutral-500">{label}</p>
       <p className="font-mono text-[11px] font-medium text-ink-800">{value}</p>
     </div>
   );

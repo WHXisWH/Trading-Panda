@@ -4,7 +4,7 @@ import { PandaLabPage } from "@/components/panda/lab/PandaLabPage";
 import { isPandaLabEnabled } from "@/lib/pandaLab";
 
 export const metadata = {
-  title: "熊猫试装实验室 | TradingPanda",
+  title: "Panda Lab | TradingPanda",
   description: "无需铸造，调试 Canvas PNG 素材合成熊猫",
 };
 

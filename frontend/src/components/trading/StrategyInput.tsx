@@ -3,8 +3,8 @@
 import { Button } from "@/components/ui/Button";
 
 const EXAMPLES = [
-  { title: "RSI 超卖", text: "当 RSI 低于 30 时买入，高于 70 时卖出" },
-  { title: "趋势跟踪", text: "价格突破 20 日均线买入，跌破卖出" },
+  { title: "RSI 超卖", text: "当 RSI 低于 30 时Buy，高于 70 时Sell" },
+  { title: "趋势跟踪", text: "价格突破 20 日均线Buy，跌破Sell" },
   { title: "网格", text: "每下跌 2% 加仓 5%，上涨 3% 减仓" },
 ];
 
@@ -34,24 +34,24 @@ export function StrategyInput({
             <button
               key={ex.title}
               type="button"
-              className="rounded-lg border border-dashed border-[var(--color-border)] p-2 text-left text-[11px] hover:border-bamboo-500 hover:bg-bamboo-50"
+              className="rounded-lg border border-dashed border-[var(--color-border)] p-2 text-left text-[11px] hover:border-primary-500 hover:bg-primary-50"
               onClick={() => onChange(ex.text)}
             >
-              <span className="font-medium text-bamboo-500">{ex.title}</span>
-              <p className="text-ink-500">{ex.text}</p>
+              <span className="font-medium text-primary-500">{ex.title}</span>
+              <p className="text-neutral-500">{ex.text}</p>
             </button>
           ))}
         </div>
       )}
       <textarea
-        className="w-full resize-none rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] p-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-bamboo-500"
+        className="w-full resize-none rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] p-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-primary-500"
         rows={3}
-        placeholder="当 RSI 低于 30 时买入..."
+        placeholder="当 RSI 低于 30 时Buy..."
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
       {matchScore != null && (
-        <p className="text-[11px] text-bamboo-500">匹配度: {matchScore}/100</p>
+        <p className="text-[11px] text-primary-500">匹配度: {matchScore}/100</p>
       )}
       <Button
         size="sm"

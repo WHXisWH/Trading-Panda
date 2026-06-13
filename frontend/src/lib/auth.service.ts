@@ -13,7 +13,7 @@ export function authErrorMessage(err: unknown): string {
   if (err instanceof ApiClientError) {
     const map: Record<string, string> = {
       AUTH_INVALID_SIGNATURE: "钱包签名无效，请重新连接",
-      AUTH_INVALID_NONCE: "登录已过期，请重新连接钱包",
+      AUTH_INVALID_NONCE: "登录已过期，请重新Connect Wallet",
       AUTH_MISSING_PARAMS: "登录参数不完整",
       SERVICE_UNAVAILABLE: "认证服务暂不可用，请稍后重试",
     };

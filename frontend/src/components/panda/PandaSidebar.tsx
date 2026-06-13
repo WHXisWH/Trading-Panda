@@ -34,7 +34,7 @@ const STAGE_LABEL: Record<string, string> = {
 export function PandaSidebar({
   variant = "default",
   pandaId,
-  name = "我的熊猫",
+  name = "My Panda",
   boldness,
   patience,
   intuition,
@@ -62,8 +62,8 @@ export function PandaSidebar({
     <aside
       className={
         isDashboardLeft
-          ? "flex w-full min-w-0 max-w-full shrink-0 flex-col gap-3 rounded-xl bg-paper-card p-3"
-          : "flex w-full shrink-0 flex-col gap-4 rounded-xl bg-paper-card p-4 lg:w-sidebar"
+          ? "flex w-full min-w-0 max-w-full shrink-0 flex-col gap-3 rounded-xl bg-neutral-50 p-3"
+          : "flex w-full shrink-0 flex-col gap-4 rounded-xl bg-neutral-50 p-4 lg:w-sidebar"
       }
     >
       <div className="flex flex-col items-center gap-3">
@@ -81,8 +81,8 @@ export function PandaSidebar({
           size="lg"
         />
         <div className="text-center">
-          <h2 className="font-serif text-[15px] font-semibold">{name}</h2>
-          <p className="text-[11px] text-ink-500">
+          <h2 className="font-sans text-[15px] font-semibold">{name}</h2>
+          <p className="text-[11px] text-neutral-500">
             {stage} · 熟练度 {prof}%
           </p>
         </div>
@@ -96,11 +96,11 @@ export function PandaSidebar({
       <PersonalityRadar scores={scores} size={radarSize} className="mx-auto" />
 
       {!isDashboardLeft && (
-        <div className="grid grid-cols-1 gap-1 text-[11px] text-ink-500">
+        <div className="grid grid-cols-1 gap-1 text-[11px] text-neutral-500">
           {PERSONALITY_AXES.map((axis) => (
             <div key={axis.key} className="flex justify-between">
               <span>{axis.label}</span>
-              <span className="font-mono font-medium text-bamboo-500">
+              <span className="font-mono font-medium text-primary-500">
                 {scores[axis.key]}
               </span>
             </div>
@@ -110,14 +110,14 @@ export function PandaSidebar({
 
       <button
         type="button"
-        className="w-full rounded-lg border border-[var(--color-border)] px-3 py-2 text-[13px] transition-colors hover:bg-bamboo-50"
+        className="w-full rounded-lg border border-[var(--color-border)] px-3 py-2 text-[13px] transition-colors hover:bg-primary-50"
       >
-        🎋 冷静竹 · 今日剩余 {calmBambooRemaining} 次
+        冷静竹 · 今日剩余 {calmBambooRemaining} 次
       </button>
 
       {pandas.length > 1 && (
         <div className="border-t border-[var(--color-border)] pt-3">
-          <label className="mb-1 block text-[10px] text-ink-500">🐾 我的熊猫</label>
+          <label className="mb-1 block text-[10px] text-neutral-500">My Pandas</label>
           <select
             className="w-full rounded-lg border border-[var(--color-border)] bg-white px-2 py-1.5 text-[13px]"
             defaultValue={pandaId}
@@ -136,7 +136,7 @@ export function PandaSidebar({
 
       <Link
         href={`/pools?panda=${pandaId}&focus=${focus}`}
-        className="text-center text-[11px] text-bamboo-500 hover:underline"
+        className="text-center text-[11px] text-primary-500 hover:underline"
       >
         配置交易池 →
       </Link>

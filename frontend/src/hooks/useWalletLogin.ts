@@ -26,7 +26,7 @@ export function useWalletLogin() {
 
   const loginWithWallet = useCallback(async () => {
     if (!account) {
-      toast.error("请先连接钱包");
+      toast.error("请先Connect Wallet");
       return;
     }
 

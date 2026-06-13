@@ -27,7 +27,7 @@ export function MarketDetailModal({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-[var(--color-overlay)]" />
         <Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[90vh] w-[min(800px,95vw)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl bg-white p-6 shadow-lg animate-scale-in">
-          <Dialog.Title className="font-serif text-xl font-bold">
+          <Dialog.Title className="font-sans text-xl font-bold">
             {listing.name}
           </Dialog.Title>
           <div className="mt-6 grid gap-6 md:grid-cols-2">
@@ -44,12 +44,12 @@ export function MarketDetailModal({
             <div className="space-y-4">
               <PersonalityRadar scores={listing.personality} size={200} />
               <div className="grid grid-cols-2 gap-2 text-[13px]">
-                <span className="text-ink-500">经验</span>
+                <span className="text-neutral-500">经验</span>
                 <span>Lv.{listing.experienceLevel}</span>
-                <span className="text-ink-500">胜率</span>
+                <span className="text-neutral-500">胜率</span>
                 <span>{Math.round(listing.winRate * 100)}%</span>
-                <span className="text-ink-500">价格</span>
-                <span className="font-mono text-xl font-bold text-bamboo-500">
+                <span className="text-neutral-500">价格</span>
+                <span className="font-mono text-xl font-bold text-primary-500">
                   {listing.priceSui} SUI
                 </span>
               </div>
@@ -58,7 +58,7 @@ export function MarketDetailModal({
               </Button>
             </div>
           </div>
-          <Dialog.Close className="absolute right-4 top-4 text-ink-500 hover:text-ink-900">
+          <Dialog.Close className="absolute right-4 top-4 text-neutral-500 hover:text-neutral-900">
             ✕
           </Dialog.Close>
         </Dialog.Content>

@@ -2,7 +2,7 @@ import { clsx } from "clsx";
 import type { HTMLAttributes } from "react";
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  variant?: "default" | "bordered" | "ink" | "paper";
+  variant?: "default" | "bordered" | "subtle";
 }
 
 export function Card({ variant = "default", className, children, ...props }: CardProps) {
@@ -12,8 +12,7 @@ export function Card({ variant = "default", className, children, ...props }: Car
         "rounded-xl p-5",
         variant === "default" && "bg-white shadow-sm",
         variant === "bordered" && "border border-[var(--color-border)] bg-white",
-        variant === "ink" && "bg-bamboo-50 border border-bamboo-100",
-        variant === "paper" && "card-paper",
+        variant === "subtle" && "bg-neutral-50 border border-neutral-100",
         className
       )}
       {...props}
