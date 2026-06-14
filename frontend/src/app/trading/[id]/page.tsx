@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { PageContainer } from "@/components/layout/PageContainer";
+import { Select } from "@/components/ui/Select";
 import { PositionList } from "@/components/trading/PositionList";
 import { OrderBook } from "@/components/trading/OrderBook";
 import { TradeForm } from "@/components/trading/TradeForm";
@@ -10,6 +12,7 @@ import { MOCK_POSITIONS, generateOrderBook } from "@/lib/mockData";
 
 export default function TradingPage({ params }: { params: { id: string } }) {
   const { asks, bids } = generateOrderBook();
+  const [strategy, setStrategy] = useState("rsi");
 
   return (
     <PageContainer className="py-4">
@@ -28,10 +31,17 @@ export default function TradingPage({ params }: { params: { id: string } }) {
           <PositionList positions={MOCK_POSITIONS} />
           <div className="mt-4 border-t pt-4">
             <p className="text-[11px] font-medium text-neutral-500">策略选择</p>
-            <select className="mt-1 w-full rounded border border-[var(--color-border)] px-2 py-1.5 text-[12px]">
-              <option>RSI 超卖反弹</option>
-              <option>趋势跟踪</option>
-            </select>
+            <Select
+              size="sm"
+              aria-label="策略选择"
+              className="mt-1"
+              value={strategy}
+              onValueChange={setStrategy}
+              options={[
+                { value: "rsi", label: "RSI 超卖反弹" },
+                { value: "trend", label: "趋势跟踪" },
+              ]}
+            />
           </div>
         </aside>
 

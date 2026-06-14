@@ -4,7 +4,21 @@ import {
   CONDITION_OPTIONS,
   rulePreviewText,
 } from "@/lib/strategyBuilder";
+import { Select } from "@/components/ui/Select";
+import { Input } from "@/components/ui/Input";
 import type { SignalRuleRow } from "@/types/strategy";
+
+const INDICATOR_OPTIONS = [
+  { value: "RSI", label: "RSI" },
+  { value: "MA20", label: "MA20" },
+  { value: "MACD", label: "MACD" },
+  { value: "PRICE", label: "PRICE" },
+];
+
+const ACTION_OPTIONS = [
+  { value: "BUY", label: "Buy" },
+  { value: "SELL", label: "Sell" },
+];
 
 interface Props {
   row: SignalRuleRow;
@@ -44,48 +58,39 @@ export function StrategyRuleRow({ row, invalid, compact = false, onChange, onRem
       >
         <label className="flex flex-col gap-1 text-[10px] text-neutral-500">
           指标
-          <select
-            className="rounded border border-[var(--color-border)] bg-white px-2 py-1 text-[12px]"
+          <Select
+            size="sm"
+            aria-label="指标"
             value={row.indicator}
-            onChange={(e) =>
-              handleIndicator(e.target.value as SignalRuleRow["indicator"])
-            }
-          >
-            <option value="RSI">RSI</option>
-            <option value="MA20">MA20</option>
-            <option value="MACD">MACD</option>
-            <option value="PRICE">PRICE</option>
-          </select>
+            onValueChange={(v) => handleIndicator(v as SignalRuleRow["indicator"])}
+            options={INDICATOR_OPTIONS}
+          />
         </label>
 
         <label className="flex flex-col gap-1 text-[10px] text-neutral-500">
           条件
-          <select
-            className="rounded border border-[var(--color-border)] bg-white px-2 py-1 text-[12px]"
+          <Select
+            size="sm"
+            aria-label="条件"
             value={row.condition}
-            onChange={(e) => {
-              const opt = condOptions.find((c) => c.value === e.target.value);
+            onValueChange={(v) => {
+              const opt = condOptions.find((c) => c.value === v);
               onChange({
                 ...row,
-                condition: e.target.value,
+                condition: v,
                 threshold: opt?.needsThreshold ? row.threshold ?? 30 : undefined,
               });
             }}
-          >
-            {condOptions.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.label}
-              </option>
-            ))}
-          </select>
+            options={condOptions.map((c) => ({ value: c.value, label: c.label }))}
+          />
         </label>
 
         {needsThreshold ? (
           <label className="flex flex-col gap-1 text-[10px] text-neutral-500">
             阈值
-            <input
+            <Input
               type="number"
-              className="rounded border border-[var(--color-border)] bg-white px-2 py-1 text-[12px]"
+              inputSize="sm"
               value={row.threshold ?? ""}
               onChange={(e) =>
                 onChange({ ...row, threshold: Number(e.target.value) })
@@ -98,16 +103,15 @@ export function StrategyRuleRow({ row, invalid, compact = false, onChange, onRem
 
         <label className="flex flex-col gap-1 text-[10px] text-neutral-500">
           动作
-          <select
-            className="rounded border border-[var(--color-border)] bg-white px-2 py-1 text-[12px]"
+          <Select
+            size="sm"
+            aria-label="动作"
             value={row.action}
-            onChange={(e) =>
-              onChange({ ...row, action: e.target.value as SignalRuleRow["action"] })
+            onValueChange={(v) =>
+              onChange({ ...row, action: v as SignalRuleRow["action"] })
             }
-          >
-            <option value="BUY">Buy</option>
-            <option value="SELL">Sell</option>
-          </select>
+            options={ACTION_OPTIONS}
+          />
         </label>
       </div>
 

@@ -12,6 +12,7 @@ import {
 } from "@/lib/auth.service";
 import { useAuthStore } from "@/stores/authStore";
 import { PageContainer } from "@/components/layout/PageContainer";
+import { Slider } from "@/components/ui/Slider";
 import { Button } from "@/components/ui/Button";
 
 const STEPS = 5;
@@ -285,18 +286,17 @@ export default function OnboardingPage() {
           {step === 5 && (
             <section className="space-y-4">
               <h1 className="font-sans text-[22px] font-bold">你希望熊猫多自主？</h1>
-              <input
-                type="range"
+              <Slider
+                aria-label="熊猫自主程度"
                 min={1}
                 max={5}
                 value={answers.panda_autonomy}
-                onChange={(e) =>
+                onValueChange={(v) =>
                   setAnswers((a) => ({
                     ...a,
-                    panda_autonomy: Number(e.target.value) as Answers["panda_autonomy"],
+                    panda_autonomy: v as Answers["panda_autonomy"],
                   }))
                 }
-                className="w-full accent-primary-600"
               />
               <p className="text-center text-[14px] text-neutral-600">
                 {AUTONOMY_LABELS[answers.panda_autonomy]}

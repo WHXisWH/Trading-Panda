@@ -1,6 +1,9 @@
 from fastapi import APIRouter
 from app.api import health, actor, auth, strategy, market
 from app.api import (
+    achievements,
+    checkin,
+    leaderboard,
     market_pools,
     pandas_api,
     panda_mint,
@@ -21,5 +24,8 @@ api_router.include_router(panda_simulation.router, prefix="/panda", tags=["panda
 api_router.include_router(panda_pools.router, prefix="/panda", tags=["panda-pools"])
 api_router.include_router(market_pools.router, prefix="/market", tags=["market"])
 api_router.include_router(pandas_api.router, prefix="/pandas", tags=["pandas"])
+api_router.include_router(leaderboard.router, prefix="/leaderboard", tags=["leaderboard"])
+api_router.include_router(achievements.router, prefix="/achievements", tags=["achievements"])
+api_router.include_router(checkin.router, prefix="/checkin", tags=["checkin"])
 api_router.include_router(actor.router, prefix="/engine/actors", tags=["actors"])
 api_router.include_router(strategy.router, prefix="/engine/strategy", tags=["strategy"])

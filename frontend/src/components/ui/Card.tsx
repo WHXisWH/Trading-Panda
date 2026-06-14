@@ -10,7 +10,7 @@ export function Card({ variant = "default", className, children, ...props }: Car
     <div
       className={clsx(
         "rounded-xl p-5",
-        variant === "default" && "bg-white shadow-sm",
+        variant === "default" && "bg-brand-soft border border-neutral-200 shadow-sm",
         variant === "bordered" && "border border-[var(--color-border)] bg-white",
         variant === "subtle" && "bg-neutral-50 border border-neutral-100",
         className

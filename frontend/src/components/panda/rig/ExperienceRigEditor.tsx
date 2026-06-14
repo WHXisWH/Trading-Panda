@@ -22,6 +22,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { clsx } from "clsx";
+import { Select } from "@/components/ui/Select";
 import {
   canvasSublayerAssetsFor,
   canvasSublayerOptions,
@@ -1897,19 +1898,12 @@ export function ExperienceRigEditor({
               <div className="mt-3 grid gap-4">
                 <label className="grid gap-1 text-[12px] text-neutral-500">
                   Experience
-                  <select
+                  <Select
+                    aria-label="Experience tier"
                     value={tier}
-                    onChange={(event) =>
-                      setTier(event.target.value as ExperienceRigTierKey)
-                    }
-                    className="rounded-md border border-[var(--color-border)] px-2 py-2 text-[13px] text-neutral-900"
-                  >
-                    {EXPERIENCE_RIG_TIERS.map((item) => (
-                      <option key={item} value={item}>
-                        {item}
-                      </option>
-                    ))}
-                  </select>
+                    onValueChange={(v) => setTier(v as ExperienceRigTierKey)}
+                    options={EXPERIENCE_RIG_TIERS.map((item) => ({ value: item, label: item }))}
+                  />
                 </label>
 
                 <div className="grid gap-2">

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { PandaCanvasRenderer } from "@/components/panda/PandaCanvasRenderer";
+import { Select } from "@/components/ui/Select";
 import {
   PANDA_EMOTION_TIER_LABELS,
   canvasSublayerAssetsFor,
@@ -395,67 +396,55 @@ export function PandaLabQaPage() {
         <div className="grid content-start gap-3">
           <label className="grid gap-1 text-[12px] text-neutral-500">
             Attribute
-            <select
+            <Select
+              aria-label="Attribute"
               value={attribute}
-              onChange={(event) =>
-                onAttributeChange(event.target.value as PandaCanvasSublayerAttributeKey)
+              onValueChange={(v) =>
+                onAttributeChange(v as PandaCanvasSublayerAttributeKey)
               }
-              className="border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-neutral-900"
-            >
-              {options
+              options={options
                 .map((item) => item.attribute)
                 .filter((item, index, items) => items.indexOf(item) === index)
-                .map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
+                .map((item) => ({ value: item, label: item }))}
+            />
           </label>
           <label className="grid gap-1 text-[12px] text-neutral-500">
             Sublayer
-            <select
+            <Select
+              aria-label="Sublayer"
               value={sublayer}
-              onChange={(event) => setSublayer(event.target.value)}
-              className="border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-neutral-900"
-            >
-              {sublayerOptions.map((item) => (
-                <option key={`${item.attribute}/${item.sublayer}`} value={item.sublayer}>
-                  {item.sublayer}
-                </option>
-              ))}
-            </select>
+              onValueChange={setSublayer}
+              options={sublayerOptions.map((item) => ({
+                value: item.sublayer,
+                label: item.sublayer,
+              }))}
+            />
           </label>
           <label className="grid gap-1 text-[12px] text-neutral-500">
             Tier
-            <select
-              value={tier}
-              onChange={(event) => setTier(Number(event.target.value))}
-              className="border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-neutral-900"
-            >
-              {Array.from({ length: 10 }, (_, index) => index + 1).map((item) => (
-                <option key={item} value={item}>
-                  tier-{String(item).padStart(2, "0")}
-                  {attribute === "emotion"
-                    ? ` · ${PANDA_EMOTION_TIER_LABELS[item]}`
-                    : ""}
-                </option>
-              ))}
-            </select>
+            <Select
+              aria-label="Tier"
+              value={String(tier)}
+              onValueChange={(v) => setTier(Number(v))}
+              options={Array.from({ length: 10 }, (_, index) => index + 1).map((item) => ({
+                value: String(item),
+                label:
+                  `tier-${String(item).padStart(2, "0")}` +
+                  (attribute === "emotion" ? ` · ${PANDA_EMOTION_TIER_LABELS[item]}` : ""),
+              }))}
+            />
           </label>
           <label className="grid gap-1 text-[12px] text-neutral-500">
             Experience Tier
-            <select
-              value={experienceTier}
-              onChange={(event) => setExperienceTier(Number(event.target.value))}
-              className="border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-neutral-900"
-            >
-              {Array.from({ length: 10 }, (_, index) => index + 1).map((item) => (
-                <option key={item} value={item}>
-                  tier-{String(item).padStart(2, "0")}
-                </option>
-              ))}
-            </select>
+            <Select
+              aria-label="Experience Tier"
+              value={String(experienceTier)}
+              onValueChange={(v) => setExperienceTier(Number(v))}
+              options={Array.from({ length: 10 }, (_, index) => index + 1).map((item) => ({
+                value: String(item),
+                label: `tier-${String(item).padStart(2, "0")}`,
+              }))}
+            />
           </label>
 
           {selectedAsset && (

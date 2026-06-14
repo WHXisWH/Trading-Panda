@@ -2,6 +2,7 @@
 
 import { clsx } from "clsx";
 import { PandaSvgRenderer } from "./PandaSvgRenderer";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { emotionMeta } from "@/lib/emotion";
 import {
   statsFromPanda,
@@ -108,11 +109,12 @@ export function PandaAvatar({
         showBackground
         className="h-full w-full"
       />
-      <span
-        className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full shadow-sm"
-        style={{ backgroundColor: meta.color }}
-        title={meta.label}
-      />
+      <Tooltip content={meta.label}>
+        <span
+          className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full shadow-sm"
+          style={{ backgroundColor: meta.color }}
+        />
+      </Tooltip>
     </div>
   );
 }

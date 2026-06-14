@@ -20,6 +20,19 @@ CORE_TABLES = (
     "strategy_history",
     "simulations",
     "trades",
+    # 003_growth_experience
+    "experience_patterns",
+    "experience_mastery",
+    "experience_mistakes",
+    "experience_cycles",
+    "emotions_log",
+    "merkle_roots",
+    "achievements",
+    "user_achievements",
+    "checkins",
+    "market_data_cache",
+    "correlation_matrix",
+    "panda_diary",
 )
 
 

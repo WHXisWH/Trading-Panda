@@ -16,6 +16,38 @@ _EMPTY_EXPERIENCE: dict[str, Any] = {
     "cycles": {},
 }
 
+# ── post-trade write-back tuning (pure, unit-tested) ──
+MISTAKE_LOSS_THRESHOLD = -0.02  # a trade losing >2% is logged as a mistake
+MISTAKE_PENALTY_SCALE = 2.0
+MISTAKE_PENALTY_CAP = 0.5
+
+
+def merge_pattern(
+    old_data: dict[str, Any] | None,
+    pattern_hash: str,
+    regime: str,
+    won: bool,
+) -> tuple[dict[str, Any], float]:
+    """Fold one trade outcome into a pattern's running record.
+
+    Returns (new pattern_data, confidence=win_rate). Pure — no DB.
+    """
+    base = old_data or {}
+    count = int(base.get("count", 0)) + 1
+    wins = int(base.get("wins", 0)) + (1 if won else 0)
+    data = {"hash": pattern_hash, "count": count, "wins": wins, "regime": regime}
+    confidence = round(wins / count, 4) if count else 0.0
+    return data, confidence
+
+
+def mistake_penalty_for(pnl: float) -> float:
+    """Penalty magnitude for a losing trade, scaled by loss size and capped."""
+    return round(min(MISTAKE_PENALTY_CAP, abs(float(pnl)) * MISTAKE_PENALTY_SCALE), 4)
+
+
+def is_mistake(pnl: float) -> bool:
+    return float(pnl) < MISTAKE_LOSS_THRESHOLD
+
 
 class ExperienceEngine:
     def __init__(self, panda_id: str) -> None:
@@ -140,15 +172,35 @@ class ExperienceEngine:
             return "顺势"
         return "震荡"
 
-    async def record_trade(self, session: "AsyncSession", trade: dict[str, Any]) -> None:
-        """Post-trade experience updates — minimal MVP upsert."""
+    async def record_trade(
+        self,
+        session: "AsyncSession",
+        trade: dict[str, Any],
+        market: dict[str, Any] | None = None,
+    ) -> None:
+        """Post-trade experience write-back.
+
+        Always updates per-asset mastery. When the trade's market context is
+        supplied, also folds the outcome into the pattern memory + market-cycle
+        record, and logs a mistake row for sizeable losses. Each subsystem runs
+        in its own savepoint so a missing table degrades gracefully.
+        """
+        pnl = float(trade.get("pnl_pct") or 0)
+        asset = trade.get("asset", "BTC")
+        await self._record_mastery(session, asset, pnl)
+        if market:
+            await self._record_pattern(session, market, pnl)
+            await self._record_cycle(session, market)
+            if is_mistake(pnl):
+                await self._record_mistake(session, market, trade.get("trade_id"), pnl)
+
+    async def _record_mastery(self, session: "AsyncSession", asset: str, pnl: float) -> None:
         from sqlalchemy import select
 
         from app.db.models import ExperienceMastery
 
         try:
             async with session.begin_nested():
-                asset = trade.get("asset", "BTC")
                 result = await session.execute(
                     select(ExperienceMastery).where(
                         ExperienceMastery.panda_id == self.panda_id,
@@ -156,7 +208,6 @@ class ExperienceEngine:
                     )
                 )
                 row = result.scalar_one_or_none()
-                pnl = float(trade.get("pnl_pct") or 0)
                 delta = 2.0 if pnl > 0 else -1.0
                 if row is None:
                     session.add(
@@ -172,6 +223,107 @@ class ExperienceEngine:
                     row.mastery_score = min(
                         100, max(0, float(row.mastery_score or 50) + delta)
                     )
+        except (ProgrammingError, OperationalError):
+            pass
+
+    async def _record_pattern(
+        self, session: "AsyncSession", market: dict[str, Any], pnl: float
+    ) -> None:
+        from sqlalchemy import select
+
+        from app.db.models import ExperiencePattern
+
+        try:
+            async with session.begin_nested():
+                pattern_hash = self.compute_pattern_hash(market)
+                regime = market.get("market_regime", "unknown")
+                row = (
+                    await session.execute(
+                        select(ExperiencePattern).where(
+                            ExperiencePattern.panda_id == self.panda_id,
+                            ExperiencePattern.pattern_type == pattern_hash,
+                        )
+                    )
+                ).scalar_one_or_none()
+                data, confidence = merge_pattern(
+                    row.pattern_data if row else None, pattern_hash, regime, pnl > 0
+                )
+                if row is None:
+                    session.add(
+                        ExperiencePattern(
+                            panda_id=self.panda_id,
+                            pattern_type=pattern_hash,
+                            pattern_data=data,
+                            confidence=confidence,
+                        )
+                    )
+                else:
+                    row.pattern_data = data
+                    row.confidence = confidence
+        except (ProgrammingError, OperationalError):
+            pass
+
+    async def _record_cycle(self, session: "AsyncSession", market: dict[str, Any]) -> None:
+        from datetime import datetime
+
+        from sqlalchemy import select
+
+        from app.db.models import ExperienceCycle
+
+        try:
+            async with session.begin_nested():
+                cycle_type = _regime_to_cycle(market.get("market_regime", "unknown"))
+                row = (
+                    await session.execute(
+                        select(ExperienceCycle).where(
+                            ExperienceCycle.panda_id == self.panda_id,
+                            ExperienceCycle.cycle_type == cycle_type,
+                            ExperienceCycle.ended_at.is_(None),
+                        )
+                    )
+                ).scalar_one_or_none()
+                now = datetime.utcnow()
+                if row is None:
+                    session.add(
+                        ExperienceCycle(
+                            panda_id=self.panda_id,
+                            cycle_type=cycle_type,
+                            performance_data={"trade_count": 1, "days_experienced": 0},
+                            started_at=now,
+                        )
+                    )
+                else:
+                    data = dict(row.performance_data or {})
+                    data["trade_count"] = int(data.get("trade_count", 0)) + 1
+                    started = row.started_at or now
+                    try:
+                        days = (now - started.replace(tzinfo=None)).days
+                    except Exception:
+                        days = int(data.get("days_experienced", 0))
+                    data["days_experienced"] = max(int(data.get("days_experienced", 0)), days)
+                    row.performance_data = data
+        except (ProgrammingError, OperationalError):
+            pass
+
+    async def _record_mistake(
+        self,
+        session: "AsyncSession",
+        market: dict[str, Any],
+        trade_id: str | None,
+        pnl: float,
+    ) -> None:
+        from app.db.models import ExperienceMistake
+
+        try:
+            async with session.begin_nested():
+                session.add(
+                    ExperienceMistake(
+                        panda_id=self.panda_id,
+                        trade_id=trade_id,
+                        mistake_type=self.classify_signal_type(market),
+                        penalty=mistake_penalty_for(pnl),
+                    )
+                )
         except (ProgrammingError, OperationalError):
             pass
 

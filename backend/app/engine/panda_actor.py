@@ -18,7 +18,7 @@ from app.engine.emotion_state_machine import EmotionContext, EmotionStateMachine
 from app.engine.event_publisher import EventPublisher
 from app.engine.experience_engine import ExperienceEngine
 from app.engine.market_event import MarketEvent
-from app.engine.merkle_worker import compute_merkle_root
+from app.engine.merkle_worker import persist_merkle_batch
 from app.engine.panda_loader import load_actor_context
 from app.engine.strategy_ghost import GhostManager
 from app.integrations.deepseek import agent_coordinator
@@ -354,7 +354,8 @@ class PandaActor:
 
             await self._experience_engine.record_trade(
                 session,
-                {"asset": event.asset, "pnl_pct": pnl_pct},
+                {"asset": event.asset, "pnl_pct": pnl_pct, "trade_id": trade.id},
+                market=event.to_market_dict(),
             )
             await session.commit()
 
@@ -381,12 +382,52 @@ class PandaActor:
                 )
 
         if self.state.trade_count % settings.merkle_batch_size == 0:
-            logger.info(
-                "Merkle batch ready for panda %s (%d trades)",
-                self.state.panda_id,
-                self.state.trade_count,
-            )
-            compute_merkle_root([])
+            await self._persist_merkle_batch()
+
+    async def _persist_merkle_batch(self) -> None:
+        """Every MERKLE_BATCH_SIZE trades: build a Merkle root over the batch
+        and persist a merkle_roots row. On-chain submission is deferred."""
+        from sqlalchemy.exc import OperationalError, ProgrammingError
+
+        ensure_engine()
+        if AsyncSessionLocal is None:
+            return
+        batch_size = settings.merkle_batch_size
+        batch_index = self.state.trade_count // batch_size
+        try:
+            async with AsyncSessionLocal() as session:
+                rows = (
+                    await session.execute(
+                        select(Trade)
+                        .where(Trade.panda_id == self.state.panda_id)
+                        .order_by(Trade.created_at.desc())
+                        .limit(batch_size)
+                    )
+                ).scalars().all()
+                trades = [
+                    {
+                        "id": t.id,
+                        "action": t.action,
+                        "price": t.price,
+                        "quantity": t.quantity,
+                        "final_score": t.final_score,
+                        "pnl_pct": t.pnl_pct,
+                    }
+                    for t in reversed(rows)
+                ]
+                root = await persist_merkle_batch(
+                    session, self.state.panda_id, batch_index, trades
+                )
+                await session.commit()
+                logger.info(
+                    "Merkle batch %d for panda %s: %d trades root=%s",
+                    batch_index,
+                    self.state.panda_id,
+                    len(trades),
+                    root[:12],
+                )
+        except (ProgrammingError, OperationalError):
+            pass
 
     def snapshot(self) -> dict:
         return {

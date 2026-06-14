@@ -166,7 +166,7 @@ class ExperienceMastery(Base):
     id = Column(UUID(as_uuid=False), primary_key=True, default=_uuid)
     panda_id = Column(UUID(as_uuid=False), ForeignKey("pandas.id", ondelete="CASCADE"), nullable=False)
     asset = Column(String(10), nullable=False)
-    mastery_score = Column(Numeric(5, 4), nullable=False, default=0)
+    mastery_score = Column(Numeric(6, 2), nullable=False, default=0)  # 0–100 scale
     trade_count = Column(Integer, nullable=False, default=0)
     updated_at = Column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow)
 

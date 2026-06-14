@@ -44,6 +44,28 @@ const config: Config = {
       borderRadius: {
         card: "12px",
       },
+      boxShadow: {
+        xs: "var(--shadow-xs)",
+        sm: "var(--shadow-sm)",
+        md: "var(--shadow-md)",
+        lg: "var(--shadow-lg)",
+        accent: "var(--shadow-accent)",
+        "accent-lg": "var(--shadow-accent-lg)",
+      },
+      backgroundImage: {
+        brand: "var(--gradient-brand)",
+        "brand-soft": "var(--gradient-brand-soft)",
+        "dark-panel": "var(--gradient-dark-panel)",
+        hero: "var(--gradient-hero)",
+      },
+      transitionTimingFunction: {
+        expo: "cubic-bezier(0.16, 1, 0.3, 1)",
+        smooth: "cubic-bezier(0.4, 0, 0.2, 1)",
+      },
+      transitionDuration: {
+        fast: "150ms",
+        normal: "250ms",
+      },
     },
   },
   plugins: [],

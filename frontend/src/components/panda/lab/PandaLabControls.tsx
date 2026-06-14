@@ -1,6 +1,9 @@
 "use client";
 
-import { clsx } from "clsx";
+import { Slider } from "@/components/ui/Slider";
+import { Select } from "@/components/ui/Select";
+import { Tooltip } from "@/components/ui/Tooltip";
+import { Button } from "@/components/ui/Button";
 import { PERSONALITY_AXES } from "@/lib/personality";
 import { PANDA_LAB_PRESETS } from "@/lib/pandaLabPresets";
 import {
@@ -38,14 +41,7 @@ function StatSlider({
         <span className="text-neutral-700">{label}</span>
         <span className="font-mono text-neutral-500">{value}</span>
       </div>
-      <input
-        type="range"
-        min={0}
-        max={100}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full accent-primary-600"
-      />
+      <Slider aria-label={label} min={0} max={100} value={value} onValueChange={onChange} />
     </label>
   );
 }
@@ -83,54 +79,38 @@ export function PandaLabControls({
 
       <div>
         <label className="mb-1 block text-[12px] text-neutral-700">情绪（眼嘴层）</label>
-        <select
+        <Select
+          aria-label="情绪"
           value={stats.emotion}
-          onChange={(e) => onEmotionChange(e.target.value as PandaEmotion)}
-          className="w-full rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-[13px]"
-        >
-          {PANDA_EMOTIONS.map((e) => (
-            <option key={e} value={e}>
-              {EMOTION_LABELS[e]}
-            </option>
-          ))}
-        </select>
+          onValueChange={(v) => onEmotionChange(v as PandaEmotion)}
+          options={PANDA_EMOTIONS.map((e) => ({ value: e, label: EMOTION_LABELS[e] }))}
+        />
       </div>
 
       <div>
         <h2 className="mb-2 text-[13px] font-semibold text-neutral-900">预设</h2>
         <div className="flex flex-wrap gap-2">
           {PANDA_LAB_PRESETS.map((preset) => (
-            <button
-              key={preset.id}
-              type="button"
-              title={preset.description}
-              onClick={() => onPreset(preset.id)}
-              className={clsx(
-                "rounded-full border border-[var(--color-border)] px-3 py-1 text-[11px]",
-                "hover:border-primary-500 hover:bg-primary-50"
-              )}
-            >
-              {preset.label}
-            </button>
+            <Tooltip key={preset.id} content={preset.description}>
+              <button
+                type="button"
+                onClick={() => onPreset(preset.id)}
+                className="rounded-full border border-[var(--color-border)] px-3 py-1 text-[11px] hover:border-primary-500 hover:bg-primary-50"
+              >
+                {preset.label}
+              </button>
+            </Tooltip>
           ))}
         </div>
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={onRandom}
-          className="rounded-lg border border-primary-500 px-3 py-1.5 text-[12px] text-primary-600 hover:bg-primary-50"
-        >
+        <Button variant="outline" size="sm" onClick={onRandom}>
           随机
-        </button>
-        <button
-          type="button"
-          onClick={onReset}
-          className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-[12px] text-neutral-600 hover:bg-primary-50"
-        >
+        </Button>
+        <Button variant="ghost" size="sm" onClick={onReset}>
           重置
-        </button>
+        </Button>
       </div>
     </div>
   );
