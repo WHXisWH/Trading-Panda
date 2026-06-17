@@ -844,7 +844,7 @@
         ${item.id === "success" ? `<button class="button ghost" type="button" data-product-action="details">View mint details</button>` : ""}
         <div class="gas-fee-hint" data-hotspot="evidence-rail">
           <span>Gas estimate</span>
-          <strong>${item.id === "disconnected" ? "Connect wallet to estimate" : "~0.01 SUI · Testnet"}</strong>
+          <strong>${item.id === "disconnected" ? "Connect wallet to estimate" : "~0.03 SUI · Testnet"}</strong>
           <em>Minting creates identity only. No PandaVault, TradingPolicy, or trading authority yet.</em>
         </div>
       </div>

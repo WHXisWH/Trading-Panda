@@ -14,7 +14,7 @@ export function GasFeeHint({ muted = false, compact = false }: GasFeeHintProps) 
           muted ? "text-product-muted/80" : "text-product-muted",
         )}
       >
-        ~0.01 SUI · Sui Testnet
+        ~0.03 SUI · Sui Testnet
       </p>
     );
   }
@@ -29,7 +29,7 @@ export function GasFeeHint({ muted = false, compact = false }: GasFeeHintProps) 
       <span className="font-mono text-[10px] font-black uppercase tracking-wider text-product-green">
         Network · Gas
       </span>
-      <strong className="text-sm text-product-text">~0.01 SUI · Sui Testnet</strong>
+      <strong className="text-sm text-product-text">~0.03 SUI · Sui Testnet</strong>
       <p className="text-[11px] leading-relaxed text-product-muted">
         Minting a Panda does not give it trading permission yet.
       </p>
