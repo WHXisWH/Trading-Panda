@@ -45,10 +45,10 @@ export function Select({
       <RadixSelect.Trigger
         aria-label={ariaLabel}
         className={clsx(
-          "inline-flex w-full items-center justify-between gap-2 rounded-xl border border-product-line bg-white/[0.055] text-product-text transition-[border-color,box-shadow] duration-fast ease-smooth",
-          "hover:border-product-gold/30 focus:outline-none focus-visible:border-product-green/50 focus-visible:ring-2 focus-visible:ring-product-green/15",
+          "inline-flex w-full items-center justify-between gap-2 rounded-[14px] border border-product-line/80 bg-white/[0.045] text-product-text transition-[border-color,box-shadow] duration-fast ease-smooth",
+          "hover:border-product-gold/35 focus:outline-none focus-visible:border-product-green/50 focus-visible:ring-2 focus-visible:ring-product-green/15",
           "data-[placeholder]:text-product-muted/70 disabled:cursor-not-allowed disabled:opacity-50",
-          size === "sm" ? "h-8 px-2.5 text-sm" : "h-10 px-3 text-sm",
+          size === "sm" ? "h-9 px-2.5 text-sm" : "h-11 px-3.5 text-sm",
           className,
         )}
       >

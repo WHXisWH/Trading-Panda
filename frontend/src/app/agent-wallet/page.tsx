@@ -5,7 +5,7 @@ export default function AgentWalletPage() {
   return (
     <Suspense
       fallback={
-        <div className="py-12 text-center text-[13px] text-neutral-500">Loading…</div>
+        <div className="py-12 text-center text-[13px] text-product-muted">Loading…</div>
       }
     >
       <AgentWalletPageClient />

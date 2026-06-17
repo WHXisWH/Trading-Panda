@@ -56,12 +56,12 @@ export function AgentWalletPageContent({ jwt, panda }: AgentWalletPageProps) {
       />
 
       {wallet.toast ? (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-[13px] text-emerald-800">
+        <div className="rounded-xl border border-product-green/30 bg-product-green/10 px-4 py-2 text-[13px] text-product-green">
           {wallet.toast}
         </div>
       ) : null}
       {wallet.errorMessage ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-[13px] text-red-700">
+        <div className="rounded-xl border border-product-red/40 bg-product-red/10 px-4 py-2 text-[13px] text-product-red">
           {wallet.errorMessage}
           {wallet.txDigest && !hasVault ? (
             <button
@@ -78,12 +78,12 @@ export function AgentWalletPageContent({ jwt, panda }: AgentWalletPageProps) {
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
         <PandaPermissionCard panda={panda} status={wallet.status} />
 
-        <Card className="space-y-5 p-5">
+        <Card className="space-y-6 p-5 md:p-6">
           {isReady ? (
-            <div className="space-y-4">
-              <p className="text-[13px] text-neutral-600">
+            <div className="space-y-5">
+              <p className="text-[13px] text-product-muted">
                 PandaVault and TradingPolicy are active. Mirror status:{" "}
-                <strong>{wallet.status?.mirror_sync_status}</strong>
+                <strong className="text-product-text">{wallet.status?.mirror_sync_status}</strong>
               </p>
               <PolicyPreviewSummary draft={wallet.draft} agentAddress={wallet.agentAddress} />
               <div className="flex flex-wrap gap-3">
@@ -106,7 +106,7 @@ export function AgentWalletPageContent({ jwt, panda }: AgentWalletPageProps) {
               </div>
             </div>
           ) : (
-            <>
+            <div className="space-y-6">
               <PolicyCollarEditor
                 draft={wallet.draft}
                 onChange={wallet.setDraft}
@@ -115,7 +115,7 @@ export function AgentWalletPageContent({ jwt, panda }: AgentWalletPageProps) {
                 disabled={editorLocked || wallet.isLoading}
               />
               <PolicyPreviewSummary draft={wallet.draft} agentAddress={wallet.agentAddress} />
-              <div className="flex flex-wrap gap-3 pt-2">
+              <div className="flex flex-wrap gap-3 border-t border-product-line/40 pt-5">
                 <Button
                   size="lg"
                   disabled={wallet.isLoading || !wallet.agentAddress}
@@ -129,7 +129,7 @@ export function AgentWalletPageContent({ jwt, panda }: AgentWalletPageProps) {
                   </Button>
                 ) : null}
               </div>
-            </>
+            </div>
           )}
         </Card>
       </div>

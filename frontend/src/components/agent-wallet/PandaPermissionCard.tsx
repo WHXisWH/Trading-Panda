@@ -1,6 +1,6 @@
 "use client";
 
-import { Badge } from "@/components/ui/Badge";
+import { clsx } from "clsx";
 import { Card } from "@/components/ui/Card";
 import type { AgentWalletStatusApi } from "@/types/agent-wallet";
 import type { PandaSummaryApi } from "@/types/panda";
@@ -16,6 +16,29 @@ function truncateId(id: string | null | undefined): string {
   return `${id.slice(0, 6)}…${id.slice(-4)}`;
 }
 
+function StatusBadge({
+  ready,
+  readyLabel,
+  missingLabel,
+}: {
+  ready: boolean;
+  readyLabel: string;
+  missingLabel: string;
+}) {
+  return (
+    <span
+      className={clsx(
+        "inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-medium",
+        ready
+          ? "bg-product-green/10 text-product-green"
+          : "bg-product-amber/15 text-product-amber",
+      )}
+    >
+      {ready ? readyLabel : missingLabel}
+    </span>
+  );
+}
+
 export function PandaPermissionCard({ panda, status }: PandaPermissionCardProps) {
   const vaultReady = Boolean(status?.vault?.sui_object_id);
   const policyReady = Boolean(status?.policy?.sui_object_id);
@@ -24,42 +47,40 @@ export function PandaPermissionCard({ panda, status }: PandaPermissionCardProps)
   return (
     <Card className="space-y-4 p-5">
       <div className="space-y-1">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-neutral-500">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-product-muted">
           Panda permission
         </p>
-        <h2 className="font-sans text-lg font-bold">{panda.name ?? "Your Panda"}</h2>
-        <p className="text-[12px] text-neutral-500">
+        <h2 className="font-sans text-lg font-bold text-product-text">{panda.name ?? "Your Panda"}</h2>
+        <p className="text-[12px] text-product-muted">
           Panda cannot loosen policy alone. Only you can sign collar changes.
         </p>
       </div>
 
       <dl className="space-y-2 text-[13px]">
         <div className="flex items-center justify-between gap-2">
-          <dt className="text-neutral-500">NFT identity</dt>
-          <dd className="font-mono text-[12px]">{truncateId(panda.sui_object_id)}</dd>
+          <dt className="text-product-muted">NFT identity</dt>
+          <dd className="font-mono text-[12px] text-product-text">{truncateId(panda.sui_object_id)}</dd>
         </div>
         <div className="flex items-center justify-between gap-2">
-          <dt className="text-neutral-500">PandaVault</dt>
+          <dt className="text-product-muted">PandaVault</dt>
           <dd>
-            <Badge className={vaultReady ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}>
-              {vaultReady ? "Active" : "Missing"}
-            </Badge>
+            <StatusBadge ready={vaultReady} readyLabel="Active" missingLabel="Missing" />
           </dd>
         </div>
         <div className="flex items-center justify-between gap-2">
-          <dt className="text-neutral-500">TradingPolicy</dt>
+          <dt className="text-product-muted">TradingPolicy</dt>
           <dd>
-            <Badge className={policyReady ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}>
-              {policyReady ? `v${status?.policy?.version ?? 1}` : "Missing"}
-            </Badge>
+            <StatusBadge
+              ready={policyReady}
+              readyLabel={`v${status?.policy?.version ?? 1}`}
+              missingLabel="Missing"
+            />
           </dd>
         </div>
         <div className="flex items-center justify-between gap-2">
-          <dt className="text-neutral-500">Agent signer</dt>
+          <dt className="text-product-muted">Agent signer</dt>
           <dd>
-            <Badge className={signerReady ? "bg-primary-50 text-primary-600" : "bg-amber-50 text-amber-700"}>
-              {signerReady ? "Configured" : "Not set"}
-            </Badge>
+            <StatusBadge ready={signerReady} readyLabel="Configured" missingLabel="Not set" />
           </dd>
         </div>
       </dl>
