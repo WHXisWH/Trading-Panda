@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { fetchAuthMe } from "@/lib/auth.service";
 import { useAuthStore } from "@/stores/authStore";
 
-const SKIP_PREFIXES = ["/onboarding", "/auth/"];
+const SKIP_PREFIXES = ["/onboarding", "/auth/", "/mint"];
 
 /**
  * Redirect authenticated users without onboarding_survey to /onboarding.

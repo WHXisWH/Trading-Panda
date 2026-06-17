@@ -25,10 +25,18 @@ class Settings(BaseSettings):
     sui_rpc_url: str = "https://fullnode.testnet.sui.io:443"
     sui_private_key: str = ""
     sui_wallet_address: str = ""
+    admin_cap_id: str = ""
     package_id: str = ""
     registry_id: str = ""
     achievement_registry_id: str = ""
     transfer_policy_id: str = ""
+    agent_signer_address: str = ""
+    agent_signer_private_key: str = ""
+    chain_proof_enabled: bool = False
+    chain_proof_auto_score_threshold: float = 0.75
+    chain_proof_cooldown_minutes: int = 30
+    chain_proof_daily_cap: int = 10
+    deepbook_launch_pairs: str = "DEEP/SUI,SUI/USDC"
 
     # Walrus
     walrus_publisher_url: str = ""
@@ -44,6 +52,8 @@ class Settings(BaseSettings):
     port: int = 8000
     max_actors: int = 100
     merkle_batch_size: int = 50
+    merkle_submit_enabled: bool = True
+    skill_digest_enabled: bool = True
     debug: bool = False
     cors_origins: List[str] = ["http://localhost:3000"]
 

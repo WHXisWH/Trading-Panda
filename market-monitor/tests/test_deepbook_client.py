@@ -2,6 +2,7 @@ from feed.deepbook_client import (
     _parse_candles,
     _parse_pool_list,
     encode_pool_for_path,
+    parse_pool_catalog,
     parse_pool_directory,
 )
 
@@ -20,6 +21,24 @@ def test_parse_pools_json_objects() -> None:
     assert _parse_pool_list(raw) == ["DEEP/SUI"]
     assert parse_pool_directory(raw)["DEEP/SUI"] == "0xabc"
     assert parse_pool_directory(raw)["DEEP_SUI"] == "0xabc"
+
+
+def test_parse_pool_catalog_metadata() -> None:
+    raw = [
+        {
+            "pool_id": "0x1",
+            "pool_name": "SUI_USDC",
+            "base_asset_decimals": 9,
+            "quote_asset_decimals": 6,
+            "min_tick_size": 0.000001,
+        }
+    ]
+    catalog = parse_pool_catalog(raw)
+    entry = catalog["SUI_USDC"]
+    assert entry.pool_id == "0x1"
+    assert entry.base_decimals == 9
+    assert entry.quote_decimals == 6
+    assert entry.min_tick_size == 0.000001
 
 
 def test_parse_pools_rejects_url() -> None:

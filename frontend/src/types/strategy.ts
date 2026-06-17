@@ -41,6 +41,21 @@ export interface ParsedStrategyLayers {
   position_sizing: PositionSizingLayers;
   signal_rules: SignalRule[];
   risk_management: RiskManagementLayers;
+  target_pairs?: string[];
+}
+
+export interface PolicyConflictDetail {
+  field: string;
+  code: string;
+  message: string;
+  value?: string | number;
+}
+
+export interface GhostInfluenceSummary {
+  ghost_weight: number;
+  trades_since_switch?: number;
+  expected_decay_trades: number;
+  summary?: string;
 }
 
 export interface StrategyFeedRequest {
@@ -56,6 +71,7 @@ export interface StrategyShadowInfo {
 
 export interface StrategyFeedData {
   strategy_id: string;
+  version: number;
   raw_text: string;
   parsed: ParsedStrategyLayers;
   strategy_hash: string;
@@ -63,6 +79,9 @@ export interface StrategyFeedData {
   personality_match: number;
   previous_strategy_shadow: StrategyShadowInfo | null;
   panda_reaction: string;
+  policy_version?: number | null;
+  policy_compatible?: boolean | null;
+  target_pairs?: string[];
 }
 
 export type StrategyFeedResponse = SuccessResponse<StrategyFeedData>;
@@ -85,6 +104,14 @@ export interface StrategyValidateData {
   }>;
   preview_signal?: StrategyValidatePreviewSignal;
   warnings: string[];
+  policy_compatible?: boolean | null;
+  policy_version?: number | null;
+  policy_paused?: boolean;
+  policy_summary?: string | null;
+  allowed_pairs?: string[];
+  blocked_pairs?: string[];
+  target_pairs?: string[];
+  policy_conflicts?: PolicyConflictDetail[];
 }
 
 export type StrategyValidateResponse = SuccessResponse<StrategyValidateData>;
@@ -92,6 +119,7 @@ export type StrategyValidateResponse = SuccessResponse<StrategyValidateData>;
 /** Persisted strategy row (GET /api/panda/:id/strategy) */
 export interface StrategyRecord {
   strategy_id: string;
+  version: number;
   raw_text: string;
   parsed: ParsedStrategyLayers;
   strategy_hash: string;
@@ -99,6 +127,14 @@ export interface StrategyRecord {
   is_active: boolean;
   personality_match: number;
   created_at: string;
+  policy_compatible?: boolean | null;
+  policy_version?: number | null;
+  policy_summary?: string | null;
+  allowed_pairs?: string[];
+  blocked_pairs?: string[];
+  target_pairs?: string[];
+  policy_conflicts?: PolicyConflictDetail[];
+  ghost_influence?: GhostInfluenceSummary | null;
 }
 
 /** UI builder row (camelCase local state) */

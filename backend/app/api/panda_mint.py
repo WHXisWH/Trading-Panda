@@ -21,6 +21,7 @@ from app.schemas.panda import (
     PandaTalentData,
 )
 from app.services.mint_event_parser import fetch_parsed_mint_from_tx
+from app.services.mint_registration import ExistingMintDecision, decide_existing_mint
 from app.services.sui_rpc import get_object
 from app.services.talent_meta import talent_payload
 from app.services.wallet_verify import normalize_sui_address
@@ -47,6 +48,42 @@ def _api_error_response(exc: ApiError) -> JSONResponse:
     )
 
 
+def _panda_mint_data(
+    panda: Panda,
+    sui_tx_digest: str,
+    name: str | None,
+    mint_ev: object | None = None,
+) -> PandaMintData:
+    """Build API payload from DB row (optionally with parsed mint event for talent meta)."""
+    from app.services.mint_event_parser import ParsedMintEvent
+
+    talent_id = panda.talent
+    if isinstance(mint_ev, ParsedMintEvent):
+        talent_id = mint_ev.talent
+
+    talent = talent_payload(talent_id)
+    return PandaMintData(
+        id=panda.id,
+        sui_object_id=panda.sui_object_id,
+        sui_tx_digest=sui_tx_digest,
+        name=name,
+        personality=PandaPersonalityData(
+            boldness=panda.boldness,
+            patience=panda.patience,
+            intuition=panda.intuition,
+            focus=panda.focus,
+            contrarian=panda.contrarian,
+        ),
+        talent=PandaTalentData(
+            id=int(talent["id"]),
+            name=str(talent["name"]),
+            description=str(talent["description"]),
+        ),
+        generation=panda.generation,
+        created_at=_iso(panda.created_at),
+    )
+
+
 @router.post("/mint", status_code=201)
 async def register_mint(
     body: PandaMintRequest,
@@ -61,7 +98,12 @@ async def register_mint(
     existing = await db.execute(
         select(Panda).where(Panda.sui_object_id == body.sui_object_id)
     )
-    if existing.scalar_one_or_none():
+    existing_panda = existing.scalar_one_or_none()
+    decision = decide_existing_mint(
+        existing_panda.owner_id if existing_panda else None,
+        user.id,
+    )
+    if decision == ExistingMintDecision.CONFLICT:
         return JSONResponse(
             status_code=409,
             content=error(
@@ -69,6 +111,9 @@ async def register_mint(
                 "Panda already registered for this sui_object_id",
             ),
         )
+    if decision == ExistingMintDecision.RETURN_EXISTING and existing_panda:
+        data = _panda_mint_data(existing_panda, body.sui_tx_digest, body.name)
+        return JSONResponse(status_code=200, content=success(data.model_dump()))
 
     try:
         mint_ev = await fetch_parsed_mint_from_tx(
@@ -124,30 +169,13 @@ async def register_mint(
         talent=mint_ev.talent,
         generation=mint_ev.generation,
         emotion_stability=stability,
+        # Mint creates identity only — vault/policy wired in Agent Wallet setup (Epic 2).
+        active_vault_id=None,
+        active_policy_id=None,
     )
     db.add(panda)
     await db.commit()
     await db.refresh(panda)
 
-    talent = talent_payload(mint_ev.talent)
-    data = PandaMintData(
-        id=panda.id,
-        sui_object_id=panda.sui_object_id,
-        sui_tx_digest=body.sui_tx_digest,
-        name=body.name,
-        personality=PandaPersonalityData(
-            boldness=mint_ev.boldness,
-            patience=mint_ev.patience,
-            intuition=mint_ev.intuition,
-            focus=mint_ev.focus,
-            contrarian=mint_ev.contrarian,
-        ),
-        talent=PandaTalentData(
-            id=int(talent["id"]),
-            name=str(talent["name"]),
-            description=str(talent["description"]),
-        ),
-        generation=mint_ev.generation,
-        created_at=_iso(panda.created_at),
-    )
+    data = _panda_mint_data(panda, body.sui_tx_digest, body.name, mint_ev)
     return JSONResponse(status_code=201, content=success(data.model_dump()))

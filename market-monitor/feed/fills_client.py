@@ -373,3 +373,44 @@ class FillsClient:
             pool, interval, limit, lookback_sec=lookback_sec
         )
         return fills_to_candles(fills, interval, limit)
+
+    async def get_volume_stats(
+        self,
+        pool: str,
+        *,
+        now: float | None = None,
+    ) -> tuple[float, float]:
+        """Return (volume_24h, volume_7d) as sum(price * qty) in quote terms."""
+        import time
+
+        clock = time.time() if now is None else now
+        v24 = await self._sum_notional(pool, clock - 86_400)
+        v7 = await self._sum_notional(pool, clock - 604_800)
+        return v24, v7
+
+    async def _sum_notional(self, pool: str, since_sec: float) -> float:
+        schema = self._schema
+        pool_key = await self.resolve_pool_key(pool)
+        if schema is None or self._pool is None or pool_key is None:
+            return 0.0
+        query = f"""
+            SELECT COALESCE(
+                SUM(
+                    ({schema.price_expr}::double precision / $3)
+                    * ({schema.qty_expr}::double precision / $4)
+                ),
+                0
+            ) AS notional
+            FROM order_fills
+            WHERE {schema.pool_col}::text = $1
+              AND {schema.ts_expr} >= $2
+        """
+        async with self._pool.acquire() as conn:
+            val = await conn.fetchval(
+                query,
+                pool_key,
+                since_sec,
+                self._price_scale,
+                self._qty_scale,
+            )
+        return float(val or 0.0)

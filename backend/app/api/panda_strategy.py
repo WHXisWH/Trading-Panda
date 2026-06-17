@@ -17,7 +17,7 @@ from app.services.strategy_feed import (
     feed_strategy,
     get_active_strategy_record,
     load_owned_panda,
-    validate_strategy_body,
+    validate_strategy_for_panda,
 )
 
 router = APIRouter()
@@ -30,6 +30,7 @@ def _api_error_response(exc: ApiError) -> JSONResponse:
             exc.code.value,
             exc.message,
             invalid_rules=exc.invalid_rules,
+            policy_conflicts=exc.policy_conflicts,
         ),
     )
 
@@ -76,7 +77,7 @@ async def post_strategy_validate(
                 ApiErrorCode.STRATEGY_TEXT_TOO_SHORT,
                 "Strategy text must be at least 10 characters",
             )
-        data: StrategyValidateData = validate_strategy_body(body)
+        data: StrategyValidateData = await validate_strategy_for_panda(panda_id, body, db)
         return JSONResponse(content=success(data.model_dump()))
     except ApiError as exc:
         return _api_error_response(exc)

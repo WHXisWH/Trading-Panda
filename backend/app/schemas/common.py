@@ -26,6 +26,7 @@ class ErrorBody(BaseModel):
     message: str
     details: Any | None = None
     invalid_rules: list[dict[str, Any]] | None = None
+    policy_conflicts: list[dict[str, Any]] | None = None
 
 
 class ErrorResponse(BaseModel):
@@ -46,10 +47,13 @@ def error(
     *,
     details: Any | None = None,
     invalid_rules: list[dict[str, Any]] | None = None,
+    policy_conflicts: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     body: dict[str, Any] = {"code": code, "message": message}
     if details is not None:
         body["details"] = details
     if invalid_rules is not None:
         body["invalid_rules"] = invalid_rules
+    if policy_conflicts is not None:
+        body["policy_conflicts"] = policy_conflicts
     return {"success": False, "error": body}

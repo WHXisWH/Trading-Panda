@@ -23,6 +23,78 @@ class Candle:
     timestamp: float
 
 
+@dataclass(frozen=True)
+class PoolCatalogEntry:
+    pool_id: str
+    base_decimals: int | None = None
+    quote_decimals: int | None = None
+    min_tick_size: float | None = None
+
+
+def _optional_int(value: Any) -> int | None:
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _optional_float(value: Any) -> float | None:
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def parse_pool_catalog(data: Any) -> dict[str, PoolCatalogEntry]:
+    """Extract pool metadata from /get_pools response."""
+    out: dict[str, PoolCatalogEntry] = {}
+    rows = data
+    if isinstance(data, dict):
+        rows = data.get("pools") or data.get("data") or []
+    if not isinstance(rows, list):
+        return out
+
+    for item in rows:
+        if not isinstance(item, dict):
+            continue
+        pool_id = item.get("pool_id")
+        pool_name = item.get("pool_name") or item.get("name")
+        if not pool_id or not pool_name:
+            continue
+        pid = str(pool_id).strip()
+        name = str(pool_name).strip()
+        entry = PoolCatalogEntry(
+            pool_id=pid,
+            base_decimals=_optional_int(
+                item.get("base_asset_decimals")
+                or item.get("base_decimals")
+                or item.get("base_asset_decimal")
+            ),
+            quote_decimals=_optional_int(
+                item.get("quote_asset_decimals")
+                or item.get("quote_decimals")
+                or item.get("quote_asset_decimal")
+            ),
+            min_tick_size=_optional_float(
+                item.get("min_tick_size") or item.get("tick_size")
+            ),
+        )
+        out[name] = entry
+        alt = name.replace("/", "_")
+        if alt != name:
+            out[alt] = entry
+    return out
+
+
+def parse_pool_directory(data: Any) -> dict[str, str]:
+    """Map pool_name → pool_id (hex) from /get_pools response."""
+    return {name: entry.pool_id for name, entry in parse_pool_catalog(data).items()}
+
+
 class DeepBookClient:
     def __init__(
         self,
@@ -57,6 +129,13 @@ class DeepBookClient:
             r.raise_for_status()
             data = r.json()
         return parse_pool_directory(data)
+
+    async def fetch_pool_catalog(self) -> dict[str, PoolCatalogEntry]:
+        async with httpx.AsyncClient(timeout=self._timeout) as client:
+            r = await client.get(f"{self._base}/get_pools")
+            r.raise_for_status()
+            data = r.json()
+        return parse_pool_catalog(data)
 
     async def get_ohlcv(
         self, pool: str, period: str = "1m", limit: int = 60
@@ -119,31 +198,6 @@ def _parse_pool_list(data: Any) -> list[str]:
             if key and not key.startswith(("http://", "https://")):
                 names.append(key)
     return names
-
-
-def parse_pool_directory(data: Any) -> dict[str, str]:
-    """Map pool_name → pool_id (hex) from /get_pools response."""
-    out: dict[str, str] = {}
-    rows = data
-    if isinstance(data, dict):
-        rows = data.get("pools") or data.get("data") or []
-    if not isinstance(rows, list):
-        return out
-
-    for item in rows:
-        if not isinstance(item, dict):
-            continue
-        pool_id = item.get("pool_id")
-        pool_name = item.get("pool_name") or item.get("name")
-        if not pool_id or not pool_name:
-            continue
-        pid = str(pool_id).strip()
-        name = str(pool_name).strip()
-        out[name] = pid
-        alt = name.replace("/", "_")
-        if alt != name:
-            out[alt] = pid
-    return out
 
 
 def _parse_candles(data: Any) -> list[Candle]:

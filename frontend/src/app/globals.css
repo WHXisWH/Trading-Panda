@@ -124,6 +124,10 @@
     animation: modalIn 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
+  .animate-drawer-in {
+    animation: drawerIn 240ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
   /* Shared hover-lift for cards/tiles — one motion language across the app */
   .lift {
     transition: transform var(--duration-normal) var(--ease-out-expo),
@@ -181,6 +185,30 @@
   to {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes drawerIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (min-width: 768px) {
+  @keyframes drawerIn {
+    from {
+      opacity: 0;
+      transform: translateX(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
   }
 }
 

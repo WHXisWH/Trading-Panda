@@ -116,10 +116,12 @@ export function StrategyBuilder({
 
       <StrategyTemplates
         hasExistingRules={rules.length > 0}
-        onApply={(rows, p) => {
+        onApply={(rows, p, extras) => {
           if (rules.length <= 2) setRules(rows);
           else setRules((prev) => [...prev, ...rows].slice(0, 8));
           setPhilosophy(p);
+          if (extras?.positionPct != null) setPositionPct(extras.positionPct);
+          if (extras?.stopLossPct != null) setStopLossPct(extras.stopLossPct);
         }}
       />
 

@@ -24,10 +24,15 @@ async function parseApiError(res: Response, json: ApiResult<unknown>): Promise<n
   const msg = isApiError(json)
     ? json.error.message
     : `Request failed (${res.status})`;
-  const err = new Error(msg) as Error & { code?: string; invalidRules?: unknown };
+  const err = new Error(msg) as Error & {
+    code?: string;
+    invalidRules?: unknown;
+    policyConflicts?: unknown;
+  };
   if (isApiError(json)) {
     err.code = json.error.code;
     err.invalidRules = json.error.invalid_rules;
+    err.policyConflicts = (json.error as { policy_conflicts?: unknown }).policy_conflicts;
   }
   throw err;
 }
@@ -93,6 +98,8 @@ export function strategyErrorMessage(err: unknown): string {
   if (err instanceof Error) {
     const code = (err as Error & { code?: string }).code;
     if (code === "STRATEGY_RULE_INVALID") return "部分规则无法编译，请检查标红行";
+    if (code === "STRATEGY_POLICY_CONFLICT") return "策略与当前 TradingPolicy 冲突，请调整交易对或仓位";
+    if (code === "POLICY_PAIR_NOT_ALLOWED") return "策略包含 Policy 未授权的交易对";
     if (code === "STRATEGY_RATE_LIMIT") return "LLM 解析过于频繁，请稍后再试";
     if (code === "PANDA_IS_TRADING") return "模拟进行中，请先停止再换策略";
     return err.message;

@@ -6,11 +6,17 @@ from app.api import (
     leaderboard,
     market_pools,
     pandas_api,
+    panda_agent_wallet,
+    panda_chain_proof,
     panda_mint,
     panda_pools,
     panda_read,
+    panda_review,
+    panda_safety,
     panda_simulation,
     panda_strategy,
+    panda_training,
+    panda_trust,
 )
 
 api_router = APIRouter()
@@ -18,9 +24,15 @@ api_router.include_router(health.router, prefix="/engine", tags=["health"])
 api_router.include_router(market.router, prefix="/engine", tags=["market"])
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(panda_mint.router, prefix="/panda", tags=["panda"])
+api_router.include_router(panda_agent_wallet.router, prefix="/panda", tags=["panda-agent-wallet"])
+api_router.include_router(panda_chain_proof.router, prefix="/panda", tags=["panda-chain-proof"])
 api_router.include_router(panda_read.router, prefix="/panda", tags=["panda"])
 api_router.include_router(panda_strategy.router, prefix="/panda", tags=["panda-strategy"])
 api_router.include_router(panda_simulation.router, prefix="/panda", tags=["panda-simulation"])
+api_router.include_router(panda_training.router, prefix="/panda", tags=["panda-training"])
+api_router.include_router(panda_safety.router, prefix="/panda", tags=["panda-safety"])
+api_router.include_router(panda_review.router, prefix="/panda", tags=["panda-review"])
+api_router.include_router(panda_trust.router, prefix="/panda", tags=["panda-trust"])
 api_router.include_router(panda_pools.router, prefix="/panda", tags=["panda-pools"])
 api_router.include_router(market_pools.router, prefix="/market", tags=["market"])
 api_router.include_router(pandas_api.router, prefix="/pandas", tags=["pandas"])

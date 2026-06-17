@@ -36,7 +36,25 @@ module trading_panda::trust_proof {
         timestamp: u64,
     }
 
+    public struct SkillDigestProof has store, drop {
+        skill_version: u64,
+        skill_hash: vector<u8>,
+        timestamp: u64,
+    }
+
+    public struct SkillDigestKey has copy, drop, store {
+        skill_version: u64,
+    }
+
+    public struct SkillDigestSubmitted has copy, drop {
+        panda_id: ID,
+        skill_version: u64,
+        skill_hash: vector<u8>,
+        timestamp: u64,
+    }
+
     const KEY_INDEX: vector<u8> = b"trust_proofs";
+    const KEY_SKILL_INDEX: vector<u8> = b"skill_digests";
     const E_ALREADY_INITIALIZED: u64 = 42;
 
     /// Trust proof index at mint (batch proofs added on submit).
@@ -94,6 +112,56 @@ module trading_panda::trust_proof {
             timestamp,
         });
     }
+
+    public entry fun submit_skill_digest(
+        panda: &mut Panda,
+        _admin: &AdminCap,
+        skill_version: u64,
+        skill_hash: vector<u8>,
+        clock: &Clock,
+        _ctx: &mut TxContext,
+    ) {
+        assert!(vector::length(&skill_hash) == MERKLE_ROOT_LENGTH, E_INVALID_ROOT);
+        assert!(skill_version > 0, E_TRADE_COUNT_MISMATCH);
+
+        let timestamp = clock::timestamp_ms(clock);
+        let key = SkillDigestKey { skill_version };
+        if (dynamic_field::exists(panda::uid(panda), key)) {
+            let _old: SkillDigestProof = dynamic_field::remove(panda::uid_mut(panda), key);
+        };
+        dynamic_field::add(panda::uid_mut(panda), key, SkillDigestProof {
+            skill_version,
+            skill_hash,
+            timestamp,
+        });
+
+        if (!dynamic_field::exists(panda::uid(panda), KEY_SKILL_INDEX)) {
+            dynamic_field::add(panda::uid_mut(panda), KEY_SKILL_INDEX, TrustProofIndex {
+                count: 0,
+                total_verified_trades: 0,
+            });
+        };
+        let index_ref: &mut TrustProofIndex = dynamic_field::borrow_mut(panda::uid_mut(panda), KEY_SKILL_INDEX);
+        index_ref.count = index_ref.count + 1;
+
+        event::emit(SkillDigestSubmitted {
+            panda_id: object::id(panda),
+            skill_version,
+            skill_hash,
+            timestamp,
+        });
+    }
+
+    public fun has_skill_digest(panda: &Panda, skill_version: u64): bool {
+        dynamic_field::exists(panda::uid(panda), SkillDigestKey { skill_version })
+    }
+
+    public fun get_skill_digest(panda: &Panda, skill_version: u64): &SkillDigestProof {
+        dynamic_field::borrow(panda::uid(panda), SkillDigestKey { skill_version })
+    }
+
+    public fun skill_hash(proof: &SkillDigestProof): vector<u8> { proof.skill_hash }
+    public fun skill_version(proof: &SkillDigestProof): u64 { proof.skill_version }
 
     public fun get_latest_proof_index(panda: &Panda): (u64, u64) {
         if (dynamic_field::exists(panda::uid(panda), KEY_INDEX)) {

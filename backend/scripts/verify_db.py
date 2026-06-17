@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify DATABASE_URL connectivity and Sprint 0.2 core tables."""
+"""Verify DATABASE_URL connectivity and core + v3.1 tables."""
 from __future__ import annotations
 
 import asyncio
@@ -35,6 +35,59 @@ CORE_TABLES = (
     "panda_diary",
 )
 
+V31_TABLES = (
+    "panda_vaults",
+    "trading_policies",
+    "panda_accounts",
+    "panda_positions",
+    "order_intents",
+    "ledger_entries",
+    "trade_facts",
+    "trade_reviews",
+    "skill_memories",
+    "skill_versions",
+    "chain_execution_logs",
+    "async_jobs",
+    "outbox_events",
+)
+
+V31_INDEXES = (
+    "idx_panda_vaults_panda",
+    "idx_trading_policies_panda",
+    "idx_panda_accounts_panda",
+    "idx_order_intents_decision_hash",
+    "idx_trade_facts_hash",
+    "idx_async_jobs_idempotency",
+    "idx_chain_execution_logs_digest",
+    "idx_chain_execution_logs_idempotency",
+)
+
+
+async def _table_exists(conn, name: str) -> bool:
+    result = await conn.execute(
+        text(
+            "SELECT EXISTS ("
+            "  SELECT 1 FROM information_schema.tables "
+            "  WHERE table_schema = 'public' AND table_name = :name"
+            ")"
+        ),
+        {"name": name},
+    )
+    return bool(result.scalar())
+
+
+async def _index_exists(conn, name: str) -> bool:
+    result = await conn.execute(
+        text(
+            "SELECT EXISTS ("
+            "  SELECT 1 FROM pg_indexes "
+            "  WHERE schemaname = 'public' AND indexname = :name"
+            ")"
+        ),
+        {"name": name},
+    )
+    return bool(result.scalar())
+
 
 async def main() -> int:
     if not settings.database_url:
@@ -48,21 +101,19 @@ async def main() -> int:
             await conn.execute(text("SELECT 1"))
             print("ping: ok")
 
-            for table in CORE_TABLES:
-                result = await conn.execute(
-                    text(
-                        "SELECT EXISTS ("
-                        "  SELECT 1 FROM information_schema.tables "
-                        "  WHERE table_schema = 'public' AND table_name = :name"
-                        ")"
-                    ),
-                    {"name": table},
-                )
-                exists = result.scalar()
+            for table in (*CORE_TABLES, *V31_TABLES):
+                exists = await _table_exists(conn, table)
                 status = "ok" if exists else "MISSING"
                 print(f"table {table}: {status}")
                 if not exists:
                     return 2
+
+            for index in V31_INDEXES:
+                exists = await _index_exists(conn, index)
+                status = "ok" if exists else "MISSING"
+                print(f"index {index}: {status}")
+                if not exists:
+                    return 3
 
             rev = await conn.execute(
                 text("SELECT version_num FROM alembic_version LIMIT 1")

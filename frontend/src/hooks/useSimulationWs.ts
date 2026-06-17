@@ -10,6 +10,10 @@ export type SimulationWsEvent =
   | { type: "decision"; payload: DecisionLog }
   | { type: "emotion"; payload: Record<string, unknown> }
   | { type: "trade_executed"; payload: TradeRecordApi }
+  | { type: "order_intent"; payload: Record<string, unknown> }
+  | { type: "execution"; payload: Record<string, unknown> }
+  | { type: "policy_rejected"; payload: Record<string, unknown> }
+  | { type: "market_stale"; payload: Record<string, unknown> }
   | { type: "other"; event: string; payload: Record<string, unknown> };
 
 export type UseSimulationWsOptions = {
@@ -43,6 +47,18 @@ function mapServerEvent(event: WsServerEvent): SimulationWsEvent {
   }
   if (event.event === "trade_executed") {
     return { type: "trade_executed", payload: payload as unknown as TradeRecordApi };
+  }
+  if (event.event === "order_intent") {
+    return { type: "order_intent", payload };
+  }
+  if (event.event === "execution") {
+    return { type: "execution", payload };
+  }
+  if (event.event === "policy_rejected") {
+    return { type: "policy_rejected", payload };
+  }
+  if (event.event === "market_stale") {
+    return { type: "market_stale", payload };
   }
   return { type: "other", event: event.event, payload };
 }

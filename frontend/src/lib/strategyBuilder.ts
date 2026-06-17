@@ -46,21 +46,16 @@ export const CONDITION_OPTIONS: Record<
 export const STRATEGY_TEMPLATES: {
   id: string;
   name: string;
+  description: string;
   philosophy: Philosophy;
   rules: Omit<SignalRule, "weight">[];
+  positionPct?: number;
+  stopLossPct?: number;
 }[] = [
   {
-    id: "rsi",
-    name: "RSI 抄底逃顶",
-    philosophy: "contrarian",
-    rules: [
-      { indicator: "RSI", condition: "< 30", threshold: 30, action: "BUY" },
-      { indicator: "RSI", condition: "> 70", threshold: 70, action: "SELL" },
-    ],
-  },
-  {
-    id: "ma",
-    name: "均线趋势",
+    id: "trend-scout",
+    name: "Trend Scout",
+    description: "Follow momentum with MA confirmation.",
     philosophy: "trend_following",
     rules: [
       { indicator: "MA20", condition: "cross_above", action: "BUY" },
@@ -68,19 +63,36 @@ export const STRATEGY_TEMPLATES: {
     ],
   },
   {
+    id: "mean-reversion",
+    name: "Mean Reversion",
+    description: "Buy oversold, sell overbought RSI swings.",
+    philosophy: "contrarian",
+    rules: [
+      { indicator: "RSI", condition: "< 30", threshold: 30, action: "BUY" },
+      { indicator: "RSI", condition: "> 70", threshold: 70, action: "SELL" },
+    ],
+  },
+  {
+    id: "cautious-learner",
+    name: "Cautious Learner",
+    description: "Small entries with tight risk for first practice.",
+    philosophy: "trend_following",
+    positionPct: 0.05,
+    stopLossPct: 0.03,
+    rules: [
+      { indicator: "RSI", condition: "< 35", threshold: 35, action: "BUY" },
+      { indicator: "RSI", condition: "> 65", threshold: 65, action: "SELL" },
+    ],
+  },
+  {
     id: "macd",
-    name: "MACD 趋势",
+    name: "MACD Pulse",
+    description: "MACD cross trend template.",
     philosophy: "trend_following",
     rules: [
       { indicator: "MACD", condition: "golden_cross", action: "BUY" },
       { indicator: "MACD", condition: "death_cross", action: "SELL" },
     ],
-  },
-  {
-    id: "rsi-simple",
-    name: "极简抄底",
-    philosophy: "contrarian",
-    rules: [{ indicator: "RSI", condition: "< 30", threshold: 30, action: "BUY" }],
   },
 ];
 
@@ -119,6 +131,7 @@ export function buildParsedStrategy(params: {
   stopLossPct: number;
   takeProfitPct: number;
   maxDrawdownPct: number;
+  targetPairs?: string[];
 }): ParsedStrategyLayers {
   return {
     philosophy: params.philosophy,
@@ -133,6 +146,7 @@ export function buildParsedStrategy(params: {
       take_profit_pct: params.takeProfitPct,
       max_drawdown_pct: params.maxDrawdownPct,
     },
+    ...(params.targetPairs?.length ? { target_pairs: params.targetPairs } : {}),
   };
 }
 

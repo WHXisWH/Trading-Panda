@@ -1,10 +1,12 @@
 """Load panda + strategy + experience from PostgreSQL for PandaActor."""
 from __future__ import annotations
 
+from typing import Any
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import Panda, Strategy, StrategyHistory
+from app.db.models import Panda, SkillMemory, Strategy, StrategyHistory
 from app.engine.experience_engine import ExperienceEngine
 from app.engine.strategy_ghost import StrategyGhost
 
@@ -38,15 +40,49 @@ async def load_actor_context(session: AsyncSession, panda_id: str) -> dict | Non
         "talent": int(panda.talent),
     }
 
+    strategy_version = 0
+    if strategy_row and strategy_row.created_at:
+        version_result = await session.execute(
+            select(Strategy).where(
+                Strategy.panda_id == panda_id,
+                Strategy.created_at <= strategy_row.created_at,
+            )
+        )
+        strategy_version = len(version_result.scalars().all())
+
     strategy = {
         "philosophy": strategy_row.philosophy if strategy_row else "balanced",
         "proficiency": int(strategy_row.proficiency) if strategy_row else 0,
+        "strategy_version": strategy_version,
+        "skill_version": int(panda.active_skill_version or 0),
         "signal_rules": parsed.get("signal_rules", []),
         "position_sizing": parsed.get("position_sizing", {"value": 0.05}),
         "risk_management": parsed.get("risk_management", {"stop_loss_pct": 0.08}),
         "parsed_json": parsed,
         "strategy_id": strategy_row.id if strategy_row else None,
     }
+
+    skill_memories: list[dict[str, Any]] = []
+    mem_result = await session.execute(
+        select(SkillMemory)
+        .where(
+            SkillMemory.panda_id == panda_id,
+            SkillMemory.status.in_(("supported", "verified")),
+        )
+        .order_by(SkillMemory.version.desc())
+        .limit(5)
+    )
+    for mem in mem_result.scalars().all():
+        skill_memories.append(
+            {
+                "scope": mem.scope,
+                "pair": mem.pair,
+                "market_regime": mem.market_regime,
+                "rule_text": mem.rule_text,
+                "confidence": float(mem.confidence or 0),
+                "version": int(mem.version),
+            }
+        )
 
     max_assets = 1 + personality["focus"] // 25
 
@@ -83,6 +119,7 @@ async def load_actor_context(session: AsyncSession, panda_id: str) -> dict | Non
         "personality": personality,
         "strategy": strategy,
         "experience": experience,
+        "skill_memories": skill_memories,
         "emotion": panda.emotion_state or "focused",
         "max_assets": max_assets,
         "strategy_id": strategy_row.id if strategy_row else None,

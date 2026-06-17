@@ -37,14 +37,29 @@ def test_trade_leaf_is_deterministic():
 
 
 def test_trade_leaf_changes_with_content():
-    t1 = {"id": "1", "action": "BUY", "price": 100}
-    t2 = {"id": "1", "action": "SELL", "price": 100}
+    t1 = {
+        "id": "1",
+        "pair": "DEEP/SUI",
+        "side": "BUY",
+        "fact_hash": hashlib.sha256(b"buy").hexdigest(),
+    }
+    t2 = {
+        "id": "1",
+        "pair": "DEEP/SUI",
+        "side": "SELL",
+        "fact_hash": hashlib.sha256(b"sell").hexdigest(),
+    }
     assert trade_leaf(t1) != trade_leaf(t2)
 
 
 def test_build_leaves_length():
-    trades = [{"id": str(i)} for i in range(5)]
+    trades = [{"id": str(i), "fact_hash": hashlib.sha256(str(i).encode()).hexdigest()} for i in range(5)]
     assert len(build_leaves(trades)) == 5
-    # 50-trade batch produces a stable, single root
-    root = compute_merkle_root(build_leaves([{"id": str(i)} for i in range(50)]))
+    root = compute_merkle_root(build_leaves([{"id": str(i), "fact_hash": hashlib.sha256(str(i).encode()).hexdigest()} for i in range(50)]))
     assert len(root) == 64
+
+
+def test_trade_fact_leaf_alias():
+    fact_hash = hashlib.sha256(b"fact").hexdigest()
+    fact = {"fact_hash": fact_hash}
+    assert trade_leaf(fact) == fact_hash

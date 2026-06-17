@@ -105,6 +105,23 @@
   --z-modal: 50;
   --z-toast: 60;
 
+  /* ========== Product cockpit (Epic 10 — docs/design/visual-system.md) ========== */
+  --color-void: #050604;
+  --color-product-panel: #0b0f0b;
+  --color-product-panel-soft: #11170f;
+  --color-product-line: rgba(225, 186, 92, 0.18);
+  --color-gold: #e1ba5c;
+  --color-gold-soft: #b8954a;
+  --color-neon-green: #6dff90;
+  --color-neon-green-soft: #2d8f55;
+  --color-product-blue: #75d7ff;
+  --color-product-amber: #ffc857;
+  --color-product-red: #ff5f56;
+  --color-product-text: #f6f1df;
+  --color-product-muted: #9ca58f;
+  --gradient-product-void: radial-gradient(120% 80% at 50% -20%, rgba(225, 186, 92, 0.06) 0%, transparent 55%),
+    linear-gradient(180deg, #050604 0%, #0a0d0a 100%);
+
   /* ========== Layout ========== */
   --navbar-height: 48px;
   --page-max-width: 1440px;

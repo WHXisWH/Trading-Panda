@@ -1,4 +1,9 @@
-"""POST simulation start/stop · GET trades — Epic 3 Dashboard."""
+"""Legacy simulation routes — compatibility wrapper for Training Ledger sessions.
+
+v3.1: `POST /simulation/start|stop` and `GET /simulation/status` remain for
+backward compatibility. New execution should route through order_intents,
+ledger_entries, and trade_facts once the hot path migrates (Epic 5+).
+"""
 
 from __future__ import annotations
 
@@ -18,6 +23,7 @@ from app.db.models import Simulation, Trade, User
 from app.engine.actor_manager import actor_manager
 from app.schemas.common import error, success
 from app.schemas.errors import ApiError, ApiErrorCode
+from app.services.agent_wallet import require_active_wallet
 from app.services.pool_catalog import MVP_POOLS, normalize_subscribed_pools
 
 router = APIRouter()
@@ -73,6 +79,11 @@ async def start_simulation(
 ):
     try:
         panda = await _load_owned_panda(panda_id, user, db)
+    except ApiError as exc:
+        return JSONResponse(status_code=exc.status_code, content=error(exc.code.value, exc.message))
+
+    try:
+        await require_active_wallet(panda, db)
     except ApiError as exc:
         return JSONResponse(status_code=exc.status_code, content=error(exc.code.value, exc.message))
 
@@ -217,6 +228,9 @@ async def simulation_status(
         payload["trade_count"] = actor_state.get("trade_count", 0)
         payload["positions"] = actor_state.get("positions", {})
         payload["emotion"] = actor_state.get("emotion")
+        payload["policy_version"] = actor_state.get("policy_version")
+        payload["last_order_intent"] = actor_state.get("last_order_intent")
+        payload["last_trade_fact"] = actor_state.get("last_trade_fact")
     elif sim:
         payload["equity"] = (
             float(sim.final_equity) if sim.final_equity is not None else initial_capital

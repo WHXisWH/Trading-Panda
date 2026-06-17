@@ -44,3 +44,51 @@ class EventPublisher:
             f"panda:{panda_id}:trade",
             {"event": "trade_executed", "payload": payload},
         )
+
+    async def publish_order_intent(self, panda_id: str, payload: dict[str, Any]) -> None:
+        await self.publish(
+            f"panda:{panda_id}:order_intent",
+            {"event": "order_intent", "payload": payload},
+        )
+
+    async def publish_execution(self, panda_id: str, payload: dict[str, Any]) -> None:
+        await self.publish(
+            f"panda:{panda_id}:execution",
+            {"event": "execution", "payload": payload},
+        )
+
+    async def publish_review(self, panda_id: str, payload: dict[str, Any]) -> None:
+        await self.publish(
+            f"panda:{panda_id}:review",
+            {"event": "review", "payload": payload},
+        )
+
+    async def publish_policy_rejected(self, panda_id: str, payload: dict[str, Any]) -> None:
+        await self.publish(
+            f"panda:{panda_id}:policy",
+            {"event": "policy_rejected", "payload": payload},
+        )
+
+    async def publish_market_stale(self, panda_id: str, payload: dict[str, Any]) -> None:
+        await self.publish(
+            f"panda:{panda_id}:market",
+            {"event": "market_stale", "payload": payload},
+        )
+
+    async def publish_policy_paused(self, panda_id: str, payload: dict[str, Any]) -> None:
+        await self.publish(
+            f"panda:{panda_id}:policy",
+            {"event": "policy_paused", "payload": payload},
+        )
+
+    async def publish_review(self, panda_id: str, payload: dict[str, Any]) -> None:
+        await self.publish(
+            f"panda:{panda_id}:review",
+            {"event": "review_completed", "payload": payload},
+        )
+
+    async def publish_skill(self, panda_id: str, payload: dict[str, Any]) -> None:
+        await self.publish(
+            f"panda:{panda_id}:skill",
+            {"event": "skill_updated", "payload": payload},
+        )

@@ -66,7 +66,8 @@ market-monitor/
 4. 新 K 线或 `stale` 时节流 `PUBLISH market:tick:{pair}`。
 5. 定期 `market:heartbeat`（默认 30s）。
 6. **`GET /candles/{pool}`**：用 **`FILLS_LOOKBACK_SEC`**（默认 30d）供前端历史图；**勿**依赖 DeepBook `/ohclv`（常为空）。
-7. **`GET /health`**：含 `fills_poll_lookback_sec`、各池 `error`（`no_fills_ever` / `no_fills_in_poll_window` 等）。
+7. **`GET /health`**：含 `network`、`ranked_pairs`、各池 `health`/`freshness_sec`/`error`。
+8. **`GET /pairs`**：流动性排名与 pair metadata（volume、spread、depth、launch priority）。
 
 ## 环境变量
 

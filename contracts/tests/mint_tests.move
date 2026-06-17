@@ -88,4 +88,36 @@ module trading_panda::mint_tests {
         };
         scenario.end();
     }
+
+    #[test]
+    fun test_minted_panda_identity_only_no_trading_permission() {
+        let minter = @0xC;
+        let mut scenario = test_scenario::begin(@0x0);
+        random::create_for_testing(scenario.ctx());
+        seed_random(&mut scenario, @0x0);
+        scenario.next_tx(minter);
+        {
+            let random_state = scenario.take_shared<Random>();
+            let ctx = scenario.ctx();
+            let mut registry = panda_registry::new_for_testing(ctx);
+            let clock = clock::create_for_testing(ctx);
+            mint::mint(&mut registry, &random_state, &clock, ctx);
+            test_scenario::return_shared(random_state);
+            panda_registry::destroy_for_testing(registry);
+            clock::destroy_for_testing(clock);
+        };
+        scenario.next_tx(minter);
+        {
+            let panda_obj = scenario.take_from_sender<panda::Panda>();
+            assert!(!panda::is_trading(&panda_obj), 17);
+            let (b, p, i, f, c) = panda::get_personality(&panda_obj);
+            assert!(b == panda::boldness(&panda_obj), 18);
+            assert!(p == panda::patience(&panda_obj), 19);
+            assert!(i == panda::intuition(&panda_obj), 20);
+            assert!(f == panda::focus(&panda_obj), 21);
+            assert!(c == panda::contrarian(&panda_obj), 22);
+            panda::destroy_for_testing(panda_obj);
+        };
+        scenario.end();
+    }
 }

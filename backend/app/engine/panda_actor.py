@@ -5,20 +5,20 @@ import asyncio
 import logging
 import random
 from dataclasses import dataclass, field
-from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import select, update
 
 from app.config import settings
 from app.db.database import AsyncSessionLocal, ensure_engine, ensure_engine
-from app.db.models import EmotionLog, Panda, Simulation, Trade
+from app.db.models import EmotionLog, Panda, PandaVault, TradingPolicy
+from app.services.policy_compatibility import PolicyMirror, policy_mirror_from_row
+from app.services.trade_fact_writer import TradeFactWriter
 from app.engine.decision_pipeline import DecisionPipeline, DecisionResult
 from app.engine.emotion_state_machine import EmotionContext, EmotionStateMachine
 from app.engine.event_publisher import EventPublisher
 from app.engine.experience_engine import ExperienceEngine
 from app.engine.market_event import MarketEvent
-from app.engine.merkle_worker import persist_merkle_batch
 from app.engine.panda_loader import load_actor_context
 from app.engine.strategy_ghost import GhostManager
 from app.integrations.deepseek import agent_coordinator
@@ -34,12 +34,19 @@ class PandaActorState:
     emotion: str = "focused"
     trade_count: int = 0
     equity: float = 10_000.0
+    initial_capital: float = 10_000.0
+    vault_id: str | None = None
+    policy_id: str | None = None
+    policy_mirror: PolicyMirror | None = None
     personality: dict[str, Any] = field(default_factory=dict)
     active_strategy: dict[str, Any] = field(default_factory=dict)
     experience: dict[str, Any] = field(default_factory=dict)
+    skill_memories: list[dict[str, Any]] = field(default_factory=list)
     subscribed_assets: list[str] = field(default_factory=list)
     positions: dict[str, float] = field(default_factory=dict)
     last_decision: dict[str, Any] | None = None
+    last_order_intent: dict[str, Any] | None = None
+    last_trade_fact: dict[str, Any] | None = None
 
 
 class PandaActor:
@@ -64,6 +71,7 @@ class PandaActor:
         self._experience_engine = ExperienceEngine(panda_id)
         self._ghosts = GhostManager()
         self._publisher = publisher
+        self._trade_writer = TradeFactWriter()
         self._running = False
         self._tick_queue: asyncio.Queue[MarketEvent] = asyncio.Queue(maxsize=64)
         self._pending_delay: dict[str, Any] | None = None
@@ -75,11 +83,29 @@ class PandaActor:
             return False
         async with AsyncSessionLocal() as session:
             ctx = await load_actor_context(session, self.state.panda_id)
+            panda_row = await session.get(Panda, self.state.panda_id)
+            if panda_row and panda_row.active_policy_id:
+                policy_row = await session.get(TradingPolicy, panda_row.active_policy_id)
+                vault_row = (
+                    await session.get(PandaVault, panda_row.active_vault_id)
+                    if panda_row.active_vault_id
+                    else None
+                )
+                if policy_row:
+                    from app.services.agent_wallet import is_mirror_synced
+
+                    self.state.policy_id = policy_row.id
+                    self.state.vault_id = panda_row.active_vault_id
+                    self.state.policy_mirror = policy_mirror_from_row(
+                        policy_row,
+                        mirror_synced=is_mirror_synced(vault_row, policy_row),
+                    )
         if ctx is None:
             return False
         self.state.personality = ctx["personality"]
         self.state.active_strategy = ctx["strategy"]
         self.state.experience = ctx["experience"]
+        self.state.skill_memories = ctx.get("skill_memories") or []
         self.state.emotion = ctx["emotion"]
         self._ghosts = GhostManager()
         for ghost in ctx.get("ghosts") or []:
@@ -102,7 +128,7 @@ class PandaActor:
         self.state.subscribed_assets = self.state.subscribed_assets[:max_assets]
 
     async def enqueue_tick(self, event: MarketEvent) -> None:
-        if not self.accepts_asset(event.asset):
+        if not self.accepts_asset(event.asset) and not self.accepts_asset(event.pair):
             return
         try:
             self._tick_queue.put_nowait(event)
@@ -131,6 +157,10 @@ class PandaActor:
         self._running = False
 
     async def _tick(self, event: MarketEvent) -> None:
+        if not event.is_tradeable():
+            await self._apply_stale_hold(event)
+            return
+
         if self._pending_delay is not None:
             self._pending_delay["remaining_delay"] -= 1
             if self._pending_delay["remaining_delay"] > 0:
@@ -151,6 +181,7 @@ class PandaActor:
             ghost_weight=ghost_weight,
             ghost_strategy=ghost_strategy,
             positions=self.state.positions,
+            skill_memories=self.state.skill_memories,
         )
 
         if result.entry_delay > 0 and result.zone == "EXECUTE":
@@ -162,6 +193,28 @@ class PandaActor:
             return
 
         await self._apply_decision(event, result)
+
+    async def _apply_stale_hold(self, event: MarketEvent) -> None:
+        self.state.last_decision = {
+            "action": "HOLD",
+            "final_score": 0.0,
+            "zone": "OBSERVE",
+            "steps": [],
+            "asset": event.asset,
+            "price": event.price,
+            "timestamp": event.timestamp,
+            "market_stale": True,
+            "health": event.health,
+        }
+        if self._publisher:
+            await self._publisher.publish_decision(
+                self.state.panda_id,
+                self.state.last_decision,
+            )
+            await self._publisher.publish_market_stale(
+                self.state.panda_id,
+                {"health": event.health, "pair": event.pair, "asset": event.asset},
+            )
 
     async def _apply_decision(self, event: MarketEvent, result: DecisionResult) -> None:
         if result.zone == "OBSERVE" and self.state.speed != "instant":
@@ -211,15 +264,13 @@ class PandaActor:
 
         if result.zone == "EXECUTE":
             await self._execute_trade(event, result)
-        elif result.zone == "OBSERVE":
+        elif result.zone in ("OBSERVE", "IGNORE"):
+            await self._persist_hold_intent(event, result)
             self._emotion_ctx.idle_count += 1
             new_emotion = self._emotion_machine.transition(self._emotion_ctx, "idle")
             await self._update_emotion(new_emotion, "idle")
-        else:
-            self._emotion_ctx.idle_count += 1
-            self._emotion_machine.transition(self._emotion_ctx, "idle")
 
-    async def _execute_trade(self, event: MarketEvent, result: DecisionResult) -> None:
+    def _position_sizing(self, result: DecisionResult) -> tuple[float, float]:
         sizing = self.state.active_strategy.get("position_sizing", {})
         risk = self.state.active_strategy.get("risk_management", {})
         base_pct = float(sizing.get("value", sizing.get("max_position_pct", 0.05)))
@@ -232,9 +283,97 @@ class PandaActor:
             float(risk.get("stop_loss_pct", risk.get("stopLoss", 0.08)))
             * result.emotion_stoploss_mod,
         )
+        return position_pct, stop_loss
 
-        pnl_pct = self._simulate_pnl(event, result.action, position_pct, stop_loss)
-        self.state.equity *= 1 + pnl_pct
+    async def _persist_hold_intent(self, event: MarketEvent, result: DecisionResult) -> None:
+        ensure_engine()
+        if AsyncSessionLocal is None:
+            return
+        hold_result = DecisionResult(
+            final_score=result.final_score,
+            action="HOLD",
+            steps=result.steps,
+            zone=result.zone,
+            entry_delay=result.entry_delay,
+            entry_threshold=result.entry_threshold,
+            position_factor=result.position_factor,
+            emotion_position_mod=result.emotion_position_mod,
+            emotion_stoploss_mod=result.emotion_stoploss_mod,
+            signal_direction=0,
+        )
+        async with AsyncSessionLocal() as session:
+            commit = await self._trade_writer.commit_tick(
+                session,
+                panda_id=self.state.panda_id,
+                vault_id=self.state.vault_id,
+                policy_id=self.state.policy_id,
+                policy=self.state.policy_mirror,
+                simulation_id=self.state.simulation_id,
+                strategy_id=self.state.active_strategy.get("strategy_id"),
+                event=event,
+                result=hold_result,
+                emotion=self.state.emotion,
+                strategy_version=int(self.state.active_strategy.get("strategy_version", 0)),
+                skill_version=int(self.state.active_strategy.get("skill_version", 0)),
+                initial_capital=self.state.initial_capital,
+                position_pct=0.0,
+                stop_loss=0.0,
+                publisher=self._publisher,
+            )
+        self.state.last_order_intent = commit.order_intent_payload
+
+    async def _execute_trade(self, event: MarketEvent, result: DecisionResult) -> None:
+        position_pct, stop_loss = self._position_sizing(result)
+
+        ensure_engine()
+        if AsyncSessionLocal is None:
+            return
+
+        async with AsyncSessionLocal() as session:
+            commit = await self._trade_writer.commit_tick(
+                session,
+                panda_id=self.state.panda_id,
+                vault_id=self.state.vault_id,
+                policy_id=self.state.policy_id,
+                policy=self.state.policy_mirror,
+                simulation_id=self.state.simulation_id,
+                strategy_id=self.state.active_strategy.get("strategy_id"),
+                event=event,
+                result=result,
+                emotion=self.state.emotion,
+                strategy_version=int(self.state.active_strategy.get("strategy_version", 0)),
+                skill_version=int(self.state.active_strategy.get("skill_version", 0)),
+                initial_capital=self.state.initial_capital,
+                position_pct=position_pct,
+                stop_loss=stop_loss,
+                publisher=self._publisher,
+            )
+
+        self.state.last_order_intent = commit.order_intent_payload
+        self.state.last_trade_fact = commit.trade_fact_payload
+
+        if not commit.executed:
+            if commit.rejection_reason and self._publisher:
+                await self._publisher.publish_policy_rejected(
+                    self.state.panda_id,
+                    {
+                        "order_intent_id": commit.order_intent_id,
+                        "reason": commit.rejection_reason,
+                    },
+                )
+            return
+
+        pnl_pct = 0.0
+        if commit.trade_fact_payload:
+            realized = commit.trade_fact_payload.get("realized_pnl")
+            if realized is not None:
+                pnl_pct = float(realized) / max(self.state.initial_capital, 1.0)
+
+        self.state.equity = float(
+            (commit.trade_fact_payload or {}).get("ledger_snapshot_after", {}).get(
+                "equity", self.state.equity
+            )
+        )
         self._peak_equity = max(self._peak_equity, self.state.equity)
         drawdown = 1 - self.state.equity / self._peak_equity if self._peak_equity else 0
 
@@ -252,25 +391,42 @@ class PandaActor:
 
         self.state.trade_count += 1
         self._ghosts.on_trade()
-        qty = position_pct * self.state.equity / max(event.price, 1e-9)
-        if result.action == "BUY":
-            self.state.positions[event.asset] = self.state.positions.get(event.asset, 0) + qty
-        elif result.action == "SELL":
-            self.state.positions[event.asset] = max(
-                0, self.state.positions.get(event.asset, 0) - qty
+        ledger_positions = (
+            (commit.trade_fact_payload or {})
+            .get("ledger_snapshot_after", {})
+            .get("positions", [])
+        )
+        for pos in ledger_positions:
+            self.state.positions[pos["asset"]] = pos["quantity"]
+
+        if commit.executed and commit.trade_fact_payload:
+            ensure_engine()
+            if AsyncSessionLocal is not None:
+                async with AsyncSessionLocal() as session:
+                    await self._experience_engine.record_trade(
+                        session,
+                        {
+                            "asset": event.asset,
+                            "pnl_pct": pnl_pct,
+                            "trade_id": commit.trade_fact_id,
+                        },
+                        market=event.to_market_dict(),
+                    )
+                    await session.commit()
+
+        if self._publisher and commit.trade_fact_payload:
+            await self._publisher.publish_trade_executed(
+                self.state.panda_id,
+                {
+                    **commit.trade_fact_payload,
+                    "order_intent_id": commit.order_intent_id,
+                    "simulation_id": self.state.simulation_id,
+                    "pair": event.pair,
+                },
             )
 
-        await self._persist_trade(event, result, position_pct, pnl_pct, stop_loss)
-
-    def _simulate_pnl(
-        self, event: MarketEvent, action: str, position_pct: float, stop_loss: float
-    ) -> float:
-        """MVP paper trade — bias from RSI mean reversion + noise."""
-        edge = (50 - event.rsi) / 500
-        if action == "SELL":
-            edge = -edge
-        noise = self._pipeline._rng.uniform(-stop_loss, stop_loss)
-        return (edge + noise) * position_pct
+        if self.state.trade_count % settings.merkle_batch_size == 0:
+            await self._enqueue_merkle_batch()
 
     async def _update_emotion(self, new_state: str, trigger: str) -> None:
         if new_state == self.state.emotion:
@@ -304,127 +460,30 @@ class PandaActor:
             )
             await session.commit()
 
-    async def _persist_trade(
-        self,
-        event: MarketEvent,
-        result: DecisionResult,
-        position_pct: float,
-        pnl_pct: float,
-        stop_loss: float,
-    ) -> None:
-        ensure_engine()
-        if AsyncSessionLocal is None:
-            return
-        strategy_id = self.state.active_strategy.get("strategy_id")
-        if not strategy_id:
-            return
-
-        async with AsyncSessionLocal() as session:
-            trade = Trade(
-                panda_id=self.state.panda_id,
-                strategy_id=strategy_id,
-                simulation_id=self.state.simulation_id,
-                asset=event.asset[:5],
-                action=result.action,
-                price=Decimal(str(event.price)),
-                quantity=Decimal(str(position_pct * self.state.equity / max(event.price, 1))),
-                position_size_pct=Decimal(str(position_pct)),
-                final_score=Decimal(str(round(result.final_score, 4))),
-                emotion_at_trade=self.state.emotion,
-                proficiency_at_trade=int(
-                    self.state.active_strategy.get("proficiency", 0)
-                ),
-                pnl_pct=Decimal(str(round(pnl_pct, 6))),
-                decision_details={
-                    "steps": result.steps,
-                    "zone": result.zone,
-                    "entry_threshold": round(result.entry_threshold, 4),
-                },
-            )
-            session.add(trade)
-            await session.flush()
-
-            sim_result = await session.execute(
-                select(Simulation).where(Simulation.id == self.state.simulation_id)
-            )
-            sim = sim_result.scalar_one_or_none()
-            if sim:
-                sim.total_trades = int(sim.total_trades or 0) + 1
-                sim.final_equity = Decimal(str(round(self.state.equity, 2)))
-
-            await self._experience_engine.record_trade(
-                session,
-                {"asset": event.asset, "pnl_pct": pnl_pct, "trade_id": trade.id},
-                market=event.to_market_dict(),
-            )
-            await session.commit()
-
-            if self._publisher:
-                await self._publisher.publish_trade_executed(
-                    self.state.panda_id,
-                    {
-                        "id": trade.id,
-                        "panda_id": self.state.panda_id,
-                        "simulation_id": self.state.simulation_id,
-                        "strategy_id": strategy_id,
-                        "asset": trade.asset,
-                        "action": trade.action,
-                        "price": float(trade.price),
-                        "quantity": float(trade.quantity),
-                        "position_size_pct": float(trade.position_size_pct),
-                        "final_score": float(trade.final_score),
-                        "emotion_at_trade": trade.emotion_at_trade,
-                        "pnl_pct": float(trade.pnl_pct) if trade.pnl_pct is not None else None,
-                        "decision_details": trade.decision_details,
-                        "created_at": trade.created_at.isoformat() if trade.created_at else None,
-                        "pair": event.pair,
-                    },
-                )
-
-        if self.state.trade_count % settings.merkle_batch_size == 0:
-            await self._persist_merkle_batch()
-
-    async def _persist_merkle_batch(self) -> None:
-        """Every MERKLE_BATCH_SIZE trades: build a Merkle root over the batch
-        and persist a merkle_roots row. On-chain submission is deferred."""
+    async def _enqueue_merkle_batch(self) -> None:
+        """Every MERKLE_BATCH_SIZE trades: enqueue durable Merkle batch job."""
         from sqlalchemy.exc import OperationalError, ProgrammingError
 
+        from app.workers.merkle_worker import enqueue_merkle_batch_job
+
         ensure_engine()
         if AsyncSessionLocal is None:
             return
-        batch_size = settings.merkle_batch_size
-        batch_index = self.state.trade_count // batch_size
+        batch_index = self.state.trade_count // settings.merkle_batch_size
         try:
             async with AsyncSessionLocal() as session:
-                rows = (
-                    await session.execute(
-                        select(Trade)
-                        .where(Trade.panda_id == self.state.panda_id)
-                        .order_by(Trade.created_at.desc())
-                        .limit(batch_size)
-                    )
-                ).scalars().all()
-                trades = [
-                    {
-                        "id": t.id,
-                        "action": t.action,
-                        "price": t.price,
-                        "quantity": t.quantity,
-                        "final_score": t.final_score,
-                        "pnl_pct": t.pnl_pct,
-                    }
-                    for t in reversed(rows)
-                ]
-                root = await persist_merkle_batch(
-                    session, self.state.panda_id, batch_index, trades
+                await enqueue_merkle_batch_job(
+                    session,
+                    panda_id=self.state.panda_id,
+                    batch_index=batch_index,
+                    trade_count=self.state.trade_count,
                 )
                 await session.commit()
                 logger.info(
-                    "Merkle batch %d for panda %s: %d trades root=%s",
+                    "Merkle batch %d queued for panda %s (%d trades)",
                     batch_index,
                     self.state.panda_id,
-                    len(trades),
-                    root[:12],
+                    self.state.trade_count,
                 )
         except (ProgrammingError, OperationalError):
             pass
@@ -439,5 +498,10 @@ class PandaActor:
             "speed": self.state.speed,
             "subscribed_assets": self.state.subscribed_assets,
             "last_decision": self.state.last_decision,
+            "last_order_intent": self.state.last_order_intent,
+            "last_trade_fact": self.state.last_trade_fact,
             "positions": self.state.positions,
+            "policy_version": (
+                self.state.policy_mirror.version if self.state.policy_mirror else None
+            ),
         }

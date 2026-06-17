@@ -53,6 +53,13 @@ async def health() -> dict:
     return monitor.health_payload()
 
 
+@app.get("/pairs")
+async def list_pairs() -> dict:
+    if monitor is None:
+        raise HTTPException(status_code=503, detail="monitor not ready")
+    return monitor.pairs_payload()
+
+
 def _normalize_pool_param(pool: str) -> str:
     """Accept DEEP/SUI path segment or DEEP%2FSUI (decoded by Starlette)."""
     return unquote(pool.strip())

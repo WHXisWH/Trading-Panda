@@ -58,6 +58,7 @@ class ActorManager:
             actor.state.subscribed_assets = list(subscribed_pools)
         if initial_capital is not None and initial_capital > 0:
             actor.state.equity = float(initial_capital)
+            actor.state.initial_capital = float(initial_capital)
             actor._peak_equity = float(initial_capital)
         self._actors[panda_id] = actor
         self._tasks[panda_id] = asyncio.create_task(actor.run(), name=f"actor-{panda_id}")
@@ -83,8 +84,10 @@ class ActorManager:
         return actor.snapshot()
 
     async def broadcast_market_tick(self, event: MarketEvent) -> None:
+        if not self._actors:
+            return
         for actor in list(self._actors.values()):
-            if actor.accepts_asset(event.asset):
+            if actor.accepts_asset(event.asset) or actor.accepts_asset(event.pair):
                 await actor.enqueue_tick(event)
 
     def set_subscribed_pools(self, panda_id: str, pools: list[str]) -> None:

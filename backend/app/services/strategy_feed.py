@@ -7,7 +7,7 @@ import json
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
@@ -19,11 +19,19 @@ from app.schemas.errors import ApiError, ApiErrorCode
 from app.schemas.strategy import (
     InvalidRuleDetail,
     ParsedStrategyLayers,
+    PolicyConflictDetail,
     StrategyFeedRequest,
     StrategyValidateData,
     StrategyValidatePreviewSignal,
 )
 from app.services.personality_match import calc_personality_match, panda_reaction_for_match
+from app.services.policy_compatibility import (
+    check_policy_compatibility,
+    compatibility_to_dict,
+    load_active_trading_policy,
+    load_panda_fallback_pairs,
+    resolve_target_pairs,
+)
 from app.services.strategy_rate_limit import check_llm_rate_limit
 
 DEFAULT_MARKET_SNAPSHOT: dict[str, Any] = {
@@ -157,6 +165,9 @@ def validate_strategy_body(
     body: StrategyFeedRequest,
     *,
     market_snapshot: dict[str, Any] | None = None,
+    policy_mirror=None,
+    fallback_pairs: list[str] | None = None,
+    initial_capital: float = 10_000.0,
 ) -> StrategyValidateData:
     if body.raw_text is None and body.parsed is None:
         return StrategyValidateData(
@@ -213,12 +224,90 @@ def validate_strategy_body(
 
     market = market_snapshot or DEFAULT_MARKET_SNAPSHOT
     preview = build_preview_signal(parsed, market)
+    warnings = collect_warnings(parsed)
+
+    target_pairs = resolve_target_pairs(parsed, fallback_pairs=fallback_pairs)
+    policy_result = check_policy_compatibility(
+        parsed,
+        policy_mirror,
+        target_pairs=target_pairs,
+        initial_capital=initial_capital,
+    )
+    if policy_mirror and not policy_result.compatible:
+        warnings.append(policy_result.summary or "Strategy conflicts with TradingPolicy.")
+
+    valid = True
+    if policy_mirror is not None:
+        valid = policy_result.compatible
+
     return StrategyValidateData(
-        valid=True,
+        valid=valid,
         compiled_count=compiled_count,
         invalid_rules=[],
         preview_signal=preview,
-        warnings=collect_warnings(parsed),
+        warnings=warnings,
+        policy_compatible=policy_result.compatible if policy_mirror else None,
+        policy_version=policy_result.policy_version,
+        policy_paused=policy_result.policy_paused,
+        policy_summary=policy_result.summary,
+        allowed_pairs=policy_result.allowed_pairs,
+        blocked_pairs=policy_result.blocked_pairs,
+        target_pairs=policy_result.target_pairs,
+        policy_conflicts=policy_result.conflicts,
+    )
+
+
+async def validate_strategy_for_panda(
+    panda_id: str,
+    body: StrategyFeedRequest,
+    db: AsyncSession,
+    *,
+    market_snapshot: dict[str, Any] | None = None,
+    initial_capital: float = 10_000.0,
+) -> StrategyValidateData:
+    policy_mirror = await load_active_trading_policy(db, panda_id)
+    fallback_pairs = await load_panda_fallback_pairs(db, panda_id)
+    return validate_strategy_body(
+        body,
+        market_snapshot=market_snapshot,
+        policy_mirror=policy_mirror,
+        fallback_pairs=fallback_pairs,
+        initial_capital=initial_capital,
+    )
+
+
+async def next_strategy_version(panda_id: str, db: AsyncSession) -> int:
+    result = await db.execute(
+        select(func.count()).select_from(Strategy).where(Strategy.panda_id == panda_id)
+    )
+    return int(result.scalar() or 0) + 1
+
+
+async def load_ghost_summary(panda_id: str, db: AsyncSession) -> dict[str, Any] | None:
+    result = await db.execute(
+        select(StrategyHistory)
+        .where(StrategyHistory.panda_id == panda_id)
+        .order_by(StrategyHistory.switched_at.desc())
+        .limit(1)
+    )
+    ghost = result.scalar_one_or_none()
+    if ghost is None:
+        return None
+    weight = float(ghost.ghost_weight or 0)
+    trades = int(ghost.trades_since_switch or 0)
+    return {
+        "ghost_weight": round(weight, 4),
+        "trades_since_switch": trades,
+        "expected_decay_trades": 50,
+        "summary": "Old habits may fade over the next trades as the Panda practices the new strategy.",
+    }
+
+
+def _raise_policy_conflicts(conflicts: list[PolicyConflictDetail]) -> None:
+    raise ApiError(
+        ApiErrorCode.STRATEGY_POLICY_CONFLICT,
+        conflicts[0].message if conflicts else "Strategy conflicts with TradingPolicy",
+        policy_conflicts=[c.model_dump() for c in conflicts],
     )
 
 
@@ -238,8 +327,20 @@ async def feed_strategy(
     parsed, user_raw = await resolve_parsed_layers(body, user_id)
     body.validate_for_feed()
 
+    policy_mirror = await load_active_trading_policy(db, panda.id)
+    fallback_pairs = await load_panda_fallback_pairs(db, panda.id)
+    target_pairs = resolve_target_pairs(parsed, fallback_pairs=fallback_pairs)
+    policy_result = check_policy_compatibility(
+        parsed,
+        policy_mirror,
+        target_pairs=target_pairs,
+    )
+    if policy_mirror is not None and not policy_result.compatible:
+        _raise_policy_conflicts(policy_result.conflicts)
+
     strategy_hash = strategy_hash_from_parsed(parsed)
     raw_text = (user_raw or "").strip() or summarize_parsed(parsed)
+    version = await next_strategy_version(panda.id, db)
 
     old_result = await db.execute(
         select(Strategy).where(Strategy.panda_id == panda.id, Strategy.is_active == True)
@@ -286,6 +387,7 @@ async def feed_strategy(
 
     return {
         "strategy_id": strategy.id,
+        "version": version,
         "raw_text": raw_text,
         "parsed": parsed_dict,
         "strategy_hash": strategy_hash,
@@ -293,6 +395,9 @@ async def feed_strategy(
         "personality_match": personality_match,
         "previous_strategy_shadow": previous_shadow,
         "panda_reaction": panda_reaction_for_match(personality_match, parsed.philosophy),
+        "policy_version": policy_result.policy_version,
+        "policy_compatible": policy_result.compatible if policy_mirror else None,
+        "target_pairs": policy_result.target_pairs,
     }
 
 
@@ -311,9 +416,28 @@ async def get_active_strategy_record(
     panda = panda_result.scalar_one_or_none()
     parsed = ParsedStrategyLayers.model_validate(strategy.parsed_json)
     match = calc_personality_match(panda, parsed) if panda else 50
+    version_result = await db.execute(
+        select(func.count())
+        .select_from(Strategy)
+        .where(Strategy.panda_id == panda_id, Strategy.created_at <= strategy.created_at)
+    )
+    version = int(version_result.scalar() or 1)
+    policy_mirror = await load_active_trading_policy(db, panda_id)
+    ghost_summary = await load_ghost_summary(panda_id, db)
+    policy_payload = compatibility_to_dict(
+        check_policy_compatibility(
+            parsed,
+            policy_mirror,
+            target_pairs=resolve_target_pairs(
+                parsed,
+                fallback_pairs=await load_panda_fallback_pairs(db, panda_id),
+            ),
+        )
+    )
 
     return {
         "strategy_id": strategy.id,
+        "version": version,
         "raw_text": strategy.raw_text,
         "parsed": strategy.parsed_json,
         "strategy_hash": strategy.strategy_hash,
@@ -321,4 +445,6 @@ async def get_active_strategy_record(
         "is_active": strategy.is_active,
         "personality_match": match,
         "created_at": strategy.created_at.isoformat() if strategy.created_at else None,
+        "ghost_influence": ghost_summary,
+        **policy_payload,
     }

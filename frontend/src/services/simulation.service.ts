@@ -29,6 +29,9 @@ export interface SimulationStatusResult {
   trade_count?: number;
   positions?: Record<string, number>;
   emotion?: string;
+  policy_version?: number | null;
+  last_order_intent?: Record<string, unknown> | null;
+  last_trade_fact?: Record<string, unknown> | null;
 }
 
 async function parseError(res: Response, json: ApiResult<unknown>): Promise<never> {

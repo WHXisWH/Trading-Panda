@@ -51,6 +51,7 @@ class ParsedStrategyLayers(BaseModel):
     position_sizing: PositionSizingLayers
     signal_rules: list[SignalRule] = Field(..., min_length=1, max_length=MAX_SIGNAL_RULES)
     risk_management: RiskManagementLayers
+    target_pairs: list[str] = Field(default_factory=list, max_length=8)
 
     def compiled_rule_count(self) -> int:
         count, _ = validate_signal_rules(self.to_rule_dicts())
@@ -133,9 +134,24 @@ class StrategyValidatePreviewSignal(BaseModel):
     matched_rule_indexes: list[int] = Field(default_factory=list)
 
 
+class PolicyConflictDetail(BaseModel):
+    field: str
+    code: str
+    message: str
+    value: Any | None = None
+
+
 class StrategyValidateData(BaseModel):
     valid: bool
     compiled_count: int
     invalid_rules: list[InvalidRuleDetail] = Field(default_factory=list)
     preview_signal: StrategyValidatePreviewSignal | None = None
     warnings: list[str] = Field(default_factory=list)
+    policy_compatible: bool | None = None
+    policy_version: int | None = None
+    policy_paused: bool = False
+    policy_summary: str | None = None
+    allowed_pairs: list[str] = Field(default_factory=list)
+    blocked_pairs: list[str] = Field(default_factory=list)
+    target_pairs: list[str] = Field(default_factory=list)
+    policy_conflicts: list[PolicyConflictDetail] = Field(default_factory=list)

@@ -80,6 +80,7 @@ class DecisionPipeline:
         ghost_strategy: dict[str, Any] | None = None,
         positions: dict[str, float] | None = None,
         social_signal: float = 0.0,
+        skill_memories: list[dict[str, Any]] | None = None,
     ) -> DecisionResult:
         ctx = PipelineContext()
         steps: list[dict] = []
@@ -92,7 +93,9 @@ class DecisionPipeline:
         s_prof = self._step2_proficiency_noise(s_raw, strategy, personality)
         steps.append({"step": 2, "name": "熟练度噪声", "score": s_prof})
 
-        s_exp = self._step3_experience(s_prof, market_data, experience, exp_engine)
+        s_exp = self._step3_experience(
+            s_prof, market_data, experience, exp_engine, skill_memories
+        )
         steps.append({"step": 3, "name": "经验修正", "score": s_exp})
 
         s_fuse = self._step4_fusion(
@@ -181,9 +184,11 @@ class DecisionPipeline:
         market: dict,
         experience: dict,
         exp_engine: ExperienceEngine,
+        skill_memories: list[dict[str, Any]] | None = None,
     ) -> float:
         asset = market.get("asset", "BTC")
         regime = market.get("market_regime", "unknown")
+        pair = market.get("pair") or market.get("pool")
         pattern_hash = exp_engine.compute_pattern_hash(market)
         correction = 0.0
         correction += exp_engine.pattern_correction(pattern_hash, asset, experience)
@@ -191,7 +196,30 @@ class DecisionPipeline:
         signal_type = exp_engine.classify_signal_type(market)
         correction += exp_engine.mistake_penalty(signal_type, experience)
         correction += exp_engine.cycle_bonus(regime, experience)
+        correction += self._skill_memory_correction(skill_memories or [], pair, regime)
         return s_prof + correction
+
+    def _skill_memory_correction(
+        self,
+        skill_memories: list[dict[str, Any]],
+        pair: str | None,
+        regime: str,
+    ) -> float:
+        if not skill_memories:
+            return 0.0
+        boost = 0.0
+        for mem in skill_memories:
+            confidence = float(mem.get("confidence", 0))
+            if confidence <= 0:
+                continue
+            mem_pair = mem.get("pair")
+            mem_regime = mem.get("market_regime")
+            if mem_pair and pair and str(mem_pair).upper() != str(pair).upper():
+                continue
+            if mem_regime and mem_regime != regime:
+                continue
+            boost += min(0.05, confidence * 0.08)
+        return min(0.12, boost)
 
     def _step4_fusion(
         self,

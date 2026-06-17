@@ -55,7 +55,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         >
           <WalletAuthSync />
           <OnboardingGuard>{children}</OnboardingGuard>
-          <Toaster position="bottom-right" richColors />
+          <Toaster position="bottom-right" richColors theme="dark" />
         </WalletProvider>
       </SuiClientProvider>
     </QueryClientProvider>

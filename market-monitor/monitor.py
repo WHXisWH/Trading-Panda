@@ -5,14 +5,29 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from broadcast.publisher import RedisPublisher
-from broadcast.schemas import CandlePayload, MarketEvent, pair_to_asset, pool_to_pair
+from broadcast.schemas import (
+    CandlePayload,
+    MarketEvent,
+    PairMetaPayload,
+    pair_to_asset,
+    pool_to_pair,
+)
 from config import Settings
-from feed.deepbook_client import Candle, DeepBookClient
+from feed.deepbook_client import Candle, DeepBookClient, PoolCatalogEntry
 from feed.fills_client import FillsClient
-from feed.orderbook import orderbook_imbalance
+from feed.orderbook import orderbook_imbalance, orderbook_summary
+from feed.pair_registry import PairMeta, build_pair_meta, preferred_pool_candidates
 from feed.sui_pool_client import discover_pools_via_rpc, normalize_pool_list
 from pipeline.indicators import compute_indicators
 from pipeline.market_state import detect_regime
+from pipeline.pair_ranking import (
+    HEALTH_FRESH,
+    HEALTH_STALE,
+    PairQualitySignals,
+    RankedPair,
+    rank_pairs,
+    resolve_health,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +40,14 @@ class PoolRuntime:
     last_candle_ts: float | None = None
     last_publish_ts: float | None = None
     last_error: str | None = None
+    health: str = HEALTH_FRESH
+    freshness_sec: float | None = None
+    spread_bps: float | None = None
+    bid_depth: float | None = None
+    ask_depth: float | None = None
+    volume_24h: float = 0.0
+    volume_7d: float = 0.0
+    rank_score: float | None = None
 
 
 @dataclass
@@ -35,6 +58,7 @@ class MonitorState:
     pool_discovery_error: str | None = None
     pg_error: str | None = None
     pools: dict[str, PoolRuntime] = field(default_factory=dict)
+    ranked_pairs: list[RankedPair] = field(default_factory=list)
     last_heartbeat_ts: float = 0.0
 
 
@@ -54,6 +78,8 @@ class MarketMonitorService:
         self._publisher = RedisPublisher(settings.redis_url)
         self._state = MonitorState()
         self._pool_directory: dict[str, str] = {}
+        self._pool_catalog: dict[str, PoolCatalogEntry] = {}
+        self._discovered_pools: list[str] = []
         self._task: asyncio.Task[None] | None = None
         self._running = False
         self._backoff_sec = settings.poll_interval_sec
@@ -64,6 +90,26 @@ class MarketMonitorService:
 
     def _use_pg_ohlcv(self) -> bool:
         return self._fills.is_configured and not self._settings.use_ohlcv_fallback
+
+    def _catalog_for_pool(self, pool: str) -> PoolCatalogEntry | None:
+        return self._pool_catalog.get(pool) or self._pool_catalog.get(
+            pool.replace("/", "_")
+        )
+
+    def _pair_meta_for_pool(self, pool: str) -> PairMeta:
+        catalog = self._catalog_for_pool(pool)
+        pool_id = (
+            self._pool_directory.get(pool)
+            or self._pool_directory.get(pool.replace("/", "_"))
+            or (catalog.pool_id if catalog else None)
+        )
+        return build_pair_meta(
+            pool,
+            pool_id=pool_id,
+            base_decimals=catalog.base_decimals if catalog else None,
+            quote_decimals=catalog.quote_decimals if catalog else None,
+            min_tick_size=catalog.min_tick_size if catalog else None,
+        )
 
     async def start(self) -> None:
         await self._publisher.connect()
@@ -108,6 +154,12 @@ class MarketMonitorService:
             )
         return await self._client.get_ohlcv(pool, period=period, limit=count)
 
+    async def list_ranked_pairs(self) -> list[RankedPair]:
+        if self._state.ranked_pairs:
+            return self._state.ranked_pairs
+        pools = await self._resolve_pools()
+        return await self._build_rankings(pools)
+
     async def _run_loop(self) -> None:
         while self._running:
             try:
@@ -124,16 +176,25 @@ class MarketMonitorService:
         self._state.deepbook_ok = await self._client.ping()
         if self._state.deepbook_ok and not self._pool_directory:
             try:
-                self._pool_directory = await self._client.fetch_pool_directory()
-                if self._pool_directory:
+                directory = await self._client.fetch_pool_directory()
+                if directory:
+                    self._pool_directory = directory
                     self._fills.set_pool_directory(self._pool_directory)
             except Exception as exc:
                 logger.debug("fetch_pool_directory: %s", exc)
+        if self._state.deepbook_ok and not self._pool_catalog:
+            try:
+                self._pool_catalog = await self._client.fetch_pool_catalog()
+            except Exception as exc:
+                logger.debug("fetch_pool_catalog: %s", exc)
         if self._fills.is_configured:
             self._state.pg_ok = await self._fills.ping()
         pools = await self._resolve_pools()
         for pool in pools:
             self._ensure_pool_runtime(pool)
+
+        if self._settings.use_pair_ranking:
+            self._state.ranked_pairs = await self._build_rankings(pools)
 
         can_poll = pools and (self._state.pg_ok or self._state.deepbook_ok)
         if can_poll:
@@ -149,13 +210,7 @@ class MarketMonitorService:
         if pool not in self._state.pools:
             self._state.pools[pool] = PoolRuntime(pool=pool, pair=pair, asset=asset)
 
-    async def _resolve_pools(self) -> list[str]:
-        configured = self._settings.pool_list
-        if configured:
-            self._state.pool_discovery_error = None
-            self._state.sui_rpc_ok = True
-            return configured
-
+    async def _discover_all_pools(self) -> list[str]:
         pools: list[str] = []
         self._state.pool_discovery_error = None
         self._state.sui_rpc_ok = False
@@ -188,10 +243,84 @@ class MarketMonitorService:
                 logger.warning("HTTP get_pools failed: %s", exc)
 
         if pools:
+            self._discovered_pools = pools
             if self._pool_directory:
                 self._fills.set_pool_directory(self._pool_directory)
-            return pools
-        return list(self._state.pools.keys())
+            return preferred_pool_candidates(
+                pools,
+                network=self._settings.deepbook_network,
+            )
+        return []
+
+    async def _resolve_pools(self) -> list[str]:
+        configured = self._settings.pool_list
+        if configured:
+            self._state.pool_discovery_error = None
+            self._state.sui_rpc_ok = True
+            return configured
+
+        discovered = await self._discover_all_pools()
+        if not discovered:
+            return list(self._state.pools.keys())
+
+        if self._settings.use_pair_ranking:
+            ranked = await self._build_rankings(discovered)
+            selected = [row.meta.pool for row in ranked[: self._settings.max_publish_pairs]]
+            if selected:
+                return selected
+        return discovered[: self._settings.max_publish_pairs]
+
+    async def _build_rankings(self, pools: list[str]) -> list[RankedPair]:
+        signal_rows: list[PairQualitySignals] = []
+        for pool in pools:
+            runtime = self._state.pools.get(pool)
+            spread_bps = runtime.spread_bps if runtime and runtime.spread_bps is not None else 9999.0
+            bid_depth = runtime.bid_depth if runtime and runtime.bid_depth is not None else 0.0
+            ask_depth = runtime.ask_depth if runtime and runtime.ask_depth is not None else 0.0
+            last_candle_ts = runtime.last_candle_ts if runtime else None
+            monitor_error = runtime.last_error if runtime else None
+            volume_24h = runtime.volume_24h if runtime else 0.0
+            volume_7d = runtime.volume_7d if runtime else 0.0
+
+            if self._fills.is_configured and self._state.pg_ok:
+                try:
+                    volume_24h, volume_7d = await self._fills.get_volume_stats(pool)
+                except Exception as exc:
+                    logger.debug("volume stats for %s: %s", pool, exc)
+
+            if self._state.deepbook_ok and spread_bps >= 9999:
+                try:
+                    book = await self._client.get_orderbook(pool)
+                    summary = orderbook_summary(book, depth=self._settings.orderbook_depth)
+                    spread_bps = summary.spread_bps
+                    bid_depth = summary.bid_depth
+                    ask_depth = summary.ask_depth
+                except Exception:
+                    pass
+
+            signal_rows.append(
+                PairQualitySignals(
+                    pool=pool,
+                    volume_24h=volume_24h,
+                    volume_7d=volume_7d,
+                    spread_bps=spread_bps,
+                    bid_depth=bid_depth,
+                    ask_depth=ask_depth,
+                    last_candle_ts=last_candle_ts,
+                    candle_count=2 if last_candle_ts else 0,
+                    monitor_error=monitor_error,
+                    orderbook_available=spread_bps < 9999,
+                    pg_ok=self._state.pg_ok,
+                    deepbook_ok=self._state.deepbook_ok,
+                )
+            )
+
+        return rank_pairs(
+            signal_rows,
+            self._pool_directory,
+            stale_threshold_sec=self._settings.stale_threshold_sec,
+            max_pairs=len(pools),
+        )
 
     async def _fetch_candles(self, pool: str) -> list[Candle]:
         if self._use_pg_ohlcv():
@@ -232,6 +361,7 @@ class MarketMonitorService:
             self._state.pools[pool] = runtime
 
         book: dict[str, Any] = {}
+        summary = orderbook_summary({}, depth=self._settings.orderbook_depth)
         try:
             candles = await self._fetch_candles(pool)
         except Exception as exc:
@@ -242,6 +372,7 @@ class MarketMonitorService:
         if self._state.deepbook_ok:
             try:
                 book = await self._client.get_orderbook(pool)
+                summary = orderbook_summary(book, depth=self._settings.orderbook_depth)
             except Exception as exc:
                 logger.warning(
                     "pool %s orderbook failed (tick continues, imbalance=0): %s",
@@ -250,10 +381,30 @@ class MarketMonitorService:
                 )
                 book = {}
 
+        if self._fills.is_configured and self._state.pg_ok:
+            try:
+                runtime.volume_24h, runtime.volume_7d = await self._fills.get_volume_stats(pool)
+            except Exception as exc:
+                logger.debug("volume stats for %s: %s", pool, exc)
+
+        runtime.spread_bps = summary.spread_bps
+        runtime.bid_depth = summary.bid_depth
+        runtime.ask_depth = summary.ask_depth
         runtime.last_error = None
 
         if not candles:
             runtime.last_error = await self._describe_empty_candles(pool)
+            health, freshness = resolve_health(
+                PairQualitySignals(
+                    pool=pool,
+                    monitor_error=runtime.last_error,
+                    pg_ok=self._state.pg_ok,
+                    deepbook_ok=self._state.deepbook_ok,
+                ),
+                stale_threshold_sec=self._settings.stale_threshold_sec,
+            )
+            runtime.health = health
+            runtime.freshness_sec = freshness
             return
 
         indicators = compute_indicators(candles)
@@ -261,6 +412,19 @@ class MarketMonitorService:
             runtime.last_error = (
                 f"insufficient_candles: need >=2 bars, got {len(candles)}"
             )
+            health, freshness = resolve_health(
+                PairQualitySignals(
+                    pool=pool,
+                    monitor_error=runtime.last_error,
+                    last_candle_ts=candles[-1].timestamp if candles else None,
+                    candle_count=len(candles),
+                    pg_ok=self._state.pg_ok,
+                    deepbook_ok=self._state.deepbook_ok,
+                ),
+                stale_threshold_sec=self._settings.stale_threshold_sec,
+            )
+            runtime.health = health
+            runtime.freshness_sec = freshness
             return
 
         last_candle = candles[-1]
@@ -270,6 +434,27 @@ class MarketMonitorService:
         else:
             runtime.last_candle_ts = last_candle.timestamp
 
+        now = time.time()
+        freshness_sec = max(0.0, now - last_candle.timestamp)
+        health, _ = resolve_health(
+            PairQualitySignals(
+                pool=pool,
+                spread_bps=summary.spread_bps,
+                bid_depth=summary.bid_depth,
+                ask_depth=summary.ask_depth,
+                last_candle_ts=last_candle.timestamp,
+                candle_count=len(candles),
+                orderbook_available=summary.mid_price > 0,
+                pg_ok=self._state.pg_ok,
+                deepbook_ok=self._state.deepbook_ok,
+            ),
+            now=now,
+            stale_threshold_sec=self._settings.stale_threshold_sec,
+            stale_flag=stale,
+        )
+        runtime.health = health
+        runtime.freshness_sec = freshness_sec
+
         imbalance = orderbook_imbalance(book)
         regime = detect_regime(
             indicators.price,
@@ -277,6 +462,9 @@ class MarketMonitorService:
             indicators.trend_strength,
             indicators.rsi,
         )
+
+        meta = self._pair_meta_for_pool(pool)
+        reference_price = summary.mid_price if summary.mid_price > 0 else indicators.price
 
         event = MarketEvent(
             asset=asset,
@@ -302,7 +490,27 @@ class MarketMonitorService:
                 volume=last_candle.volume,
                 interval=self._settings.candle_period,
             ),
-            stale=stale,
+            stale=stale or health == HEALTH_STALE,
+            source="deepbook",
+            reference_price=round(reference_price, 6),
+            spread_bps=summary.spread_bps if summary.mid_price > 0 else None,
+            bid_depth=summary.bid_depth if summary.mid_price > 0 else None,
+            ask_depth=summary.ask_depth if summary.mid_price > 0 else None,
+            freshness_sec=round(freshness_sec, 2),
+            health=health,
+            pair_meta=PairMetaPayload(
+                pool=meta.pool,
+                pair=meta.pair,
+                base_asset=meta.base_asset,
+                quote_asset=meta.quote_asset,
+                pool_id=meta.pool_id,
+                stable_quote=meta.stable_quote,
+                launch_priority=meta.launch_priority,
+                is_fallback=meta.is_fallback,
+                base_decimals=meta.base_decimals,
+                quote_decimals=meta.quote_decimals,
+                min_tick_size=meta.min_tick_size,
+            ),
         )
 
         if stale and runtime.last_publish_ts is not None:
@@ -311,7 +519,13 @@ class MarketMonitorService:
 
         receivers = await self._publisher.publish_tick(pair, event)
         runtime.last_publish_ts = time.time()
-        logger.debug("published %s subscribers=%s stale=%s", pair, receivers, stale)
+        logger.debug(
+            "published %s subscribers=%s stale=%s health=%s",
+            pair,
+            receivers,
+            event.stale,
+            health,
+        )
 
     async def _maybe_heartbeat(self, status: str) -> None:
         now = time.time()
@@ -323,6 +537,8 @@ class MarketMonitorService:
                 "last_event_ts": rt.last_candle_ts,
                 "last_publish_ts": rt.last_publish_ts,
                 "error": rt.last_error,
+                "health": rt.health,
+                "freshness_sec": rt.freshness_sec,
             }
         await self._publisher.publish_heartbeat(status, pools_payload)
         self._state.last_heartbeat_ts = now
@@ -335,14 +551,32 @@ class MarketMonitorService:
                 "last_event_ts": rt.last_candle_ts,
                 "last_publish_ts": rt.last_publish_ts,
                 "error": rt.last_error,
+                "health": rt.health,
+                "freshness_sec": rt.freshness_sec,
+                "spread_bps": rt.spread_bps,
+                "volume_24h": rt.volume_24h,
             }
+        ranked_out = [
+            {
+                "rank": row.rank,
+                "pool": row.meta.pool,
+                "pair": row.meta.pair,
+                "score": row.score,
+                "health": row.health,
+                "launch_priority": row.meta.launch_priority,
+                "is_fallback": row.meta.is_fallback,
+            }
+            for row in self._state.ranked_pairs
+        ]
         status = "ok" if (self._state.pg_ok or self._state.deepbook_ok) else "degraded"
         if not self._publisher.is_connected:
             status = "degraded"
         return {
             "status": status,
+            "network": self._settings.deepbook_network,
             "ohlcv_source": "order_fills" if self._use_pg_ohlcv() else "deepbook_http",
             "poll_interval_sec": self._settings.poll_interval_sec,
+            "stale_threshold_sec": self._settings.stale_threshold_sec,
             "fills_poll_lookback_sec": self._settings.fills_poll_lookback_sec,
             "fills_lookback_sec": self._settings.fills_lookback_sec,
             "deepbook_server": self._settings.deepbook_server_url,
@@ -354,5 +588,40 @@ class MarketMonitorService:
             "sui_rpc_ok": self._state.sui_rpc_ok,
             "pool_discovery_error": self._state.pool_discovery_error,
             "redis_connected": self._publisher.is_connected,
+            "ranked_pairs": ranked_out,
             "pools": pools_out,
+        }
+
+    def pairs_payload(self) -> dict[str, Any]:
+        rows = []
+        for row in self._state.ranked_pairs:
+            meta = self._pair_meta_for_pool(row.meta.pool)
+            rows.append(
+                {
+                    "rank": row.rank,
+                    "score": row.score,
+                    "health": row.health,
+                    "freshness_sec": row.freshness_sec,
+                    "pool": meta.pool,
+                    "pair": meta.pair,
+                    "pool_id": meta.pool_id,
+                    "base_asset": meta.base_asset,
+                    "quote_asset": meta.quote_asset,
+                    "stable_quote": meta.stable_quote,
+                    "launch_priority": meta.launch_priority,
+                    "is_fallback": meta.is_fallback,
+                    "base_decimals": meta.base_decimals,
+                    "quote_decimals": meta.quote_decimals,
+                    "min_tick_size": meta.min_tick_size,
+                    "volume_24h": row.signals.volume_24h,
+                    "volume_7d": row.signals.volume_7d,
+                    "spread_bps": row.signals.spread_bps,
+                    "bid_depth": row.signals.bid_depth,
+                    "ask_depth": row.signals.ask_depth,
+                }
+            )
+        return {
+            "network": self._settings.deepbook_network,
+            "launch_pairs": self._settings.launch_pair_list,
+            "pairs": rows,
         }

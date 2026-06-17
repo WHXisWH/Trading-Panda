@@ -105,6 +105,25 @@ module trading_panda::core_tests {
         clock::destroy_for_testing(clock);
     }
 
+    #[test]
+    fun test_submit_skill_digest() {
+        let ctx = &mut tx_context::dummy();
+        let mut panda = sample_panda(ctx);
+        let admin = panda::new_admin_for_testing(ctx);
+        let clock = clock::create_for_testing(ctx);
+
+        let digest = vector[7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7];
+        trust_proof::submit_skill_digest(&mut panda, &admin, 1, digest, &clock, ctx);
+
+        assert!(trust_proof::has_skill_digest(&panda, 1), 0);
+        let proof = trust_proof::get_skill_digest(&panda, 1);
+        assert!(trust_proof::skill_version(proof) == 1, 1);
+
+        transfer::public_transfer(panda, @0x1);
+        panda::destroy_admin_for_testing(admin);
+        clock::destroy_for_testing(clock);
+    }
+
     #[test, expected_failure(abort_code = 40)]
     fun test_invalid_merkle_root_length() {
         let ctx = &mut tx_context::dummy();

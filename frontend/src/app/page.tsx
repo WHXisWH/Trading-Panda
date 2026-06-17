@@ -49,7 +49,7 @@ const STEPS = [
     step: "01",
     icon: Sparkles,
     title: "Mint Your Panda",
-    desc: "Connect your wallet, take a quick survey, and mint a panda with unique on-chain personality. Gas is just ~0.03 SUI on Testnet.",
+    desc: "Connect your wallet and mint a panda with unique on-chain personality. Gas is just ~0.03 SUI on Testnet.",
   },
   {
     step: "02",

@@ -38,12 +38,12 @@ TradingPanda 是 Sui 链上的 **AI 交易宠物养成系统**，目标是 Sui O
 | 骨架搭建 | ✅ 完成 | 100% | frontend/backend/contracts 目录结构、CLAUDE.md、DEV_CONTEXT.md |
 | Sui Move 合约 | 🟡 Testnet 已 publish | 80% | `sui client publish` 至 Testnet（Package `0x5950…1465`）；`mint::mint` + DF 初始化；UpgradeCap 在 `0xa459…7bf3`；Kiosk/版税深化待做 |
 | PostgreSQL Schema | ✅ 全 18 表迁移 | 100% | Alembic `001`(6 表)+`002`(subscribed_pools)+`003`(其余 12 表：经验/情绪/merkle/成就/签到/缓存/日记)；`verify_db` 覆盖全表 |
-| 铸造流程（Mint） | 🟡 Epic 1.3–1.5 完成 | 75% | 问卷→mint→DB 注册→Dashboard；Epic 1.2 合约复核待办 |
+| 铸造流程（Mint） | 🟢 Epic 1 完成 | 100% | `/mint` 按 `page-mint.md`：PandaCarouselStage + WalletSignatureModal + toast + MintDetails drawer → `/agent-wallet`；链上 mint 仅身份；DB 注册幂等 + tx digest 重试同步 |
 | 策略解析 | ✅ Epic 2 完成 | 100% | `POST/GET /panda/:id/strategy` + `validate`；积木 `StrategyBuilder`；LLM 5/min；`strategy_history` ghost 0.40 |
 | 8步决策引擎 | 🟡 MVP 实现 | 75% | `decision_pipeline` 八步公式 + `RuleEngine` + `PandaActor` + Redis `market:tick:*` 订阅；Agent/Merkle 链上提交待完善 |
 | 情绪状态机 | 🟡 MVP 实现 | 80% | 7 状态转移 + Step 8 情绪扭曲；已接入 Actor |
-| 经验引擎（5子系统） | 🟢 读写闭环 | 85% | load + Step5 修正（pattern/mastery/mistake/cycle 全汇入）+ `record_trade` 写回 patterns/mistakes/cycles；纯逻辑单测；**缺**：Walrus 备份 |
-| Merkle Root Worker | 🟢 链下闭环 | 70% | leaf 收集 + 树根 + `merkle_roots` 表写入（每50笔，`batch_index`）；**缺**：`submit_merkle_root` 链上提交（合约侧，已留 stub）|
+| Merkle Root Worker | 🟢 Epic 9 完成 | 95% | Trade Fact leaf + 异步 `merkle_batch_ready` job + `trust_proof::submit_merkle_root`（dry-run 可测）；`GET /panda/:id/trust/merkle`；Training Ledger 状态条展示 |
+| 经验引擎（5子系统） | 🟢 读写闭环 | 90% | load + Step5 修正 + `record_trade` 写回；Walrus 归档经 `walrus_archive_requested` 异步 job（review/skill） |
 | 模拟盘前端 Dashboard | 🟡 UI 实现 | 70% | 三栏布局、K 线（lightweight-charts）、决策链/策略/池选择；`useMarketWs`/`useSimulationWs` 已封装，Dashboard 接线待 Epic 3 |
 | NFT 市场（Kiosk） | 🟡 UI 实现 | 40% | 市场网格/筛选/弹窗（mock）；Kiosk 交易待接 |
 | 排行榜/成就/签到 | 🟢 链下完成 | 80% | `GET /leaderboard`(winrate/pnl/level)、`GET /achievements`(9 目录+检测)、`POST/GET /checkin`(streak) + BFF + 三个前端页接真实数据；纯逻辑单测；**缺**：成就/签到链上奖励（合约侧）|
@@ -135,10 +135,17 @@ Blockchain  → Sui Testnet（**本项目首次正式 publish**，钱包 `0xa459
 | `REDIS_URL` | **`rediss://`** Upstash（或兼容托管商）TLS 端点；`redis-py` / 异步客户端直连 |
 | `DEEPSEEK_API_KEY` | DeepSeek V3 API Key |
 | `SUI_RPC_URL` | Sui 全节点 RPC（`https://fullnode.testnet.sui.io:443`） |
-| `SUI_PRIVATE_KEY` | 后端签名钱包私钥（Merkle Root 上链用） |
+| `SUI_PRIVATE_KEY` | 后端签名钱包私钥（Merkle Root / Skill Digest 上链用） |
+| `ADMIN_CAP_ID` | Move `AdminCap` Object ID（`trust_proof` 提交用） |
 | `PACKAGE_ID` | Move 合约 Package ID |
 | `REGISTRY_ID` | PandaRegistry Shared Object ID |
-| `WALRUS_API_URL` | Walrus Publisher 节点 URL |
+| `AGENT_SIGNER_ADDRESS` | v3.1 testnet Agent Signer 地址（Chain Proof PTB） |
+| `AGENT_SIGNER_PRIVATE_KEY` | Agent Signer 私钥（仅 testnet；Render Secret） |
+| `CHAIN_PROOF_ENABLED` | 是否启用 Mode 2 Chain Proof（默认 `false`） |
+| `DEEPBOOK_LAUNCH_PAIRS` | Training Ledger 默认 DeepBook mainnet 交易对（逗号分隔，如 `DEEP/SUI,SUI/USDC`） |
+| `WALRUS_PUBLISHER_URL` / `WALRUS_AGGREGATOR_URL` | Walrus 存取节点（review/skill 归档） |
+| `MERKLE_SUBMIT_ENABLED` | 是否尝试链上提交 Trade Fact Merkle root（默认 `true`，无密钥时 dry-run） |
+| `SKILL_DIGEST_ENABLED` | 是否尝试链上提交 skill digest（默认 `true`） |
 | `JWT_SECRET` | 与 frontend / websocket Worker **相同**（HS256） |
 | `INTERNAL_SECRET` | 与 frontend 共享（BFF `X-Internal-Key`） |
 | `GOOGLE_CLIENT_ID` | 可选；校验 zkLogin `id_token` 的 `aud` |
@@ -152,9 +159,12 @@ Blockchain  → Sui Testnet（**本项目首次正式 publish**，钱包 `0xa459
 | `REDIS_URL` | 与 backend 相同 Upstash 实例（`rediss://`） |
 | `DEEPBOOK_DATABASE_URL` | DeepBook Indexer 库（`order_fills`）；VPS 如 `postgresql://…@127.0.0.1:5433/…` |
 | `DEEPBOOK_SERVER_URL` | DeepBook Server（**盘口**等，如 `http://localhost:9008`） |
-| `DEEPBOOK_POOLS` | 可选；**非空则强制**使用；留空则默认 `SUI_RPC_URL` 发现池，可回退 `GET /get_pools` |
-| `SUI_RPC_URL` | 全节点 JSON-RPC；**仅**用于 `suix_queryEvents` 枚举 `PoolCreated`（默认 Testnet） |
-| `DEEPBOOK_PACKAGE_ID` / `DEEPBOOK_POOL_MODULE` | DeepBook 包与 `pool` 模块（默认 `0xdee9` / `pool`） |
+| `DEEPBOOK_POOLS` | 可选；**非空则强制**使用；留空则流动性排名自动选 top `MAX_PUBLISH_PAIRS` |
+| `DEEPBOOK_NETWORK` | `mainnet`（默认）或 `testnet`（开发回退） |
+| `LAUNCH_PAIRS` | 产品优先池，默认 `SUI_USDC,DEEP_USDC,WAL_USDC,NS_USDC` |
+| `USE_PAIR_RANKING` / `MAX_PUBLISH_PAIRS` / `STALE_THRESHOLD_SEC` | 流动性排名与 stale 判定 |
+| `SUI_RPC_URL` | 全节点 JSON-RPC；池发现（默认 **mainnet** `fullnode.mainnet.sui.io`） |
+| `DEEPBOOK_PACKAGE_ID` / `DEEPBOOK_POOL_MODULE` | DeepBook v3 主网包（默认 `0x2c8d…4809` / `pool`） |
 | `USE_SUI_RPC_FOR_POOLS` / `USE_HTTP_GET_POOLS_FALLBACK` | 池发现开关与 HTTP 回退 |
 | `POOL_RPC_LIMIT_PER_PAGE` / `POOL_RPC_MAX_PAGES` | 池事件查询分页 |
 | `POLL_INTERVAL_SEC` | 主循环间隔，默认 **15** |
@@ -184,19 +194,30 @@ POST /api/auth/wallet-login          # 遗留别名（→ `/auth/login`）
 # zkLogin OAuth 回调页：`/auth/zklogin-callback`（hash 内 id_token）
 
 POST /api/panda/mint                 # 链上 mint 后注册 DB（`sui_object_id` + `sui_tx_digest`）
+GET  /api/panda/[id]/agent-wallet    # Agent Wallet 状态（代理 → `/panda/:id/agent-wallet`）
+POST /api/panda/[id]/agent-wallet/validate-policy  # 策略草案校验
+POST /api/panda/[id]/agent-wallet/sync             # 链上 setup tx 后镜像 vault/policy
 GET  /api/panda/my                   # 我的熊猫（代理 → backend `/pandas`）
 GET  /api/panda/[id]                 # 单只熊猫详情（代理 → `/pandas/:id`）
 GET  /api/pandas                     # 当前用户的熊猫列表（legacy，同 `/api/panda/my`）
 GET  /api/pandas/[id]                # 单只熊猫详情
 POST /api/pandas/[id]/strategy       # 喂策略（转发 → Python backend）
-POST /api/pandas/[id]/simulation/start  # 启动模拟
-POST /api/pandas/[id]/simulation/stop   # 停止模拟
+POST /api/pandas/[id]/simulation/start  # 启动 Training Ledger 会话（legacy 路径）
+POST /api/pandas/[id]/simulation/stop   # 停止 Training Ledger 会话
+GET  /api/panda/[id]/training/ledger         # Training Ledger 账户状态（Epic 5）
+GET  /api/panda/[id]/training/order-intents    # OrderIntent 时间线
+GET  /api/panda/[id]/training/trade-facts      # Trade Fact 时间线
 POST /api/pandas/[id]/calm-bamboo    # 使用冷静竹（重置情绪）
 
 GET  /api/market/candles             # 历史 K 线（BFF → market-monitor GET /candles?pool=…）
 GET  /api/leaderboard                # 排行榜（Redis 缓存 TTL 60s）
 GET  /api/achievements               # 成就列表
 POST /api/checkin                    # 每日签到
+GET  /api/panda/[id]/reviews         # Review Journal 列表（Epic 7）
+GET  /api/panda/[id]/trade-facts/[tradeFactId]/review  # 单笔复盘
+POST /api/panda/[id]/trade-facts/[tradeFactId]/review  # 手动触发复盘
+GET  /api/panda/[id]/skill-memories  # Skill Memory 列表
+GET  /api/panda/[id]/skill-versions/latest  # 最新 skill version digest
 ```
 
 ### WebSocket Hub（Cloudflare Workers + DO，非 Next.js 路由）
@@ -221,13 +242,18 @@ POST /engine/market/tick             # 推送市场数据（内部触发）
 
 PostgreSQL 完整表定义见 `docs/database-schema.md`。Alembic 迁移位于 `backend/alembic/`。
 
-**核心表清单（18张）：**
+**核心表清单（18张 legacy + 13张 v3.1）：**
 `users` · `pandas` · `strategies` · `strategy_history` · `trades` · `simulations` ·
 `experience_patterns` · `experience_mastery` · `experience_mistakes` · `experience_cycles` ·
 `emotions_log` · `merkle_roots` · `achievements` · `user_achievements` · `checkins` ·
 `market_data_cache` · `correlation_matrix` · `panda_diary`
 
-**当前迁移状态**：`backend/alembic/versions/001_initial_core_tables.py`（revision `001_initial_core`）已创建 6 张核心表；其余 ORM 表（经验/成就/情绪日志等）尚未迁移。本地：`alembic upgrade head` → `python scripts/verify_db.py` → `python scripts/seed_dev.py`。
+**v3.1 Agent Wallet 表（13张）**：
+`panda_vaults` · `trading_policies` · `panda_accounts` · `panda_positions` ·
+`order_intents` · `ledger_entries` · `trade_facts` · `trade_reviews` ·
+`skill_memories` · `skill_versions` · `chain_execution_logs` · `async_jobs` · `outbox_events`
+
+**当前迁移状态**：`001_initial_core` → `002_panda_subscribed_pools` → `003_growth_experience` → **`004_v31_agent_wallet`**（head）。`004` 扩展 `pandas.active_vault_id` / `active_policy_id` / `active_skill_version` 并创建上述 13 张 v3.1 表。本地：`alembic upgrade head` → `python scripts/verify_db.py` → `python scripts/seed_dev.py`。
 
 ---
 
@@ -374,3 +400,16 @@ Package ID：**0x595087bb3e5f6c5011585797e4eb4db513b55d39ce84f984bb357e9375c1146
 | 2026-06-17 | **Product Design 文档体系（仅文档）**：新增 `docs/design/README.md`、`visual-system.md` 与 7 个页面级设计规范（Mint/Agent Wallet/Strategy/Training/Chain Proof/Review/Safety）；锁定黑金荧光绿视觉方向、页面信息密度分层、每页 Desktop/Mobile 布局、核心组件、状态、交互与 Evidence Exposure；Mint 明确为极简铸造仪式页，无 mint 前问卷。同步更新 `docs/prototype-redesign-spec.md` v1.1，将 `docs/design/page-*.md` 设为 Product Screen 上游，取消强制三栏 cockpit / PandaCard / EvidenceRail 骨架。 | 下一步原型重构应按 `docs/design/page-*.md` 渲染真实页面状态；`docs/design` 相对链接校验通过，`node --check prototype/journey.js` 通过；未改 prototype/frontend/backend/contracts、部署事实、环境变量或 API 路径 |
 | 2026-06-17 | **Prototype 按 Product Design 重构（仅文档资产）**：更新 `prototype/journey.js` 与 `prototype/styles.css`，将 Product Screen 渲染从通用三栏骨架改为页面专属渲染器：Mint 使用极简 `PandaCarouselStage` 铸造舞台并移除 mint 前 survey；Agent Wallet/Strategy/Review 使用中密度工作台；Training 使用 `TrainingStatusStrip + PandaAgentStatus + MarketChartPanel + LedgerPanel + TradeFactDrawer` cockpit；Chain Proof 使用 proof console；Safety 使用急停控制面板。 | 原型现在按 `docs/design/page-*.md` 呈现真实页面状态；`node --check prototype/journey.js`、HTML 链接检查、design-doc alignment smoke 均通过；浏览器预览验证 Mint desktop/mobile、Training desktop 通过；未改 frontend/backend/contracts、部署事实、环境变量或 API 路径 |
 | 2026-06-17 | **Prototype 渐进披露交互重构（仅文档资产）**：更新 `docs/prototype-redesign-spec.md`、`docs/design/` 页面规范、`prototype/journey.js` 与 `prototype/styles.css`；锁定 L0/L1/L2/L3 披露模型，主画布默认只显示用户任务与状态摘要，Evidence/Policy/PTB/Skill 等细节改为点击后打开 drawer，签名/危险操作使用 modal，状态反馈使用 toast，主 CTA 支持同页 step 推进与跨 journey `#step=` 路由跳转；Interaction Replay 同步可打开 modal/drawer/toast。 | 原型现在能表达“用户交互 → 页面状态变化 → 需要时展开证据”的完整链路；`node --check prototype/journey.js` 通过；本地 HTTP 浏览器 smoke 通过（Mint 主 CTA/签名 modal/详情 drawer/Agent Wallet 路由跳转、7 个 journey hash 初始化、console 无项目错误）；未改 frontend/backend/contracts、部署事实、环境变量或 API 路径 |
+| 2026-06-17 | **TODO v3.1 重写（仅文档）**：根据最新 `docs/PRD.md`、`docs/architecture.md`、`spec.md` 与 `docs/design/` 全量重写 `dev-docs/TODO.md`；主线改为 Autonomous Agent Wallet MVP：Mint → Agent Wallet → Strategy → DeepBook mainnet Training Ledger → Trade Fact → selected Chain Proof → Review/Skill → Safety；旧 simulation/testnet 两池/每笔 PTB 口径降级为 legacy baseline 或 out-of-MVP。 | TODO 现在按 PRD v3.1 的全栈纵向 Epic 拆分任务，并映射到 PRD/Architecture/Design；未改 frontend/backend/contracts、部署事实、环境变量、数据库结构或 API 路径 |
+| 2026-06-17 | **Epic 2 Agent Wallet Setup（全栈）**：Move 新增 `panda_coin`/`trading_policy`/`panda_vault`/`demo_executor`/`agent_wallet` + `tests/agent_wallet_tests.move`（21 项 `sui move test` 绿）；backend `panda_agent_wallet.py` + `services/agent_wallet.py` + `agent_wallet_event_parser.py`（`GET/POST /panda/:id/agent-wallet*`、owner-action sync）；`simulation/start` 增加 `require_active_wallet` 门禁；frontend `/agent-wallet` + `components/agent-wallet/*` + `lib/sui/setupAgentWallet.ts` + BFF 代理；`tests/test_agent_wallet.py` 5 项绿 | 链上 setup 须 **重新 publish** 合约后 `agent_wallet::setup_agent_wallet` 才可用；本地配置 `AGENT_SIGNER_ADDRESS`；DB 仍用 migration `004`；训练前须有 active vault+policy mirror |
+| 2026-06-17 | **Epic 1 Mint Panda Identity（代码）**：前端 `/mint` 按 `docs/design/page-mint.md` 重构（`PandaCarouselStage`/`PandaStageHalo`/`WalletSignatureModal`/`MintDetailsDrawer`/`GasFeeHint`、sonner toast、暗色铸造舞台）；`OnboardingGuard` 跳过 `/mint` 问卷拦截；铸造成功 CTA → `/agent-wallet?step=no-vault`；`useMintPanda` 支持 sessionStorage pending + `retryRegistration`；后端 `POST /panda/mint` 同 owner 幂等 200、`active_vault_id/active_policy_id` 显式 null；Move `test_minted_panda_identity_only_no_trading_permission`；pytest `test_mint_registration` + 前端 vitest smoke **5** 项绿 | Testnet Package `0x5950…1465` 与 `contracts/DEPLOY.md`/`DEV_CONTEXT` §3 一致；mint 不授予交易权限 |
+| 2026-06-17 | **Epic 4 Strategy Builder Inside Policy（全栈）**：backend `policy_compatibility.py` + `strategy_feed` 重构（validate/feed 加载 `trading_policies` mirror、返回 `policy_conflicts`/`strategy version`、未授权 pair 拒绝保存 `STRATEGY_POLICY_CONFLICT`）；`panda_loader`/`decision_pipeline`/`panda_actor` 读取 `strategy_version` + `skill_memories`；前端新增 `/strategy/[id]` + `components/strategy/*`（模板架、Policy 兼容预览、版本条、ghost 提示、详情 drawer）；`tests/test_strategy_policy.py` **8** 项绿 | 策略仅指导决策、不扩展 Policy 权限；有 active policy 时须 validate 通过再 save；训练入口 `/dashboard/:id` |
+| 2026-06-17 | **Epic 7 Review & Skill Memory（全栈）**：backend `review_logic.py`/`review_service.py`/`skill_memory_service.py` + `ReviewWorker`/`SkillMemoryWorker`/`queue_dispatcher`；`GET/POST /panda/:id/trade-facts/:fact_id/review` + reviews/skill-memories/skill-versions API；`EventPublisher.publish_review|publish_skill`；前端 `/review` Review Journal（outcome story、Evidence drawer、Why not updated modal、Continue training）；BFF 代理 4 路由；`tests/test_review_logic.py` **6** 项绿 | 复盘仅在有证据时更新 Skill Memory；盈利 alone 不 auto-verify；`pandas.active_skill_version` 由 SkillMemoryWorker 递增；DecisionPipeline 经 `panda_loader` 读取 supported/verified memories |
+| 2026-06-17 | **Epic 6 Chain Proof Mode 2（全栈）**：Move `demo_executor` 扩展 `DemoTradeExecuted`（`trade_fact_id_hash`）+ `agent_wallet_tests` 新增 legal/abort 路径（**25** 项 `sui move test` 绿）；backend `proof_selector.py`/`agent_signer.py`/`chain_proof_service.py` + `chain_execution_worker` + `panda_chain_proof.py`（`GET/POST /panda/:id/chain-proof/:fact_id*`）；Alembic `005`（`chain_execution_logs.retryable` + idempotency index）；`CHAIN_PROOF_ENABLED`/`chain_proof_*` 配置项；前端 `/chain-proof` + `components/chain-proof/*` + BFF 代理；pytest `test_proof_selector`/`test_agent_signer`/`test_chain_execution_worker` **13** 项绿 | Mode 2 仅 selected Trade Fact；proof 失败不回滚 Training Ledger PnL；无 `AGENT_SIGNER_PRIVATE_KEY` 时 dry-run digest；须 `alembic upgrade head` 应用 `005` |
+| 2026-06-17 | **Epic 5 Training Ledger Hot Path（全栈）**：backend `policy_gate.py`/`ledger_service.py`/`trade_fact_writer.py`；`PandaActor` 热路径 OrderIntent→PolicyGate→Ledger→TradeFact；`EventPublisher` 增加 `order_intent`/`execution`/`policy_rejected`/`market_stale`；`panda_training.py`（`GET /panda/:id/training/ledger|order-intents|trade-facts`）；frontend `/training-ledger/[id]` + `components/training/*` + BFF 3 路由；pytest `test_policy_gate`/`test_ledger_service`/`test_training_hot_path` **17** 项绿 | Mode 1 执行真相为 Training Ledger；拒绝 intent 持久化；新 API 路径见上；训练页 `/training-ledger/:id` |
+| 2026-06-17 | **Epic 0 验证记录（仅文档）**：新增 `docs/epic-verification-record.md`（原 `epic0-v31-foundation-verification.md`），作为全项目 Epic 0–11 验证台账；Epic 0 实测：迁移结构测试 9/9 ✅、前端 type-check ✅、Supabase 直连 `alembic current`/`verify_db.py` ❌ TimeoutError。 | 验证事实可追溯；各 Epic 验收结果统一记入该文档 §3.x；DB 落地须在可达 `DATABASE_URL` 环境重跑后更新 §1 与对应 Epic 节 |
+| 2026-06-17 | **Epic 9 Trust, Merkle, Walrus（全栈）**：**Merkle**：`trade_fact_leaf` + 确定性 batch 加载；`PandaActor` 改 enqueue `merkle_batch_ready`；`MerkleWorker` 写 `merkle_roots`（`root_type`/`start_fact_id`/`end_fact_id`）+ `TrustProofService` 调 `trust_proof::submit_merkle_root`（无密钥 dry-run）；Alembic `006`。**Skill Digest**：Move `submit_skill_digest` + `SkillDigestWorker` 异步写 `skill_versions.submitted_tx_digest`。**Walrus**：`WalrusSyncWorker` 归档 review batch → `pandas.walrus_*`、skill snapshot → `skill_versions.walrus_blob_id`（不阻塞热路径）。API `GET /panda/:id/trust/merkle|skill-digest`；前端 Training Ledger 状态条展示 Merkle 批次；`tests/test_merkle*.py` **16** 项绿、`sui move test` **27/27** 绿 | 须 `alembic upgrade head` 应用 `006`；链上 Merkle/Skill 提交需 `SUI_PRIVATE_KEY`+`ADMIN_CAP_ID`；Walrus 需 publisher/aggregator URL；合约 `submit_skill_digest` 须 republish 后链上可用。**自动验证**：`docs/epic-verification-record.md` §3.9 → **⚠️ 部分验证** |
+| 2026-06-17 | **Epic 2 验证台账**：`docs/epic-verification-record.md` §3.2 自动复验（Move 27/27、agent_wallet 12/12、pytest 19/19、type-check ✅；`verify_db` Timeout、`npm run build` ❌ `/agent-wallet` Suspense；链上 E2E ⏸） | 结论：**⚠️ 部分验证**；复验命令见 §3.2 Backend/Frontend 验证方法 |
+| 2026-06-17 | **Epic 8 验证台账**：`docs/epic-verification-record.md` §3.8 记录自动验证（Move 27/27、pytest 16/16、tsc ✅；build/API/DB/链上手测 ⏸） | 结论：Epic 8 **⚠️ 部分验证**；完整闭环见 §3.8 How to Re-Run |
+| 2026-06-17 | **Epic 6 验证台账**：`docs/epic-verification-record.md` §3.6 自动复验（Move 27/27、pytest 16/16、type-check ✅；DB/testnet E2E ⏸；`pnpm build` ❌ `/agent-wallet`） | 结论：**⚠️ 部分验证**；复验命令见 §3.6 How to Re-Verify |
+| 2026-06-17 | **Epic 3 自动验证（文档）**：`docs/epic-verification-record.md` §3.3；pytest monitor 51/51 + backend market_event 7/7 + websocket 17/17；live monitor `/health`·`/pairs`·`/candles` + Redis `market:tick`×2；判定 **⚠️ 部分验证**（testnet VPS 池通过；mainnet launch pairs + frontend E2E 未验） | 复验命令见该文档 §3.3 Verification Methods |

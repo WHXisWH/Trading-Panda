@@ -9,6 +9,21 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        product: {
+          void: "var(--color-void)",
+          panel: "var(--color-product-panel)",
+          "panel-soft": "var(--color-product-panel-soft)",
+          line: "var(--color-product-line)",
+          gold: "var(--color-gold)",
+          "gold-soft": "var(--color-gold-soft)",
+          green: "var(--color-neon-green)",
+          "green-soft": "var(--color-neon-green-soft)",
+          blue: "var(--color-product-blue)",
+          amber: "var(--color-product-amber)",
+          red: "var(--color-product-red)",
+          text: "var(--color-product-text)",
+          muted: "var(--color-product-muted)",
+        },
         primary: {
           50: "#f0fdf4",
           100: "#dcfce7",

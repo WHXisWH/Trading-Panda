@@ -41,6 +41,35 @@ export type {
 } from "./panda";
 
 export type {
+  AccountStatus,
+  ChainProofStatus,
+  IntentSide,
+  IntentStatus,
+  OrderIntentApi,
+  PandaVaultApi,
+  PolicyMode,
+  ReviewVerdict,
+  SkillMemoryApi,
+  SkillMemoryStatus,
+  SkillScope,
+  SkillVersionApi,
+  TradeFactApi,
+  TradeReviewApi,
+  TradingPolicyApi,
+  VaultMode,
+  VaultStatus,
+} from "./autonomous-wallet";
+
+export type {
+  AgentWalletStatusApi,
+  MirrorSyncStatus,
+  PolicyDraft,
+  PolicyValidationResult,
+  SetupState,
+} from "./agent-wallet";
+export { DEFAULT_POLICY_DRAFT } from "./agent-wallet";
+
+export type {
   DecisionLog,
   DecisionStep,
   DecisionZone,

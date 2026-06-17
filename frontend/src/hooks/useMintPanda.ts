@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   useCurrentAccount,
   useSignAndExecuteTransaction,
@@ -13,15 +13,23 @@ import {
 } from "@/lib/sui/mintPanda";
 import { extractTxDigest } from "@/lib/sui/parseMintEvent";
 import { parseMintError } from "@/lib/sui/parseMintError";
+import {
+  clearPendingMintRegistration,
+  loadPendingMintRegistration,
+  savePendingMintRegistration,
+  type PendingMintRegistration,
+} from "@/lib/mint/pendingMint";
 import { registerMintedPanda } from "@/services/panda.service";
 import { mintResultFromApi, type MintResult } from "@/types/panda";
+import { statsFromPanda } from "@/utils/pandaHelper";
+import type { PandaStats } from "@/utils/pandaHelper";
 
 export type MintStatus =
   | "idle"
   | "connecting"
-  | "confirming"
+  | "signing"
   | "minting"
-  | "revealing"
+  | "registering"
   | "success"
   | "error";
 
@@ -33,43 +41,53 @@ export function useMintPanda(jwt: string | null) {
   };
 
   const [status, setStatus] = useState<MintStatus>("idle");
+  const [signModalOpen, setSignModalOpen] = useState(false);
   const [result, setResult] = useState<MintResult | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [errorKind, setErrorKind] = useState<string | null>(null);
-  const [revealPhase, setRevealPhase] = useState<"hatching" | "radar" | "talent" | "done">(
-    "hatching",
-  );
+  const [pendingRegistration, setPendingRegistration] =
+    useState<PendingMintRegistration | null>(null);
 
   const effectiveStatus: MintStatus =
     !account || !jwt ? "connecting" : status;
 
+  useEffect(() => {
+    const stored = loadPendingMintRegistration();
+    if (stored) setPendingRegistration(stored);
+  }, []);
+
   const reset = useCallback(() => {
     setStatus("idle");
+    setSignModalOpen(false);
     setResult(null);
     setErrorMessage(null);
     setErrorKind(null);
-    setRevealPhase("hatching");
+    clearPendingMintRegistration();
+    setPendingRegistration(null);
   }, []);
 
-  const startReveal = useCallback(() => {
-    setRevealPhase("hatching");
-    const t1 = window.setTimeout(() => setRevealPhase("radar"), 400);
-    const t2 = window.setTimeout(() => setRevealPhase("talent"), 1400);
-    const t3 = window.setTimeout(() => {
-      setRevealPhase("done");
+  const registerOnBackend = useCallback(
+    async (pending: PendingMintRegistration, options?: { name?: string }) => {
+      setStatus("registering");
+      const apiData = await registerMintedPanda(jwt!, {
+        sui_object_id: pending.suiObjectId,
+        sui_tx_digest: pending.suiTxDigest,
+        name: options?.name,
+      });
+      clearPendingMintRegistration();
+      setPendingRegistration(null);
+      const mintResult = mintResultFromApi(apiData);
+      setResult(mintResult);
       setStatus("success");
-    }, 2200);
-    return () => {
-      window.clearTimeout(t1);
-      window.clearTimeout(t2);
-      window.clearTimeout(t3);
-    };
-  }, []);
+      return mintResult;
+    },
+    [jwt],
+  );
 
-  const mint = useCallback(
+  const executeMint = useCallback(
     async (options?: { name?: string }) => {
       if (!account || !jwt) {
-        setErrorMessage("请先Connect Wallet并登录");
+        setErrorMessage("Connect wallet and sign in first");
         setStatus("error");
         return;
       }
@@ -77,14 +95,15 @@ export function useMintPanda(jwt: string | null) {
       setErrorMessage(null);
       setErrorKind(null);
       setResult(null);
+      setSignModalOpen(false);
 
       try {
-        setStatus("confirming");
+        setStatus("signing");
         const tx = buildMintTx();
         const txResult = await signAndExecute.mutateAsync({ transaction: tx });
 
         const txDigest = extractTxDigest(txResult);
-        if (!txDigest) throw new Error("未找到交易 digest");
+        if (!txDigest) throw new Error("Transaction digest not found");
 
         setStatus("minting");
         const objectId = await resolvePandaObjectIdFromDigest(
@@ -92,16 +111,14 @@ export function useMintPanda(jwt: string | null) {
           txDigest,
         );
 
-        const apiData = await registerMintedPanda(jwt, {
-          sui_object_id: objectId,
-          sui_tx_digest: txDigest,
-          name: options?.name,
-        });
+        const pending: PendingMintRegistration = {
+          suiObjectId: objectId,
+          suiTxDigest: txDigest,
+        };
+        savePendingMintRegistration(pending);
+        setPendingRegistration(pending);
 
-        const mintResult = mintResultFromApi(apiData);
-        setResult(mintResult);
-        setStatus("revealing");
-        startReveal();
+        await registerOnBackend(pending, options);
       } catch (err: unknown) {
         const parsed = parseMintError(err);
         setErrorMessage(parsed.message);
@@ -110,20 +127,74 @@ export function useMintPanda(jwt: string | null) {
         throw err;
       }
     },
-    [account, jwt, signAndExecute, startReveal, suiClient],
+    [account, jwt, registerOnBackend, signAndExecute, suiClient],
   );
+
+  const openSignModal = useCallback(() => {
+    if (!account || !jwt) return;
+    setErrorMessage(null);
+    setErrorKind(null);
+    setSignModalOpen(true);
+  }, [account, jwt]);
+
+  const closeSignModal = useCallback(() => {
+    if (status === "signing" || status === "minting" || status === "registering") return;
+    setSignModalOpen(false);
+  }, [status]);
+
+  const retryRegistration = useCallback(
+    async (options?: { name?: string }) => {
+      const pending = pendingRegistration ?? loadPendingMintRegistration();
+      if (!pending || !jwt) {
+        setErrorMessage("No pending mint to sync. Try minting again.");
+        setStatus("error");
+        return;
+      }
+
+      setErrorMessage(null);
+      setErrorKind(null);
+
+      try {
+        await registerOnBackend(pending, options);
+      } catch (err: unknown) {
+        const parsed = parseMintError(err);
+        setErrorMessage(parsed.message);
+        setErrorKind(parsed.kind === "rejected" ? "unknown" : parsed.kind);
+        setStatus("error");
+        throw err;
+      }
+    },
+    [jwt, pendingRegistration, registerOnBackend],
+  );
+
+  const revealedStats: PandaStats | null = result
+    ? statsFromPanda({
+        boldness: result.personality.boldness,
+        patience: result.personality.patience,
+        intuition: result.personality.intuition,
+        focus: result.personality.focus,
+        contrarian: result.personality.contrarian,
+        experience_level: 5,
+      })
+    : null;
 
   return {
     status,
     effectiveStatus,
+    signModalOpen,
+    setSignModalOpen,
+    openSignModal,
+    closeSignModal,
     result,
     errorMessage,
     errorKind,
-    revealPhase,
-    mint,
+    pendingRegistration,
+    executeMint,
+    retryRegistration,
     reset,
-    showRadar: revealPhase === "radar" || revealPhase === "talent" || revealPhase === "done",
-    showTalent: revealPhase === "talent" || revealPhase === "done",
+    revealedStats,
     isSuccess: status === "success",
+    isPendingChain:
+      status === "signing" || status === "minting" || status === "registering",
   };
 }

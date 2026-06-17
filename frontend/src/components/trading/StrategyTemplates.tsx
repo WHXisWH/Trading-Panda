@@ -6,7 +6,11 @@ import { newRuleRow } from "@/lib/strategyBuilder";
 
 interface Props {
   hasExistingRules: boolean;
-  onApply: (rules: SignalRuleRow[], philosophy: typeof STRATEGY_TEMPLATES[0]["philosophy"]) => void;
+  onApply: (
+    rules: SignalRuleRow[],
+    philosophy: typeof STRATEGY_TEMPLATES[0]["philosophy"],
+    extras?: { positionPct?: number; stopLossPct?: number },
+  ) => void;
 }
 
 export function StrategyTemplates({ hasExistingRules, onApply }: Props) {
@@ -20,10 +24,9 @@ export function StrategyTemplates({ hasExistingRules, onApply }: Props) {
           onClick={() => {
             const rows = tpl.rules.map((r) => newRuleRow({ ...r, id: crypto.randomUUID() }));
             onApply(
-              hasExistingRules
-                ? rows
-                : rows,
+              rows,
               tpl.philosophy,
+              { positionPct: tpl.positionPct, stopLossPct: tpl.stopLossPct },
             );
           }}
         >
