@@ -4,11 +4,16 @@ import Image from "next/image";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useWallets, useConnectWallet } from "@mysten/dapp-kit";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 type ConnectableWallet = ReturnType<typeof useWallets>[number];
 import { useZkLogin } from "@/hooks/useZkLogin";
-import { resetWalletLoginState } from "@/lib/auth/walletLoginSession";
+import {
+  resetWalletLoginState,
+  setWalletConnectPending,
+} from "@/lib/auth/walletLoginSession";
+import { setConnectModalWalletLoginSuppress } from "@/lib/sui/zkLogin";
+import { useAuthStore } from "@/stores/authStore";
 import { Zap, ShieldCheck, TrendingUp, X, ChevronRight, Loader2, Wallet } from "lucide-react";
 
 interface ConnectWalletModalProps {
@@ -44,19 +49,31 @@ export function ConnectWalletModal({ open, onOpenChange }: ConnectWalletModalPro
   const wallets = useWallets();
   const { mutate: connect } = useConnectWallet();
   const { startGoogleLogin, isLoading: googleLoading } = useZkLogin();
+  const allowWalletAutoLogin = useAuthStore((s) => s.allowWalletAutoLogin);
   const [connecting, setConnecting] = useState<string | null>(null);
+
+  useEffect(() => {
+    setConnectModalWalletLoginSuppress(open);
+    return () => setConnectModalWalletLoginSuppress(false);
+  }, [open]);
 
   function handleConnect(wallet: ConnectableWallet) {
     setConnecting(wallet.name);
     resetWalletLoginState();
+    allowWalletAutoLogin();
+    setWalletConnectPending(true);
     connect(
       { wallet },
       {
         onSuccess: () => {
           setConnecting(null);
+          setWalletConnectPending(false);
           onOpenChange(false);
         },
-        onError: () => setConnecting(null),
+        onError: () => {
+          setConnecting(null);
+          setWalletConnectPending(false);
+        },
       },
     );
   }
@@ -167,7 +184,7 @@ export function ConnectWalletModal({ open, onOpenChange }: ConnectWalletModalPro
             <div className="relative hidden flex-col justify-between gap-6 bg-dark-panel p-7 text-white md:flex">
               <div className="flex items-center gap-2.5">
                 <Image
-                  src="/assets/ui-logo.svg"
+                  src="/assets/ui-logo.png"
                   alt="TradingPanda"
                   width={28}
                   height={28}

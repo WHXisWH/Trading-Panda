@@ -57,6 +57,7 @@ The key improvement is information-density control. Not every page is a cockpit.
 
 | Page doc | Product purpose | Primary journey | Layout type |
 |---|---|---|---|
+| [Logo](logo.md) | Brand mark and asset usage | Global | Visual identity |
 | [Mint Panda](page-mint.md) | Create Panda NFT identity | J0-J1 | Minimal ritual page |
 | [Agent Wallet](page-agent-wallet.md) | Create PandaVault and TradingPolicy | J2 | Permission setup wizard |
 | [Strategy](page-strategy.md) | Feed and validate trading style | J3 | Rule studio |

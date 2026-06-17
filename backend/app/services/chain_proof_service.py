@@ -10,12 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.db.models import AsyncJob, ChainExecutionLog, OrderIntent, PandaVault, TradeFact, TradingPolicy
 from app.schemas.errors import ApiError, ApiErrorCode
-from app.services.agent_signer import (
-    AgentSignerService,
-    DemoTradeParams,
-    proof_source_to_u8,
-    side_to_u8,
-)
+from app.services.agent_signer import CHAIN_PROOF_EVENT_TYPE
 from app.services.proof_selector import (
     check_eligibility,
     load_proof_context,
@@ -110,7 +105,7 @@ async def get_chain_proof_status(
         "agent_signer": {
             "configured": bool((settings.agent_signer_address or "").strip()),
             "address": settings.agent_signer_address or None,
-            "scope": "testnet PandaCoin demo PTB only",
+            "scope": "testnet chain proof PTB only",
         },
         "proof_job": {
             "job_id": job.id if job else None,
@@ -184,7 +179,7 @@ async def attach_execution_result(
         order_intent_id=order_intent_id,
         trade_fact_id=trade_fact_id,
         tx_digest=submit_result.tx_digest,
-        event_type="DemoTradeExecuted",
+        event_type=CHAIN_PROOF_EVENT_TYPE,
         event_payload=submit_result.event_payload or {},
         policy_version=policy_version,
         decision_hash=decision_hash,

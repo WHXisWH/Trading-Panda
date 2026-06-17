@@ -1,4 +1,4 @@
-"""Testnet Agent Signer — Mode 2 PandaCoin demo PTBs only (Epic 6)."""
+"""Testnet Agent Signer — Mode 2 chain proof PTBs only (Epic 6)."""
 
 from __future__ import annotations
 
@@ -13,11 +13,14 @@ from app.services.wallet_verify import normalize_sui_address
 
 logger = logging.getLogger(__name__)
 
-SubmitFn = Callable[["DemoTradeParams"], Awaitable["SubmitResult"]]
+CHAIN_PROOF_EVENT_TYPE = "ChainProofRecorded"
+LEGACY_CHAIN_PROOF_EVENT_TYPE = "DemoTradeExecuted"
+
+SubmitFn = Callable[["ChainProofParams"], Awaitable["SubmitResult"]]
 
 
 @dataclass(frozen=True)
-class DemoTradeParams:
+class ChainProofParams:
     vault_object_id: str
     policy_object_id: str
     pair: str
@@ -41,7 +44,7 @@ class SubmitResult:
 
 
 class AgentSignerService:
-    """Signs only authorized testnet demo_executor PTBs."""
+    """Signs only authorized testnet chain_proof_executor PTBs."""
 
     def __init__(self, submit_fn: SubmitFn | None = None) -> None:
         self._submit_fn = submit_fn
@@ -92,7 +95,7 @@ class AgentSignerService:
                 "Agent Signer only supports testnet demo modes",
             )
 
-    async def submit_demo_trade(self, params: DemoTradeParams) -> SubmitResult:
+    async def submit_chain_proof(self, params: ChainProofParams) -> SubmitResult:
         if self._submit_fn is not None:
             return await self._submit_fn(params)
 
@@ -112,7 +115,7 @@ class AgentSignerService:
                 details={"reason": str(exc)},
             ) from exc
 
-    def _dry_run_result(self, params: DemoTradeParams) -> SubmitResult:
+    def _dry_run_result(self, params: ChainProofParams) -> SubmitResult:
         digest_seed = hashlib.sha256(
             f"{params.proof_key}:{params.vault_object_id}:{params.policy_object_id}".encode()
         ).hexdigest()
@@ -121,7 +124,7 @@ class AgentSignerService:
             tx_digest=digest,
             dry_run=True,
             event_payload={
-                "type": "DemoTradeExecuted",
+                "type": CHAIN_PROOF_EVENT_TYPE,
                 "vault_id": params.vault_object_id,
                 "policy_id": params.policy_object_id,
                 "pair": params.pair,
@@ -134,7 +137,7 @@ class AgentSignerService:
             },
         )
 
-    async def _submit_with_pysui(self, params: DemoTradeParams, private_key: str) -> SubmitResult:
+    async def _submit_with_pysui(self, params: ChainProofParams, private_key: str) -> SubmitResult:
         from pysui import SuiConfig, SyncClient  # type: ignore[import-untyped]
         from pysui.sui.sui_txn import SyncTransaction  # type: ignore[import-untyped]
 
@@ -156,7 +159,7 @@ class AgentSignerService:
         trade_fact_id_hash = list(params.trade_fact_id_hash or params.proof_key[:16].encode())
 
         tx.move_call(
-            target=f"{package_id}::demo_executor::execute_demo_trade",
+            target=f"{package_id}::chain_proof_executor::submit_chain_proof",
             arguments=[
                 params.vault_object_id,
                 params.policy_object_id,
@@ -182,7 +185,7 @@ class AgentSignerService:
             tx_digest=digest,
             dry_run=False,
             event_payload={
-                "type": "DemoTradeExecuted",
+                "type": CHAIN_PROOF_EVENT_TYPE,
                 "vault_id": params.vault_object_id,
                 "policy_id": params.policy_object_id,
                 "pair": params.pair,

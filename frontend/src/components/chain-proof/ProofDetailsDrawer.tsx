@@ -43,7 +43,7 @@ export function ProofDetailsDrawer({ open, onOpenChange, status }: ProofDetailsD
         <div>
           <dt className="text-neutral-500">PTB path</dt>
           <dd>
-            demo_executor::execute_demo_trade → DemoTradeExecuted
+            chain_proof_executor::submit_chain_proof → ChainProofRecorded
           </dd>
         </div>
         {exec.event_payload ? (

@@ -1,5 +1,6 @@
 """Async SQLAlchemy engine setup."""
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import NullPool
 
 from app.config import settings
 from app.db.base import Base
@@ -30,7 +31,25 @@ def get_engine():
     url = normalize_database_url(settings.database_url)
     if not url:
         return None
-    return create_async_engine(url, pool_pre_ping=True, echo=settings.debug)
+    connect_args: dict[str, object] = {"timeout": 10}
+    if "supabase" in url:
+        connect_args["ssl"] = "require"
+    # Transaction pooler (:6543) needs PgBouncer workarounds; session pooler (:5432) is fine.
+    if "pooler.supabase.com" in url and ":6543" in url:
+        connect_args["statement_cache_size"] = 0
+        return create_async_engine(
+            url,
+            poolclass=NullPool,
+            pool_pre_ping=True,
+            echo=settings.debug,
+            connect_args=connect_args,
+        )
+    return create_async_engine(
+        url,
+        pool_pre_ping=True,
+        echo=settings.debug,
+        connect_args=connect_args,
+    )
 
 
 engine = None

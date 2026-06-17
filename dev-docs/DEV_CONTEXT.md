@@ -2,7 +2,7 @@
 
 > 本文档以「忒修斯之船」方式持续维护：只换木板、不换整船。部署事实变更时同步更新对应段落；任何改动必须在本文末尾「§9 变更日志」追加一行。
 >
-> **最后同步**：2026-06-17（Epic 1-10 自动化复验）
+> **最后同步**：2026-06-18（PNG Logo 视觉系统更新）
 
 ---
 
@@ -36,7 +36,7 @@ TradingPanda 是 Sui 链上的 **AI 交易宠物养成系统**，目标是 Sui O
 | 里程碑 | 状态 | 进度 | 备注 |
 |--------|------|------|------|
 | 骨架搭建 | ✅ 完成 | 100% | frontend/backend/contracts 目录结构、CLAUDE.md、DEV_CONTEXT.md |
-| Sui Move 合约 | 🟡 Testnet 已 publish | 80% | `sui client publish` 至 Testnet（Package `0x5950…1465`）；`mint::mint` + DF 初始化；UpgradeCap 在 `0xa459…7bf3`；Kiosk/版税深化待做 |
+| Sui Move 合约 | 🟢 Testnet v4 已 upgrade | 95% | `panda_vault::deposit_training_credit` 已上链；PandaCoin Treasury 已 bootstrap |
 | PostgreSQL Schema | ✅ v3.1 Schema 已落地 | 100% | Supabase `dpezgzzvbpemlgxdogue` 已从 `002` 升级至 Alembic head `006_trust_merkle_columns`；`verify_db.py` 覆盖 31 张表 + 8 个关键索引 + `006` Merkle 新列 |
 | 铸造流程（Mint） | 🟢 Epic 1 完成 | 100% | `/mint` 按 `page-mint.md`：PandaCarouselStage + WalletSignatureModal + toast + MintDetails drawer → `/agent-wallet`；链上 mint 仅身份；DB 注册幂等 + tx digest 重试同步 |
 | 策略解析 | ✅ Epic 2 完成 | 100% | `POST/GET /panda/:id/strategy` + `validate`；积木 `StrategyBuilder`；LLM 5/min；`strategy_history` ghost 0.40 |
@@ -100,12 +100,22 @@ Cache       → **Upstash Redis**（推荐；MVP 可与 Redis Cloud 互换直至
             用途：Pub/Sub（DE 发布；WS Hub 订阅）+ 响应缓存（TTL 60s）+ HTTP Rate Limit + Nonce 等（频道见 `docs/redis-architecture.md` §5）
 
 Blockchain  → Sui Testnet（**本项目首次正式 publish**，钱包 `0xa459…7bf3`）
-            Package ID：0x595087bb3e5f6c5011585797e4eb4db513b55d39ce84f984bb357e9375c11465
+            Package ID（original-id，调用仍用此地址）：0x595087bb3e5f6c5011585797e4eb4db513b55d39ce84f984bb357e9375c11465
+            Package published-at（v4 链上对象）：0x00d500fb909a63177ae0f88812a06b0ba071e151dd5cb80e9f51af250d6a6339
+            Package version：**4**（Sui CLI `testnet-v1.73.1` / protocol 126）
             PandaRegistry Object ID：0x5cbf822c3fe346d7001125ff0ad52d675611148b2c4734d1e200ebf23d53baa5
             AchievementRegistry Object ID：0x53c879bc3560a54548219f0a1f44dff471792c585a7b666829cfa08e722c8f8b
             AdminCap Object ID：0xf6ff3f496b7471353dc2ea3c7732cd822f596cdb62d27bdb0362171862b60a00
             UpgradeCap Object ID：0x40d481fc083c49ea5d1f48d25a60096ec07a49197370e9efe7a1cda3cd8e381e
             Publish Tx：HM2XXX4MHQzskM6TLgxmoYAsJJarRJfiAKUuWrjaZiQ3
+            Upgrade Tx（v1→v2）：Ftg2Yu7dz94xHubPKdcqieK8DMJj3KjV4zRftkMA1cjB
+            Upgrade Tx（v2→v3）：APAEyimP9KhCfHiDSsFQVSwkJu9gBXugoyiW3UMWSLXq
+            Upgrade Tx（v3→v4）：2ycsrXZHFK4xQ5iQQ42mYaoCexnDMoLdcUfuSoMZCfBr
+            新增模块（v2）：`agent_wallet` · `chain_proof_executor` · `panda_coin` · `panda_vault` · `trading_policy`；`trust_proof::submit_skill_digest` 已含
+            PandaCoin TreasuryCap（`PandaTrainingToken`）：0x3286e67193c94b1a46fbcc2d08632c30cc6c30dd5b4f31a8787942d8a04b98f6
+            PandaCoinAdminCap：0x44e4ee18e846133db694bd5cd82969230b3d3b55ace6e3acb4969118e213064a
+            PandaCoin bootstrap Tx：`panda_coin::bootstrap_currency` → 6229ATwhDTEnRNS4fyqcVj6wdXoax1yBps7d4mafhXPt
+            铸币入口：`panda_coin::mint_training_credit`；Vault 存取：`panda_vault::deposit_training_credit` / `withdraw_training_credit`（v4 已上链）
 ```
 
 ---
@@ -424,3 +434,14 @@ Package ID：**0x595087bb3e5f6c5011585797e4eb4db513b55d39ce84f984bb357e9375c1146
 | 2026-06-17 | **market-monitor 本地运行验证**：本机 `uvicorn main:app --reload --port 8001` 正在监听；`GET /health` 返回 `status=ok`、`pg_ok=true`、`deepbook_reachable=true`、`redis_connected=true`；`/pairs` 与 `/candles` 可返回 `DEEP/SUI`、`SUI/DBUSDC` 数据。 | 当前运行配置不是正式网口径：`.env` 指向 `SUI_RPC_URL=https://fullnode.testnet.sui.io:443`、`DEEPBOOK_PACKAGE_ID=0xdee9`、`DEEPBOOK_POOLS=DEEP/SUI,SUI/DBUSDC`、VPS `152.53.166.128:9008`；虽然 `/health.network` 显示 `mainnet`，实际数据源/池为 testnet；两池 health 均为 `stale`，需切 mainnet 配置并复验 freshness |
 | 2026-06-17 | **zkLogin 回调页 UX 修复**：`startGoogleLogin` 写入 `sessionStorage` 来源页（如 `/mint`）；回调页黑金品牌 UI + loading/success/error 状态；成功/失败均 `router.replace` 回来源页；toast 延后到返回后由 `ZkLoginResultToast` 展示（说明 Google 登录无需钱包签名、链上操作仍需钱包批准） | 从 mint 页 Google 登录后应回到 `/mint` 再弹 toast；不再硬跳首页 |
 | 2026-06-17 | **market-monitor 切主网公开 Indexer**：弃用 VPS `152.53.166.128:9008`；`DEEPBOOK_SERVER_URL` 默认 `https://deepbook-indexer.mainnet.mystenlabs.com`；`DEEPBOOK_DATABASE_URL` 改为可选（留空则 OHLCV/成交量走 Indexer `/ohclv` + `/historical_volume`）；池发现优先 `GET /get_pools`；`deepbook_client` 支持 Indexer 数组 K 线格式；`render.yaml` 默认 mainnet | 本地 smoke：`SUI_USDC` 实时 K 线 + 盘口 + 24h/7d 成交量可读；`/health.ohlcv_source=indexer_http`；无需自建 DeepBook Server |
+| 2026-06-17 | **Mode 2 合约重命名**：`demo_executor` → `chain_proof_executor`；`execute_demo_trade` → `submit_chain_proof`；`DemoTradeExecuted` → `ChainProofRecorded`；同步 backend `ChainProofParams`/`submit_chain_proof`、Chain Proof 前端文案、`contracts/DEPLOY.md` | `sui move test` 27/27；pytest chain proof 14/14；**须 `sui client upgrade` 后链上 Mode 2 才可用**；Mode 3 未来用独立 `trade_executor` |
+| 2026-06-17 | **Testnet upgrade 执行受阻（CLI/网络）**：已新增 `contracts/scripts/install-sui-testnet.sh` + `upgrade-testnet.sh`；本机 `sui` 1.72.2 仅支持 protocol 124、brew `sui` 1.73.0 仅 125，Testnet 需 **protocol 126**（`testnet-v1.73.1`）；GitHub 下载超时、git proxy `127.0.0.1:1087` 未监听；deployer `0xa459…` + gas ~0.8 SUI 就绪 | 用户开启代理或网络恢复后：`./contracts/scripts/install-sui-testnet.sh && SUI_BIN=~/.local/bin/sui-testnet ./contracts/scripts/upgrade-testnet.sh`；成功后更新 §3 PandaCoin TreasuryCap 等新 Object ID |
+| 2026-06-18 | **Testnet package upgrade v2 成功**：`~/.local/bin/sui-testnet` v1.73.1；`panda_coin` 去掉 module `init`（改为 `setup_currency`，因 upgrade 禁止新模块 initializer）；tx `Ftg2Yu7dz94xHubPKdcqieK8DMJj3KjV4zRftkMA1cjB`；`Published.toml` published-at `0x9e8a64…5262`、original-id 仍为 `0x595087…1465`；链上 **15** 模块（含 `agent_wallet`/`chain_proof_executor`） | `NEXT_PUBLIC_PACKAGE_ID` 仍用 original-id；RPC 查模块用 published-at；`panda_coin::setup_currency` 待 deployer 手动执行后回填 TreasuryCap |
+| 2026-06-18 | **PandaCoin 印钞机已开（v2→v3 + bootstrap）**：`panda_coin` 新增 `bootstrap_currency(AdminCap, CoinRegistry)`（`coin_registry::new_currency<PandaTrainingToken>`，因 OTW `PANDA_COIN` 无法在 upgrade 后外部调用）；v3 upgrade tx `APAEyimP9KhCfHiDSsFQVSwkJu9gBXugoyiW3UMWSLXq`；bootstrap tx `6229ATwhDTEnRNS4fyqcVj6wdXoax1yBps7d4mafhXPt`；TreasuryCap `0x3286e6…98f6`、PandaCoinAdminCap `0x44e4ee…064a`；published-at v3 `0xb2c3e7…62b8` | `sui move test` 27/27；铸币用 `mint_training_credit` |
+| 2026-06-18 | **`panda_vault` 对齐 PandaTrainingToken（v4）**：`TrainingCreditBalanceKey` dynamic field + `deposit_training_credit` / `withdraw_training_credit`；`panda_vault_tests` 2 项；`sui move test` **29/29** | 见下行 v4 upgrade tx |
+| 2026-06-18 | **Testnet package upgrade v4 成功**：tx `2ycsrXZHFK4xQ5iQQ42mYaoCexnDMoLdcUfuSoMZCfBr`；published-at `0x00d500…339`、version **4**；链上已含 `panda_vault::deposit_training_credit` | RPC 查新模块用 published-at v4；`NEXT_PUBLIC_PACKAGE_ID` 仍用 original-id |
+| 2026-06-17 | **钱包登录 500 修复**：`auth.py` 将 ORM 返回的 `uuid.UUID` 型 `user.id` 统一 `str()` 后再写入 JWT/Pydantic/JSON；补回归测试 `test_connect_wallet_existing_user_uuid_id` | Slush/钱包 `POST /auth/connect` 对已存在用户不再 500 |
+| 2026-06-17 | **本地 Supabase 连接修复**：`db.*.supabase.co:5432` 直连仅 IPv6 导致 `TimeoutError`；`backend/.env` 切 Session Pooler `aws-1-us-east-1.pooler.supabase.com:5432`；`database.py` 加 SSL/超时，`:6543` transaction pooler 自动 `NullPool`；`auth/connect` DB 异常映射 503；`verify_db.py` 复用 `get_engine()` | `python scripts/verify_db.py` 通过；重启 backend 后 Slush 登录应 200 |
+| 2026-06-17 | **Google 登录假成功 + 钱包签名冲突**：根因①打开 `ConnectWalletModal` 时 `allowWalletAutoLogin` 触发 Slush 自动签名；②zkLogin 会话地址与 Slush 地址不同，`WalletAuthSync` 误判后 `clearAuth()`；修复：`authMethod` 区分 wallet/zklogin、弹窗打开期间抑制自动钱包登录、仅 wallet 登录校验地址一致、成功 toast 需验证 token | Google 登录不应弹 Slush 签名；成功后导航栏应保持已登录 |
+| 2026-06-18 | **TradingPanda Logo 重设计落地**：基于黑金 + 荧光绿视觉系统，设计并替换 “Policy Collar Panda Agent” 几何 SVG logo；新增 `docs/assets/logo/trading-panda-icon.svg`、`trading-panda-wordmark.svg`、`trading-panda-preview.html` 与 `docs/design/logo.md`；覆盖 `frontend/public/assets/ui-logo.svg`、`frontend/public/favicon.svg`；prototype 顶栏 `.logo` / `.mini-panda` 改用本地 SVG 资产。 | `xmllint` 校验 5 个 SVG 通过；`node --check prototype/journey.js` 通过；QuickLook 成功渲染 icon/wordmark 缩略图；旧品牌 logo 中的武侠头带元素已从产品 logo 移除 |
+| 2026-06-18 | **TradingPanda PNG Logo 取代 SVG 版**：用户认为几何 SVG icon 质感不佳；改用 Panda Lab `panda_ink_base.png` 合成 PNG 徽章 logo（黑金六边形 Move-object 边界 + 金色 Policy Collar + 绿色 market pulse + 蓝色 proof/Sui sensor）。新增/更新 `docs/assets/logo/trading-panda-logo.png`、`trading-panda-logo-512.png`、`trading-panda-wordmark.png`、`frontend/public/assets/ui-logo.png`、`frontend/public/favicon.png`、`prototype/assets/trading-panda-logo.png`；前端 Navbar/首页/zkLogin/连接弹窗与 prototype `.logo`/`.mini-panda` 全部切换到 PNG；`docs/design/logo.md` 与 logo preview 同步 PNG 资产表。 | `file` 确认 PNG 为 RGBA；PIL 校验透明角正常；`rg` 确认 frontend/prototype/docs 活跃链路无旧 SVG logo 引用；`node --check prototype/journey.js` 通过；已人工视觉检查 icon 与 wordmark |

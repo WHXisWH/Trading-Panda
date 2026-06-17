@@ -96,7 +96,7 @@ export default function ChainProofPageClient() {
             <h2 className="text-[13px] font-semibold text-neutral-200">PTB preview</h2>
             <p className="mt-2 text-[12px] text-neutral-400">
               PandaVault + TradingPolicy v{status.chain_execution.policy_version} → PandaCoin demo
-              mutation via <span className="font-mono">demo_executor</span>
+              mutation via <span className="font-mono">chain_proof_executor</span>
             </p>
             <p className="mt-2 font-mono text-[11px] text-neutral-500">
               vault {status.objects.vault_object_id_short ?? "—"} · policy{" "}

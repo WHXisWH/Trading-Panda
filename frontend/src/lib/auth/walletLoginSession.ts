@@ -6,6 +6,7 @@ import { useSyncExternalStore } from "react";
 
 let inFlightAddress: string | null = null;
 let failedAddress: string | null = null;
+let connectPending = false;
 const listeners = new Set<() => void>();
 
 function notifyWalletLoginStatus(): void {
@@ -27,6 +28,25 @@ export function useWalletLoginInFlight(): string | null {
     subscribeWalletLoginStatus,
     getWalletLoginInFlightAddress,
     () => null,
+  );
+}
+
+function getWalletAuthPending(): boolean {
+  return connectPending || inFlightAddress !== null;
+}
+
+export function setWalletConnectPending(pending: boolean): void {
+  if (connectPending === pending) return;
+  connectPending = pending;
+  notifyWalletLoginStatus();
+}
+
+/** True while dapp-kit connect or backend wallet sign-in is in progress. */
+export function useWalletAuthPending(): boolean {
+  return useSyncExternalStore(
+    subscribeWalletLoginStatus,
+    getWalletAuthPending,
+    () => false,
   );
 }
 
@@ -67,6 +87,7 @@ export function clearWalletLoginFailure(walletAddress?: string): void {
 export function resetWalletLoginState(): void {
   failedAddress = null;
   inFlightAddress = null;
+  connectPending = false;
   notifyWalletLoginStatus();
 }
 

@@ -1,5 +1,5 @@
-/// Mode 2 demo execution — policy-checked PandaCoin proof path (Epic 6 extends usage).
-module trading_panda::demo_executor {
+/// Mode 2 chain proof — policy-checked proof path (not real trade execution).
+module trading_panda::chain_proof_executor {
     use sui::clock::Clock;
     use sui::event;
     use sui::object::ID;
@@ -10,7 +10,7 @@ module trading_panda::demo_executor {
     const SIDE_BUY: u8 = 1;
     const SIDE_SELL: u8 = 2;
 
-    public struct DemoTradeExecuted has copy, drop {
+    public struct ChainProofRecorded has copy, drop {
         vault_id: ID,
         policy_id: ID,
         panda_id: ID,
@@ -27,7 +27,7 @@ module trading_panda::demo_executor {
         timestamp_ms: u64,
     }
 
-    public entry fun execute_demo_trade(
+    public entry fun submit_chain_proof(
         vault: &mut PandaVault,
         policy: &TradingPolicy,
         pair_hash: vector<u8>,
@@ -56,7 +56,7 @@ module trading_panda::demo_executor {
         let _ = side;
         assert!(side == SIDE_BUY || side == SIDE_SELL, 0);
 
-        event::emit(DemoTradeExecuted {
+        event::emit(ChainProofRecorded {
             vault_id: panda_vault::id(vault),
             policy_id: trading_policy::id(policy),
             panda_id: panda_vault::panda_id(vault),

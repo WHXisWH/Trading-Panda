@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   description:
     "Mint your panda NFT with on-chain personality. Teach it trading strategies and watch it grow through autonomous simulated trading on Sui.",
   icons: {
-    icon: "/favicon.svg",
+    icon: "/favicon.png",
   },
   openGraph: {
     title: "TradingPanda",

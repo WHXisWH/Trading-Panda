@@ -35,6 +35,7 @@ from app.services.auth_tokens import (
     issue_refresh_token,
 )
 from app.services.bff_auth import is_bff_wallet_signature_verified
+from app.services.db_errors import rethrow_db_error
 from app.services.nonce_store import NONCE_MESSAGE_TEMPLATE, consume_nonce, issue_nonce
 from app.services.wallet_verify import normalize_sui_address, verify_wallet_personal_message
 from app.services.zklogin_verify import verify_google_id_token
@@ -52,9 +53,14 @@ def _iso(dt: datetime | None) -> str:
     return dt.isoformat()
 
 
+def _user_id_str(user: User) -> str:
+    """ORM may return uuid.UUID for UUID columns — API/JWT require str."""
+    return str(user.id)
+
+
 def _user_payload(user: User) -> AuthUserData:
     return AuthUserData(
-        id=user.id,
+        id=_user_id_str(user),
         wallet_address=user.wallet_address,
         display_name=user.display_name,
         avatar_url=user.avatar_url,
@@ -63,8 +69,9 @@ def _user_payload(user: User) -> AuthUserData:
 
 
 def _tokens_for_user(user: User, auth_method: str) -> AuthConnectData:
-    access, expires_in = issue_access_token(user.id, user.wallet_address, auth_method)  # type: ignore[arg-type]
-    refresh = issue_refresh_token(user.id, user.wallet_address)
+    user_id = _user_id_str(user)
+    access, expires_in = issue_access_token(user_id, user.wallet_address, auth_method)  # type: ignore[arg-type]
+    refresh = issue_refresh_token(user_id, user.wallet_address)
     return AuthConnectData(
         access_token=access,
         refresh_token=refresh,
@@ -107,6 +114,12 @@ async def auth_connect(
         return await _connect_zklogin(body, db)
     except ApiError as exc:
         return _api_error_response(exc)
+    except Exception as exc:
+        try:
+            rethrow_db_error(exc)
+        except ApiError as mapped:
+            return _api_error_response(mapped)
+        raise
 
 
 async def _connect_wallet(
@@ -201,8 +214,9 @@ async def auth_refresh(body: AuthRefreshRequest, db: AsyncSession = Depends(get_
         )
 
     auth_method = "zklogin" if user.zk_login_subject else "wallet"
-    access, expires_in = issue_access_token(user.id, user.wallet_address, auth_method)  # type: ignore[arg-type]
-    refresh = issue_refresh_token(user.id, user.wallet_address)
+    user_id = _user_id_str(user)
+    access, expires_in = issue_access_token(user_id, user.wallet_address, auth_method)  # type: ignore[arg-type]
+    refresh = issue_refresh_token(user_id, user.wallet_address)
     data = AuthRefreshData(
         access_token=access,
         refresh_token=refresh,
@@ -261,7 +275,7 @@ async def auth_me(authorization: str = Header(...), db: AsyncSession = Depends(g
     auth_method = payload.get("auth_method") or ("zklogin" if user.zk_login_subject else "wallet")
 
     data = AuthMeData(
-        id=user.id,
+        id=_user_id_str(user),
         wallet_address=user.wallet_address,
         zk_login_subject=user.zk_login_subject,
         display_name=user.display_name,

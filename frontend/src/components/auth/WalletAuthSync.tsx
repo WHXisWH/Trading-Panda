@@ -9,13 +9,18 @@ import { useCurrentAccount, useCurrentWallet } from "@mysten/dapp-kit";
 import { toast } from "sonner";
 import { useWalletLogin } from "@/hooks/useWalletLogin";
 import { clearWalletLoginFailure, walletsMatch } from "@/lib/auth/walletLoginSession";
+import {
+  isConnectModalWalletLoginSuppress,
+  isWalletAutoLoginSuppressedByOAuth,
+} from "@/lib/sui/zkLogin";
 import { isAccountOnAppNetwork, networkMismatchHint } from "@/lib/sui/network";
 import { useAuthStore } from "@/stores/authStore";
 
 export function WalletAuthSync() {
   const account = useCurrentAccount();
   const { currentWallet } = useCurrentWallet();
-  const { user, accessToken, jwt, clearAuth } = useAuthStore();
+  const { user, accessToken, jwt, clearAuth, walletAutoLoginSuppressed, authMethod } =
+    useAuthStore();
   const token = accessToken ?? jwt;
   const { loginWithWallet } = useWalletLogin();
   const loginRef = useRef(loginWithWallet);
@@ -27,14 +32,20 @@ export function WalletAuthSync() {
   useEffect(() => {
     if (!account) {
       clearWalletLoginFailure();
+      useAuthStore.getState().allowWalletAutoLogin();
       networkToastShown.current = false;
       return;
     }
 
-    if (token && user?.walletAddress && !walletsMatch(user.walletAddress, account.address)) {
+    if (
+      token &&
+      authMethod === "wallet" &&
+      user?.walletAddress &&
+      !walletsMatch(user.walletAddress, account.address)
+    ) {
       clearAuth();
     }
-  }, [account?.address, token, user?.walletAddress, clearAuth]);
+  }, [account?.address, token, user?.walletAddress, clearAuth, authMethod]);
 
   useEffect(() => {
     const address = account?.address;
@@ -43,6 +54,11 @@ export function WalletAuthSync() {
       return;
     }
     if (!currentWallet) return;
+
+    if (walletAutoLoginSuppressed) return;
+    if (isWalletAutoLoginSuppressedByOAuth()) return;
+    if (isConnectModalWalletLoginSuppress()) return;
+    if (authMethod === "zklogin") return;
 
     if (networkMismatch) {
       if (!networkToastShown.current) {
@@ -53,7 +69,7 @@ export function WalletAuthSync() {
     }
 
     void loginRef.current();
-  }, [account?.address, token, currentWallet?.name, networkMismatch]);
+  }, [account?.address, token, currentWallet?.name, networkMismatch, walletAutoLoginSuppressed, authMethod]);
 
   return null;
 }

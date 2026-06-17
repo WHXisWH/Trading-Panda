@@ -4,7 +4,7 @@ module trading_panda::agent_wallet_tests {
     use sui::test_scenario::{Self as ts};
     use sui::transfer;
     use trading_panda::agent_wallet;
-    use trading_panda::demo_executor;
+    use trading_panda::chain_proof_executor;
     use trading_panda::panda;
     use trading_panda::panda_vault::{Self, PandaVault};
     use trading_panda::trading_policy::{Self, TradingPolicy};
@@ -181,7 +181,7 @@ module trading_panda::agent_wallet_tests {
     }
 
     #[test, expected_failure(abort_code = trading_panda::trading_policy::E_AGENT_REVOKED)]
-    fun test_revoked_agent_blocks_demo_executor() {
+    fun test_revoked_agent_blocks_chain_proof_executor() {
         let mut scenario = ts::begin(OWNER);
         scenario.next_tx(OWNER);
         {
@@ -219,7 +219,7 @@ module trading_panda::agent_wallet_tests {
             let mut vault = scenario.take_shared<PandaVault>();
             let policy = scenario.take_shared<TradingPolicy>();
             let clock = clock::create_for_testing(scenario.ctx());
-            demo_executor::execute_demo_trade(
+            chain_proof_executor::submit_chain_proof(
                 &mut vault,
                 &policy,
                 PAIR_HASH,
@@ -243,7 +243,7 @@ module trading_panda::agent_wallet_tests {
     }
 
     #[test, expected_failure(abort_code = trading_panda::trading_policy::E_PAUSED)]
-    fun test_paused_policy_blocks_demo_executor() {
+    fun test_paused_policy_blocks_chain_proof_executor() {
         let mut scenario = ts::begin(OWNER);
         scenario.next_tx(OWNER);
         {
@@ -281,7 +281,7 @@ module trading_panda::agent_wallet_tests {
             let mut vault = scenario.take_shared<PandaVault>();
             let policy = scenario.take_shared<TradingPolicy>();
             let clock = clock::create_for_testing(scenario.ctx());
-            demo_executor::execute_demo_trade(
+            chain_proof_executor::submit_chain_proof(
                 &mut vault,
                 &policy,
                 PAIR_HASH,
@@ -335,7 +335,7 @@ module trading_panda::agent_wallet_tests {
             let mut vault = scenario.take_shared<PandaVault>();
             let policy = scenario.take_shared<TradingPolicy>();
             let clock = clock::create_for_testing(scenario.ctx());
-            demo_executor::execute_demo_trade(
+            chain_proof_executor::submit_chain_proof(
                 &mut vault,
                 &policy,
                 PAIR_HASH,
@@ -391,7 +391,7 @@ module trading_panda::agent_wallet_tests {
             let mut vault = scenario.take_shared<PandaVault>();
             let policy = scenario.take_shared<TradingPolicy>();
             let clock = clock::create_for_testing(scenario.ctx());
-            demo_executor::execute_demo_trade(
+            chain_proof_executor::submit_chain_proof(
                 &mut vault,
                 &policy,
                 PAIR_HASH,
@@ -415,7 +415,7 @@ module trading_panda::agent_wallet_tests {
     }
 
     #[test]
-    fun test_legal_demo_trade_succeeds() {
+    fun test_legal_chain_proof_succeeds() {
         let mut scenario = ts::begin(OWNER);
         scenario.next_tx(OWNER);
         {
@@ -445,7 +445,7 @@ module trading_panda::agent_wallet_tests {
             let mut vault = scenario.take_shared<PandaVault>();
             let policy = scenario.take_shared<TradingPolicy>();
             let clock = clock::create_for_testing(scenario.ctx());
-            demo_executor::execute_demo_trade(
+            chain_proof_executor::submit_chain_proof(
                 &mut vault,
                 &policy,
                 PAIR_HASH,
@@ -499,7 +499,7 @@ module trading_panda::agent_wallet_tests {
             let mut vault = scenario.take_shared<PandaVault>();
             let policy = scenario.take_shared<TradingPolicy>();
             let clock = clock::create_for_testing(scenario.ctx());
-            demo_executor::execute_demo_trade(
+            chain_proof_executor::submit_chain_proof(
                 &mut vault,
                 &policy,
                 PAIR_HASH,
@@ -553,7 +553,7 @@ module trading_panda::agent_wallet_tests {
             let mut vault = scenario.take_shared<PandaVault>();
             let policy = scenario.take_shared<TradingPolicy>();
             let clock = clock::create_for_testing(scenario.ctx());
-            demo_executor::execute_demo_trade(
+            chain_proof_executor::submit_chain_proof(
                 &mut vault,
                 &policy,
                 b"SUI/USDC",
@@ -607,7 +607,7 @@ module trading_panda::agent_wallet_tests {
             let mut vault = scenario.take_shared<PandaVault>();
             let policy = scenario.take_shared<TradingPolicy>();
             let clock = clock::create_for_testing(scenario.ctx());
-            demo_executor::execute_demo_trade(
+            chain_proof_executor::submit_chain_proof(
                 &mut vault,
                 &policy,
                 PAIR_HASH,

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from app.services.agent_signer import AgentSignerService, DemoTradeParams, SubmitResult
+from app.services.agent_signer import AgentSignerService, ChainProofParams, SubmitResult
 from app.workers.chain_execution_worker import decision_hash_bytes
 
 
@@ -36,8 +36,8 @@ async def test_agent_signer_dry_run_without_private_key(monkeypatch):
         vault_status="active",
     )
 
-    result = await signer.submit_demo_trade(
-        DemoTradeParams(
+    result = await signer.submit_chain_proof(
+        ChainProofParams(
             vault_object_id="0xvault",
             policy_object_id="0xpolicy",
             pair="DEEP/SUI",
@@ -56,12 +56,12 @@ async def test_agent_signer_dry_run_without_private_key(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_agent_signer_custom_submit_fn():
-    async def fake_submit(params: DemoTradeParams) -> SubmitResult:
+    async def fake_submit(params: ChainProofParams) -> SubmitResult:
         return SubmitResult(tx_digest="CUSTOM_DIGEST", event_payload={"pair": params.pair})
 
     signer = AgentSignerService(submit_fn=fake_submit)
-    result = await signer.submit_demo_trade(
-        DemoTradeParams(
+    result = await signer.submit_chain_proof(
+        ChainProofParams(
             vault_object_id="0x1",
             policy_object_id="0x2",
             pair="DEEP/SUI",

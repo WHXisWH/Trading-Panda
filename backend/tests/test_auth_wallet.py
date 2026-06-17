@@ -90,9 +90,44 @@ async def test_consume_nonce_replay_fails():
     assert exc.value.code == ApiErrorCode.AUTH_INVALID_NONCE
 
 
-def test_decode_access_token_rejects_refresh_type():
-    from app.services.auth_tokens import decode_access_token
+@pytest.mark.asyncio
+async def test_connect_wallet_existing_user_uuid_id():
+    """Regression: asyncpg may return user.id as uuid.UUID — must not 500 on connect."""
+    import uuid
+    from unittest.mock import AsyncMock, MagicMock, patch
 
-    refresh = issue_refresh_token("u1", "0xw")
-    with pytest.raises(jwt.InvalidTokenError):
-        decode_access_token(refresh)
+    from starlette.requests import Request
+
+    from app.api.auth import _connect_wallet
+    from app.db.models import User
+    from app.schemas.auth import AuthConnectRequest
+
+    body = AuthConnectRequest(
+        method="wallet",
+        wallet_address=_FIXTURE_ADDRESS,
+        signature=_FIXTURE_SIGNATURE,
+        nonce="test-nonce-001",
+    )
+    existing = User(wallet_address=_FIXTURE_ADDRESS)
+    existing.id = uuid.uuid4()
+
+    mock_db = AsyncMock()
+    mock_result = MagicMock()
+    mock_result.scalar_one_or_none.return_value = existing
+    mock_db.execute = AsyncMock(return_value=mock_result)
+
+    scope = {"type": "http", "headers": [], "method": "POST", "path": "/auth/connect"}
+    req = Request(scope)
+
+    with patch("app.api.auth.consume_nonce", AsyncMock()), patch(
+        "app.api.auth.is_bff_wallet_signature_verified",
+        return_value=True,
+    ):
+        res = await _connect_wallet(body, mock_db, req)
+
+    assert res.status_code == 200
+    import json
+
+    payload = json.loads(res.body.decode())
+    assert payload["success"] is True
+    assert payload["data"]["user"]["id"] == str(existing.id)

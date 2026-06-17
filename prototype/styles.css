@@ -106,7 +106,6 @@ a {
   min-width: 260px;
 }
 
-.logo,
 .panda-avatar {
   background:
     radial-gradient(circle at 50% 38%, #fff7dd 0 28%, transparent 29%),
@@ -121,7 +120,9 @@ a {
 .logo {
   width: 44px;
   height: 44px;
-  border-radius: 16px;
+  border-radius: 0;
+  background: url("./assets/trading-panda-logo.png") center / contain no-repeat;
+  filter: drop-shadow(0 0 18px rgba(109, 255, 144, 0.15));
 }
 
 .brand strong {
@@ -1412,13 +1413,9 @@ h1 {
   display: block;
   width: 38px;
   height: 38px;
-  border-radius: 14px;
-  background:
-    radial-gradient(circle at 50% 38%, #fff7dd 0 30%, transparent 31%),
-    radial-gradient(circle at 38% 40%, #070907 0 10%, transparent 11%),
-    radial-gradient(circle at 62% 40%, #070907 0 10%, transparent 11%),
-    linear-gradient(135deg, #2c3229, #080a07);
-  border: 1px solid rgba(225, 186, 92, 0.32);
+  border-radius: 0;
+  background: url("./assets/trading-panda-logo.png") center / contain no-repeat;
+  filter: drop-shadow(0 0 14px rgba(109, 255, 144, 0.13));
 }
 
 .product-brand strong,

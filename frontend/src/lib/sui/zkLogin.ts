@@ -8,6 +8,8 @@ import { jwtToAddress } from "@mysten/zklogin";
 const SALT_STORAGE_KEY = "trading-panda-zklogin-salt";
 const RETURN_TO_STORAGE_KEY = "tp-zklogin-return-to";
 const RESULT_STORAGE_KEY = "tp-zklogin-result";
+const WALLET_AUTO_LOGIN_SUPPRESS_KEY = "tp-suppress-wallet-auto-login";
+const CONNECT_MODAL_SUPPRESS_KEY = "tp-connect-modal-suppress";
 
 export type ZkLoginResultKind = "success" | "error";
 
@@ -61,6 +63,37 @@ export function consumeZkLoginDeferredResult(): ZkLoginDeferredResult | null {
     /* ignore malformed payload */
   }
   return null;
+}
+
+/** Survives OAuth full-page redirect; blocks WalletAuthSync until user retries connect. */
+export function suppressWalletAutoLoginForOAuth(): void {
+  if (typeof window === "undefined") return;
+  sessionStorage.setItem(WALLET_AUTO_LOGIN_SUPPRESS_KEY, "1");
+}
+
+export function releaseWalletAutoLoginSuppress(): void {
+  if (typeof window === "undefined") return;
+  sessionStorage.removeItem(WALLET_AUTO_LOGIN_SUPPRESS_KEY);
+}
+
+export function isWalletAutoLoginSuppressedByOAuth(): boolean {
+  if (typeof window === "undefined") return false;
+  return sessionStorage.getItem(WALLET_AUTO_LOGIN_SUPPRESS_KEY) === "1";
+}
+
+/** While connect modal is open, block WalletAuthSync from auto wallet sign-in. */
+export function setConnectModalWalletLoginSuppress(active: boolean): void {
+  if (typeof window === "undefined") return;
+  if (active) {
+    sessionStorage.setItem(CONNECT_MODAL_SUPPRESS_KEY, "1");
+  } else {
+    sessionStorage.removeItem(CONNECT_MODAL_SUPPRESS_KEY);
+  }
+}
+
+export function isConnectModalWalletLoginSuppress(): boolean {
+  if (typeof window === "undefined") return false;
+  return sessionStorage.getItem(CONNECT_MODAL_SUPPRESS_KEY) === "1";
 }
 
 export function getOrCreateZkLoginSalt(): string {

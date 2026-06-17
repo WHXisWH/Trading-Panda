@@ -10,7 +10,10 @@ import { ConnectWalletModal } from "@/components/layout/ConnectWalletModal";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { useWalletLogin } from "@/hooks/useWalletLogin";
-import { resetWalletLoginState } from "@/lib/auth/walletLoginSession";
+import {
+  resetWalletLoginState,
+  useWalletAuthPending,
+} from "@/lib/auth/walletLoginSession";
 import { formatShortAddress } from "@/lib/formatAddress";
 import { networkMismatchHint } from "@/lib/sui/network";
 import { useAuthStore } from "@/stores/authStore";
@@ -40,7 +43,10 @@ export function WalletButton() {
   const account = useCurrentAccount();
   const { isAuthed, user } = useAuth();
   const clearAuth = useAuthStore((s) => s.clearAuth);
+  const allowWalletAutoLogin = useAuthStore((s) => s.allowWalletAutoLogin);
+  const walletAutoLoginSuppressed = useAuthStore((s) => s.walletAutoLoginSuppressed);
   const { isLoading: walletLoginLoading, networkMismatch } = useWalletLogin();
+  const walletAuthPending = useWalletAuthPending();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [connectOpen, setConnectOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -74,6 +80,8 @@ export function WalletButton() {
   const dashMatch = pathname.match(/^\/dashboard\/([^/]+)/);
   const currentPandaId = dashMatch?.[1];
   const needsWalletSignIn = !!account && !isAuthed;
+  const showWalletAuthLoading =
+    !walletAutoLoginSuppressed && (walletAuthPending || walletLoginLoading);
   const sessionLabel =
     user?.displayName ??
     (user?.walletAddress ? formatShortAddress(user.walletAddress) : null);
@@ -180,7 +188,7 @@ export function WalletButton() {
   return (
     <div className="flex items-center gap-2">
       {/* ── network mismatch warning ── */}
-      {needsWalletSignIn && networkMismatch && !walletLoginLoading && (
+      {needsWalletSignIn && networkMismatch && !showWalletAuthLoading && (
         <Tooltip content={networkMismatchHint()}>
           <span className="max-w-[140px] text-xs leading-tight text-amber-600">
             Switch to Testnet
@@ -189,7 +197,7 @@ export function WalletButton() {
       )}
 
       {/* ── wallet connect / sign-in ── */}
-      {needsWalletSignIn && walletLoginLoading ? (
+      {showWalletAuthLoading ? (
         <Button variant="primary" size="sm" disabled className="rounded-full">
           <Loader2 className="h-4 w-4 animate-spin" />
           <span className="hidden sm:inline">Signing in…</span>
@@ -201,6 +209,7 @@ export function WalletButton() {
           className="rounded-full"
           onClick={() => {
             resetWalletLoginState();
+            allowWalletAutoLogin();
             setConnectOpen(true);
           }}
         >

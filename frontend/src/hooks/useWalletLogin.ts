@@ -59,7 +59,7 @@ export function useWalletLogin() {
         signature,
         nonce,
       });
-      setAuth(session.user, session.accessToken, session.refreshToken);
+      setAuth(session.user, session.accessToken, session.refreshToken, "wallet");
       toast.success("登录成功");
     } catch (err) {
       console.error(err);

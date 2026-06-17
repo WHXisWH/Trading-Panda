@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { toastFailedSafely, toastSubmitted, toastSuccess } from "@/lib/ui/productToast";
 import { useAuth } from "@/hooks/useAuth";
 import { useMintPanda } from "@/hooks/useMintPanda";
+import { useWalletAuthPending } from "@/lib/auth/walletLoginSession";
 import { parseMintError } from "@/lib/sui/parseMintError";
 import { fetchMyPandas } from "@/services/panda.service";
 import { ProductPageShell } from "@/components/layout/ProductPageShell";
@@ -20,7 +21,8 @@ import { ConnectWalletModal } from "@/components/layout/ConnectWalletModal";
 import { agentWalletSetupPath } from "@/lib/mint/mintRoutes";
 
 export default function MintPage() {
-  const { jwt } = useAuth();
+  const { jwt, isAuthed } = useAuth();
+  const walletAuthPending = useWalletAuthPending();
   const [connectOpen, setConnectOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
@@ -116,8 +118,14 @@ export default function MintPage() {
           <div className="mint-action-zone">
           {effectiveStatus === "connecting" && (
             <>
-              <Button size="lg" className="min-w-[220px]" onClick={() => setConnectOpen(true)}>
-                Connect Wallet
+              <Button
+                size="lg"
+                className="min-w-[220px]"
+                loading={walletAuthPending && !isAuthed}
+                disabled={walletAuthPending}
+                onClick={() => setConnectOpen(true)}
+              >
+                {walletAuthPending && !isAuthed ? "Connecting…" : "Connect Wallet"}
               </Button>
               <GasFeeHint muted compact />
             </>

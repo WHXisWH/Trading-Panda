@@ -248,7 +248,7 @@ export default function LandingPage() {
         <div className="relative">
           <div className="absolute inset-0 rounded-full bg-product-green/20 blur-3xl" />
           <Image
-            src="/assets/ui-logo.svg"
+            src="/assets/ui-logo.png"
             alt="TradingPanda"
             width={96}
             height={96}

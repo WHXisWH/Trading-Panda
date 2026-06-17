@@ -103,14 +103,17 @@ DATABASE_URL=postgresql+asyncpg://postgres:你的密码@db.xxxxxxxxxxxx.supabase
 - 主机：`db.<project-ref>.supabase.co`
 - 端口：`5432`
 
-**运行时 Pooler（可选）** — 使用 Dashboard 里 **Session / Transaction pooler** 的完整 URI，勿手拼 `aws-0-[region]`：
+**运行时 Pooler（本地 IPv4 推荐）** — Dashboard → **Connection pooling → Session mode**（端口 **5432**）。本机若 `db.*.supabase.co:5432` 仅 IPv6 导致超时，请改用 Pooler：
 
 ```env
-DATABASE_URL=postgresql+asyncpg://postgres.xxxxxxxxxxxx:密码@aws-1-xx-xxxx.pooler.supabase.com:6543/postgres
+DATABASE_URL=postgresql+asyncpg://postgres.xxxxxxxxxxxx:密码@aws-1-us-east-1.pooler.supabase.com:5432/postgres
 ```
 
 - 用户名必须是 `postgres.<project-ref>`
-- 主机名、区域以 Dashboard 为准（可能是 `aws-1-...` 而非 `aws-0-...`）
+- 主机名、区域以 Dashboard 为准（本项目实测为 `aws-1-us-east-1`）
+- **勿**在本地开发使用 Transaction pooler `:6543`（asyncpg prepared statement 与 PgBouncer 冲突）
+
+**Transaction pooler（`:6543`，生产/Serverless 可选）** — 仅当 Dashboard 明确给出时使用；代码已对 `:6543` 自动 `NullPool` + `statement_cache_size=0`。
 
 若连接报 `Tenant or user not found`：检查用户名是否含 project ref、主机是否与 Dashboard 一致、密码特殊字符是否 URL 编码（`@` → `%40`）。可加：
 

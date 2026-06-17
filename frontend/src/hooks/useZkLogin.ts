@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import { useAuthStore } from "@/stores/authStore";
 import { connectAuth, authErrorMessage } from "@/lib/auth.service";
-import { buildGoogleOAuthUrl, getOrCreateZkLoginSalt, saveZkLoginReturnTo } from "@/lib/sui/zkLogin";
+import { buildGoogleOAuthUrl, getOrCreateZkLoginSalt, saveZkLoginReturnTo, suppressWalletAutoLoginForOAuth, releaseWalletAutoLoginSuppress } from "@/lib/sui/zkLogin";
 import { finalizeZkLoginSession, prepareZkLoginOAuthSession } from "@/lib/sui/zkLoginSession";
 
 export function useZkLogin() {
@@ -16,6 +16,7 @@ export function useZkLogin() {
     setIsLoading(true);
     try {
       saveZkLoginReturnTo(returnTo);
+      suppressWalletAutoLoginForOAuth();
       const { nonce } = await prepareZkLoginOAuthSession();
       const redirectUri = `${window.location.origin}/auth/zklogin-callback`;
       window.location.href = buildGoogleOAuthUrl(redirectUri, nonce);
@@ -40,7 +41,8 @@ export function useZkLogin() {
           provider: "google",
           salt,
         });
-        setAuth(user, accessToken, refreshToken);
+        setAuth(user, accessToken, refreshToken, "zklogin");
+        releaseWalletAutoLoginSuppress();
       } catch (e) {
         const msg = authErrorMessage(e);
         setError(msg);

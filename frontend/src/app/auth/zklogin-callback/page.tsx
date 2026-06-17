@@ -12,6 +12,7 @@ import {
 } from "@/lib/sui/zkLogin";
 import { useZkLogin } from "@/hooks/useZkLogin";
 import { authErrorMessage } from "@/lib/auth.service";
+import { useAuthStore } from "@/stores/authStore";
 
 type CallbackPhase = "loading" | "success" | "error";
 
@@ -54,6 +55,12 @@ export default function ZkLoginCallbackPage() {
 
     void completeWithIdToken(idToken)
       .then(() => {
+        const { accessToken, authMethod } = useAuthStore.getState();
+        if (!accessToken || authMethod !== "zklogin") {
+          finishError("Google sign-in did not complete. Please try again.");
+          return;
+        }
+
         setPhase("success");
         setDetail("Redirecting you back…");
         setZkLoginDeferredResult({
@@ -73,7 +80,7 @@ export default function ZkLoginCallbackPage() {
         <div className="border-b border-white/10 px-6 py-5">
           <div className="flex items-center gap-3">
             <Image
-              src="/assets/ui-logo.svg"
+              src="/assets/ui-logo.png"
               alt="TradingPanda"
               width={32}
               height={32}

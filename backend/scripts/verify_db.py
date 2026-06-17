@@ -8,10 +8,9 @@ import sys
 import _bootstrap  # noqa: F401 — must run before `app` imports
 
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.config import settings
-from app.db.database import normalize_database_url
+from app.db.database import get_engine, normalize_database_url
 
 CORE_TABLES = (
     "users",
@@ -118,7 +117,10 @@ async def main() -> int:
         return 1
 
     url = normalize_database_url(settings.database_url)
-    engine = create_async_engine(url, pool_pre_ping=True)
+    engine = get_engine()
+    if engine is None:
+        print("DATABASE_URL is not set", file=sys.stderr)
+        return 1
     try:
         async with engine.connect() as conn:
             await conn.execute(text("SELECT 1"))

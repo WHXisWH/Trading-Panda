@@ -12,7 +12,8 @@ from app.db.models import ChainExecutionLog, OrderIntent, PandaVault, TradeFact,
 from app.schemas.errors import ApiError, ApiErrorCode
 from app.services.agent_signer import (
     AgentSignerService,
-    DemoTradeParams,
+    ChainProofParams,
+    CHAIN_PROOF_EVENT_TYPE,
     proof_source_to_u8,
 )
 from app.services.chain_proof_service import attach_execution_result
@@ -57,7 +58,7 @@ async def process_chain_proof_job(
         mode=vault_row.mode,
     )
 
-    params = DemoTradeParams(
+    params = ChainProofParams(
         vault_object_id=vault_row.sui_object_id,
         policy_object_id=policy_row.sui_object_id,
         pair=fact.pair,
@@ -71,7 +72,7 @@ async def process_chain_proof_job(
     )
 
     try:
-        submit_result = await signer_service.submit_demo_trade(params)
+        submit_result = await signer_service.submit_chain_proof(params)
     except ApiError as exc:
         await _record_failure(
             session,
