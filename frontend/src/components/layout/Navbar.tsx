@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { clsx } from "clsx";
 import { useQuery } from "@tanstack/react-query";
@@ -72,11 +71,9 @@ export function Navbar() {
 
   return (
     <header className="sticky top-4 z-[var(--z-navbar)] overflow-visible px-4 md:px-5">
-      <div className="product-panel mx-auto flex max-w-page flex-wrap items-center justify-between gap-3 overflow-visible !rounded-[26px] px-3 py-3 backdrop-blur-2xl">
+      <div className="product-topbar mx-auto flex max-w-page flex-wrap items-center justify-between gap-3 px-3 py-3">
         <Link href="/" className="flex min-w-[200px] items-center gap-3" aria-label="TradingPanda Home">
-          <span className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-product-gold/30 bg-gradient-to-br from-[#2b2f25] via-[#080a07] to-[#172014] shadow-[inset_0_-10px_22px_rgba(0,0,0,0.34),0_0_28px_rgba(109,255,144,0.11)]">
-            <Image src="/assets/ui-logo.png" alt="" width={28} height={28} className="h-7 w-7" priority />
-          </span>
+          <span className="product-brand-logo" aria-hidden />
           <span>
             <strong className="block text-[15px] font-bold leading-tight tracking-tight text-product-text">
               TradingPanda
