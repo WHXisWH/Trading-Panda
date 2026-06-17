@@ -46,16 +46,16 @@ Mint Panda NFT
 
 ### 0.1 Repo Audit And Terminology
 
-- [ ] Audit frontend/backend/contracts for old user-facing copy: `simulation`, `模拟盘`, `DeepBook testnet 两池`, `paper trade = chain trade`.
-- [ ] Rename product-facing copy to `Training Ledger`, `Agent Wallet`, `Chain Proof Moment`, `Trade Fact`.
+- [x] Audit frontend/backend/contracts for old user-facing copy: `simulation`, `模拟盘`, `DeepBook testnet 两池`, `paper trade = chain trade`.
+- [x] Rename product-facing copy to `Training Ledger`, `Agent Wallet`, `Chain Proof Moment`, `Trade Fact`.
 - [x] Keep legacy API names only as compatibility wrappers where cheaper than migration.
 - [x] Add comments/deprecation notes where old `simulation/start|stop|status` remains but now means Training Ledger session.
 - [x] Update `.env.example` files for v3.1 additions: `AGENT_SIGNER_ADDRESS`, `AGENT_SIGNER_PRIVATE_KEY`, `CHAIN_PROOF_ENABLED`, selected DeepBook mainnet pair config.
 
 ### 0.2 Contract And API Spec Alignment
 
-- [ ] Update `docs/api-specification.md` with explicit v3.1 endpoints for Agent Wallet setup, Training Ledger status, Trade Facts, Chain Proof, Review, Safety.
-- [ ] Update `spec.md` if implementation changes module contracts or endpoint names.
+- [x] Update `docs/api-specification.md` with explicit v3.1 endpoints for Agent Wallet setup, Training Ledger status, Trade Facts, Chain Proof, Review, Safety.
+- [x] Update `spec.md` if implementation changes module contracts or endpoint names.
 - [x] Define frontend TypeScript contracts for `PandaVault`, `TradingPolicy`, `OrderIntent`, `TradeFact`, `ChainProofStatus`, `SkillMemory`.
 - [x] Define backend Pydantic schemas for the same v3.1 contracts.
 - [x] Add shared error codes for `POLICY_*`, `VAULT_*`, `LEDGER_*`, `TRADE_FACT_*`, `CHAIN_PROOF_*`, `AGENT_SIGNER_*`.
@@ -64,7 +64,7 @@ Mint Panda NFT
 
 - [x] Keep existing `simulations` and `trades` tables for compatibility.
 - [x] Add v3.1 canonical tables from `docs/database-schema.md`.
-- [ ] Route new execution through `order_intents`, `ledger_entries`, and `trade_facts`.
+- [x] Route new execution through `order_intents`, `ledger_entries`, and `trade_facts`.
 - [x] Decide whether old `trades` are backfilled into `trade_facts` or shown only in legacy views. **Decision**: legacy views only in MVP; no automatic backfill.
 - [x] Extend `scripts/verify_db.py` to verify all v3.1 tables and key indexes.
 

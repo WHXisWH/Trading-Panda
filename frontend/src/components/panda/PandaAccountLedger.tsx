@@ -49,7 +49,7 @@ export function PandaAccountLedger({ snapshot }: Props) {
   return (
     <section className="border-t border-[var(--color-border)] pt-3">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <h3 className="text-[11px] font-medium text-neutral-500">模拟账户</h3>
+        <h3 className="text-[11px] font-medium text-neutral-500">训练账本账户</h3>
         <span className="flex items-center gap-1.5 text-[10px] text-neutral-500">
           <span
             className={`h-1.5 w-1.5 shrink-0 rounded-full ${

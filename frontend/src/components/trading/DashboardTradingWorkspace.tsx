@@ -150,7 +150,7 @@ export function DashboardTradingWorkspace({
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--color-border)] bg-paper-card px-4 py-2.5">
         <div>
-          <h2 className="text-[14px] font-semibold text-ink-900">模拟交易工作台</h2>
+          <h2 className="text-[14px] font-semibold text-ink-900">Training Ledger 工作台</h2>
           <p className="text-[10px] text-ink-500">
             {pool} · {interval} · {isRunning ? "训练中" : "未训练"}
           </p>

@@ -15,6 +15,40 @@
 | Chain proof panel | API should expose Trade Fact proof status and support manual proof request. |
 | Durable async | Chain proof/review/skill/merkle/walrus tasks should be visible through `async_jobs`-backed status. |
 
+#### v3.1 REST 端点（2026-06-17 实现）
+
+路径前缀均为 `/api/panda`（经 Next.js BFF 代理至 backend `/panda`）。`simulation/*` 为 **Training Ledger 会话兼容包装**，新前端应优先使用 `training/*` 读路径。
+
+| 方法 | 路径 | 简述 | 认证 |
+|------|------|------|------|
+| GET | `/api/panda/:id/agent-wallet` | Agent Wallet 设置状态（vault/policy mirror） | JWT |
+| POST | `/api/panda/:id/agent-wallet/validate-policy` | 校验 policy draft（不落库） | JWT |
+| POST | `/api/panda/:id/agent-wallet/sync` | 链上 setup PTB 后 mirror vault + policy | JWT |
+| POST | `/api/panda/:id/agent-wallet/owner-action` | 链上 owner action mirror（兼容；首选 `/safety/owner-action`） | JWT |
+| POST | `/api/panda/:id/simulation/start` | **兼容** 启动 Training Ledger 会话（`PandaActor`） | JWT |
+| POST | `/api/panda/:id/simulation/stop` | **兼容** 停止 Training Ledger 会话 | JWT |
+| GET | `/api/panda/:id/simulation/status` | **兼容** 会话状态 + actor 摘要 | JWT |
+| GET | `/api/panda/:id/training/ledger` | Training Ledger 账户快照（cash/positions/PnL） | JWT |
+| GET | `/api/panda/:id/training/order-intents` | `OrderIntent` 时间线（含 policy 拒绝） | JWT |
+| GET | `/api/panda/:id/training/trade-facts` | `TradeFact` 时间线 | JWT |
+| GET | `/api/panda/:id/chain-proof/:tradeFactId` | Chain Proof Moment 资格与 job 状态 | JWT |
+| POST | `/api/panda/:id/chain-proof/:tradeFactId/request` | 手动请求 Mode 2 testnet PandaCoin PTB | JWT |
+| GET | `/api/panda/:id/reviews` | Review 列表 | JWT |
+| GET | `/api/panda/:id/reviews/:reviewId` | 单条 Review 详情 | JWT |
+| GET | `/api/panda/:id/trade-facts/:tradeFactId/review` | Trade Fact 关联 Review | JWT |
+| POST | `/api/panda/:id/trade-facts/:tradeFactId/review` | 手动触发 Review job | JWT |
+| GET | `/api/panda/:id/skill-memories` | Skill Memory 列表 | JWT |
+| GET | `/api/panda/:id/skill-versions/latest` | 最新 skill version + digest 状态 | JWT |
+| GET | `/api/panda/:id/safety` | 安全态（policy pause/revoke、pending jobs） | JWT |
+| POST | `/api/panda/:id/safety/owner-action` | 链上 pause/revoke/tighten mirror | JWT |
+| GET | `/api/panda/:id/trust/merkle` | 最新 Merkle batch 状态 | JWT |
+| GET | `/api/panda/:id/trust/merkle/history` | Merkle batch 历史 | JWT |
+| GET | `/api/panda/:id/trust/skill-digest` | 最新 skill digest 链上状态 | JWT |
+
+**v3.1 错误码**（与 `backend/app/schemas/errors.py` 对齐）：`VAULT_*` · `POLICY_*` · `LEDGER_*` · `TRADE_FACT_*` · `CHAIN_PROOF_*` · `AGENT_SIGNER_*` · `REVIEW_*` · `SKILL_*`。
+
+**v3.1 WebSocket 事件**（Hub 频道 `panda:{id}:*`）：`decision` · `order_intent` · `execution` · `policy_rejected` · `market_stale` · `review` · `skill`（后两者由 async worker 发出）。
+
 ---
 
 ## 一、接口总览
@@ -36,10 +70,28 @@
 | GET | `/api/panda/:id/strategy` | 获取当前策略 | JWT |
 | GET | `/api/panda/:id/strategy/history` | 策略变更历史 | JWT |
 | GET | `/api/panda/:id/strategy/match` | 策略-性格匹配度 | JWT |
-| POST | `/api/panda/:id/simulation/start` | 开始模拟 | JWT |
-| POST | `/api/panda/:id/simulation/stop` | 停止模拟 | JWT |
-| GET | `/api/panda/:id/simulation/status` | 当前模拟状态 | JWT |
-| GET | `/api/panda/:id/simulation/history` | 历史模拟列表 | JWT |
+| POST | `/api/panda/:id/simulation/start` | 开始 Training Ledger 会话（**兼容路径**） | JWT |
+| POST | `/api/panda/:id/simulation/stop` | 停止 Training Ledger 会话（**兼容路径**） | JWT |
+| GET | `/api/panda/:id/simulation/status` | 当前 Training Ledger 会话状态（**兼容路径**） | JWT |
+| GET | `/api/panda/:id/simulation/history` | 历史会话列表 | JWT |
+| GET | `/api/panda/:id/agent-wallet` | Agent Wallet 设置状态 | JWT |
+| POST | `/api/panda/:id/agent-wallet/validate-policy` | 校验 TradingPolicy draft | JWT |
+| POST | `/api/panda/:id/agent-wallet/sync` | 链上 vault/policy 创建后 mirror | JWT |
+| GET | `/api/panda/:id/training/ledger` | Training Ledger 账户与持仓 | JWT |
+| GET | `/api/panda/:id/training/order-intents` | OrderIntent 时间线 | JWT |
+| GET | `/api/panda/:id/training/trade-facts` | Trade Fact 时间线 | JWT |
+| GET | `/api/panda/:id/chain-proof/:tradeFactId` | Chain Proof Moment 状态 | JWT |
+| POST | `/api/panda/:id/chain-proof/:tradeFactId/request` | 请求 Chain Proof PTB | JWT |
+| GET | `/api/panda/:id/reviews` | Review 列表 | JWT |
+| GET | `/api/panda/:id/trade-facts/:tradeFactId/review` | Trade Fact Review | JWT |
+| POST | `/api/panda/:id/trade-facts/:tradeFactId/review` | 触发 Review | JWT |
+| GET | `/api/panda/:id/skill-memories` | Skill Memory 列表 | JWT |
+| GET | `/api/panda/:id/skill-versions/latest` | 最新 Skill version | JWT |
+| GET | `/api/panda/:id/safety` | 安全控制状态 | JWT |
+| POST | `/api/panda/:id/safety/owner-action` | Owner pause/revoke/tighten | JWT |
+| GET | `/api/panda/:id/trust/merkle` | 最新 Merkle root 状态 | JWT |
+| GET | `/api/panda/:id/trust/merkle/history` | Merkle 历史 | JWT |
+| GET | `/api/panda/:id/trust/skill-digest` | Skill digest 链上状态 | JWT |
 | GET | `/api/panda/:id/trades` | 交易历史 | JWT |
 | GET | `/api/panda/:id/trades/:tradeId/decision` | 单笔交易决策链 | JWT |
 | GET | `/api/panda/:id/experience` | 经验总览 | JWT |

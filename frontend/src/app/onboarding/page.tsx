@@ -19,7 +19,7 @@ const STEPS = 5;
 
 const EXP_OPTIONS = [
   { value: "none", label: "零经验，纯新手" },
-  { value: "beginner", label: "做过一些模拟/小额" },
+  { value: "beginner", label: "做过纸上练习或小额" },
   { value: "intermediate", label: "交易 1 年以上" },
   { value: "advanced", label: "资深交易者" },
 ] as const;

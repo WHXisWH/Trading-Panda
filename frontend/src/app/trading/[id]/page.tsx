@@ -22,7 +22,7 @@ export default function TradingPage({ params }: { params: { id: string } }) {
           href={`/dashboard/${params.id}`}
           className="text-[13px] text-primary-500 hover:underline"
         >
-          ← 返回模拟盘
+          ← 返回训练账本
         </Link>
       </div>
 

@@ -61,7 +61,7 @@ const STEPS = [
     step: "03",
     icon: Zap,
     title: "Watch It Grow",
-    desc: "Your panda trades autonomously in simulation. Track its P&L, watch its emotions change, and level up through experience.",
+    desc: "Your panda trains on the Training Ledger with real DeepBook market data. Track P&L, watch emotions evolve, and level up through experience.",
   },
 ];
 

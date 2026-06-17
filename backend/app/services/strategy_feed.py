@@ -320,7 +320,7 @@ async def feed_strategy(
     if panda.is_trading:
         raise ApiError(
             ApiErrorCode.PANDA_IS_TRADING,
-            "Panda is in simulation; stop trading before changing strategy",
+            "Panda is training on the Training Ledger; stop the session before changing strategy",
         )
 
     body.validate_for_feed()

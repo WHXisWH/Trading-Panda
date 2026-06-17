@@ -150,3 +150,31 @@ Required checks in `demo_executor`:
 | Sui failure does not corrupt PnL | Chain worker failure leaves Training Ledger balances unchanged. |
 | Reviews update skills only with evidence | `SkillMemoryWorker` requires reviewed Trade Fact evidence. |
 | Queue is durable | Restarted worker can resume pending `async_jobs`. |
+
+## 8. REST API Surface (v3.1)
+
+Canonical backend prefix: `/panda/{panda_id}/…` (BFF exposes `/api/panda/:id/…`).
+
+| Domain | Method | Path suffix | Module |
+|---|---|---|---|
+| Agent Wallet | GET | `/agent-wallet` | `panda_agent_wallet` |
+| Agent Wallet | POST | `/agent-wallet/validate-policy` | `panda_agent_wallet` |
+| Agent Wallet | POST | `/agent-wallet/sync` | `panda_agent_wallet` |
+| Training session (compat) | POST | `/simulation/start` | `panda_simulation` |
+| Training session (compat) | POST | `/simulation/stop` | `panda_simulation` |
+| Training session (compat) | GET | `/simulation/status` | `panda_simulation` |
+| Training Ledger reads | GET | `/training/ledger` | `panda_training` |
+| Training Ledger reads | GET | `/training/order-intents` | `panda_training` |
+| Training Ledger reads | GET | `/training/trade-facts` | `panda_training` |
+| Chain Proof | GET | `/chain-proof/{trade_fact_id}` | `panda_chain_proof` |
+| Chain Proof | POST | `/chain-proof/{trade_fact_id}/request` | `panda_chain_proof` |
+| Review | GET | `/reviews` · `/reviews/{review_id}` | `panda_review` |
+| Review | GET/POST | `/trade-facts/{trade_fact_id}/review` | `panda_review` |
+| Skill Memory | GET | `/skill-memories` · `/skill-versions/latest` | `panda_review` |
+| Safety | GET | `/safety` | `panda_safety` |
+| Safety | POST | `/safety/owner-action` | `panda_safety` |
+| Trust | GET | `/trust/merkle` · `/trust/merkle/history` · `/trust/skill-digest` | `panda_trust` |
+
+Hot-path write contract: `PandaActor` → `TradeFactWriter.commit_tick` persists `order_intents`, `ledger_entries`, and `trade_facts` (plus legacy `trades` row for compatibility). Rejected intents are stored with `status=REJECTED`.
+
+Shared wire types: `frontend/src/types/autonomous-wallet.ts` · `backend/app/schemas/autonomous_wallet.py`.

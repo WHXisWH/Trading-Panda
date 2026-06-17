@@ -88,22 +88,41 @@ python scripts/verify_db.py
 
 | 项 | 状态 |
 |----|------|
-| 全库术语审计 | ⬜ |
-| 产品文案重命名 | ⬜ |
+| 全库术语审计 | ✅ |
+| 产品文案重命名 | ✅ |
 | Legacy API 兼容包装 | ✅ |
 | `simulation/*` 弃用注释 | ✅ |
 | `.env.example` v3.1 变量 | ✅ |
-| `api-specification.md` v3.1 端点 | ⬜ |
-| `spec.md` 同步 | ⬜ |
+| `api-specification.md` v3.1 端点 | ✅ |
+| `spec.md` 同步 | ✅ |
 | 前后端契约 | ✅ |
 | 共享错误码 | ✅ |
 | 保留 legacy 表 | ✅ |
 | v3.1 表 ORM + migration | ✅ |
-| 热路径接入 `order_intents` 等 | ⬜（Epic 5） |
+| 热路径接入 `order_intents` 等 | ✅（Epic 5 · `TradeFactWriter.commit_tick`） |
 | `trades` backfill 决策 | ✅ legacy views only |
 | `verify_db.py` 扩展 | ✅（脚本已写） |
 
-#### Verification Runs (2026-06-17)
+#### Terminology Audit (2026-06-17)
+
+| 范围 | 结论 | 处理 |
+|------|------|------|
+| MVP 七页（mint/agent-wallet/strategy/training-ledger/chain-proof/review/safety） | ✅ 已用 v3.1 术语 | 无需改 |
+| Legacy 页（landing/dashboard/trading/onboarding） | ⚠️ 含「模拟盘」等 | 已重命名为 Training Ledger / 训练账本 |
+| 内部标识（`simulation_id`、`useSimulationSession`、API `/simulation/*`） | ✅ 保留 | 兼容包装，见 `panda_simulation.py` 注释 |
+| 后端用户文案 | ⚠️ 1 处 | `strategy_feed` 错误信息已改 |
+| Move 合约 | ✅ | 无用户可见文案 |
+| 历史文档（whitepaper、frontend-design 等） | ⏸ | 非 Epic 0 阻塞；PRD v3.1 已对齐 |
+
+**审计命令（可复现）：**
+
+```bash
+rg -n '模拟盘|paper trade = chain|DeepBook testnet 两池' frontend/src backend/app contracts/sources
+rg -n 'Training Ledger|Agent Wallet|Chain Proof|Trade Fact' frontend/src/app/mint frontend/src/app/agent-wallet frontend/src/app/training-ledger
+rg -n 'commit_tick|order_intents|trade_facts' backend/app/engine/panda_actor.py backend/app/services/trade_fact_writer.py
+```
+
+#### Verification Runs (2026-06-17, Epic 0 补全)
 
 | # | 命令 / 检查 | 结果 | 详情 |
 |---|-------------|------|------|
@@ -112,6 +131,10 @@ python scripts/verify_db.py
 | C | 静态抽查（错误码 / config / 类型导出） | ✅ PASS | 均存在 |
 | D | `alembic current` | ❌ FAIL | `TimeoutError`（见 §1） |
 | E | `python scripts/verify_db.py` | ❌ FAIL | `TimeoutError`（见 §1） |
+| F | 术语审计 `rg`（见上表） | ✅ PASS | MVP 七页 v3.1 术语；legacy 页已重命名；无「paper trade = chain trade」用户文案 |
+| G | 静态：`api-specification.md` v3.1 端点表 | ✅ PASS | 22 条 v3.1 REST + 错误码/WS 说明 |
+| H | 静态：`spec.md` §8 REST 映射 | ✅ PASS | 与 `router.py` 挂载路径一致 |
+| I | 静态：热路径 `PandaActor` → `TradeFactWriter` | ✅ PASS | `commit_tick` 写 `order_intents` / `ledger_entries` / `trade_facts` |
 
 #### Expected Pass (DB reachable)
 
@@ -123,8 +146,9 @@ python scripts/verify_db.py
 | 层级 | 结论 |
 |------|------|
 | 代码 / 契约 / 迁移脚本 | ✅ 通过 |
+| 术语 / API spec / spec 同步 | ✅ 通过（2026-06-17 补全） |
 | 数据库落地 | ⏸ 未验证（环境阻塞） |
-| Epic 0 完整闭环 | ⚠️ 部分完成 |
+| Epic 0 完整闭环 | ⚠️ 部分完成（仅 DB 落地待 §1 可达后复验） |
 
 ---
 
@@ -1580,6 +1604,7 @@ _待补充：端到端 demo 脚本、Battle Case 回归、MVP 验收清单逐项
 
 | 日期 | 变更 |
 |------|------|
+| 2026-06-17 | **Epic 0 补全**：术语审计 + legacy 产品文案重命名；`api-specification.md` v3.1 端点表（22 条）；`spec.md` §8 REST 映射；确认 `PandaActor`→`TradeFactWriter` 热路径；§3.0 checklist 全绿（DB 落地仍 ⏸） |
 | 2026-06-17 | **Epic 9 自动验证**：pytest Merkle 16/16、`sui move test` 27/27、Alembic head=`006_trust_merkle_columns`、前端 `pnpm type-check` ✅；`alembic current` Timeout、`006` 未落地、真实链上 PTB/Walrus 上传/E2E 50 笔/浏览器 smoke ⏸；§3.9 完整记录；判定 **⚠️ 部分验证** |
 | 2026-06-17 | Epic 5 自动验证：pytest 22/22（PolicyGate·Ledger snapshot·stale gate·migration 004）+ 静态 API/WS/前端资产；`verify_db` Timeout；记录 async_jobs 未写、无热路径集成测、Ledger 变异/rollback 测缺失 → §3.5 **⚠️ 部分验证** |
 | 2026-06-17 | Epic 6 自动验证：Move 27/27、backend pytest 16/16、type-check ✅、vitest routeJump 4/4；DB/testnet E2E ⏸；`pnpm build` ❌（`/agent-wallet`）；§3.6 完整记录；判定 **⚠️ 部分验证** |
