@@ -1,15 +1,17 @@
 # Market Monitor
 
-独立行情服务（方案 B）。**方案甲（MVP）**：OHLCV 自 DeepBook PG **`order_fills`** 聚合（**不用** `/ohclv`）；盘口仍走 Server HTTP；`PUBLISH market:tick:*` 供 **DE + CF WebSocket Hub**（前端 K 线与决策同源）。
+独立行情服务。**PRD v3.1**：DeepBook **mainnet 真实行情**为训练真相；默认接 Mysten 公开 Indexer（`https://deepbook-indexer.mainnet.mystenlabs.com`），`PUBLISH market:tick:*` 供 **DE + CF WebSocket Hub**。
 
 - 设计：`docs/market-monitor-design.md`
-- 部署：**VPS 与 PG 同机推荐**；`render.yaml` 可作过渡
+- 公开 Indexer 文档：[Sui DeepBookV3 Indexer](https://docs.sui.io/onchain-finance/deepbookv3/deepbookv3-indexer)
+- 部署：**无需 VPS**；`render.yaml` 可直接部署（仅 `REDIS_URL` 必填）
 - Redis：`market:tick:{pair}`；历史 K 线 REST：`GET /candles/{pool:path}` 或 `GET /candles?pool=`
 
 ## 前置条件
 
-1. 本地 DeepBook **Indexer + Server**（见 `docs/deepbook-v3-server-local-deployment.md`）
-2. **Upstash Redis**（`REDIS_URL`，见下）
+1. **Upstash Redis**（`REDIS_URL`，见下）
+2. 网络可访问 `deepbook-indexer.mainnet.mystenlabs.com`（默认 OHLCV + 盘口 + 成交量）
+3. （可选）自建 DeepBook Indexer PG：配置 `DEEPBOOK_DATABASE_URL` 后 OHLCV 优先从 `order_fills` 聚合
 
 ### Upstash 两种凭据（勿混用）
 
@@ -24,7 +26,7 @@
 
 ```bash
 cp .env.example .env
-# 填写 DEEPBOOK_SERVER_URL、REDIS_URL
+# 填写 REDIS_URL（DEEPBOOK_SERVER_URL 已有 mainnet 默认值）
 
 pip install -r requirements.txt
 uvicorn main:app --reload --port 8001
@@ -32,8 +34,8 @@ uvicorn main:app --reload --port 8001
 
 ```bash
 curl http://localhost:8001/health
-curl "http://localhost:8001/candles/DEEP/SUI?interval=1m&limit=100"
-# 或（避免路径里的 /）：curl "http://localhost:8001/candles?pool=DEEP/SUI&limit=100"
+curl "http://localhost:8001/candles/SUI_USDC?interval=1m&limit=100"
+# 或：curl "http://localhost:8001/candles?pool=SUI_USDC&limit=100"
 ```
 
 ## 目录结构
@@ -44,10 +46,10 @@ market-monitor/
 ├── config.py               # 环境变量
 ├── monitor.py              # 轮询编排
 ├── feed/
-│   ├── deepbook_client.py  # GET /orderbook（盘口）
-│   ├── fills_client.py     # PG order_fills → OHLCV
+│   ├── deepbook_client.py  # Indexer HTTP：/orderbook、/ohclv、/historical_volume
+│   ├── fills_client.py     # 可选 PG order_fills → OHLCV
 │   ├── kline_aggregate.py  # fills → candles
-│   ├── sui_pool_client.py  # suix_queryEvents → PoolCreated → 池名 SUI_USDC
+│   ├── sui_pool_client.py  # suix_queryEvents → PoolCreated（池发现回退）
 │   └── orderbook.py        # 订单簿不平衡度
 ├── pipeline/
 │   ├── indicators.py       # RSI / MA20 / MACD / 波动率
@@ -60,35 +62,35 @@ market-monitor/
 
 ## 行为说明
 
-1. **解析池列表**：`DEEPBOOK_POOLS` 非空则用之（MVP 推荐 `DEEP/SUI,SUI/DBUSDC`）；否则 Sui RPC + 可选 `GET /get_pools`。
-2. 每 **`POLL_INTERVAL_SEC`**（默认 **15s**，testnet 够用）：用 **`FILLS_POLL_LOOKBACK_SEC`**（默认 72h）读 PG `order_fills` 聚 K 线；再 `GET /orderbook`（池名 URL 编码）。
+1. **解析池列表**：`DEEPBOOK_POOLS` 非空则用之；否则 Indexer `GET /get_pools`（主）+ Sui RPC（回退）；mainnet 按流动性排名选 top `MAX_PUBLISH_PAIRS`。
+2. 每 **`POLL_INTERVAL_SEC`**（默认 **15s**）：OHLCV 来自 Indexer `/ohclv`（或可选 PG `order_fills`）；再 `GET /orderbook`。
 3. 每个池：OHLCV → 指标（需 ≥2 根 K 线）→ 盘口 → `MarketEvent`。
 4. 新 K 线或 `stale` 时节流 `PUBLISH market:tick:{pair}`。
 5. 定期 `market:heartbeat`（默认 30s）。
-6. **`GET /candles/{pool}`**：用 **`FILLS_LOOKBACK_SEC`**（默认 30d）供前端历史图；**勿**依赖 DeepBook `/ohclv`（常为空）。
-7. **`GET /health`**：含 `network`、`ranked_pairs`、各池 `health`/`freshness_sec`/`error`。
+6. **`GET /candles/{pool}`**：Indexer `/ohclv` 或 PG 历史深度。
+7. **`GET /health`**：含 `network`、`ohlcv_source`（`indexer_http` | `order_fills`）、各池 `health`/`freshness_sec`/`error`。
 8. **`GET /pairs`**：流动性排名与 pair metadata（volume、spread、depth、launch priority）。
 
 ## 环境变量
 
 | 变量 | 说明 |
 |------|------|
-| `DEEPBOOK_DATABASE_URL` | DeepBook Indexer 库（`order_fills`），如 `postgresql://…@127.0.0.1:5433/deepbook` |
-| `DEEPBOOK_SERVER_URL` | 如 `http://localhost:9008`（盘口） |
-| `DEEPBOOK_POOLS` | 可选，逗号分隔；**最高优先级**，留空则走 Sui + 可选 HTTP 回退 |
-| `SUI_RPC_URL` | 全节点 JSON-RPC，默认 `https://fullnode.testnet.sui.io:443`；主网请改 |
-| `DEEPBOOK_PACKAGE_ID` | DeepBook Move 包地址，默认 `0xdee9`（与网络一致） |
-| `DEEPBOOK_POOL_MODULE` | 含 `PoolCreated` 的模块名，默认 `pool` |
-| `USE_SUI_RPC_FOR_POOLS` | 默认 `true` |
-| `USE_HTTP_GET_POOLS_FALLBACK` | Sui 无结果时是否再调 `GET /get_pools`，默认 `true` |
+| `DEEPBOOK_SERVER_URL` | 默认 `https://deepbook-indexer.mainnet.mystenlabs.com`（盘口 + OHLCV + 成交量） |
+| `DEEPBOOK_DATABASE_URL` | **可选**；DeepBook Indexer PG（`order_fills`），配置后 OHLCV 优先走 PG |
+| `DEEPBOOK_NETWORK` | `mainnet`（默认）或 `testnet` |
+| `DEEPBOOK_POOLS` | 可选，逗号分隔；**最高优先级**，留空则自动发现 + 排名 |
+| `LAUNCH_PAIRS` | 产品优先池，默认 `SUI_USDC,DEEP_USDC,WAL_USDC,NS_USDC` |
+| `SUI_RPC_URL` | 全节点 JSON-RPC，默认 `https://fullnode.mainnet.sui.io:443` |
+| `DEEPBOOK_PACKAGE_ID` | DeepBook Move 包地址（mainnet 默认 `0x2c8d…4809`） |
+| `USE_HTTP_POOL_DISCOVERY_PRIMARY` | 默认 `true`：优先 Indexer `/get_pools` |
+| `USE_SUI_RPC_FOR_POOLS` | 默认 `true`（HTTP 无结果时回退） |
+| `USE_HTTP_GET_POOLS_FALLBACK` | 默认 `true` |
 | `REDIS_URL` | `redis://` 或 `rediss://`（Upstash 用控制台 Python 连接串） |
-| `PRICE_SCALE` / `QTY_SCALE` | 链上整数价量缩放，默认 `1e9` |
-| `USE_OHLCV_FALLBACK` | `true` 时回退 `GET /ohclv`（无 PG 时） |
-| `ORDERBOOK_DEPTH` | `/orderbook` 深度档数，默认 `10` |
-| `ORDERBOOK_LEVEL` | `2` = 多档 Level2（与 Server 一致） |
-| `POLL_INTERVAL_SEC` | 主循环间隔，默认 **15**（与 PG 回溯无关） |
-| `FILLS_POLL_LOOKBACK_SEC` | 轮询 tick 读 PG 的时间深度，默认 **259200**（72h） |
-| `FILLS_LOOKBACK_SEC` | `GET /candles` 历史深度，默认 **2592000**（30d） |
+| `USE_OHLCV_FALLBACK` | `true` 时即使配置了 PG 也强制走 HTTP `/ohclv` |
+| `ORDERBOOK_DEPTH` / `ORDERBOOK_LEVEL` | `/orderbook` 参数，默认 `10` / `2` |
+| `POLL_INTERVAL_SEC` | 主循环间隔，默认 **15** |
+| `FILLS_POLL_LOOKBACK_SEC` | PG 轮询回溯（仅 PG 模式），默认 **72h** |
+| `FILLS_LOOKBACK_SEC` | PG 历史 K 线深度，默认 **30d** |
 | `CANDLE_PERIOD` | K 线周期，默认 `1m` |
 | `OHLCV_LIMIT` | 返回 K 线根数上限，默认 `60` |
 

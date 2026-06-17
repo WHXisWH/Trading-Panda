@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import Any, TYPE_CHECKING
 
 from feed.deepbook_client import Candle
+from feed.pair_registry import is_fallback_pool
 
 if TYPE_CHECKING:
     import asyncpg
@@ -169,10 +170,10 @@ class FillsClient:
         if key in self._pool_directory:
             return self._pool_directory[key]
         alt = key.replace("_", "/")
-        if alt in self._pool_directory:
+        if alt in self._pool_directory and not is_fallback_pool(alt):
             return self._pool_directory[alt]
         alt2 = key.replace("/", "_")
-        if alt2 in self._pool_directory:
+        if alt2 in self._pool_directory and not is_fallback_pool(key):
             return self._pool_directory[alt2]
         return None
 
@@ -247,22 +248,7 @@ class FillsClient:
 
             schema = self._schema
             assert schema is not None
-            row = await conn.fetchrow(
-                f"""
-                SELECT {schema.pool_col}::text AS pool_id, COUNT(*) AS cnt
-                FROM order_fills
-                GROUP BY {schema.pool_col}
-                ORDER BY cnt DESC
-                LIMIT 1
-                """
-            )
-            if row and row["pool_id"]:
-                logger.warning(
-                    "pool %s unresolved; using busiest pool_id=%s",
-                    pool,
-                    row["pool_id"],
-                )
-                return str(row["pool_id"])
+            logger.warning("pool %s unresolved; no matching pool_id found", pool)
         return None
 
     def _scaled(self, value: float, scale: float) -> float:

@@ -12,6 +12,7 @@ HEALTH_FRESH = "fresh"
 HEALTH_STALE = "stale"
 HEALTH_NO_FILLS = "no_fills"
 HEALTH_INSUFFICIENT_CANDLES = "insufficient_candles"
+HEALTH_UNRESOLVED = "unresolved"
 HEALTH_SOURCE_DOWN = "source_down"
 HEALTH_ORDERBOOK_UNAVAILABLE = "orderbook_unavailable"
 
@@ -117,6 +118,8 @@ def resolve_health(
             return HEALTH_NO_FILLS, None
         if "insufficient_candles" in err:
             return HEALTH_INSUFFICIENT_CANDLES, None
+        if "pool_unresolved" in err:
+            return HEALTH_UNRESOLVED, None
     clock = time.time() if now is None else now
     freshness: float | None = None
     if signals.last_candle_ts is not None:

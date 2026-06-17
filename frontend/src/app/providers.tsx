@@ -7,6 +7,7 @@ import { Toaster } from "sonner";
 import { useState } from "react";
 import { OnboardingGuard } from "@/components/auth/OnboardingGuard";
 import { WalletAuthSync } from "@/components/auth/WalletAuthSync";
+import { ZkLoginResultToast } from "@/components/auth/ZkLoginResultToast";
 import { walletSupportsPersonalMessageLogin } from "@/lib/sui/walletCompat";
 
 const SUI_NETWORK =
@@ -54,6 +55,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           stashedWallet={{ name: "TradingPanda", network: SUI_NETWORK }}
         >
           <WalletAuthSync />
+          <ZkLoginResultToast />
           <OnboardingGuard>{children}</OnboardingGuard>
           <Toaster position="bottom-right" richColors theme="dark" />
         </WalletProvider>

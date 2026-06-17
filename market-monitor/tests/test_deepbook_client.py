@@ -65,3 +65,15 @@ def test_parse_candles() -> None:
     assert len(candles) == 1
     assert candles[0].close == 1.05
     assert candles[0].timestamp == 1_700_000_000.0
+
+
+def test_parse_candles_indexer_arrays() -> None:
+    from feed.deepbook_client import _parse_historical_volume
+
+    raw = {"candles": [[1_781_703_900_000, 0.79, 0.80, 0.78, 0.795, 100.0]]}
+    candles = _parse_candles(raw)
+    assert len(candles) == 1
+    assert candles[0].timestamp == 1_781_703_900.0
+    assert candles[0].close == 0.795
+
+    assert _parse_historical_volume({"SUI_USDC": 1_000_000}, "SUI_USDC") == 1_000_000.0

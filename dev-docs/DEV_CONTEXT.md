@@ -62,7 +62,7 @@ TradingPanda 是 Sui 链上的 **AI 交易宠物养成系统**，目标是 Sui O
 | 胜率 | 链下 trades 表计算，不上链 | （PRD C11） |
 | 执行阈值 | >0.65 执行 / 0.40-0.65 观望 / <0.40 忽视 | （PRD C12） |
 | 策略残影 | ghost_weight 衰减，旧策略归档不删除 | （PRD C7） |
-| 行情采集 | **`market-monitor/`**（**VPS+PG 推荐**）：OHLCV 自 **`order_fills`** 聚合（**不用** `/ohclv`）；盘口 HTTP :9008；池列表 Sui RPC；→ `PUBLISH market:tick:{pair}` | `docs/market-monitor-design.md` |
+| 行情采集 | **`market-monitor/`**：默认 Mysten 公开 Indexer（`deepbook-indexer.mainnet.mystenlabs.com`）拉 OHLCV + 盘口；可选 PG `order_fills`；→ `PUBLISH market:tick:{pair}` | `docs/market-monitor-design.md` |
 | 实时推送（方案甲） | **单 WSS** `NEXT_PUBLIC_WS_URL`：Hub 订 **`market:tick:*` + `panda:*`**；REST 历史 K 线 `GET /candles` | `docs/websocket-hub-design.md` |
 | K 线独立服务 | **MVP 不部署** `:9009`；可选方案乙见 `docs/kline-websocket-service.md` | 高频拆流时再上 |
 
@@ -76,9 +76,9 @@ frontend/   → Vercel
             HTTP API Gateway（Next.js API Routes）；**不承载 WebSocket**
             域名：[待 Vercel 部署后填入]
 
-market-monitor/ → **VPS 推荐**（与 DeepBook PG :5433 同机；Render 仅作过渡）
-            读 `order_fills` 聚 K 线 + 指标；HTTP :9008 盘口；`PUBLISH market:tick:*`
-            `GET /health`；规划 `GET /candles/{pool}`；`DEEPBOOK_DATABASE_URL`
+market-monitor/ → **Render / 任意主机**（无需 VPS DeepBook 栈）
+            默认 Mysten 公开 Indexer HTTP（OHLCV + 盘口 + 成交量）；可选 `DEEPBOOK_DATABASE_URL` PG
+            `PUBLISH market:tick:*`；`GET /health`；`GET /candles/{pool}`
             设计见 docs/market-monitor-design.md
 
 websocket/  → Cloudflare Workers + Durable Objects
@@ -157,14 +157,15 @@ Blockchain  → Sui Testnet（**本项目首次正式 publish**，钱包 `0xa459
 | 变量名 | 说明 |
 |--------|------|
 | `REDIS_URL` | 与 backend 相同 Upstash 实例（`rediss://`） |
-| `DEEPBOOK_DATABASE_URL` | DeepBook Indexer 库（`order_fills`）；VPS 如 `postgresql://…@127.0.0.1:5433/…` |
-| `DEEPBOOK_SERVER_URL` | DeepBook Server（**盘口**等，如 `http://localhost:9008`） |
+| `DEEPBOOK_DATABASE_URL` | **可选**；DeepBook Indexer PG（`order_fills`）；留空则 OHLCV 走 Indexer `/ohclv` |
+| `DEEPBOOK_SERVER_URL` | DeepBook Indexer 基址，默认 `https://deepbook-indexer.mainnet.mystenlabs.com` |
 | `DEEPBOOK_POOLS` | 可选；**非空则强制**使用；留空则流动性排名自动选 top `MAX_PUBLISH_PAIRS` |
-| `DEEPBOOK_NETWORK` | `mainnet`（默认）或 `testnet`（开发回退） |
+| `DEEPBOOK_NETWORK` | `mainnet`（默认）或 `testnet`（开发回退，改 Indexer URL 为 testnet） |
 | `LAUNCH_PAIRS` | 产品优先池，默认 `SUI_USDC,DEEP_USDC,WAL_USDC,NS_USDC` |
 | `USE_PAIR_RANKING` / `MAX_PUBLISH_PAIRS` / `STALE_THRESHOLD_SEC` | 流动性排名与 stale 判定 |
-| `SUI_RPC_URL` | 全节点 JSON-RPC；池发现（默认 **mainnet** `fullnode.mainnet.sui.io`） |
+| `SUI_RPC_URL` | 全节点 JSON-RPC；池发现回退（默认 **mainnet** `fullnode.mainnet.sui.io`） |
 | `DEEPBOOK_PACKAGE_ID` / `DEEPBOOK_POOL_MODULE` | DeepBook v3 主网包（默认 `0x2c8d…4809` / `pool`） |
+| `USE_HTTP_POOL_DISCOVERY_PRIMARY` | 默认 `true`：优先 Indexer `GET /get_pools` |
 | `USE_SUI_RPC_FOR_POOLS` / `USE_HTTP_GET_POOLS_FALLBACK` | 池发现开关与 HTTP 回退 |
 | `POOL_RPC_LIMIT_PER_PAGE` / `POOL_RPC_MAX_PAGES` | 池事件查询分页 |
 | `POLL_INTERVAL_SEC` | 主循环间隔，默认 **15** |
@@ -420,3 +421,6 @@ Package ID：**0x595087bb3e5f6c5011585797e4eb4db513b55d39ce84f984bb357e9375c1146
 | 2026-06-17 | **`/mint` 单屏无滚动**：`mint/layout` 锁定视口高度；`ProductPageShell.fitViewport` + 三行 grid（hero / stage / actions）；舞台与熊猫尺寸改用 `dvh` 自适应；Gas 提示 `compact` 单行 | 桌面/移动 `/mint` 不应出现垂直滚动条；各 mint 状态（连接/铸造/成功）同屏展示 |
 | 2026-06-17 | **`/mint` 垂直居中聚簇**：Hero/Stage/Actions 收入 `mint-ritual-cluster` 整体居中；收紧区块间距；舞台放大至 `48dvh` / 熊猫 `21dvh` | 视觉上不再贴顶/贴底；舞台更突出 |
 | 2026-06-17 | **Epic 1-10 自动化复验与验证链路修复**：按 `docs/epic-verification-record.md` 复跑 Move/backend/frontend/market-monitor/websocket/DB 关键验证；`verify_db.py` 增加 `006` Merkle 新列检查；frontend `type-check` 改用独立 `tsconfig.typecheck.json`，避免 `.next/types` 与增量缓存假失败。 | `python scripts/verify_db.py` 通过：31 张表 + 8 个关键索引 + `merkle_roots.root_type/start_fact_id/end_fact_id`；`npm run build` 与 `npm run type-check` 通过；未覆盖钱包/浏览器 E2E、真实 testnet PTB、Walrus、50 笔训练闭环 |
+| 2026-06-17 | **market-monitor 本地运行验证**：本机 `uvicorn main:app --reload --port 8001` 正在监听；`GET /health` 返回 `status=ok`、`pg_ok=true`、`deepbook_reachable=true`、`redis_connected=true`；`/pairs` 与 `/candles` 可返回 `DEEP/SUI`、`SUI/DBUSDC` 数据。 | 当前运行配置不是正式网口径：`.env` 指向 `SUI_RPC_URL=https://fullnode.testnet.sui.io:443`、`DEEPBOOK_PACKAGE_ID=0xdee9`、`DEEPBOOK_POOLS=DEEP/SUI,SUI/DBUSDC`、VPS `152.53.166.128:9008`；虽然 `/health.network` 显示 `mainnet`，实际数据源/池为 testnet；两池 health 均为 `stale`，需切 mainnet 配置并复验 freshness |
+| 2026-06-17 | **zkLogin 回调页 UX 修复**：`startGoogleLogin` 写入 `sessionStorage` 来源页（如 `/mint`）；回调页黑金品牌 UI + loading/success/error 状态；成功/失败均 `router.replace` 回来源页；toast 延后到返回后由 `ZkLoginResultToast` 展示（说明 Google 登录无需钱包签名、链上操作仍需钱包批准） | 从 mint 页 Google 登录后应回到 `/mint` 再弹 toast；不再硬跳首页 |
+| 2026-06-17 | **market-monitor 切主网公开 Indexer**：弃用 VPS `152.53.166.128:9008`；`DEEPBOOK_SERVER_URL` 默认 `https://deepbook-indexer.mainnet.mystenlabs.com`；`DEEPBOOK_DATABASE_URL` 改为可选（留空则 OHLCV/成交量走 Indexer `/ohclv` + `/historical_volume`）；池发现优先 `GET /get_pools`；`deepbook_client` 支持 Indexer 数组 K 线格式；`render.yaml` 默认 mainnet | 本地 smoke：`SUI_USDC` 实时 K 线 + 盘口 + 24h/7d 成交量可读；`/health.ohlcv_source=indexer_http`；无需自建 DeepBook Server |

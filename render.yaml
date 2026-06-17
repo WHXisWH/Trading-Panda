@@ -13,18 +13,22 @@ services:
       - key: DEEPBOOK_DATABASE_URL
         sync: false
       - key: DEEPBOOK_SERVER_URL
-        sync: false
+        value: https://deepbook-indexer.mainnet.mystenlabs.com
+      - key: DEEPBOOK_NETWORK
+        value: mainnet
       - key: DEEPBOOK_POOLS
         sync: false
       - key: SUI_RPC_URL
-        value: https://fullnode.testnet.sui.io:443
+        value: https://fullnode.mainnet.sui.io:443
       - key: DEEPBOOK_PACKAGE_ID
-        value: "0xdee9"
+        value: "0x2c8d603bc51326b8c13cef9dd07031a408a48dddb541963357661df5d3204809"
       - key: DEEPBOOK_POOL_MODULE
         value: pool
       - key: USE_SUI_RPC_FOR_POOLS
         value: "true"
       - key: USE_HTTP_GET_POOLS_FALLBACK
+        value: "true"
+      - key: USE_HTTP_POOL_DISCOVERY_PRIMARY
         value: "true"
       - key: POOL_RPC_LIMIT_PER_PAGE
         value: "50"

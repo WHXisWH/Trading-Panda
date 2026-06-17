@@ -3,6 +3,7 @@ import time
 from feed.pair_registry import (
     LAUNCH_PAIR_PRIORITY,
     build_pair_meta,
+    filter_pools_for_network,
     launch_priority_for,
     parse_pool_assets,
     preferred_pool_candidates,
@@ -11,6 +12,7 @@ from pipeline.pair_ranking import (
     HEALTH_FRESH,
     HEALTH_NO_FILLS,
     HEALTH_STALE,
+    HEALTH_UNRESOLVED,
     PairQualitySignals,
     compute_pair_score,
     rank_pairs,
@@ -50,6 +52,19 @@ def test_preferred_pool_candidates_mainnet() -> None:
     discovered = ["WAL_USDC", "SUI_USDC", "RANDOM_SUI"]
     ordered = preferred_pool_candidates(discovered, network="mainnet")
     assert ordered[0] == "SUI_USDC"
+
+
+def test_filter_pools_for_mainnet_drops_testnet_fallbacks() -> None:
+    pools = filter_pools_for_network(
+        ["DEEP_SUI", "DEEP/SUI", "SUI/DBUSDC"],
+        network="mainnet",
+    )
+    assert pools == ["DEEP_SUI"]
+
+
+def test_filter_pools_for_testnet_keeps_fallbacks() -> None:
+    pools = filter_pools_for_network(["DEEP/SUI", "SUI/DBUSDC"], network="testnet")
+    assert pools == ["DEEP/SUI", "SUI/DBUSDC"]
 
 
 def test_compute_pair_score_prefers_liquid_pair() -> None:
@@ -134,6 +149,16 @@ def test_resolve_health_no_fills() -> None:
         )
     )
     assert health == HEALTH_NO_FILLS
+
+
+def test_resolve_health_pool_unresolved() -> None:
+    health, _ = resolve_health(
+        PairQualitySignals(
+            pool="DEEP_USDC",
+            monitor_error="pool_unresolved: check get_pools / DEEPBOOK_POOLS",
+        )
+    )
+    assert health == HEALTH_UNRESOLVED
 
 
 def test_launch_pairs_constant() -> None:

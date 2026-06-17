@@ -3,6 +3,7 @@
 import Image from "next/image";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useWallets, useConnectWallet } from "@mysten/dapp-kit";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 type ConnectableWallet = ReturnType<typeof useWallets>[number];
@@ -39,6 +40,7 @@ const BENEFITS = [
  * On successful connect, WalletAuthSync auto-triggers wallet login.
  */
 export function ConnectWalletModal({ open, onOpenChange }: ConnectWalletModalProps) {
+  const pathname = usePathname();
   const wallets = useWallets();
   const { mutate: connect } = useConnectWallet();
   const { startGoogleLogin, isLoading: googleLoading } = useZkLogin();
@@ -143,7 +145,7 @@ export function ConnectWalletModal({ open, onOpenChange }: ConnectWalletModalPro
               {/* Google */}
               <button
                 type="button"
-                onClick={() => startGoogleLogin()}
+                onClick={() => void startGoogleLogin(pathname)}
                 disabled={googleLoading || !!connecting}
                 className="lift flex items-center justify-center gap-2.5 rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm font-medium text-neutral-700 hover:border-neutral-300 disabled:opacity-60"
               >

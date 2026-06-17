@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    deepbook_server_url: str = "http://localhost:9008"
+    deepbook_server_url: str = "https://deepbook-indexer.mainnet.mystenlabs.com"
     deepbook_database_url: str = ""
     deepbook_pools: str = ""
     deepbook_network: str = "mainnet"
@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     price_scale: float = 1e9
     qty_scale: float = 1e9
     use_ohlcv_fallback: bool = False
+    # When true, prefer HTTP /get_pools from DeepBook indexer before Sui RPC.
+    use_http_pool_discovery_primary: bool = True
 
     sui_rpc_url: str = "https://fullnode.mainnet.sui.io:443"
     deepbook_package_id: str = (

@@ -72,7 +72,7 @@ def launch_priority_for(pool: str) -> int | None:
 
 def is_fallback_pool(pool: str) -> bool:
     key = pool.strip()
-    return key in TESTNET_FALLBACK_POOLS or key.replace("_", "/") in TESTNET_FALLBACK_POOLS
+    return key in TESTNET_FALLBACK_POOLS
 
 
 def _default_decimals(asset: str) -> int | None:
@@ -150,3 +150,10 @@ def preferred_pool_candidates(
     for pool in discovered:
         add(pool)
     return ordered
+
+
+def filter_pools_for_network(pools: list[str], *, network: str = "mainnet") -> list[str]:
+    """Drop known sparse testnet fallback pools from mainnet training mode."""
+    if network != "mainnet":
+        return pools
+    return [pool for pool in pools if not is_fallback_pool(pool)]

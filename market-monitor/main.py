@@ -1,4 +1,4 @@
-"""Market Monitor — order_fills (PG) or DeepBook HTTP → Redis market:tick:*"""
+"""Market Monitor — DeepBook mainnet indexer (HTTP ± optional PG) → Redis market:tick:*"""
 
 import logging
 from contextlib import asynccontextmanager
@@ -41,7 +41,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(
     title="TradingPanda Market Monitor",
     version="0.1.0",
-    description="Aggregates OHLCV from order_fills (PG) and publishes market:tick:{pair} to Redis",
+    description="Aggregates OHLCV from DeepBook mainnet indexer (HTTP or optional PG) and publishes market:tick:{pair} to Redis",
     lifespan=lifespan,
 )
 

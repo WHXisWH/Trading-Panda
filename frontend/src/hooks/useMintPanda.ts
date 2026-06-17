@@ -23,6 +23,7 @@ import { registerMintedPanda } from "@/services/panda.service";
 import { mintResultFromApi, type MintResult } from "@/types/panda";
 import { statsFromPanda } from "@/utils/pandaHelper";
 import type { PandaStats } from "@/utils/pandaHelper";
+import { useZkLoginWallet } from "@/hooks/useZkLoginWallet";
 
 export type MintStatus =
   | "idle"
@@ -35,10 +36,13 @@ export type MintStatus =
 
 export function useMintPanda(jwt: string | null) {
   const account = useCurrentAccount();
+  const zkLoginWallet = useZkLoginWallet();
   const suiClient = useSuiClient();
   const signAndExecute = useSignAndExecuteTransaction() as {
     mutateAsync: (args: { transaction: unknown }) => Promise<unknown>;
   };
+
+  const hasChainSigner = !!account || zkLoginWallet.isReady;
 
   const [status, setStatus] = useState<MintStatus>("idle");
   const [signModalOpen, setSignModalOpen] = useState(false);
@@ -49,7 +53,7 @@ export function useMintPanda(jwt: string | null) {
     useState<PendingMintRegistration | null>(null);
 
   const effectiveStatus: MintStatus =
-    !account || !jwt ? "connecting" : status;
+    !hasChainSigner || !jwt ? "connecting" : status;
 
   useEffect(() => {
     const stored = loadPendingMintRegistration();
@@ -86,7 +90,7 @@ export function useMintPanda(jwt: string | null) {
 
   const executeMint = useCallback(
     async (options?: { name?: string }) => {
-      if (!account || !jwt) {
+      if (!hasChainSigner || !jwt) {
         setErrorMessage("Connect wallet and sign in first");
         setStatus("error");
         return;
@@ -100,7 +104,15 @@ export function useMintPanda(jwt: string | null) {
       try {
         setStatus("signing");
         const tx = buildMintTx();
-        const txResult = await signAndExecute.mutateAsync({ transaction: tx });
+        let txResult: unknown;
+
+        if (zkLoginWallet.isReady) {
+          txResult = await zkLoginWallet.signAndExecute(tx);
+        } else if (account) {
+          txResult = await signAndExecute.mutateAsync({ transaction: tx });
+        } else {
+          throw new Error("No wallet available for minting");
+        }
 
         const txDigest = extractTxDigest(txResult);
         if (!txDigest) throw new Error("Transaction digest not found");
@@ -127,15 +139,23 @@ export function useMintPanda(jwt: string | null) {
         throw err;
       }
     },
-    [account, jwt, registerOnBackend, signAndExecute, suiClient],
+    [
+      account,
+      hasChainSigner,
+      jwt,
+      registerOnBackend,
+      signAndExecute,
+      suiClient,
+      zkLoginWallet,
+    ],
   );
 
   const openSignModal = useCallback(() => {
-    if (!account || !jwt) return;
+    if (!hasChainSigner || !jwt) return;
     setErrorMessage(null);
     setErrorKind(null);
     setSignModalOpen(true);
-  }, [account, jwt]);
+  }, [hasChainSigner, jwt]);
 
   const closeSignModal = useCallback(() => {
     if (status === "signing" || status === "minting" || status === "registering") return;

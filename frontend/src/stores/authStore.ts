@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { User } from "@/types";
+import { clearZkLoginSession } from "@/lib/sui/zkLoginSession";
 
 interface AuthStore {
   user: User | null;
@@ -33,13 +34,15 @@ export const useAuthStore = create<AuthStore>()(
           refreshToken: refreshToken ?? state.refreshToken,
           jwt: accessToken,
         })),
-      clearAuth: () =>
+      clearAuth: () => {
+        clearZkLoginSession();
         set({
           user: null,
           accessToken: null,
           refreshToken: null,
           jwt: null,
-        }),
+        });
+      },
     }),
     { name: "trading-panda-auth" },
   ),

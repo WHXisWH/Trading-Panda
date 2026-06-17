@@ -16,7 +16,12 @@ from config import Settings
 from feed.deepbook_client import Candle, DeepBookClient, PoolCatalogEntry
 from feed.fills_client import FillsClient
 from feed.orderbook import orderbook_imbalance, orderbook_summary
-from feed.pair_registry import PairMeta, build_pair_meta, preferred_pool_candidates
+from feed.pair_registry import (
+    PairMeta,
+    build_pair_meta,
+    filter_pools_for_network,
+    preferred_pool_candidates,
+)
 from feed.sui_pool_client import discover_pools_via_rpc, normalize_pool_list
 from pipeline.indicators import compute_indicators
 from pipeline.market_state import detect_regime
@@ -90,6 +95,20 @@ class MarketMonitorService:
 
     def _use_pg_ohlcv(self) -> bool:
         return self._fills.is_configured and not self._settings.use_ohlcv_fallback
+
+    def _ohlcv_source_label(self) -> str:
+        if self._use_pg_ohlcv():
+            return "order_fills"
+        return "indexer_http"
+
+    async def _fetch_volume_stats(self, pool: str) -> tuple[float, float]:
+        if self._fills.is_configured and self._state.pg_ok:
+            return await self._fills.get_volume_stats(pool)
+        if not self._state.deepbook_ok:
+            return 0.0, 0.0
+        catalog = self._catalog_for_pool(pool)
+        quote_decimals = catalog.quote_decimals if catalog and catalog.quote_decimals else 6
+        return await self._client.get_volume_stats(pool, quote_decimals=quote_decimals)
 
     def _catalog_for_pool(self, pool: str) -> PoolCatalogEntry | None:
         return self._pool_catalog.get(pool) or self._pool_catalog.get(
@@ -215,7 +234,26 @@ class MarketMonitorService:
         self._state.pool_discovery_error = None
         self._state.sui_rpc_ok = False
 
-        if self._settings.use_sui_rpc_for_pools and self._settings.sui_rpc_url.strip():
+        if self._settings.use_http_pool_discovery_primary and self._settings.use_http_get_pools_fallback:
+            try:
+                self._state.deepbook_ok = await self._client.ping()
+                if self._state.deepbook_ok:
+                    directory = await self._client.fetch_pool_directory()
+                    if directory:
+                        self._pool_directory = directory
+                        self._fills.set_pool_directory(self._pool_directory)
+                    self._pool_catalog = await self._client.fetch_pool_catalog()
+                    http_pools = await self._client.get_pools()
+                    pools = normalize_pool_list(http_pools)
+                    pools = filter_pools_for_network(
+                        pools,
+                        network=self._settings.deepbook_network,
+                    )
+            except Exception as exc:
+                self._state.pool_discovery_error = str(exc)
+                logger.warning("HTTP get_pools failed: %s", exc)
+
+        if not pools and self._settings.use_sui_rpc_for_pools and self._settings.sui_rpc_url.strip():
             try:
                 rpc_pools = await discover_pools_via_rpc(
                     self._settings.sui_rpc_url.strip(),
@@ -231,12 +269,16 @@ class MarketMonitorService:
                 self._state.sui_rpc_ok = False
                 logger.warning("Sui RPC pool discovery failed: %s", exc)
 
-        if not pools and self._settings.use_http_get_pools_fallback:
+        if not pools and self._settings.use_http_get_pools_fallback and not self._settings.use_http_pool_discovery_primary:
             try:
                 directory = await self._client.fetch_pool_directory()
                 self._pool_directory = directory
                 http_pools = await self._client.get_pools()
                 pools = normalize_pool_list(pools + http_pools)
+                pools = filter_pools_for_network(
+                    pools,
+                    network=self._settings.deepbook_network,
+                )
             except Exception as exc:
                 if self._state.pool_discovery_error is None:
                     self._state.pool_discovery_error = str(exc)
@@ -287,6 +329,11 @@ class MarketMonitorService:
                     volume_24h, volume_7d = await self._fills.get_volume_stats(pool)
                 except Exception as exc:
                     logger.debug("volume stats for %s: %s", pool, exc)
+            elif self._state.deepbook_ok:
+                try:
+                    volume_24h, volume_7d = await self._fetch_volume_stats(pool)
+                except Exception as exc:
+                    logger.debug("indexer volume stats for %s: %s", pool, exc)
 
             if self._state.deepbook_ok and spread_bps >= 9999:
                 try:
@@ -338,7 +385,7 @@ class MarketMonitorService:
 
     async def _describe_empty_candles(self, pool: str) -> str:
         if not self._use_pg_ohlcv():
-            return "no_candles: ohlcv_fallback_empty"
+            return "no_candles: indexer_http_empty"
         pool_key = await self._fills.resolve_pool_key(pool)
         if pool_key is None:
             return "pool_unresolved: check get_pools / DEEPBOOK_POOLS"
@@ -386,6 +433,11 @@ class MarketMonitorService:
                 runtime.volume_24h, runtime.volume_7d = await self._fills.get_volume_stats(pool)
             except Exception as exc:
                 logger.debug("volume stats for %s: %s", pool, exc)
+        elif self._state.deepbook_ok:
+            try:
+                runtime.volume_24h, runtime.volume_7d = await self._fetch_volume_stats(pool)
+            except Exception as exc:
+                logger.debug("indexer volume stats for %s: %s", pool, exc)
 
         runtime.spread_bps = summary.spread_bps
         runtime.bid_depth = summary.bid_depth
@@ -574,7 +626,7 @@ class MarketMonitorService:
         return {
             "status": status,
             "network": self._settings.deepbook_network,
-            "ohlcv_source": "order_fills" if self._use_pg_ohlcv() else "deepbook_http",
+            "ohlcv_source": self._ohlcv_source_label(),
             "poll_interval_sec": self._settings.poll_interval_sec,
             "stale_threshold_sec": self._settings.stale_threshold_sec,
             "fills_poll_lookback_sec": self._settings.fills_poll_lookback_sec,

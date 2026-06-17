@@ -99,6 +99,7 @@ async def discover_pools_via_rpc(
     pool_module: str = "pool",
     limit_per_page: int = 50,
     max_pages: int = 20,
+    descending: bool = False,
     timeout: float = 30.0,
 ) -> list[str]:
     """
@@ -121,7 +122,7 @@ async def discover_pools_via_rpc(
                 {"MoveModule": {"package": pkg_display, "module": pool_module}},
                 cursor,
                 limit_per_page,
-                True,
+                descending,
             ]
             result = await _sui_rpc(client, rpc_url, "suix_queryEvents", params)
             data = result.get("data") or []

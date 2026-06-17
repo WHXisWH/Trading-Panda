@@ -42,11 +42,14 @@ def test_normalize_pool_list_rejects_url() -> None:
 async def test_discover_pools_parses_mock_rpc_response(monkeypatch: pytest.MonkeyPatch) -> None:
     from feed import sui_pool_client
 
+    seen_params = []
+
     async def fake_rpc(_client, _url, _method, _params):
+        seen_params.append(_params)
         return {
             "data": [
                 {
-                    "type": "0xdee9::pool::PoolCreated<0x2::sui::SUI, 0x1::deep::DEEP>",
+                    "type": "0x2c8d603bc51326b8c13cef9dd07031a408a48dddb541963357661df5d3204809::pool::PoolCreated<0x2::sui::SUI, 0x1::deep::DEEP>",
                 }
             ],
             "hasNextPage": False,
@@ -56,9 +59,10 @@ async def test_discover_pools_parses_mock_rpc_response(monkeypatch: pytest.Monke
     monkeypatch.setattr(sui_pool_client, "_sui_rpc", fake_rpc)
     pools = await sui_pool_client.discover_pools_via_rpc(
         "https://example.invalid",
-        "0xdee9",
+        "0x2c8d603bc51326b8c13cef9dd07031a408a48dddb541963357661df5d3204809",
         pool_module="pool",
         limit_per_page=10,
         max_pages=1,
     )
     assert pools == ["SUI_DEEP"]
+    assert seen_params[0][3] is False

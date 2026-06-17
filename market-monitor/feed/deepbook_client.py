@@ -140,14 +140,62 @@ class DeepBookClient:
     async def get_ohlcv(
         self, pool: str, period: str = "1m", limit: int = 60
     ) -> list[Candle]:
+        path_pool = encode_pool_for_path(pool)
+        params = {"interval": period, "limit": limit}
         async with httpx.AsyncClient(timeout=self._timeout) as client:
             r = await client.get(
-                f"{self._base}/ohclv/{encode_pool_for_path(pool)}",
-                params={"period": period, "limit": limit},
+                f"{self._base}/ohclv/{path_pool}",
+                params=params,
             )
             r.raise_for_status()
             data = r.json()
         return _parse_candles(data)
+
+    async def get_historical_volume(
+        self,
+        pool: str,
+        *,
+        start_time: int | None = None,
+        end_time: int | None = None,
+        volume_in_base: bool = False,
+    ) -> float:
+        """Quote/base volume in raw on-chain units (divide by asset decimals)."""
+        path_pool = encode_pool_for_path(pool)
+        params: dict[str, str | int] = {}
+        if start_time is not None:
+            params["start_time"] = start_time
+        if end_time is not None:
+            params["end_time"] = end_time
+        if volume_in_base:
+            params["volume_in_base"] = "true"
+        async with httpx.AsyncClient(timeout=self._timeout) as client:
+            r = await client.get(
+                f"{self._base}/historical_volume/{path_pool}",
+                params=params or None,
+            )
+            r.raise_for_status()
+            data = r.json()
+        return _parse_historical_volume(data, pool)
+
+    async def get_volume_stats(
+        self,
+        pool: str,
+        *,
+        quote_decimals: int = 6,
+        now: float | None = None,
+    ) -> tuple[float, float]:
+        """Return (volume_24h, volume_7d) in quote notional."""
+        import time
+
+        clock = int(time.time() if now is None else now)
+        scale = 10 ** max(quote_decimals, 0)
+        raw_24h = await self.get_historical_volume(
+            pool, start_time=clock - 86_400, end_time=clock
+        )
+        raw_7d = await self.get_historical_volume(
+            pool, start_time=clock - 604_800, end_time=clock
+        )
+        return raw_24h / scale, raw_7d / scale
 
     async def get_orderbook(self, pool: str) -> dict[str, Any]:
         path_pool = encode_pool_for_path(pool)
@@ -216,7 +264,39 @@ def _parse_candles(data: Any) -> list[Candle]:
     return candles
 
 
+def _parse_historical_volume(data: Any, pool: str) -> float:
+    if not isinstance(data, dict):
+        return 0.0
+    keys = (
+        pool,
+        pool.replace("/", "_"),
+        pool.replace("_", "/"),
+    )
+    for key in keys:
+        if key in data:
+            try:
+                return float(data[key])
+            except (TypeError, ValueError):
+                return 0.0
+    return 0.0
+
+
 def _parse_one_candle(row: Any) -> Candle | None:
+    if isinstance(row, (list, tuple)) and len(row) >= 6:
+        try:
+            ts_f = float(row[0])
+            if ts_f > 1e12:
+                ts_f /= 1000.0
+            o = float(row[1])
+            h = float(row[2])
+            l = float(row[3])
+            c = float(row[4])
+            v = float(row[5])
+            return Candle(open=o, high=h, low=l, close=c, volume=v, timestamp=ts_f)
+        except (TypeError, ValueError):
+            logger.debug("skip unparseable candle array: %s", row)
+            return None
+
     if not isinstance(row, dict):
         return None
     try:

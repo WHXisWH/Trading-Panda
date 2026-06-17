@@ -6,6 +6,62 @@
 import { jwtToAddress } from "@mysten/zklogin";
 
 const SALT_STORAGE_KEY = "trading-panda-zklogin-salt";
+const RETURN_TO_STORAGE_KEY = "tp-zklogin-return-to";
+const RESULT_STORAGE_KEY = "tp-zklogin-result";
+
+export type ZkLoginResultKind = "success" | "error";
+
+export interface ZkLoginDeferredResult {
+  kind: ZkLoginResultKind;
+  message?: string;
+}
+
+/** Only allow same-origin in-app paths (blocks open redirects). */
+export function sanitizeZkLoginReturnPath(path: string | null | undefined): string {
+  if (!path || !path.startsWith("/") || path.startsWith("//")) {
+    return "/";
+  }
+  if (path.startsWith("/auth/zklogin-callback")) {
+    return "/";
+  }
+  return path;
+}
+
+export function saveZkLoginReturnTo(path?: string): void {
+  if (typeof window === "undefined") return;
+  const target = sanitizeZkLoginReturnPath(
+    path ?? `${window.location.pathname}${window.location.search}`,
+  );
+  sessionStorage.setItem(RETURN_TO_STORAGE_KEY, target);
+}
+
+export function consumeZkLoginReturnTo(): string {
+  if (typeof window === "undefined") return "/";
+  const stored = sessionStorage.getItem(RETURN_TO_STORAGE_KEY);
+  sessionStorage.removeItem(RETURN_TO_STORAGE_KEY);
+  return sanitizeZkLoginReturnPath(stored);
+}
+
+export function setZkLoginDeferredResult(result: ZkLoginDeferredResult): void {
+  if (typeof window === "undefined") return;
+  sessionStorage.setItem(RESULT_STORAGE_KEY, JSON.stringify(result));
+}
+
+export function consumeZkLoginDeferredResult(): ZkLoginDeferredResult | null {
+  if (typeof window === "undefined") return null;
+  const raw = sessionStorage.getItem(RESULT_STORAGE_KEY);
+  sessionStorage.removeItem(RESULT_STORAGE_KEY);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as ZkLoginDeferredResult;
+    if (parsed.kind === "success" || parsed.kind === "error") {
+      return parsed;
+    }
+  } catch {
+    /* ignore malformed payload */
+  }
+  return null;
+}
 
 export function getOrCreateZkLoginSalt(): string {
   if (typeof window === "undefined") return "0";
@@ -39,4 +95,10 @@ export function parseIdTokenFromCallbackHash(hash: string): string | null {
   const raw = hash.startsWith("#") ? hash.slice(1) : hash;
   const params = new URLSearchParams(raw);
   return params.get("id_token");
+}
+
+export function parseOAuthErrorFromCallbackHash(hash: string): string | null {
+  const raw = hash.startsWith("#") ? hash.slice(1) : hash;
+  const params = new URLSearchParams(raw);
+  return params.get("error_description") ?? params.get("error");
 }
