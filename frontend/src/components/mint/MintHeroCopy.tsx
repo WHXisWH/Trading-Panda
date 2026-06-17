@@ -4,13 +4,13 @@ interface MintHeroCopyProps {
 
 export function MintHeroCopy({ subtitle }: MintHeroCopyProps) {
   return (
-    <div className="max-w-lg space-y-2 text-center">
-      <h1 className="font-sans text-[22px] font-bold text-white md:text-3xl">
+    <div className="mint-hero-copy max-w-3xl space-y-3 text-center">
+      <h1 className="font-display text-[clamp(2.5rem,6.4vw,4.75rem)] font-bold leading-[0.86] tracking-[-0.08em] text-product-text">
         Mint your autonomous Panda
       </h1>
-      <p className="text-[13px] text-neutral-400">
+      <p className="mx-auto max-w-xl text-[15px] leading-relaxed text-[#c6c8b9] md:text-base">
         {subtitle ??
-          "A tiny agent identity for Sui market training. Personality is set on-chain at mint."}
+          "A tiny agent identity for Sui market training. Personality is sealed on-chain at mint."}
       </p>
     </div>
   );

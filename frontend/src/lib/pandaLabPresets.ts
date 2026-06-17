@@ -3,6 +3,8 @@ import type { PandaStats } from "@/utils/pandaHelper";
 export interface PandaLabPreset {
   id: string;
   label: string;
+  /** English name shown on Mint carousel caption */
+  stageLabelEn: string;
   description: string;
   stats: PandaStats;
 }
@@ -11,6 +13,7 @@ export const PANDA_LAB_PRESETS: PandaLabPreset[] = [
   {
     id: "balanced",
     label: "均衡",
+    stageLabelEn: "Balanced Scout",
     description: "五维中等，幼年学徒之间",
     stats: {
       boldness: 50,
@@ -25,6 +28,7 @@ export const PANDA_LAB_PRESETS: PandaLabPreset[] = [
   {
     id: "bold-mature",
     label: "大胆成体",
+    stageLabelEn: "Bold Veteran",
     description: "高胆识 + 高经验",
     stats: {
       boldness: 92,
@@ -39,6 +43,7 @@ export const PANDA_LAB_PRESETS: PandaLabPreset[] = [
   {
     id: "patient-calm",
     label: "耐心大师",
+    stageLabelEn: "Patient Master",
     description: "高耐性、低胆识",
     stats: {
       boldness: 18,
@@ -53,6 +58,7 @@ export const PANDA_LAB_PRESETS: PandaLabPreset[] = [
   {
     id: "contrarian",
     label: "逆向者",
+    stageLabelEn: "Contrarian Mind",
     description: "高逆向 + 谨慎脸",
     stats: {
       boldness: 45,
@@ -67,6 +73,7 @@ export const PANDA_LAB_PRESETS: PandaLabPreset[] = [
   {
     id: "panic-test",
     label: "恐慌测试",
+    stageLabelEn: "Panic Test",
     description: "极端情绪 + 幼年",
     stats: {
       boldness: 60,
@@ -81,6 +88,7 @@ export const PANDA_LAB_PRESETS: PandaLabPreset[] = [
   {
     id: "boundary",
     label: "边界值",
+    stageLabelEn: "Boundary Edge",
     description: "全轴 0/100 与阶段临界",
     stats: {
       boldness: 100,

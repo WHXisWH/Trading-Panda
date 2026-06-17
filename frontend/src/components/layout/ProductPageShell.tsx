@@ -25,10 +25,10 @@ export function ProductPageShell({
   className,
 }: ProductPageShellProps) {
   return (
-    <div className="min-h-[calc(100dvh-var(--navbar-height))] bg-product-void text-product-text">
+    <div className="min-h-[calc(100dvh-var(--navbar-height))] text-product-text">
       <div
         className={clsx(
-          "mx-auto w-full px-4 py-8 md:px-6",
+          "relative mx-auto w-full px-4 py-8 md:px-6",
           densityClass[density],
           className,
         )}

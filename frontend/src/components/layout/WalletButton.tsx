@@ -88,16 +88,16 @@ export function WalletButton() {
           type="button"
           onClick={() => setDropdownOpen(!dropdownOpen)}
           className={clsx(
-            "flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-white px-3 py-1.5 text-sm font-medium transition-all",
-            "hover:border-primary-300 hover:shadow-sm",
-            dropdownOpen && "border-primary-400 ring-2 ring-primary-500/10",
+            "flex items-center gap-2 rounded-full border border-product-line bg-white/[0.055] px-3 py-1.5 text-sm font-medium transition-all",
+            "hover:border-product-green/40 hover:shadow-[var(--glow-green)]",
+            dropdownOpen && "border-product-green/50 ring-2 ring-product-green/15",
           )}
         >
           {/* avatar dot */}
-          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-500 text-white">
+          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-product-green to-[#bfff87] text-[#071108]">
             <User className="h-3.5 w-3.5" />
           </div>
-          <span className="max-w-[120px] truncate text-neutral-700">
+          <span className="max-w-[120px] truncate text-product-text">
             {sessionLabel}
           </span>
           <ChevronDown
@@ -109,15 +109,14 @@ export function WalletButton() {
         </button>
 
         {dropdownOpen && (
-          <div className="absolute right-0 top-full z-[var(--z-dropdown)] mt-1.5 w-48 overflow-hidden rounded-xl border border-[var(--color-border)] bg-white py-1 shadow-lg animate-scale-in">
-            {/* ── user info header ── */}
-            <div className="border-b border-[var(--color-border)] px-3 py-2.5">
-              <p className="truncate text-sm font-semibold text-neutral-900">
+          <div className="product-panel absolute right-0 top-full z-[var(--z-dropdown)] mt-1.5 w-48 overflow-hidden !rounded-2xl py-1 shadow-[var(--shadow-product)] animate-scale-in">
+            <div className="border-b border-product-line px-3 py-2.5">
+              <p className="truncate text-sm font-semibold text-product-text">
                 {user?.displayName ?? "User"}
               </p>
               {user?.walletAddress && (
                 <Tooltip content={user.walletAddress}>
-                  <p className="truncate text-xs text-neutral-400">
+                  <p className="truncate font-mono text-xs text-product-muted">
                     {formatShortAddress(user.walletAddress)}
                   </p>
                 </Tooltip>
@@ -127,7 +126,7 @@ export function WalletButton() {
             <Link
               href="/profile"
               onClick={() => setDropdownOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2 text-sm text-neutral-700 transition-colors hover:bg-primary-50 hover:text-primary-600"
+              className="flex items-center gap-2.5 px-3 py-2 text-sm text-product-text transition-colors hover:bg-product-green/10 hover:text-product-green"
             >
               <User className="h-4 w-4" /> Profile
             </Link>
@@ -135,7 +134,7 @@ export function WalletButton() {
               <Link
                 href={`/dashboard/${currentPandaId ?? pandas[0].id}`}
                 onClick={() => setDropdownOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2 text-sm text-neutral-700 transition-colors hover:bg-primary-50 hover:text-primary-600"
+                className="flex items-center gap-2.5 px-3 py-2 text-sm text-product-text transition-colors hover:bg-product-green/10 hover:text-product-green"
               >
                 <LayoutDashboard className="h-4 w-4" /> Dashboard
               </Link>
@@ -163,7 +162,7 @@ export function WalletButton() {
                 clearAuth();
                 setDropdownOpen(false);
               }}
-              className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-neutral-500 transition-colors hover:bg-red-50 hover:text-red-600"
+              className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-product-muted transition-colors hover:bg-product-red/10 hover:text-product-red"
             >
               <LogOut className="h-4 w-4" /> Logout
             </button>

@@ -10,18 +10,218 @@
 @layer base {
   body {
     @apply antialiased;
-    background-color: var(--color-bg-primary);
+    background: var(--gradient-hero);
     color: var(--color-text-primary);
     font-family: var(--font-body);
   }
 }
 
 @layer components {
-  .card-white {
-    background-color: var(--color-bg-white);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
+  .product-canvas {
+    background: var(--gradient-hero);
+  }
+
+  .product-canvas-grid {
+    background:
+      linear-gradient(rgba(225, 186, 92, 0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(225, 186, 92, 0.035) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(circle at 50% 28%, black, transparent 72%);
+  }
+
+  .product-canvas-scan {
+    background:
+      repeating-linear-gradient(
+        0deg,
+        rgba(255, 255, 255, 0.025) 0,
+        rgba(255, 255, 255, 0.025) 1px,
+        transparent 1px,
+        transparent 5px
+      ),
+      linear-gradient(115deg, transparent 0 44%, rgba(109, 255, 144, 0.075) 45%, transparent 46% 100%);
+    opacity: 0.42;
+  }
+
+  .product-panel {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--color-product-line);
+    border-radius: 20px;
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)),
+      rgba(16, 20, 15, 0.86);
+    box-shadow: var(--shadow-product), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    color: var(--color-product-text);
+  }
+
+  .product-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at 15% 0%, rgba(225, 186, 92, 0.12), transparent 38%),
+      linear-gradient(
+        90deg,
+        rgba(109, 255, 144, 0.08),
+        transparent 16%,
+        transparent 84%,
+        rgba(225, 186, 92, 0.08)
+      );
+    opacity: 0.68;
+  }
+
+  .product-panel > * {
+    position: relative;
+  }
+
+  .product-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--color-neon-green);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .product-eyebrow::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-neon-green);
+    box-shadow: 0 0 18px rgba(109, 255, 144, 0.92);
+  }
+
+  .product-chip {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    border: 1px solid rgba(225, 186, 92, 0.25);
+    background: rgba(225, 186, 92, 0.08);
+    color: #eadcb1;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 800;
+    padding: 7px 9px;
+  }
+
+  .mint-ritual-screen {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    gap: 1.5rem;
+    padding: 1.5rem 0 2.5rem;
+    text-align: center;
+  }
+
+  .mint-action-zone {
+    display: grid;
+    justify-items: center;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .mint-stage {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    place-items: center;
+    width: var(--mint-stage-size);
+    height: var(--mint-stage-size);
+    margin-inline: auto;
+  }
+
+  @media (max-width: 640px) {
+    .mint-stage {
+      width: var(--mint-stage-size-mobile);
+      height: var(--mint-stage-size-mobile);
+    }
+  }
+
+  .mint-stage-halo {
+    position: absolute;
+    inset: 8%;
+    border-radius: 50%;
+    pointer-events: none;
+    background:
+      radial-gradient(circle, rgba(109, 255, 144, 0.15), transparent 56%),
+      conic-gradient(
+        from 20deg,
+        transparent,
+        rgba(225, 186, 92, 0.24),
+        transparent,
+        rgba(109, 255, 144, 0.22),
+        transparent
+      );
+    animation: stageSpin 12s linear infinite;
+  }
+
+  .mint-stage-ring {
+    position: absolute;
+    inset: 15%;
+    border-radius: 50%;
+    pointer-events: none;
+    border: 1px solid rgba(225, 186, 92, 0.34);
+    box-shadow:
+      inset 0 0 52px rgba(225, 186, 92, 0.08),
+      0 0 80px rgba(109, 255, 144, 0.16);
+  }
+
+  .mint-stage-floor-glow {
+    position: absolute;
+    left: 16%;
+    right: 16%;
+    bottom: 10%;
+    height: 34px;
+    border-radius: 50%;
+    pointer-events: none;
+    background: radial-gradient(ellipse, rgba(109, 255, 144, 0.25), transparent 68%);
+    filter: blur(8px);
+  }
+
+  .mint-stage--dimmed .mint-stage-halo {
+    animation-duration: 20s;
+    opacity: 0.62;
+  }
+
+  .mint-stage--revealed .mint-stage-ring {
+    box-shadow:
+      inset 0 0 52px rgba(109, 255, 144, 0.12),
+      0 0 90px rgba(109, 255, 144, 0.22);
+  }
+
+  .mint-stage--revealed .mint-stage-halo {
+    opacity: 1;
+  }
+
+  .mint-panda-float {
+    animation: pandaFloat 3.8s ease-in-out infinite;
+  }
+
+  .mint-stage-caption {
+    position: absolute;
+    z-index: 5;
+    left: 50%;
+    bottom: 10%;
+    transform: translateX(-50%);
+    min-width: 220px;
+    max-width: 90%;
+    padding: 10px 13px;
+    border: 1px solid rgba(225, 186, 92, 0.22);
+    border-radius: 999px;
+    background: rgba(5, 7, 5, 0.74);
+    backdrop-filter: blur(14px);
+    text-align: center;
+  }
+
+  .card-white,
+  .product-card {
+    @apply product-panel;
+    padding: 20px;
   }
 
   /* Dashboard v2: 2-column grid layout */
@@ -153,6 +353,10 @@
   .lift:hover {
     transform: none;
   }
+  .mint-stage-halo,
+  .mint-panda-float {
+    animation: none !important;
+  }
 }
 
 @keyframes scaleIn {
@@ -199,6 +403,22 @@
   }
 }
 
+@keyframes stageSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pandaFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
 @media (min-width: 768px) {
   @keyframes drawerIn {
     from {
@@ -215,44 +435,36 @@
 /* ── dapp-kit theme overrides ── */
 /* Full visual integration into TradingPanda design system */
 [data-dapp-kit] {
-  /* ── primary buttons → green ── */
-  --dapp-kit-backgroundColors-primaryButton: #0f973d;
-  --dapp-kit-backgroundColors-primaryButtonHover: #0a7a31;
-  --dapp-kit-colors-primaryButton: #ffffff;
-  --dapp-kit-shadows-primaryButton: 0 2px 8px rgba(15, 151, 61, 0.25);
+  --dapp-kit-backgroundColors-primaryButton: #6dff90;
+  --dapp-kit-backgroundColors-primaryButtonHover: #18c46a;
+  --dapp-kit-colors-primaryButton: #071108;
+  --dapp-kit-shadows-primaryButton: var(--glow-green);
 
-  /* ── outline buttons ── */
-  --dapp-kit-backgroundColors-outlineButtonHover: #f0fdf4;
-  --dapp-kit-borderColors-outlineButton: #d1d5db;
-  --dapp-kit-colors-outlineButton: #374151;
+  --dapp-kit-backgroundColors-outlineButtonHover: rgba(109, 255, 144, 0.08);
+  --dapp-kit-borderColors-outlineButton: rgba(225, 186, 92, 0.25);
+  --dapp-kit-colors-outlineButton: #f7f0dc;
 
-  /* ── modal surfaces ── */
-  --dapp-kit-backgroundColors-modalPrimary: #ffffff;
-  --dapp-kit-backgroundColors-modalSecondary: #f8f9fa;
-  --dapp-kit-backgroundColors-modalOverlay: rgba(15, 23, 42, 0.35);
-  --dapp-kit-blurs-modalOverlay: blur(4px);
+  --dapp-kit-backgroundColors-modalPrimary: #0b0f0b;
+  --dapp-kit-backgroundColors-modalSecondary: #11170f;
+  --dapp-kit-backgroundColors-modalOverlay: rgba(0, 0, 0, 0.65);
+  --dapp-kit-blurs-modalOverlay: blur(8px);
 
-  /* ── dropdown menu ── */
-  --dapp-kit-backgroundColors-dropdownMenu: #ffffff;
-  --dapp-kit-backgroundColors-dropdownMenuSeparator: #e5e7eb;
+  --dapp-kit-backgroundColors-dropdownMenu: #11170f;
+  --dapp-kit-backgroundColors-dropdownMenuSeparator: rgba(225, 186, 92, 0.18);
 
-  /* ── wallet list items ── */
-  --dapp-kit-backgroundColors-walletItemHover: #f0fdf4;
-  --dapp-kit-backgroundColors-walletItemSelected: #ffffff;
-  --dapp-kit-shadows-walletItemSelected: 0 1px 3px rgba(15, 151, 61, 0.12);
+  --dapp-kit-backgroundColors-walletItemHover: rgba(109, 255, 144, 0.08);
+  --dapp-kit-backgroundColors-walletItemSelected: #0b0f0b;
+  --dapp-kit-shadows-walletItemSelected: var(--glow-green);
 
-  /* ── text ── */
-  --dapp-kit-colors-body: #111827;
-  --dapp-kit-colors-bodyMuted: #6b7280;
-  --dapp-kit-colors-bodyDanger: #dc2626;
-  --dapp-kit-colors-iconButton: #4b5563;
+  --dapp-kit-colors-body: #f7f0dc;
+  --dapp-kit-colors-bodyMuted: #a8aa9c;
+  --dapp-kit-colors-bodyDanger: #ff5f56;
+  --dapp-kit-colors-iconButton: #c8c7b8;
 
-  /* ── icon buttons ── */
   --dapp-kit-backgroundColors-iconButton: transparent;
-  --dapp-kit-backgroundColors-iconButtonHover: #f3f4f6;
+  --dapp-kit-backgroundColors-iconButtonHover: rgba(255, 255, 255, 0.06);
 
-  /* ── typography ── */
-  --dapp-kit-typography-fontFamily: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --dapp-kit-typography-fontFamily: var(--font-body);
   --dapp-kit-fontSizes-small: 13px;
   --dapp-kit-fontSizes-medium: 14px;
   --dapp-kit-fontSizes-large: 16px;

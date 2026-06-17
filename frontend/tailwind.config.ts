@@ -43,6 +43,7 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["Inter", "-apple-system", "sans-serif"],
+        display: ["Avenir Next Condensed", "Avenir Next", "Trebuchet MS", "PingFang SC", "sans-serif"],
         mono: ["JetBrains Mono", "ui-monospace", "monospace"],
       },
       spacing: {

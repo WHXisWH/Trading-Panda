@@ -3,51 +3,52 @@
  * Imported by globals.css; Tailwind extends spacing/maxWidth from these vars.
  */
 :root {
-  /* ========== Backgrounds ========== */
-  --color-bg-primary: #f8f9fa;
-  --color-bg-card: #ffffff;
-  --color-bg-white: #ffffff;
-  --color-bg-input: #f1f3f5;
-  --color-bg-hover: #e9ecef;
-  --color-bg-overlay: rgba(0, 0, 0, 0.04);
+  /* ========== Backgrounds (product void — prototype default) ========== */
+  --color-bg-primary: #050604;
+  --color-bg-card: #0b0f0b;
+  --color-bg-white: #11170f;
+  --color-bg-input: rgba(255, 255, 255, 0.055);
+  --color-bg-hover: rgba(255, 255, 255, 0.08);
+  --color-bg-overlay: rgba(0, 0, 0, 0.45);
 
   /* ========== Accent ========== */
-  --color-accent: #0f973d;
-  --color-accent-hover: #0a7a31;
-  --color-accent-muted: rgba(15, 151, 61, 0.08);
-  --color-accent-light: #f0fdf4;
+  --color-accent: #6dff90;
+  --color-accent-hover: #18c46a;
+  --color-accent-muted: rgba(109, 255, 144, 0.12);
+  --color-accent-light: rgba(109, 255, 144, 0.08);
 
   /* ========== Text ========== */
-  --color-text-primary: #111827;
-  --color-text-secondary: #6b7280;
-  --color-text-tertiary: #9ca3af;
-  --color-text-placeholder: #d1d5db;
-  --color-text-inverse: #ffffff;
+  --color-text-primary: #f7f0dc;
+  --color-text-secondary: #a8aa9c;
+  --color-text-tertiary: #6f756b;
+  --color-text-placeholder: #6f756b;
+  --color-text-inverse: #071108;
 
   /* ========== Semantic ========== */
-  --color-success: #0f973d;
-  --color-success-bg: rgba(15, 151, 61, 0.08);
-  --color-danger: #dc2626;
-  --color-danger-bg: rgba(220, 38, 38, 0.06);
-  --color-warning: #f59e0b;
-  --color-warning-bg: rgba(245, 158, 11, 0.12);
-  --color-info: #3b82f6;
+  --color-success: #6dff90;
+  --color-success-bg: rgba(109, 255, 144, 0.12);
+  --color-danger: #ff5f56;
+  --color-danger-bg: rgba(255, 95, 86, 0.12);
+  --color-warning: #ffc857;
+  --color-warning-bg: rgba(255, 200, 87, 0.12);
+  --color-info: #75d7ff;
 
   /* ========== Panda ========== */
-  --color-panda-fur: #111827;
-  --color-neutral-50: #f8f9fa;
+  --color-panda-fur: #f7f0dc;
+  --color-neutral-50: #11170f;
 
   /* ========== Borders ========== */
-  --color-border: #e5e7eb;
-  --color-border-light: #f3f4f6;
-  --color-border-hover: #d1d5db;
-  --color-border-accent: #0f973d;
-  --color-overlay: rgba(0, 0, 0, 0.04);
+  --color-border: rgba(225, 186, 92, 0.22);
+  --color-border-light: rgba(225, 186, 92, 0.12);
+  --color-border-hover: rgba(225, 186, 92, 0.36);
+  --color-border-accent: rgba(109, 255, 144, 0.45);
+  --color-overlay: rgba(0, 0, 0, 0.45);
 
   /* ========== Typography ========== */
-  --font-heading: "Inter", -apple-system, sans-serif;
-  --font-body: "Inter", -apple-system, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-heading: "Avenir Next", "Trebuchet MS", "PingFang SC", sans-serif;
+  --font-body: "Avenir Next", "Trebuchet MS", "PingFang SC", sans-serif;
+  --font-mono: "SF Mono", "IBM Plex Mono", "JetBrains Mono", ui-monospace, monospace;
+  --font-display: "Avenir Next Condensed", "Avenir Next", "Trebuchet MS", "PingFang SC", sans-serif;
 
   --text-h1: 24px;
   --text-h2: 20px;
@@ -79,15 +80,20 @@
   --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.04), 0 2px 6px rgba(16, 24, 40, 0.05);
   --shadow-md: 0 2px 4px rgba(16, 24, 40, 0.05), 0 8px 20px rgba(16, 24, 40, 0.07);
   --shadow-lg: 0 8px 24px rgba(16, 24, 40, 0.08), 0 16px 40px rgba(16, 24, 40, 0.1);
-  --shadow-accent: 0 4px 14px rgba(15, 151, 61, 0.25);
-  --shadow-accent-lg: 0 8px 28px rgba(15, 151, 61, 0.3);
+  --shadow-accent: 0 0 36px rgba(109, 255, 144, 0.22);
+  --shadow-accent-lg: 0 28px 90px rgba(0, 0, 0, 0.56), 0 0 42px rgba(225, 186, 92, 0.16);
+  --shadow-product: 0 28px 90px rgba(0, 0, 0, 0.56);
+  --glow-green: 0 0 36px rgba(109, 255, 144, 0.22);
+  --glow-gold: 0 0 42px rgba(225, 186, 92, 0.16);
 
   /* ========== Gradients (brand green + neutral only — never purple/pink) ========== */
-  --gradient-brand: linear-gradient(135deg, #16a34a 0%, #0f973d 50%, #0a7a31 100%);
-  --gradient-brand-soft: linear-gradient(180deg, #ffffff 0%, #f7faf8 100%);
-  --gradient-dark-panel: radial-gradient(120% 120% at 50% 0%, #1c2533 0%, #0d1421 62%);
-  --gradient-hero: radial-gradient(ellipse 90% 60% at 30% -10%, rgba(15, 151, 61, 0.05) 0%, transparent 50%),
-    radial-gradient(ellipse 60% 50% at 90% 90%, rgba(15, 151, 61, 0.024) 0%, transparent 50%);
+  --gradient-brand: linear-gradient(135deg, #6dff90 0%, #bfff87 55%, #18c46a 100%);
+  --gradient-brand-soft: linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025));
+  --gradient-dark-panel: linear-gradient(135deg, rgba(9, 11, 8, 0.88), rgba(21, 25, 18, 0.76));
+  --gradient-hero: radial-gradient(circle at 12% 8%, rgba(109, 255, 144, 0.16), transparent 29%),
+    radial-gradient(circle at 82% 12%, rgba(225, 186, 92, 0.17), transparent 34%),
+    radial-gradient(circle at 58% 88%, rgba(117, 215, 255, 0.08), transparent 34%),
+    linear-gradient(135deg, #030403 0%, #0d130d 48%, #050604 100%);
 
   /* ========== Transitions ========== */
   --duration-fast: 150ms;
@@ -123,11 +129,15 @@
     linear-gradient(180deg, #050604 0%, #0a0d0a 100%);
 
   /* ========== Layout ========== */
-  --navbar-height: 48px;
+  --navbar-height: 72px;
   --page-max-width: 1440px;
   --page-mint-max-width: 800px;
   --sidebar-width: 220px;
   --panda-avatar-dashboard: 80px;
-  --panda-avatar-mint: 120px;
+  --panda-avatar-mint: 210px;
+  --mint-stage-size: min(460px, 72vw);
+  --mint-stage-size-mobile: min(300px, 76vw);
+  --mint-panda-size: min(210px, 46vw);
+  --mint-panda-size-mobile: min(150px, 50vw);
   --panda-avatar-card: 80px;
 }

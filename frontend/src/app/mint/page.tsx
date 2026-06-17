@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useMintPanda } from "@/hooks/useMintPanda";
 import { parseMintError } from "@/lib/sui/parseMintError";
 import { fetchMyPandas } from "@/services/panda.service";
-import { PageContainer } from "@/components/layout/PageContainer";
+import { ProductPageShell } from "@/components/layout/ProductPageShell";
 import { Button } from "@/components/ui/Button";
 import { GasFeeHint } from "@/components/mint/GasFeeHint";
 import { MintDetailsDrawer } from "@/components/mint/MintDetailsDrawer";
@@ -75,18 +75,15 @@ export default function MintPage() {
   const showRevealed = isSuccess && revealedStats;
 
   return (
-    <div className="min-h-[calc(100dvh-var(--navbar-height))] bg-[#0d1421]">
-      <PageContainer
-        variant="mint"
-        className="flex min-h-[calc(100dvh-var(--navbar-height))] flex-col items-center justify-center gap-8 py-10 md:py-14"
-      >
+    <ProductPageShell density="low" className="!py-4 md:!py-6">
+      <div className="mint-ritual-screen mx-auto w-full max-w-4xl">
         {existingPandas && existingPandas.length > 0 && effectiveStatus === "connecting" && jwt && (
-          <div className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-[12px] text-neutral-300">
+          <div className="product-chip rounded-2xl px-4 py-2.5 text-[11px]">
             You already have {existingPandas.length} Panda
             {existingPandas.length > 1 ? "s" : ""}.{" "}
             <Link
               href={`/agent-wallet?panda=${existingPandas[0].id}`}
-              className="text-primary-500 underline"
+              className="text-product-green underline"
             >
               Continue Agent Wallet setup
             </Link>
@@ -111,10 +108,10 @@ export default function MintPage() {
           />
         </PandaStageHalo>
 
-        <div className="flex w-full max-w-sm flex-col items-center gap-4">
+        <div className="mint-action-zone flex w-full max-w-sm flex-col items-center gap-4">
           {effectiveStatus === "connecting" && (
             <>
-              <Button size="lg" className="min-w-[220px]" onClick={() => setConnectOpen(true)}>
+              <Button size="lg" className="min-w-[240px]" onClick={() => setConnectOpen(true)}>
                 Connect Wallet
               </Button>
               <GasFeeHint muted />
@@ -126,13 +123,13 @@ export default function MintPage() {
               {pendingRegistration && effectiveStatus === "error" ? (
                 <Button
                   size="lg"
-                  className="min-w-[220px]"
+                  className="min-w-[240px]"
                   onClick={() => void handleRetryRegistration()}
                 >
                   Retry backend sync
                 </Button>
               ) : (
-                <Button size="lg" className="min-w-[220px]" onClick={openSignModal}>
+                <Button size="lg" className="min-w-[240px]" onClick={openSignModal}>
                   Mint Panda NFT
                 </Button>
               )}
@@ -141,7 +138,7 @@ export default function MintPage() {
           )}
 
           {isPendingChain && (
-            <Button size="lg" loading disabled className="min-w-[220px]">
+            <Button size="lg" loading disabled className="min-w-[240px]">
               {effectiveStatus === "signing"
                 ? "Awaiting signature…"
                 : effectiveStatus === "registering"
@@ -152,14 +149,14 @@ export default function MintPage() {
 
           {effectiveStatus === "error" && errorMessage && (
             <div className="max-w-sm space-y-3 text-center">
-              <p className="text-[13px] text-red-400">{errorMessage}</p>
+              <p className="text-[13px] text-product-red">{errorMessage}</p>
               {errorKind === "insufficient_gas" && (
-                <p className="text-[11px] text-neutral-400">
+                <p className="text-[11px] text-product-muted">
                   <a
                     href="https://faucet.testnet.sui.io/"
                     target="_blank"
                     rel="noreferrer"
-                    className="text-primary-500 underline"
+                    className="text-product-green underline"
                   >
                     Get Testnet SUI
                   </a>
@@ -179,12 +176,12 @@ export default function MintPage() {
 
           {isSuccess && result && (
             <div className="flex w-full flex-col items-center gap-3">
-              <p className="text-center text-[13px] text-neutral-300">
-                Your Panda identity is ready. Set up an Agent Wallet to grant bounded
-                training permissions.
+              <p className="text-center text-[13px] text-[#c6c8b9]">
+                Your Panda identity is ready. Set up an Agent Wallet to grant bounded training
+                permissions.
               </p>
               <Link href={agentWalletSetupPath(result.pandaId)}>
-                <Button size="lg" className="min-w-[220px]">
+                <Button size="lg" className="min-w-[240px]">
                   Create Agent Wallet
                 </Button>
               </Link>
@@ -199,7 +196,7 @@ export default function MintPage() {
             </div>
           )}
         </div>
-      </PageContainer>
+      </div>
 
       <WalletSignatureModal
         open={signModalOpen}
@@ -218,6 +215,6 @@ export default function MintPage() {
       )}
 
       <ConnectWalletModal open={connectOpen} onOpenChange={setConnectOpen} />
-    </div>
+    </ProductPageShell>
   );
 }

@@ -61,20 +61,21 @@ export default function AchievementsPage() {
       <div className="mx-auto max-w-3xl">
         <div className="mb-8 flex items-end justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-neutral-900">Achievements</h1>
-            <p className="mt-1 text-sm text-neutral-500">Track your panda&apos;s milestones</p>
+            <div className="product-eyebrow">Milestones</div>
+            <h1 className="mt-3 text-2xl font-bold tracking-tight text-product-text">Achievements</h1>
+            <p className="mt-1 text-sm text-product-muted">Track your panda&apos;s milestones</p>
           </div>
-          {data && (
-            <span className="rounded-full bg-primary-50 px-3 py-1 text-sm font-semibold text-primary-600">
+          {data ? (
+            <span className="product-chip rounded-full px-3 py-1.5 text-[11px]">
               {data.unlocked} / {data.total}
             </span>
-          )}
+          ) : null}
         </div>
 
         {!isAuthed ? (
-          <div className="rounded-xl border border-dashed border-neutral-200 bg-white py-16 text-center">
-            <Award className="mx-auto h-8 w-8 text-neutral-300" />
-            <p className="mt-3 text-sm text-neutral-500">
+          <div className="product-panel border-dashed py-16 text-center">
+            <Award className="mx-auto h-8 w-8 text-product-muted/50" />
+            <p className="mt-3 text-sm text-product-muted">
               Connect your wallet to track achievements.
             </p>
           </div>
@@ -91,30 +92,28 @@ export default function AchievementsPage() {
               return (
                 <Card
                   key={a.code}
-                  variant="default"
-                  className={clsx(
-                    "flex items-start gap-4 transition-opacity",
-                    a.unlocked ? "lift" : "opacity-50",
-                  )}
+                  className={clsx("flex items-start gap-4", !a.unlocked && "opacity-50")}
                 >
                   <div
                     className={clsx(
-                      "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
-                      a.unlocked ? "bg-primary-50 text-primary-600" : "bg-neutral-100 text-neutral-400",
+                      "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+                      a.unlocked
+                        ? "bg-product-green/15 text-product-green"
+                        : "bg-white/[0.06] text-product-muted",
                     )}
                   >
                     <Icon className="h-5 w-5" />
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-neutral-900">{a.title}</h3>
-                      {a.unlocked && (
-                        <span className="rounded-full bg-primary-50 px-2 py-0.5 text-[10px] font-medium text-primary-600">
+                      <h3 className="font-semibold text-product-text">{a.title}</h3>
+                      {a.unlocked ? (
+                        <span className="rounded-full bg-product-green/15 px-2 py-0.5 font-mono text-[10px] font-bold text-product-green">
                           Unlocked
                         </span>
-                      )}
+                      ) : null}
                     </div>
-                    <p className="mt-0.5 text-sm text-neutral-500">{a.description}</p>
+                    <p className="mt-0.5 text-sm text-product-muted">{a.description}</p>
                   </div>
                 </Card>
               );

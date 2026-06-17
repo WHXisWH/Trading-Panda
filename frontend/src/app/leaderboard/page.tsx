@@ -31,10 +31,10 @@ function metric(entry: Entry, dim: string): string {
 }
 
 function rankBadge(rank: number): string {
-  if (rank === 1) return "bg-amber-100 text-amber-700";
-  if (rank === 2) return "bg-neutral-200 text-neutral-700";
-  if (rank === 3) return "bg-orange-100 text-orange-700";
-  return "bg-neutral-100 text-neutral-500";
+  if (rank === 1) return "bg-product-gold/20 text-product-gold";
+  if (rank === 2) return "bg-white/10 text-product-text";
+  if (rank === 3) return "bg-product-amber/15 text-product-amber";
+  return "bg-white/[0.06] text-product-muted";
 }
 
 export default function LeaderboardPage() {
@@ -53,21 +53,22 @@ export default function LeaderboardPage() {
     <PageContainer className="py-8">
       <div className="mx-auto max-w-3xl">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-neutral-900">Leaderboard</h1>
-          <p className="mt-1 text-sm text-neutral-500">Top pandas on Sui Testnet</p>
+          <div className="product-eyebrow">Community</div>
+          <h1 className="mt-3 text-2xl font-bold tracking-tight text-product-text">Leaderboard</h1>
+          <p className="mt-1 text-sm text-product-muted">Top pandas on Sui Testnet</p>
         </div>
 
-        <div className="mb-6 flex gap-1 rounded-lg bg-neutral-100 p-1">
+        <div className="product-panel mb-6 flex gap-1 p-1">
           {TABS.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
               type="button"
               onClick={() => setTab(key)}
               className={clsx(
-                "flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-fast ease-smooth",
+                "flex flex-1 items-center justify-center gap-2 rounded-2xl px-4 py-2 font-mono text-[11px] font-extrabold transition-colors duration-fast ease-smooth",
                 tab === key
-                  ? "bg-white text-neutral-900 shadow-sm"
-                  : "text-neutral-500 hover:text-neutral-700",
+                  ? "bg-gradient-to-br from-product-green to-[#bfff87] text-[#071108] shadow-[var(--glow-green)]"
+                  : "text-product-muted hover:text-product-text",
               )}
             >
               <Icon className="h-4 w-4" />
@@ -83,9 +84,9 @@ export default function LeaderboardPage() {
             ))}
           </div>
         ) : !data || data.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-neutral-200 bg-white py-16 text-center">
-            <Trophy className="mx-auto h-8 w-8 text-neutral-300" />
-            <p className="mt-3 text-sm text-neutral-500">
+          <div className="product-panel border-dashed py-16 text-center">
+            <Trophy className="mx-auto h-8 w-8 text-product-muted/50" />
+            <p className="mt-3 text-sm text-product-muted">
               No ranked pandas yet — start training to climb.
             </p>
           </div>
@@ -94,25 +95,25 @@ export default function LeaderboardPage() {
             {data.map((entry) => (
               <div
                 key={entry.panda_id}
-                className="lift flex items-center gap-4 rounded-xl border border-neutral-200 bg-brand-soft px-4 py-3"
+                className="product-panel flex items-center gap-4 px-4 py-3"
               >
                 <span
                   className={clsx(
-                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold",
+                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-mono text-sm font-bold",
                     rankBadge(entry.rank),
                   )}
                 >
                   {entry.rank}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-neutral-900">
+                  <p className="truncate text-sm font-semibold text-product-text">
                     {entry.owner_name || `Panda ${entry.panda_id.slice(0, 6)}`}
                   </p>
-                  <p className="text-xs text-neutral-400">
+                  <p className="font-mono text-xs text-product-muted">
                     {entry.trade_count} trades · Lv.{entry.level}
                   </p>
                 </div>
-                <span className="font-mono text-sm font-semibold text-primary-600">
+                <span className="font-mono text-sm font-semibold text-product-green">
                   {metric(entry, tab)}
                 </span>
               </div>

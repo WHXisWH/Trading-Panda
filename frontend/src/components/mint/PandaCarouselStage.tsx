@@ -31,6 +31,25 @@ function usePrefersReducedMotion(): boolean {
   return reduced;
 }
 
+function captionForPreset(index: number, reducedMotion: boolean, revealed: boolean): {
+  title: string;
+  subtitle: string;
+} {
+  if (revealed) {
+    return {
+      title: "Your Panda",
+      subtitle: "Personality sealed on-chain",
+    };
+  }
+  const preset = PANDA_LAB_PRESETS[index % PANDA_LAB_PRESETS.length];
+  return {
+    title: preset.stageLabelEn,
+    subtitle: reducedMotion
+      ? `Preview ${index + 1} of ${PANDA_LAB_PRESETS.length}`
+      : "",
+  };
+}
+
 /** Loops Panda Lab variants until mint reveals the real Panda (page-mint §5). */
 export function PandaCarouselStage({
   activeStats,
@@ -42,6 +61,8 @@ export function PandaCarouselStage({
   const [index, setIndex] = useState(0);
 
   const displayStats = activeStats ?? PANDA_LAB_PRESETS[index % PANDA_LAB_PRESETS.length].stats;
+  const revealed = Boolean(activeStats);
+  const caption = captionForPreset(index, reducedMotion, revealed);
 
   useEffect(() => {
     if (activeStats || paused || reducedMotion) return;
@@ -53,13 +74,13 @@ export function PandaCarouselStage({
   }, [activeStats, paused, reducedMotion, slowed]);
 
   return (
-    <div className={clsx("flex flex-col items-center gap-3", className)}>
+    <div className={clsx("relative flex h-full w-full items-center justify-center", className)}>
       <div
         className={clsx(
-          "h-[var(--panda-avatar-mint)] w-[var(--panda-avatar-mint)] overflow-hidden rounded-full ring-4 transition-all duration-500",
-          activeStats
-            ? "ring-primary-500/50 animate-scale-in"
-            : "ring-amber-400/25",
+          "mint-panda-float h-[var(--mint-panda-size-mobile)] w-[var(--mint-panda-size-mobile)] overflow-hidden rounded-full sm:h-[var(--panda-avatar-mint)] sm:w-[var(--panda-avatar-mint)]",
+          "ring-4 transition-all duration-500",
+          revealed ? "animate-scale-in ring-product-green/50 shadow-[var(--glow-green)]" : "ring-product-gold/30",
+          slowed && !revealed && "opacity-90",
         )}
       >
         <PandaCanvasRenderer
@@ -69,13 +90,13 @@ export function PandaCarouselStage({
           className="h-full w-full"
         />
       </div>
-      {!activeStats && (
-        <p className="text-[11px] text-neutral-400">
-          {reducedMotion
-            ? `Preview ${index + 1} / ${PANDA_LAB_PRESETS.length}`
-            : PANDA_LAB_PRESETS[index % PANDA_LAB_PRESETS.length].label}
-        </p>
-      )}
+
+      <div className="mint-stage-caption">
+        <strong className="block text-sm leading-none text-product-text">{caption.title}</strong>
+        {caption.subtitle ? (
+          <span className="mt-1 block font-mono text-[10px] text-product-muted">{caption.subtitle}</span>
+        ) : null}
+      </div>
     </div>
   );
 }

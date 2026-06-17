@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { AppShell } from "@/components/layout/AppShell";
 import { Navbar } from "@/components/layout/Navbar";
+import { ProductCanvas } from "@/components/layout/ProductCanvas";
 
 export const metadata: Metadata = {
   title: "TradingPanda — AI Trading Companion on Sui",
@@ -28,8 +29,10 @@ export default function RootLayout({
     <html lang="zh-CN">
       <body>
         <Providers>
-          <Navbar />
-          <AppShell>{children}</AppShell>
+          <ProductCanvas>
+            <Navbar />
+            <AppShell>{children}</AppShell>
+          </ProductCanvas>
         </Providers>
       </body>
     </html>

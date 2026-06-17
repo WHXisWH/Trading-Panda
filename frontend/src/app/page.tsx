@@ -1,307 +1,272 @@
 "use client";
+
 import Link from "next/link";
 import Image from "next/image";
-import { useCurrentAccount } from "@mysten/dapp-kit";
+import { clsx } from "clsx";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import {
-  Dice5,
-  Brain,
-  TrendingUp,
-  GitBranch,
-  Sparkles,
-  BarChart3,
-  ArrowRight,
-  Shield,
-  Zap,
-  ChevronRight,
-} from "lucide-react";
 import type { Panda } from "@/types";
 
-const FEATURES = [
+const SYSTEM_TILES = [
   {
-    icon: Dice5,
-    title: "On-chain Personality",
-    desc: "Five personality axes permanently minted by sui::random. Every panda is provably unique and immutable.",
+    label: "Market source",
+    value: "DeepBook mainnet",
+    note: "Real market training — not testnet liquidity.",
+    tone: "good" as const,
   },
   {
-    icon: Brain,
-    title: "Strategy Engine",
-    desc: "Feed your panda trading rules with a visual builder or natural language. It trades autonomously.",
+    label: "Sui core",
+    value: "Objects + PTB",
+    note: "PandaVault / TradingPolicy / demo executor.",
+    tone: "gold" as const,
   },
   {
-    icon: TrendingUp,
-    title: "Verifiable Growth",
-    desc: "Every 50 trades produce a Merkle Root on Sui. Your panda's track record is on-chain and auditable.",
+    label: "Execution truth",
+    value: "Training Ledger",
+    note: "Paper ledger PnL; Trade Facts keep evidence.",
+    tone: "default" as const,
   },
   {
-    icon: GitBranch,
-    title: "Strategy Memory",
-    desc: "Old strategies decay through ghost weight, giving your panda realistic behavioral memory and adaptation.",
+    label: "Autonomy proof",
+    value: "Agent Signer",
+    note: "Selected Chain Proof Moments on testnet.",
+    tone: "good" as const,
   },
 ];
 
-const STEPS = [
+const JOURNEYS = [
   {
-    step: "01",
-    icon: Sparkles,
-    title: "Mint Your Panda",
-    desc: "Connect your wallet and mint a panda with unique on-chain personality. Gas is just ~0.03 SUI on Testnet.",
+    id: "J0",
+    page: "Mint",
+    title: "Connect And Understand",
+    desc: "Confirm the Panda only acts inside PandaVault and TradingPolicy — never your whole wallet.",
+    bullets: ["Connect wallet / zkLogin", "Explain bounded agent wallet"],
+    href: "/mint",
   },
   {
-    step: "02",
-    icon: BarChart3,
-    title: "Teach It to Trade",
-    desc: "Build trading strategies with visual blocks — pick indicators like RSI, MACD, or moving averages, set entry and exit rules.",
+    id: "J1",
+    page: "Mint",
+    title: "Mint Panda Identity",
+    desc: "Sign to mint a Panda NFT with immutable on-chain personality and agent identity.",
+    bullets: ["User signs Sui transaction", "Backend registers Panda"],
+    href: "/mint",
   },
   {
-    step: "03",
-    icon: Zap,
-    title: "Watch It Grow",
-    desc: "Your panda trains on the Training Ledger with real DeepBook market data. Track P&L, watch emotions evolve, and level up through experience.",
+    id: "J2",
+    page: "Wallet",
+    title: "Create Agent Wallet",
+    desc: "Create PandaVault and TradingPolicy — bounded vault plus risk collar.",
+    bullets: ["Shared PandaVault", "Standalone TradingPolicy"],
+    href: "/agent-wallet",
+    needsPanda: false,
+  },
+  {
+    id: "J3",
+    page: "Strategy",
+    title: "Feed Strategy Rules",
+    desc: "Teach trading style inside policy boundaries; strategy never expands permissions.",
+    bullets: ["Template + rule blocks", "Policy compatibility preview"],
+    href: "/strategy",
+    needsPanda: true,
+  },
+  {
+    id: "J4",
+    page: "Training",
+    title: "Train On Real Markets",
+    desc: "Watch DeepBook ticks drive decisions, paper execution, and Trade Facts.",
+    bullets: ["market:tick consumption", "OrderIntent → Trade Fact"],
+    href: "/training-ledger",
+    needsPanda: true,
+  },
+  {
+    id: "J5",
+    page: "Proof",
+    title: "Chain Proof Moment",
+    desc: "Prove selected actions with testnet PandaCoin PTB without rolling back ledger PnL.",
+    bullets: ["Manual or auto eligibility", "Idempotent proof jobs"],
+    href: "/chain-proof",
+    needsPanda: true,
+  },
+  {
+    id: "J6",
+    page: "Review",
+    title: "Review And Learn",
+    desc: "Turn closed trades into evidence-backed reviews and optional Skill Memory.",
+    bullets: ["Hypothesis lifecycle", "No vibe-based learning"],
+    href: "/review",
+    needsPanda: true,
+  },
+  {
+    id: "J7",
+    page: "Safety",
+    title: "Pause Or Tighten Risk",
+    desc: "Owner controls block both Training Ledger execution and chain proof paths.",
+    bullets: ["Pause / revoke / tighten", "Mirror sync from chain"],
+    href: "/safety",
+    needsPanda: true,
   },
 ];
+
+function tileToneClass(tone: "good" | "gold" | "default") {
+  if (tone === "good") return "border-product-green/25 bg-product-green/[0.06]";
+  if (tone === "gold") return "border-product-gold/30 bg-product-gold/[0.08]";
+  return "border-product-line bg-white/[0.03]";
+}
 
 export default function LandingPage() {
-  const account = useCurrentAccount();
   const { jwt } = useAuth();
 
   const { data: pandas } = useQuery<Panda[]>({
     queryKey: ["pandas", jwt],
     enabled: !!jwt,
     queryFn: () =>
-      fetch("/api/pandas", { headers: { Authorization: `Bearer ${jwt}` } }).then(
-        (r) => r.json()
-      ),
+      fetch("/api/pandas", { headers: { Authorization: `Bearer ${jwt}` } }).then((r) => r.json()),
   });
 
-  const hasPandas = pandas && pandas.length > 0;
+  const pandaId = pandas?.[0]?.id;
+
+  const resolveHref = (j: (typeof JOURNEYS)[number]) => {
+    if (!j.needsPanda || !pandaId) {
+      if (j.href === "/agent-wallet" && pandaId) return `${j.href}?panda=${pandaId}`;
+      return j.href;
+    }
+    if (j.href === "/chain-proof" || j.href === "/review") {
+      return `${j.href}?panda=${pandaId}`;
+    }
+    if (j.href === "/safety") return `${j.href}/${pandaId}`;
+    return `${j.href}/${pandaId}`;
+  };
 
   return (
-    <>
-      {/* ── Hero ── */}
-      <section className="relative overflow-hidden bg-white">
-        {/* Background decoration */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-          {/* Main gradient (brand-tinted, token-driven) */}
-          <div className="absolute inset-0 bg-hero" />
-          {/* Decorative grid lines */}
+    <PageContainer variant="wide" className="pb-16 pt-2">
+      <section className="mb-8 grid items-end gap-6 lg:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)]">
+        <div>
+          <div className="product-eyebrow">Cyber Panda Agent Wallet OS</div>
+          <h1 className="mt-4 max-w-4xl font-display text-[clamp(2.25rem,6vw,4.5rem)] font-bold leading-[0.9] tracking-[-0.06em] text-product-text">
+            Train a Move-constrained autonomous trading Panda.
+          </h1>
+          <p className="mt-4 max-w-2xl text-[17px] leading-relaxed text-[#c6c8b9]">
+            The control room for J0–J8: mint identity, create bounded wallet, feed strategy, train on
+            real DeepBook data, prove selected actions on-chain, review outcomes, and tighten risk.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link href="/mint">
+              <Button size="lg">Start with Mint</Button>
+            </Link>
+            {pandaId ? (
+              <Link href={`/training-ledger/${pandaId}`}>
+                <Button size="lg" variant="ghost">
+                  Open Training Ledger
+                </Button>
+              </Link>
+            ) : null}
+          </div>
+        </div>
+
+        <aside className="product-panel p-5">
+          <h2 className="text-lg font-bold tracking-tight text-product-text">Agent Wallet Thesis</h2>
+          <p className="mt-2 text-sm leading-relaxed text-product-muted">
+            The user is training a Move-constrained autonomous trading wallet.
+          </p>
+          <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {[
+              "Panda NFT = agent identity",
+              "TradingPolicy = risk collar",
+              "PandaVault = bounded account",
+              "Chain Proof = selected PTB proof",
+            ].map((pill) => (
+              <span key={pill} className="product-chip w-full justify-center rounded-2xl px-3 py-2.5 text-[11px]">
+                {pill}
+              </span>
+            ))}
+          </div>
+        </aside>
+      </section>
+
+      <section className="mb-10 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {SYSTEM_TILES.map((tile) => (
           <div
-            className="absolute inset-0 opacity-[0.03]"
-            style={{
-              backgroundImage:
-                "linear-gradient(#0f973d 1px, transparent 1px), linear-gradient(90deg, #0f973d 1px, transparent 1px)",
-              backgroundSize: "60px 60px",
-            }}
+            key={tile.label}
+            className={clsx("product-panel flex flex-col gap-1 p-4", tileToneClass(tile.tone))}
+          >
+            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-product-muted">
+              {tile.label}
+            </span>
+            <strong className="text-base font-bold tracking-tight text-product-text">{tile.value}</strong>
+            <em className="text-[12px] not-italic leading-snug text-product-muted">{tile.note}</em>
+          </div>
+        ))}
+      </section>
+
+      <section>
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight text-product-text">All user journeys</h2>
+            <p className="mt-1 max-w-2xl text-sm leading-relaxed text-product-muted">
+              Each card answers one user question and links to the live product route.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {JOURNEYS.map((j) => (
+            <article key={j.id} className="product-panel flex min-h-[240px] flex-col gap-3 p-5">
+              <div className="flex items-center justify-between gap-3">
+                <span className="grid h-11 w-11 place-items-center rounded-[17px] bg-gradient-to-br from-product-gold to-[#fff0a8] font-mono text-[13px] font-black text-[#071108] shadow-[var(--glow-gold)]">
+                  {j.id}
+                </span>
+                <span className="rounded-full border border-product-green/25 bg-product-green/[0.08] px-2.5 py-1 font-mono text-[10px] font-extrabold uppercase tracking-wider text-product-green">
+                  {j.page}
+                </span>
+              </div>
+              <h3 className="text-xl font-bold tracking-tight text-product-text">{j.title}</h3>
+              <p className="flex-1 text-sm leading-relaxed text-product-muted">{j.desc}</p>
+              <ul className="grid gap-1.5">
+                {j.bullets.map((b) => (
+                  <li
+                    key={b}
+                    className="flex items-center gap-2 font-mono text-[11px] font-bold text-[#c5c1ad]"
+                  >
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-product-gold shadow-[0_0_14px_rgba(225,186,92,0.6)]" />
+                    {b}
+                  </li>
+                ))}
+              </ul>
+              <Link href={resolveHref(j)} className="mt-auto w-fit">
+                <Button variant="ghost" size="sm">
+                  Enter {j.page} journey
+                </Button>
+              </Link>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-12 product-panel flex flex-col items-center gap-4 p-8 text-center">
+        <div className="relative">
+          <div className="absolute inset-0 rounded-full bg-product-green/20 blur-3xl" />
+          <Image
+            src="/assets/ui-logo.svg"
+            alt="TradingPanda"
+            width={96}
+            height={96}
+            className="relative h-24 w-24"
           />
         </div>
-
-        <PageContainer className="flex min-h-[calc(100dvh-var(--navbar-height))] flex-col items-center justify-center gap-6 py-20 lg:flex-row lg:gap-16 lg:text-left">
-          {/* Left: Text + CTA */}
-          <div className="flex max-w-xl flex-col items-center gap-6 text-center lg:items-start lg:text-left">
-            {/* Badge */}
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary-200 bg-primary-50 px-3 py-1 text-xs font-medium text-primary-600">
-              <Shield className="h-3 w-3" />
-              Live on Sui Testnet
-            </span>
-
-            <div className="space-y-4">
-              <h1 className="text-4xl font-bold leading-tight tracking-tight text-neutral-900 sm:text-5xl lg:text-6xl">
-                Raise an AI panda
-                <br />
-                <span className="text-primary-500">that trades for you</span>
-              </h1>
-              <p className="max-w-md text-base leading-relaxed text-neutral-500 sm:text-lg">
-                Mint your panda NFT with on-chain personality. Teach it trading
-                strategies. Watch it grow through autonomous simulated trading —
-                every decision verifiable on Sui.
-              </p>
-            </div>
-
-            {/* CTA */}
-            <div className="flex flex-col items-center gap-4 sm:flex-row">
-              {account && jwt ? (
-                <>
-                  <Link href="/mint">
-                    <Button size="lg" className="shadow-lg shadow-primary-500/25">
-                      Mint a Panda
-                      <ChevronRight className="ml-1 h-4 w-4" />
-                    </Button>
-                  </Link>
-                  {hasPandas && (
-                    <Link href={`/dashboard/${pandas[0].id}`}>
-                      <Button size="lg" variant="outline">
-                        Go to Dashboard
-                        <ArrowRight className="ml-1 h-4 w-4" />
-                      </Button>
-                    </Link>
-                  )}
-                </>
-              ) : (
-                <div className="space-y-3">
-                  <Link href="/mint">
-                    <Button size="lg" className="shadow-lg shadow-primary-500/25">
-                      Get Started
-                      <ChevronRight className="ml-1 h-4 w-4" />
-                    </Button>
-                  </Link>
-                  <p className="text-xs text-neutral-400">
-                    Connect your wallet to mint your first panda
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Stats row */}
-            <div className="flex flex-wrap items-center gap-6 border-t border-neutral-100 pt-6">
-              {[
-                { value: "On-chain", label: "Personality" },
-                { value: "8-step", label: "Decision Pipeline" },
-                { value: "7-state", label: "Emotion System" },
-                { value: "~0.03 SUI", label: "Mint Gas" },
-              ].map(({ value, label }) => (
-                <div key={label}>
-                  <div className="text-lg font-bold text-neutral-900">{value}</div>
-                  <div className="text-xs text-neutral-400">{label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Right: Panda illustration */}
-          <div className="relative flex shrink-0 items-center justify-center">
-            {/* Glow behind logo */}
-            <div
-              className="absolute h-48 w-48 rounded-full blur-3xl"
-              style={{ backgroundColor: "#0f973d15" }}
-            />
-            {/* Logo card */}
-            <div className="lift relative rounded-3xl border border-neutral-200 bg-brand-soft p-10 shadow-lg">
-              <Image
-                src="/assets/ui-logo.svg"
-                alt="TradingPanda"
-                width={160}
-                height={160}
-                className="h-40 w-40"
-                priority
-              />
-            </div>
-          </div>
-        </PageContainer>
+        <h2 className="text-2xl font-bold text-product-text">Ready to raise your trading Panda?</h2>
+        <p className="max-w-md text-sm text-product-muted">
+          Mint your first Panda in under a minute. Gas is ~0.03 SUI on Testnet.
+        </p>
+        <Link href="/mint">
+          <Button size="lg">Get started</Button>
+        </Link>
       </section>
 
-      {/* ── How it Works ── */}
-      <section className="border-t border-neutral-100 bg-neutral-50/50">
-        <PageContainer className="py-20">
-          <div className="mx-auto mb-14 max-w-lg text-center">
-            <span className="text-xs font-semibold uppercase tracking-widest text-primary-500">
-              How it Works
-            </span>
-            <h2 className="mt-3 text-2xl font-bold text-neutral-900 sm:text-3xl">
-              From wallet to trading panda in minutes
-            </h2>
-          </div>
-
-          <div className="mx-auto grid max-w-4xl gap-8 md:grid-cols-3">
-            {STEPS.map(({ step, icon: Icon, title, desc }, i) => (
-              <div key={step} className="group relative">
-                {/* Connector line (desktop) */}
-                {i < STEPS.length - 1 && (
-                  <div className="absolute left-full top-10 hidden h-px w-8 bg-neutral-200 md:block lg:w-16" />
-                )}
-                <div className="relative z-10 flex flex-col items-center text-center">
-                  <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-500 text-white shadow-lg shadow-primary-500/25 ring-4 ring-primary-50 group-hover:scale-110 transition-transform">
-                    <Icon className="h-6 w-6" />
-                  </div>
-                  <span className="mb-2 text-xs font-bold tracking-widest text-primary-400">
-                    {step}
-                  </span>
-                  <h3 className="mb-2 font-semibold text-neutral-900">{title}</h3>
-                  <p className="text-sm leading-relaxed text-neutral-500">{desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </PageContainer>
-      </section>
-
-      {/* ── Features ── */}
-      <section className="border-t border-neutral-100 bg-white">
-        <PageContainer className="py-20">
-          <div className="mx-auto mb-14 max-w-lg text-center">
-            <span className="text-xs font-semibold uppercase tracking-widest text-primary-500">
-              Why TradingPanda
-            </span>
-            <h2 className="mt-3 text-2xl font-bold text-neutral-900 sm:text-3xl">
-              Built different from the ground up
-            </h2>
-            <p className="mt-3 text-sm text-neutral-500">
-              Part trading bot, part digital pet — every aspect is verifiable on-chain.
-            </p>
-          </div>
-
-          <div className="mx-auto grid max-w-5xl gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {FEATURES.map(({ icon: Icon, title, desc }) => (
-              <Card
-                key={title}
-                variant="default"
-                className="lift group relative space-y-3 overflow-hidden hover:border-neutral-300"
-              >
-                {/* Brand accent bar at top */}
-                <div className="absolute inset-x-0 top-0 h-0.5 bg-brand" />
-                <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-primary-50 text-primary-600 transition-colors group-hover:bg-primary-100">
-                  <Icon className="h-5 w-5" />
-                </div>
-                <h3 className="font-semibold text-neutral-900">{title}</h3>
-                <p className="text-sm leading-relaxed text-neutral-500">{desc}</p>
-              </Card>
-            ))}
-          </div>
-        </PageContainer>
-      </section>
-
-      {/* ── CTA Banner ── */}
-      <section className="border-t border-neutral-100 bg-dark-panel">
-        <PageContainer className="py-16 text-center">
-          <div className="mx-auto max-w-lg space-y-5">
-            <h2 className="text-2xl font-bold text-white sm:text-3xl">
-              Ready to raise your trading panda?
-            </h2>
-            <p className="text-neutral-400">
-              Mint your first panda in under a minute. Gas is just ~0.03 SUI on Testnet.
-            </p>
-            <Link
-              href="/mint"
-              className="group inline-flex items-center gap-2 rounded-lg bg-white px-7 py-3.5 text-sm font-semibold text-neutral-900 shadow-lg shadow-black/20 transition-all hover:scale-105 hover:shadow-xl active:scale-100"
-            >
-              Get Started Free
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </Link>
-          </div>
-        </PageContainer>
-      </section>
-
-      {/* ── Footer ── */}
-      <footer className="border-t border-neutral-800 bg-dark-panel">
-        <div className="mx-auto flex max-w-page flex-col items-center gap-4 px-6 py-8 text-center text-xs text-neutral-500">
-          <div className="flex items-center gap-2">
-            <Image
-              src="/assets/ui-logo.svg"
-              alt=""
-              width={18}
-              height={18}
-              className="h-4.5 w-4.5 opacity-50"
-            />
-            <span className="text-neutral-400">TradingPanda</span>
-          </div>
-          <p>
-            Sui Testnet · Simulated trading, not real orders · Built for Sui Overflow 2026
-          </p>
-        </div>
+      <footer className="mt-10 border-t border-product-line/50 pt-8 text-center text-xs text-product-muted">
+        <p>TradingPanda · Sui Testnet · Training Ledger paper execution · Sui Overflow 2026</p>
       </footer>
-    </>
+    </PageContainer>
   );
 }
