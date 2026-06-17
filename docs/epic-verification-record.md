@@ -1,6 +1,6 @@
 # TradingPanda — Epic Verification Record
 
-> **Last updated**: 2026-06-17 (Epic 9 re-verified)  
+> **Last updated**: 2026-06-17 (Supabase DB landed to Alembic head)  
 > **Purpose**: 记录 Autonomous Agent Wallet MVP 各 Epic 的交付物、验证命令与实测结果（如实、可追溯）  
 > **Source of truth**: `dev-docs/TODO.md` · `docs/PRD.md` v3.1 · `dev-docs/DEV_CONTEXT.md`
 
@@ -21,13 +21,14 @@
 
 | 项 | 记录 |
 |----|------|
-| 最近验证日期 | 2026-06-17（Epic 0–10 · Epic 9 复验） |
+| 最近验证日期 | 2026-06-17（Supabase DB 落地复验） |
 | OS | macOS |
 | Python | 3.10.0（pyenv） |
 | Node | 见 `frontend/package.json` engines |
-| 数据库 | `backend/.env` → Supabase 直连 `db.*.supabase.co:5432` |
-| DB 连通性 | ❌ **本环境不可达**（asyncpg `TimeoutError` ~60s）；与 `DEV_CONTEXT.md` 历史记录一致 |
-| 影响范围 | 所有依赖 PostgreSQL 的验证（`alembic` / `verify_db.py` / 集成测试）在本环境标记为 ⏸ |
+| 数据库 | `backend/.env` → Supabase 直连 `db.dpezgzzvbpemlgxdogue.supabase.co:5432/postgres` |
+| DB 连通性 | ✅ 可达；`python -m alembic current -v` 显示 `006_trust_merkle_columns (head)` |
+| Schema 验证 | ✅ `python scripts/verify_db.py`：31 张表 + 8 个关键索引全部 `ok` |
+| 影响范围 | 依赖 PostgreSQL 的 schema 验证已解除阻塞；业务级集成/E2E 仍需按各 Epic 手测或自动化复跑 |
 
 **DB 可达时通用验收命令：**
 
@@ -44,7 +45,7 @@ python scripts/verify_db.py
 
 | Epic | 名称 | TODO 状态 | 验证状态 | 最近验证 | 详见 |
 |------|------|-----------|----------|----------|------|
-| 0 | v3.1 Foundation Alignment | 部分完成 | ⚠️ 部分验证 | 2026-06-17 | [§3.0](#30-epic-0--v31-foundation-alignment) |
+| 0 | v3.1 Foundation Alignment | 部分完成 | ✅ 已验证 | 2026-06-17 | [§3.0](#30-epic-0--v31-foundation-alignment) |
 | 1 | Mint Panda Identity | TODO 全勾 | ⚠️ 部分验证 | 2026-06-17 | [§3.1](#31-epic-1--mint-panda-identity) |
 | 2 | Agent Wallet Setup | TODO 全勾 | ⚠️ 部分验证 | 2026-06-17 | [§3.2](#32-epic-2--agent-wallet-setup) |
 | 3 | Real Market Monitor And Pair Ranking | TODO `[x]` | ⚠️ 部分验证 | 2026-06-17 | [§3.3](#33-epic-3--real-market-monitor-and-pair-ranking) |
@@ -129,17 +130,21 @@ rg -n 'commit_tick|order_intents|trade_facts' backend/app/engine/panda_actor.py 
 | A | `pytest tests/test_migration_004.py tests/test_migration_003.py -q` | ✅ PASS | 9 passed |
 | B | `cd frontend && npm run type-check` | ✅ PASS | 零 TS 错误 |
 | C | 静态抽查（错误码 / config / 类型导出） | ✅ PASS | 均存在 |
-| D | `alembic current` | ❌ FAIL | `TimeoutError`（见 §1） |
-| E | `python scripts/verify_db.py` | ❌ FAIL | `TimeoutError`（见 §1） |
+| D | `python -m alembic current -v` | ✅ PASS | Supabase `006_trust_merkle_columns (head)` |
+| E | `python scripts/verify_db.py` | ✅ PASS | 31 张表 + 8 个关键索引全部 `ok` |
 | F | 术语审计 `rg`（见上表） | ✅ PASS | MVP 七页 v3.1 术语；legacy 页已重命名；无「paper trade = chain trade」用户文案 |
 | G | 静态：`api-specification.md` v3.1 端点表 | ✅ PASS | 22 条 v3.1 REST + 错误码/WS 说明 |
 | H | 静态：`spec.md` §8 REST 映射 | ✅ PASS | 与 `router.py` 挂载路径一致 |
 | I | 静态：热路径 `PandaActor` → `TradeFactWriter` | ✅ PASS | `commit_tick` 写 `order_intents` / `ledger_entries` / `trade_facts` |
 
-#### Expected Pass (DB reachable)
+#### Database Landing Root Cause (2026-06-17)
 
-- `alembic_version`: `004_v31_agent_wallet` 或更高
-- 31 张表 + 7 个 v3.1 关键索引均为 `ok`（见 `verify_db.py`）
+| 发现 | 证据 |
+|------|------|
+| Supabase 网络和登录实际可用 | DNS/TCP 探针通过；只读 SQL `current_database/current_user/version` 通过 |
+| 落地失败根因 | Supabase 当前 `alembic_version` 停在 `002_panda_subscribed_pools`，public 只有 7 张表 |
+| 修复动作 | 执行 `python -m alembic upgrade head`，迁移 `003` → `004` → `005` → `006` |
+| 验收结果 | `alembic current -v` = `006_trust_merkle_columns (head)`；`verify_db.py` 全绿 |
 
 #### Verdict
 
@@ -147,8 +152,8 @@ rg -n 'commit_tick|order_intents|trade_facts' backend/app/engine/panda_actor.py 
 |------|------|
 | 代码 / 契约 / 迁移脚本 | ✅ 通过 |
 | 术语 / API spec / spec 同步 | ✅ 通过（2026-06-17 补全） |
-| 数据库落地 | ⏸ 未验证（环境阻塞） |
-| Epic 0 完整闭环 | ⚠️ 部分完成（仅 DB 落地待 §1 可达后复验） |
+| 数据库落地 | ✅ 已落地 Supabase `dpezgzzvbpemlgxdogue` |
+| Epic 0 完整闭环 | ✅ Schema / 契约 / 文档闭环已验证；业务级 E2E 另见后续 Epic |
 
 ---
 
@@ -1604,6 +1609,7 @@ _待补充：端到端 demo 脚本、Battle Case 回归、MVP 验收清单逐项
 
 | 日期 | 变更 |
 |------|------|
+| 2026-06-17 | **Supabase DB 落地复验**：真实网络下确认 `db.dpezgzzvbpemlgxdogue.supabase.co:5432/postgres` DNS/TCP/SQL 可达；根因是数据库停在 `002_panda_subscribed_pools` 且 public 仅 7 张表；执行 `python -m alembic upgrade head` 至 `006_trust_merkle_columns (head)`；`python scripts/verify_db.py` 通过 31 张表 + 8 个关键索引；§1 与 §3.0 更新为 ✅ |
 | 2026-06-17 | **Epic 0 补全**：术语审计 + legacy 产品文案重命名；`api-specification.md` v3.1 端点表（22 条）；`spec.md` §8 REST 映射；确认 `PandaActor`→`TradeFactWriter` 热路径；§3.0 checklist 全绿（DB 落地仍 ⏸） |
 | 2026-06-17 | **Epic 9 自动验证**：pytest Merkle 16/16、`sui move test` 27/27、Alembic head=`006_trust_merkle_columns`、前端 `pnpm type-check` ✅；`alembic current` Timeout、`006` 未落地、真实链上 PTB/Walrus 上传/E2E 50 笔/浏览器 smoke ⏸；§3.9 完整记录；判定 **⚠️ 部分验证** |
 | 2026-06-17 | Epic 5 自动验证：pytest 22/22（PolicyGate·Ledger snapshot·stale gate·migration 004）+ 静态 API/WS/前端资产；`verify_db` Timeout；记录 async_jobs 未写、无热路径集成测、Ledger 变异/rollback 测缺失 → §3.5 **⚠️ 部分验证** |

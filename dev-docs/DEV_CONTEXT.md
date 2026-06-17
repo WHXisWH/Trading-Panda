@@ -2,7 +2,7 @@
 
 > 本文档以「忒修斯之船」方式持续维护：只换木板、不换整船。部署事实变更时同步更新对应段落；任何改动必须在本文末尾「§9 变更日志」追加一行。
 >
-> **最后同步**：2026-05-25（Testnet 合约 publish）
+> **最后同步**：2026-06-17（Supabase DB schema 升级至 Alembic head）
 
 ---
 
@@ -37,7 +37,7 @@ TradingPanda 是 Sui 链上的 **AI 交易宠物养成系统**，目标是 Sui O
 |--------|------|------|------|
 | 骨架搭建 | ✅ 完成 | 100% | frontend/backend/contracts 目录结构、CLAUDE.md、DEV_CONTEXT.md |
 | Sui Move 合约 | 🟡 Testnet 已 publish | 80% | `sui client publish` 至 Testnet（Package `0x5950…1465`）；`mint::mint` + DF 初始化；UpgradeCap 在 `0xa459…7bf3`；Kiosk/版税深化待做 |
-| PostgreSQL Schema | ✅ 全 18 表迁移 | 100% | Alembic `001`(6 表)+`002`(subscribed_pools)+`003`(其余 12 表：经验/情绪/merkle/成就/签到/缓存/日记)；`verify_db` 覆盖全表 |
+| PostgreSQL Schema | ✅ v3.1 Schema 已落地 | 100% | Supabase `dpezgzzvbpemlgxdogue` 已从 `002` 升级至 Alembic head `006_trust_merkle_columns`；`verify_db.py` 覆盖 31 张表 + 8 个关键索引 |
 | 铸造流程（Mint） | 🟢 Epic 1 完成 | 100% | `/mint` 按 `page-mint.md`：PandaCarouselStage + WalletSignatureModal + toast + MintDetails drawer → `/agent-wallet`；链上 mint 仅身份；DB 注册幂等 + tx digest 重试同步 |
 | 策略解析 | ✅ Epic 2 完成 | 100% | `POST/GET /panda/:id/strategy` + `validate`；积木 `StrategyBuilder`；LLM 5/min；`strategy_history` ghost 0.40 |
 | 8步决策引擎 | 🟡 MVP 实现 | 75% | `decision_pipeline` 八步公式 + `RuleEngine` + `PandaActor` + Redis `market:tick:*` 订阅；Agent/Merkle 链上提交待完善 |
@@ -253,7 +253,7 @@ PostgreSQL 完整表定义见 `docs/database-schema.md`。Alembic 迁移位于 `
 `order_intents` · `ledger_entries` · `trade_facts` · `trade_reviews` ·
 `skill_memories` · `skill_versions` · `chain_execution_logs` · `async_jobs` · `outbox_events`
 
-**当前迁移状态**：`001_initial_core` → `002_panda_subscribed_pools` → `003_growth_experience` → **`004_v31_agent_wallet`**（head）。`004` 扩展 `pandas.active_vault_id` / `active_policy_id` / `active_skill_version` 并创建上述 13 张 v3.1 表。本地：`alembic upgrade head` → `python scripts/verify_db.py` → `python scripts/seed_dev.py`。
+**当前迁移状态**：`001_initial_core` → `002_panda_subscribed_pools` → `003_growth_experience` → `004_v31_agent_wallet` → `005_chain_proof_idempotency` → **`006_trust_merkle_columns`**（head）。Supabase 项目 `dpezgzzvbpemlgxdogue` 已于 2026-06-17 执行 `python -m alembic upgrade head` 并通过 `python scripts/verify_db.py`：31 张表 + 8 个关键索引均为 `ok`。本地/新环境：`alembic upgrade head` → `python scripts/verify_db.py` → `python scripts/seed_dev.py`。
 
 ---
 
@@ -415,3 +415,5 @@ Package ID：**0x595087bb3e5f6c5011585797e4eb4db513b55d39ce84f984bb357e9375c1146
 | 2026-06-17 | **Epic 3 自动验证（文档）**：`docs/epic-verification-record.md` §3.3；pytest monitor 51/51 + backend market_event 7/7 + websocket 17/17；live monitor `/health`·`/pairs`·`/candles` + Redis `market:tick`×2；判定 **⚠️ 部分验证**（testnet VPS 池通过；mainnet launch pairs + frontend E2E 未验） | 复验命令见该文档 §3.3 Verification Methods |
 | 2026-06-17 | **Epic 0 补全（术语 + API spec）**：全库术语审计；legacy 页产品文案重命名（模拟盘→训练账本/Training Ledger）；`docs/api-specification.md` 新增 22 条 v3.1 REST 端点；`spec.md` §8 REST 映射；确认 `PandaActor`→`TradeFactWriter.commit_tick` 热路径；`dev-docs/TODO.md` Epic 0 全勾；`docs/epic-verification-record.md` §3.0 checklist 更新 | Epic 0 代码/契约/文档闭环完成；DB 落地仍待 §1 可达环境复验 `alembic`/`verify_db` |
 | 2026-06-17 | **`/mint` 仪式页对齐 prototype**：去掉 `#0d1421` 独立底；`ProductPageShell` + 圆形 `mint-stage`（金绿 halo/ring/floor glow）；熊猫 **210px**（移动 150px）；舞台 caption 英文 preset 名（`stageLabelEn`）；Hero 戏剧大字 + `GasFeeHint` 产品样式；导航保留 | `mint.smoke.test.ts` 5/5；验收：连钱包→轮播英文 preset→mint 流程 |
+| 2026-06-17 | **Navbar 钱包下拉修复**：`product-panel` 默认 `overflow:hidden` 裁切地址下拉；Navbar/`header` 改 `overflow-visible`；下拉改用独立暗色面板 + `z-index` 高于顶栏 | 登录后点击地址应完整显示 Profile/Dashboard/Logout 菜单 |
+| 2026-06-17 | **Supabase 数据库落地修复**：诊断 `dpezgzzvbpemlgxdogue` 连接与 schema 状态；真实网络下 DNS/TCP/SQL 可达，根因是 `alembic_version` 停在 `002_panda_subscribed_pools`、public 仅 7 张表；已执行 `python -m alembic upgrade head` 升级 `003`→`004`→`005`→`006`。 | `python -m alembic current -v` 显示 `006_trust_merkle_columns (head)`；`python scripts/verify_db.py` 通过：31 张表 + 8 个关键索引全部 `ok`；`docs/epic-verification-record.md` §1/§3.0 已更新 |

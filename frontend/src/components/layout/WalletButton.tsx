@@ -102,14 +102,14 @@ export function WalletButton() {
           </span>
           <ChevronDown
             className={clsx(
-              "h-3.5 w-3.5 text-neutral-400 transition-transform",
+              "h-3.5 w-3.5 text-product-muted transition-transform",
               dropdownOpen && "rotate-180",
             )}
           />
         </button>
 
         {dropdownOpen && (
-          <div className="product-panel absolute right-0 top-full z-[var(--z-dropdown)] mt-1.5 w-48 overflow-hidden !rounded-2xl py-1 shadow-[var(--shadow-product)] animate-scale-in">
+          <div className="absolute right-0 top-full z-[calc(var(--z-navbar)+1)] mt-2 w-52 overflow-hidden rounded-2xl border border-product-line bg-[rgba(11,15,11,0.96)] py-1 shadow-[var(--shadow-product)] backdrop-blur-xl animate-scale-in">
             <div className="border-b border-product-line px-3 py-2.5">
               <p className="truncate text-sm font-semibold text-product-text">
                 {user?.displayName ?? "User"}
@@ -142,19 +142,19 @@ export function WalletButton() {
             <Link
               href="/achievements"
               onClick={() => setDropdownOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2 text-sm text-neutral-700 transition-colors hover:bg-primary-50 hover:text-primary-600"
+              className="flex items-center gap-2.5 px-3 py-2 text-sm text-product-text transition-colors hover:bg-product-green/10 hover:text-product-green"
             >
               <Award className="h-4 w-4" /> Achievements
             </Link>
             <Link
               href="/leaderboard"
               onClick={() => setDropdownOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2 text-sm text-neutral-700 transition-colors hover:bg-primary-50 hover:text-primary-600"
+              className="flex items-center gap-2.5 px-3 py-2 text-sm text-product-text transition-colors hover:bg-product-green/10 hover:text-product-green"
             >
               <Flame className="h-4 w-4" /> Leaderboard
             </Link>
 
-            <div className="mx-2 my-1 border-t border-[var(--color-border)]" />
+            <div className="mx-2 my-1 border-t border-product-line" />
 
             <button
               type="button"
