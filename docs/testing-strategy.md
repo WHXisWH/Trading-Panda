@@ -3,6 +3,19 @@
 > 版本 1.0 · 2026-05-08
 > 覆盖：合约、决策引擎、API、前端四层测试 + 决策引擎可视化工具设计
 
+> **PRD v3.1 对齐说明（2026-06-17）**：早期“模拟盘”测试仍可作为兼容回归，但新增验收应以 `docs/PRD.md` v3.1、`docs/architecture.md`、`spec.md` 为准：Training Ledger 是 PnL 真相；Mode 2 只测试 selected/manual Chain Proof Moment 的 testnet PandaCoin PTB；`PandaVault` 是 shared object；`TradingPolicy` 是 standalone shared object；`async_jobs` 是 durable queue。
+
+### v3.1 新增核心测试
+
+| 层 | 必测内容 |
+|---|---|
+| Move | `TradingPolicy` owner-only update/pause/revoke；`PandaVault` shared object；`demo_executor` 对 signer/policy/vault/panda/version/pair/notional/loss 的 abort 覆盖 |
+| Backend hot path | `PandaActor → PolicyGate → LedgerService → TradeFactWriter` 原子落库；policy reject 不静默丢失 |
+| Async queue | `async_jobs` worker 重启可恢复；idempotency key 防重复 chain proof |
+| Mode 2 | 自动 proof 只选中高置信 BUY/SELL；manual proof 仍受 policy/cooldown/cap/duplicate 约束 |
+| Failure isolation | Sui RPC/PTB 失败不会回滚 Training Ledger PnL |
+| Skill Memory | 只有 reviewed Trade Fact 能更新 supported/verified memory |
+
 ---
 
 ## 一、测试分层总览

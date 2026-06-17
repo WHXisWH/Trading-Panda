@@ -3,6 +3,18 @@
 > 版本 1.0 · 2026-05-08
 > 适用于 Sui Overflow 2026 黑客松 — AI 交易宠物养成系统
 
+> **PRD v3.1 对齐说明（2026-06-17）**：本文件仍包含早期 `simulation` API 作为兼容接口。新实现语义以 `docs/PRD.md` v3.1、`docs/architecture.md`、`spec.md` 为准：`simulation/start|stop|status` 表示 Training Ledger agent session；新增实现应围绕 `OrderIntent`、`TradeFact`、`TradingPolicy`、`PandaVault`、`Chain Proof Moment` 设计。Mode 2 不为每笔 paper trade 上链，只为 selected/manual Chain Proof Moment 提交 testnet PandaCoin PTB。
+
+### v3.1 API Addendum
+
+| Surface | Required behavior |
+|---|---|
+| Agent setup | User signs PTBs to create shared `PandaVault` and standalone shared `TradingPolicy`. |
+| Session start | Backend starts `PandaActor`; actor consumes `market:tick:*` and writes Training Ledger facts. |
+| Policy controls | Pause/revoke must block both backend PolicyGate and Mode 2 Move execution. |
+| Chain proof panel | API should expose Trade Fact proof status and support manual proof request. |
+| Durable async | Chain proof/review/skill/merkle/walrus tasks should be visible through `async_jobs`-backed status. |
+
 ---
 
 ## 一、接口总览

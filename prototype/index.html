@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TradingPanda Prototype - Journey Overview</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <a class="brand" href="./index.html">
+        <span class="logo" aria-hidden="true"></span>
+        <span>
+          <strong>TradingPanda Prototype</strong>
+          <span>User journey index</span>
+        </span>
+      </a>
+      <nav class="nav" aria-label="Prototype pages">
+        <a class="active" href="./index.html">Overview</a>
+        <a href="./journeys/mint.html">Mint</a>
+        <a href="./journeys/agent-wallet.html">Wallet</a>
+        <a href="./journeys/strategy.html">Strategy</a>
+        <a href="./journeys/training.html">Training</a>
+        <a href="./journeys/chain-proof.html">Proof</a>
+        <a href="./journeys/review.html">Review</a>
+        <a href="./journeys/safety.html">Safety</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div>
+          <div class="eyebrow">Cyber Panda Agent Wallet OS</div>
+          <h1>训练一只受 Move 约束的自主交易熊猫。</h1>
+          <p class="subtitle">
+            总览页是控制室大厅：先看 J0-J8 用户旅程，再进入每个旅程状态机。核心叙事不偏题：
+            Panda 是 agent identity，PandaVault 是受限金库，TradingPolicy 是风险项圈，Chain Proof 是可验证链上动作。
+          </p>
+        </div>
+
+        <aside class="card">
+          <h2>Agent Wallet Thesis</h2>
+          <p>The user is training a Move-constrained autonomous trading wallet.</p>
+          <div class="pill-grid">
+            <span>Panda NFT = agent identity</span>
+            <span>TradingPolicy = risk collar</span>
+            <span>PandaVault = bounded account</span>
+            <span>Chain Proof = selected PTB proof</span>
+          </div>
+        </aside>
+      </section>
+
+      <section class="system-strip">
+        <div class="system-tile good">
+          <span>Market source</span>
+          <strong>DeepBook mainnet</strong>
+          <em>真实行情训练，不依赖 testnet 流动性。</em>
+        </div>
+        <div class="system-tile gold">
+          <span>Sui core</span>
+          <strong>Objects + PTB</strong>
+          <em>PandaVault / TradingPolicy / Demo executor。</em>
+        </div>
+        <div class="system-tile">
+          <span>Execution truth</span>
+          <strong>Training Ledger</strong>
+          <em>纸面账本计算 PnL，Trade Fact 留证据。</em>
+        </div>
+        <div class="system-tile good">
+          <span>Autonomy proof</span>
+          <strong>Agent Signer</strong>
+          <em>精选 Chain Proof Moment 自动上链。</em>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-title">
+          <h2>所有用户旅程</h2>
+          <p>每张卡片都回答一个用户问题，并指向对应的 journey stepper。地图大厅不展示状态细节，只负责导航。</p>
+        </div>
+
+        <div class="journey-grid">
+          <article class="journey-card">
+            <div class="journey-head">
+              <span class="journey-id">J0</span>
+              <span class="journey-page">Mint</span>
+            </div>
+            <h3>Connect And Understand</h3>
+            <p>用户先确认熊猫不会控制整个钱包，只能在 PandaVault 和 TradingPolicy 里行动。</p>
+            <ul class="mini-list">
+              <li>Connect wallet / zkLogin</li>
+              <li>Explain bounded agent wallet</li>
+            </ul>
+            <a class="button ghost" href="./journeys/mint.html">进入 Mint Journey</a>
+          </article>
+
+          <article class="journey-card">
+            <div class="journey-head">
+              <span class="journey-id">J1</span>
+              <span class="journey-page">Mint</span>
+            </div>
+            <h3>Mint Panda Identity</h3>
+            <p>用户签名 mint Panda NFT，熊猫获得不可变 personality 和 agent identity。</p>
+            <ul class="mini-list">
+              <li>User signs Sui transaction</li>
+              <li>Backend registers Panda</li>
+            </ul>
+            <a class="button ghost" href="./journeys/mint.html">进入 Mint Journey</a>
+          </article>
+
+          <article class="journey-card">
+            <div class="journey-head">
+              <span class="journey-id">J2</span>
+              <span class="journey-page">Wallet</span>
+            </div>
+            <h3>Create Agent Wallet</h3>
+            <p>用户创建 PandaVault 和 TradingPolicy，像给熊猫发一个饭盆，再戴一只风险项圈。</p>
+            <ul class="mini-list">
+              <li>Shared PandaVault</li>
+              <li>Standalone TradingPolicy</li>
+            </ul>
+            <a class="button ghost" href="./journeys/agent-wallet.html">进入 Wallet Journey</a>
+          </article>
+
+          <article class="journey-card">
+            <div class="journey-head">
+              <span class="journey-id">J3</span>
+              <span class="journey-page">Strategy</span>
+            </div>
+            <h3>Feed Strategy</h3>
+            <p>用户给熊猫喂策略，策略可以更新，但不能绕过 TradingPolicy 放大权限。</p>
+            <ul class="mini-list">
+              <li>Rule blocks and validation</li>
+              <li>Strategy version and ghost</li>
+            </ul>
+            <a class="button ghost" href="./journeys/strategy.html">进入 Strategy Journey</a>
+          </article>
+
+          <article class="journey-card">
+            <div class="journey-head">
+              <span class="journey-id">J4</span>
+              <span class="journey-page">Training</span>
+            </div>
+            <h3>Start Training</h3>
+            <p>熊猫监听 DeepBook mainnet 行情，并在 Training Ledger 中进行纸面买卖和仓位变化。</p>
+            <ul class="mini-list">
+              <li>market-monitor publishes ticks</li>
+              <li>PandaActor makes decisions</li>
+            </ul>
+            <a class="button ghost" href="./journeys/training.html">进入 Training Journey</a>
+          </article>
+
+          <article class="journey-card">
+            <div class="journey-head">
+              <span class="journey-id">J5</span>
+              <span class="journey-page">Training</span>
+            </div>
+            <h3>Inspect Decisions</h3>
+            <p>用户能看到熊猫为什么买、卖、观望，或者为什么被 policy 拦住。</p>
+            <ul class="mini-list">
+              <li>OrderIntent timeline</li>
+              <li>Trade Fact snapshots</li>
+            </ul>
+            <a class="button ghost" href="./journeys/training.html">进入 Training Journey</a>
+          </article>
+
+          <article class="journey-card">
+            <div class="journey-head">
+              <span class="journey-id">J6</span>
+              <span class="journey-page">Proof</span>
+            </div>
+            <h3>Prove On Chain</h3>
+            <p>只有 selected Chain Proof Moment 会触发 testnet PandaCoin PTB，证明熊猫能自主发起受限链上动作。</p>
+            <ul class="mini-list">
+              <li>Agent Signer signs</li>
+              <li>Move checks policy</li>
+            </ul>
+            <a class="button ghost" href="./journeys/chain-proof.html">进入 Proof Journey</a>
+          </article>
+
+          <article class="journey-card">
+            <div class="journey-head">
+              <span class="journey-id">J7</span>
+              <span class="journey-page">Review</span>
+            </div>
+            <h3>Review And Learn</h3>
+            <p>卖出并确认盈亏后，熊猫用 Trade Fact 举证复盘，再更新 Skill Memory。</p>
+            <ul class="mini-list">
+              <li>Evidence-backed review</li>
+              <li>Skill version digest</li>
+            </ul>
+            <a class="button ghost" href="./journeys/review.html">进入 Review Journey</a>
+          </article>
+
+          <article class="journey-card">
+            <div class="journey-head">
+              <span class="journey-id">J8</span>
+              <span class="journey-page">Safety</span>
+            </div>
+            <h3>Control Risk</h3>
+            <p>用户可以暂停、撤销 agent、收紧 policy。熊猫不能自己摘项圈。</p>
+            <ul class="mini-list">
+              <li>Pause policy</li>
+              <li>Revoke agent</li>
+            </ul>
+            <a class="button ghost" href="./journeys/safety.html">进入 Safety Journey</a>
+          </article>
+        </div>
+      </section>
+
+      <section class="river">
+        <div class="section-title" style="margin:0 0 14px;">
+          <h2>产品主循环</h2>
+          <p>这条循环必须贯穿所有旅程：真实行情负责训练质量，链上对象负责约束和证明。</p>
+        </div>
+        <div class="river-steps">
+          <div><strong>1. Mint</strong><span>Panda NFT 出生，获得 agent identity。</span></div>
+          <div><strong>2. Collar</strong><span>TradingPolicy 定义熊猫能做什么。</span></div>
+          <div><strong>3. Radar</strong><span>market-monitor 监听 DeepBook mainnet。</span></div>
+          <div><strong>4. Ledger</strong><span>Training Ledger 执行 paper trade。</span></div>
+          <div><strong>5. Proof</strong><span>精选 Trade Fact 触发 testnet PTB。</span></div>
+          <div><strong>6. Skill</strong><span>复盘后更新 Skill Memory。</span></div>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-title">
+          <h2>Sui 技术展示四象限</h2>
+          <p>评委应该能在 30 秒内看到：这个项目不是套壳 AI，而是把 Sui 对象模型、PTB、DeepBook 和链上事件放进产品核心。</p>
+        </div>
+        <div class="object-grid">
+          <div class="object-card">
+            <span>Object model</span>
+            <strong>Panda NFT / Vault / Policy</strong>
+            <em>身份、容器、权限拆成清晰对象。</em>
+          </div>
+          <div class="object-card">
+            <span>Autonomous action</span>
+            <strong>Agent Signer + PTB</strong>
+            <em>用户授权 agent，Move 检查边界。</em>
+          </div>
+          <div class="object-card">
+            <span>Market intelligence</span>
+            <strong>DeepBook real data</strong>
+            <em>训练质量来自真实盘口和成交。</em>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-title">
+          <h2>Journey 导航</h2>
+          <p>每个 journey 都是独立状态机页面。点击任意卡片进入 stepper，查看该旅程每一步的 UI 状态和系统状态。</p>
+        </div>
+
+        <div class="page-grid">
+          <article class="page-card">
+            <h3>Mint Panda</h3>
+            <p>连接身份、签名 mint、展示 Panda NFT 和 personality。</p>
+            <a class="button primary" href="./journeys/mint.html">进入 Journey</a>
+          </article>
+          <article class="page-card">
+            <h3>Agent Wallet Setup</h3>
+            <p>创建 PandaVault、TradingPolicy、授权 Agent Signer。</p>
+            <a class="button primary" href="./journeys/agent-wallet.html">进入 Journey</a>
+          </article>
+          <article class="page-card">
+            <h3>Strategy Builder</h3>
+            <p>喂策略、校验规则、管理策略版本和 ghost influence。</p>
+            <a class="button primary" href="./journeys/strategy.html">进入 Journey</a>
+          </article>
+          <article class="page-card">
+            <h3>Training Ledger</h3>
+            <p>真实行情、纸面账本、决策链和 Trade Fact。</p>
+            <a class="button primary" href="./journeys/training.html">进入 Journey</a>
+          </article>
+          <article class="page-card">
+            <h3>Chain Proof</h3>
+            <p>展示 selected Chain Proof Moment 的 testnet PTB 状态。</p>
+            <a class="button primary" href="./journeys/chain-proof.html">进入 Journey</a>
+          </article>
+          <article class="page-card">
+            <h3>Review Journal</h3>
+            <p>复盘胜负原因，展示 evidence、hypothesis 和 Skill Memory。</p>
+            <a class="button primary" href="./journeys/review.html">进入 Journey</a>
+          </article>
+          <article class="page-card">
+            <h3>Emergency Controls</h3>
+            <p>一键暂停、撤销 agent、收紧 policy、处理 pending jobs。</p>
+            <a class="button primary" href="./journeys/safety.html">进入 Journey</a>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

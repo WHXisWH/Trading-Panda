@@ -2,11 +2,61 @@
 
 > **方法论**：Sprint 0 横向地基 → **按功能纵向 Epic**（每条穿全栈）→ Epic 内按「契约 → 后端/链上 → service/hook → UI → 联调 → DEV_CONTEXT」检查。  
 > **原则**：每个 Epic 的 Done = **用户可演示**，不是某一层文件建完。  
-> **文档**：`docs/PRD.md` · `docs/frontend-design.md` v1.1 · `docs/api-specification.md` · `dev-docs/DEV_CONTEXT.md`
+> **文档**：`docs/PRD.md` v3.1 · `docs/architecture.md` · `spec.md` · `docs/frontend-design.md` v1.1 · `docs/api-specification.md` · `dev-docs/DEV_CONTEXT.md`
 
 **Epic 优先级（MVP 锁死）**：`Foundation` → `Mint` → `Strategy` → `Dashboard` → `Pools` → `Market` → `Growth` → `Phase 2`
 
+> **2026-06-17 PRD v3.1 对齐**：下面早期 Epic 中的“模拟盘 / simulation / DeepBook Testnet 两池”是历史实现口径。新设计以 `docs/PRD.md` v3.1、`docs/architecture.md`、`spec.md` 为准：训练真相来自 DeepBook mainnet + Training Ledger；Mode 2 只给选中的 Chain Proof Moment 提交 testnet PandaCoin PTB；`PandaVault` 是 shared object；`TradingPolicy` 是 standalone shared object；MVP Agent Signer 是 environment-level testnet signer。
+
 **状态标记**：`[ ]` 待做 · `[~]` 进行中 · `[x]` 完成 · `[-]` 跳过/Phase 2
+
+---
+
+## Epic A — PRD v3.1 Autonomous Agent Wallet 重构
+
+**Done 标准**：用户铸造 Panda → 创建 shared `PandaVault` + standalone shared `TradingPolicy` → Panda 监听 DeepBook mainnet 流动性优先池 → Training Ledger 交易 → Trade Fact 落库 → selected Chain Proof Moment 提交 testnet PandaCoin PTB → Review → Skill Memory。
+
+**依赖**：`docs/PRD.md` v3.1 · `docs/architecture.md` · `spec.md` · `docs/contract-design.md` · `docs/database-schema.md`
+
+### A.1 合约对象与权限
+
+- [ ] `trading_policy.move`：standalone shared object；owner 才能 update/pause/revoke；agent 只能被检查，不能放宽 policy
+- [ ] `panda_vault.move`：shared object；绑定 `panda_id`、`policy_id`、`authorized_agent`
+- [ ] `panda_coin.move`：testnet-only training credit，明确无经济价值
+- [ ] `demo_executor.move`：只执行 selected Chain Proof Moment；检查 signer/policy/vault/panda/version/notional/loss/pair
+- [ ] 合约测试：policy 违规 abort、paused abort、stale policy_version abort、合法 demo trade emit `DemoTradeExecuted`
+
+### A.2 数据库与异步队列
+
+- [ ] 迁移新增 `panda_vaults`、`trading_policies`、`panda_accounts`、`panda_positions`
+- [ ] 迁移新增 `order_intents`、`ledger_entries`、`trade_facts`、`trade_reviews`
+- [ ] 迁移新增 `skill_memories`、`skill_versions`、`chain_execution_logs`
+- [ ] 迁移新增 `async_jobs`、`outbox_events`；Redis 只做 wakeup，不做 durable queue
+- [ ] 幂等约束：`trade_fact_id + policy_version + decision_hash` 唯一
+
+### A.3 后端热路径
+
+- [ ] `MarketDataConsumer` 消费 `market:tick:*`，不直接查询 DeepBook
+- [ ] `PandaActor` 输出 `OrderIntent`，不直接移动链上资产
+- [ ] `PolicyGate` 检查 policy mirror，拒绝也要落库
+- [ ] `LedgerService` 在 DB transaction 内执行 Training Ledger
+- [ ] `TradeFactWriter` 原子提交 OrderIntent、ledger entries、Trade Fact、async jobs
+
+### A.4 异步 workers
+
+- [ ] `ProofSelector` 自动选择高置信 BUY/SELL Chain Proof Moment
+- [ ] Chain proof 自动规则：`final_score >= 0.75`、EXECUTE、demo enabled、supported pair、policy pass、cooldown/daily cap pass
+- [ ] Manual proof：用户可对已有 Trade Fact 请求证明，但仍需 policy/cooldown/cap/idempotency pass
+- [ ] `ChainExecutionWorker` 构建 selected Mode 2 PTB 并记录 tx digest/failure
+- [ ] `AgentSignerService` 仅签 testnet PandaCoin demo PTB；MVP 使用 environment-level signer
+- [ ] `ReviewWorker` 和 `SkillMemoryWorker` 只基于 closed/reviewed Trade Fact 更新 memory
+
+### A.5 市场与前端
+
+- [ ] `market-monitor` mainnet pair ranking：24h/7d volume、spread、depth、fresh candles、monitor health、stable quote
+- [ ] Dashboard 文案从“模拟盘”逐步改为“Training Ledger / Agent Wallet Training”
+- [ ] Chain Proof Panel 展示 proof status、tx digest、policy version、decision hash、manual proof 按钮
+- [ ] Emergency Controls：pause/revoke policy 后同时阻断 PolicyGate 与 Move PTB
 
 ---
 

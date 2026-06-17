@@ -1,0 +1,179 @@
+# Page Design: Training Ledger
+
+> Journey: J4-J5 · Density: High · Product mood: live Panda trading cockpit
+
+---
+
+## 1. Page Purpose
+
+Training Ledger is where the Panda watches real Sui market data, makes decisions, and mutates the paper ledger.
+
+The page should answer:
+
+```text
+"Is my Panda actually watching real markets, and what did it do?"
+```
+
+Execution truth:
+
+```text
+Market data = DeepBook mainnet reference data
+Execution = Training Ledger paper trade
+Optional proof = selected testnet PandaCoin PTB later
+```
+
+---
+
+## 2. User Mental Model
+
+The user is observing a live autonomous trainee:
+
+- Market comes in.
+- Panda thinks.
+- Policy gate checks the collar.
+- Ledger records paper execution.
+- Trade Fact captures evidence.
+
+This is the page that may feel like a cockpit.
+
+---
+
+## 3. Desktop Layout
+
+```text
+┌────────────────────────────────────────────────────────────────────┐
+│ TrainingStatusStrip: actor, pair, market freshness, policy state   │
+├───────────────────────┬──────────────────────────────┬─────────────┤
+│ PandaAgentStatus      │ MarketChartPanel             │ LedgerPanel │
+│ - mood/action         │ - DeepBook candles           │ - balance   │
+│ - current intent      │ - live tick pulse            │ - position  │
+│ - skill version       │ - order markers              │ - PnL       │
+├───────────────────────┴──────────────────────────────┴─────────────┤
+│ DecisionTimeline · PolicyGateBanner · TradeFactDrawer              │
+└────────────────────────────────────────────────────────────────────┘
+```
+
+Training is allowed to use dense panels because the user needs to inspect causality.
+
+---
+
+## 4. Mobile Layout
+
+```text
+┌──────────────────────────────┐
+│ TrainingStatusStrip compact  │
+├──────────────────────────────┤
+│ PandaAgentStatus compact     │
+├──────────────────────────────┤
+│ MarketChartPanel             │
+├──────────────────────────────┤
+│ LedgerSummaryStrip           │
+├──────────────────────────────┤
+│ DecisionTimeline tabs        │
+│ Evidence bottom sheet        │
+└──────────────────────────────┘
+```
+
+Mobile should prioritize chart, Panda state, and latest decision. Details move into tabs or bottom sheets.
+
+---
+
+## 5. Core Components
+
+| Component | Responsibility |
+|---|---|
+| `TrainingLedgerPage` | Live training session state |
+| `TrainingStatusStrip` | Actor online/offline, market freshness, active pair |
+| `PandaAgentStatus` | Panda mood, current intent, policy collar state |
+| `MarketChartPanel` | DeepBook mainnet chart and live ticks |
+| `LedgerSummaryStrip` | Virtual balance, position, realized/unrealized PnL |
+| `PositionPanel` | Active position details |
+| `DecisionTimeline` | Ordered decision and execution events |
+| `PolicyGateBanner` | Pass/reject/paused/stale status |
+| `TradeFactDrawer` | Evidence snapshot for selected decision |
+| `TrainingControlBar` | Start, pause, stop, pair selection |
+
+---
+
+## 6. Step States
+
+| State | Screen behavior |
+|---|---|
+| `Waiting` | Actor ready; no fresh tick yet; start/stop controls visible |
+| `Tick` | Chart pulses; market freshness turns green |
+| `Thinking` | Panda enters thinking state; decision pipeline in progress |
+| `PolicyCheck` | Policy gate pass/reject banner visible |
+| `LedgerMutated` | Balance / position delta animates |
+| `FactCommitted` | Decision row appears with trade fact id |
+| `Inspecting` | Trade Fact drawer opens with market, policy, and ledger evidence |
+| `MarketStale` | Actor holds; new execution disabled |
+| `Paused` | Policy paused; decisions may be displayed but execution blocked |
+
+---
+
+## 7. User Interactions
+
+- Start or stop training session.
+- Select one of the allowed/liquid pairs.
+- Click a decision row to inspect why it bought, sold, held, or got rejected.
+- Open the Trade Fact drawer.
+- Jump from an eligible Trade Fact to Chain Proof.
+- Jump from a closed trade to Review.
+
+---
+
+## 8. Evidence Exposure
+
+Show:
+
+- DeepBook mainnet source and pair.
+- Tick freshness / last update time.
+- Reference price used for paper ledger execution.
+- Active TradingPolicy version.
+- Decision status: `HOLD`, `ORDER_INTENT`, `REJECTED_BY_POLICY`, `PAPER_EXECUTED`.
+- Trade Fact id and decision hash.
+- Ledger balance and position deltas.
+
+Do not show:
+
+- Raw Redis channel names as main UI.
+- Full backend logs.
+- Hidden LLM chain-of-thought.
+- Private signer configuration.
+- Testnet PTB details unless user enters Chain Proof.
+
+---
+
+## 9. Progressive Disclosure Contract
+
+| Layer | Training behavior |
+|---|---|
+| Default | `TrainingStatusStrip`, `PandaAgentStatus`, `MarketChartPanel`, `LedgerSummaryStrip`, latest decision card |
+| Hidden until interaction | full 8-step chain, policy checks, trade_fact_id, decision_hash, ledger before/after, proof eligibility logs |
+| Drawer | `View decision timeline`, `Why policy passed?`, ledger detail, Trade Fact snapshot |
+| Toast | Actor starting, paper trade executed, fact committed, market stale |
+| Route jump | `Prove this action` opens `chain-proof.html#step=eligible`; closed trade opens `review.html#step=close` |
+
+Main CTA flow:
+
+```text
+Start Training → Actor starting toast → Waiting → Tick → Decision → Policy → Ledger → Fact
+```
+
+---
+
+## 10. Failure States
+
+| Failure | User-facing response |
+|---|---|
+| Market stale | Show degraded market status; Panda holds |
+| Policy paused | Block execution and route to Safety |
+| Policy cache stale | Hold and retry policy sync |
+| Ledger write failed | Stop execution and show retry-safe error |
+| Decision timeout | Mark decision as skipped, not failed trade |
+
+---
+
+## 11. Prototype Notes
+
+This page should be the main high-density cockpit. It is the one place where Panda status, chart, policy, ledger, timeline, and evidence can all coexist.

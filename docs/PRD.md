@@ -1,571 +1,1049 @@
-# TradingPanda 产品需求文档（统一版）
+# TradingPanda PRD — Autonomous Agent Wallet
 
-> 版本 2.0 · 2026-05-08
-> 前身：preparation/PRD/ 下 7 份文档的整合与勘误
-> 依据：DECISION_ITEMS.md 全部 20 项决策 + 工程文档套件
-
----
-
-## 变更日志（相对 preparation/PRD/ 原版的差异）
-
-> ⚠️ 以下列出 preparation/PRD/ 与正式工程文档之间的冲突点，已在本文档中修正。
-
-### 架构层冲突
-
-| # | 原 PRD 描述 | 正式决策 | 影响范围 |
-|---|-----------|---------|---------|
-| C1 | product-design.md §6: "黑客松直接上 Nautilus，不搞过渡方案" | Q5/TEE决策: **先用 Merkle Root 兜底**，Nautilus 作正式版升级路径 | 信任层全部改为 Merkle Root 先行 |
-| C2 | product-design.md §4.3: "链下 **SQLite** + Walrus 同步" | Q16决策: **无本地数据**，全服务端 PostgreSQL + Walrus | 经验引擎存储从 SQLite 改为 PostgreSQL |
-| C3 | product-design.md §2架构图: "Telegram Bot" 入口 | 工程文档: MVP 无 Telegram Bot | 去掉 Telegram Bot 入口 |
-| C4 | dashboard.md §4: "本地模拟引擎"、"本地经验引擎"、"本地计算" | Q16决策+backend-design: **全部服务端计算** | 所有"本地"改为"服务端" |
-| C5 | product-design.md §8: "实盘执行 → Cetus/Bluefin (Pro版)" | 工程文档: MVP 无实盘，DeepBook 用于数据源+模拟执行 | 去掉 Pro 版实盘描述 |
-| C6 | trading-behavior-mechanics.md §3 Step 6: "环境适配系数 × 策略-市场匹配度" | agent-design.md: 环境适配 = 环境感知系数 × 资产相关性修正 | 公式对齐 agent-design.md |
-| C7 | user-journey.md §2.2: "熟练度在新旧策略有重叠经验时打 7 折" | Q17决策: 策略残影机制（ghost_weight 衰减式），旧熟练度归档不删除 | 换策机制按残影设计 |
-
-### 功能层冲突
-
-| # | 原 PRD 描述 | 正式决策 | 影响范围 |
-|---|-----------|---------|---------|
-| C8 | 无 onboarding 问卷 | 新增: 初次登录 5 题问卷 | 新增流程步骤 |
-| C9 | product-design.md: "情绪稳定性" 作为独立参数 | 工程文档: 情绪稳定性 = patience 值推导，不是独立参数 | 五轴不含情绪稳定性 |
-| C10 | dashboard.md §1: "决策频率每 1 分钟" | agent-design: 由 Actor tick 频率控制，支持 1x/10x/100x/instant | 频率可变 |
-| C11 | market.md: "winRate 链上(×10000)" | database-schema: win_rate 在 trades 表服务端计算，不上链 | 胜率在链下，不在链上 |
-| C12 | product-design.md §3.3: "执行分 >0.65 买入 / <0.35 卖出" | agent-design: >0.65 执行 / 0.40-0.65 观望 / <0.40 忽视 | 阈值修正 |
-| C13 | user-journey.md §3.4: "经验书"、"策略卡" 道具 | MVP 范围未包含道具系统（仅冷静竹） | 道具系统精简 |
-| C14 | trading-behavior-mechanics.md §Q5: "多熊猫组队" | MVP 支持多熊猫但无组队/Portfolio 视图 | 多熊猫简化为列表切换 |
-| C15 | battle-cases.md: 案例中使用 6 轴（含"情绪稳定性"） | 正式设计: 5 轴（情绪稳定性从 patience 推导） | 公式中 stability = patience |
-
-### 数据层冲突
-
-| # | 原 PRD 描述 | 正式决策 | 影响范围 |
-|---|-----------|---------|---------|
-| C16 | dashboard.md: "panda.emotion 来源=情绪状态机（本地）" | backend-design: 情绪状态机在 Python Actor 内运行 | 前端通过 WebSocket 接收情绪 |
-| C17 | mint-page.md: "gas ~0.02 SUI" | contract-design: "~0.03 SUI（含 dynamic_field 初始化）" | gas 估算修正 |
-| C18 | product-design.md §7: "高级功能月费 5 SUI" | MVP 无订阅制 | 去掉 Pro 定价 |
+> Version 3.1 · 2026-06-17  
+> Repositioning: from "AI trading pet simulation" to "Sui-native autonomous agent wallet training system"  
+> Primary competition track: Autonomous Agent Wallet  
+> Secondary capability: Autonomous Risk Guardian
 
 ---
 
-## 一、产品总览
+## 1. Product Positioning
 
-TradingPanda 是 Sui 链上的 **AI 交易宠物养成系统**。每只熊猫是一个 NFT — 用户喂它交易策略知识，它在模拟盘练习交易，通过盈亏获得成长。熊猫既是用户的交易学徒，也是可转让的链上资产。
+TradingPanda is a Sui-native autonomous trading agent wallet. A user mints a Panda NFT, grants it a bounded trading policy, and trains it on real DeepBook mainnet market data. The Panda agent watches markets, makes buy/sell/hold decisions, executes in a controlled training environment, records every decision as a fact, reviews wins and losses, and evolves its skill memory over time.
 
-**一句话**：养一只会交易的 AI 熊猫。
+The core product sentence:
+
+```text
+The user is not using an AI bot; the user is training a Move-constrained autonomous trading wallet.
+```
+
+The Panda is allowed to act autonomously, but only inside a user-defined cage:
+
+```text
+Panda NFT = agent identity
+TradingPolicy = risk collar
+PandaVault = bounded training account / execution container
+Agent Signer = automated paw print
+PTB = chain action sheet
+Market Monitor = real market radar
+Fact Table = memory courtroom
+Skill Memory = learned trading instinct
+Chain Proof Moment = selected decision that gets a real testnet PTB proof
+```
+
+### 1.1 What Changed From The Previous PRD
+
+| Previous direction | New direction |
+|---|---|
+| AI trading pet practicing in a simulated order book | Autonomous agent wallet trained on real DeepBook mainnet market data |
+| DeepBook testnet execution as the primary simulation layer | Mainnet paper ledger is the training truth; testnet PandaCoin execution is a chain proof layer |
+| "Simulation" as the main product word | "Training Ledger" and "Agent Wallet" as the main product words |
+| Chain mostly proves NFT identity and Merkle roots | Chain also owns policy, vault, agent authorization, execution proofs, and skill hashes |
+| Testnet pool liquidity expected to support meaningful training | Testnet execution is only a proof of autonomous PTB behavior, not a source of PnL truth |
 
 ---
 
-## 二、系统架构
+## 2. Competition Fit
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│                       用户层                                 │
-│  Web App (Next.js)  │  Sui Wallet  │  zkLogin (Google)       │
-└────────────────────────┬─────────────────────────────────────┘
-                         │
-┌────────────────────────▼─────────────────────────────────────┐
-│               API Gateway (Next.js / Vercel)                 │
-│  认证 │ 路由 │ 缓存 │ Rate Limit │ WebSocket Hub              │
-└────────────────────────┬─────────────────────────────────────┘
-                         │ Internal RPC
-┌────────────────────────▼─────────────────────────────────────┐
-│             Decision Engine (Python / Render)                 │
-│  事件驱动 Actor 模型 (asyncio + Redis Pub/Sub)                │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────────┐   │
-│  │8步决策管线│ │情绪状态机 │ │经验引擎   │ │Agent Coord.  │   │
-│  │(<50ms)   │ │(7状态)   │ │(5子系统)  │ │(LLM 3s超时)  │   │
-│  └──────────┘ └──────────┘ └──────────┘ └──────────────┘   │
-│  ┌──────────┐ ┌──────────┐ ┌──────────────────────────┐    │
-│  │环境感知   │ │DeepBook  │ │  Merkle Root Worker      │    │
-│  │(Lv.1-4)  │ │集成层    │ │  (每50笔交易计算+上链)    │    │
-│  └──────────┘ └──────────┘ └──────────────────────────┘    │
-└────────────────────────┬─────────────────────────────────────┘
-                         │
-┌────────────────────────▼─────────────────────────────────────┐
-│                    数据与存储层                                │
-│  PostgreSQL (Supabase)  │  Upstash Redis  │  Walrus (备份)      │
-└────────────────────────┬─────────────────────────────────────┘
-                         │
-┌────────────────────────▼─────────────────────────────────────┐
-│                    Sui 链上层                                 │
-│  Panda NFT │ Kiosk 市场 │ DeepBook │ Merkle Root 验证         │
-└──────────────────────────────────────────────────────────────┘
+The target challenge requires AI projects to use Sui as a core technical component, not merely as a payment rail. TradingPanda satisfies that requirement through:
+
+| Requirement | TradingPanda design |
+|---|---|
+| Sui object model | Panda NFT, TradingPolicy, PandaVault, PandaCoin, proof objects |
+| zkLogin or wallet onboarding | Wallet login remains supported; zkLogin can be used for low-friction user identity |
+| PTB | Mint, create policy, pause/revoke, submit proof, and demo execution actions are PTB transactions |
+| DeepBook | Primary real market data source; future real execution venue |
+| Walrus | Long-term skill memory and review archive |
+| Autonomous agent wallet | Agent Signer submits bounded actions without waking the user every tick |
+| Owner revocation | User can pause policy, revoke agent authorization, and withdraw from vault |
+| On-chain activity log | Events + Merkle roots + skill hashes + demo trade execution digests |
+
+The product should be described as:
+
+```text
+Autonomous Agent Wallet with a built-in risk guardian and learning loop.
 ```
 
-**与原 PRD 差异**：
-- 去掉 Telegram Bot 入口（C3）
-- Nautilus TEE 改为 Merkle Root 兜底（C1）
-- 去掉 Cetus/Bluefin（C5）
-- 经验引擎从 SQLite 改为 PostgreSQL（C2）
+Not:
 
----
-
-## 三、用户全生命周期
-
-### 3.0 初次登录 → Onboarding 问卷 ✨ 新增
-
-```
-用户首次连接钱包/zkLogin
-→ 检测 onboarding_survey === null
-→ 跳转 /onboarding
-→ 5 步问卷：交易经验 / 偏好风格 / 最大亏损容忍 / 熟悉指标 / 自主度
-→ 推导 experience_level → 影响 UI 深度 + 策略推荐
-→ 不影响决策引擎公式
-→ 完成后跳转 /mint
-```
-
-### 3.1 铸造 — 一只熊猫的诞生
-
-```
-用户点击「铸造熊猫」
-→ Sui Wallet 确认交易 (~0.03 SUI gas)   ← 修正：原 0.02 → 0.03 (C17)
-→ sui::random 生成性格五轴 + 稀有天赋
-→ 链上 mint: Panda NFT (owned object)
-→ 前端展示熊猫形象 + 性格雷达图 + 天赋标签
-```
-
-**性格五轴**（链上固化，不可变）：
-
-| 轴 | 影响 |
-|---|------|
-| 胆识 Boldness | 入场阈值 + 仓位比例 |
-| 耐性 Patience | 入场延迟 + 持仓耐心 + 情绪稳定性推导 |
-| 直觉 Intuition | 无规则时的直觉信号权重 |
-| 专注 Focus | 资产分散度 + 单资产信号加成 |
-| 逆向性 Contrarian | 对群体信号的反向程度 |
-
-> **C9 修正**：情绪稳定性不是独立的第六轴，而是从 patience 值推导：`emotion_stability ≈ patience`
-
-**天赋**（15% 概率，6 种）：
-
-| 天赋 | 概率 | 效果 |
-|------|------|------|
-| 竹林禅心 | 2% | 情绪永不进入恐慌 |
-| 黑白视界 | 3% | 震荡市信号加成 |
-| 冬眠反弹 | 2% | 休眠后经验衰减减半 |
-| 竹笋嗅觉 | 4% | 异常资金流检测加成 |
-| 镜像思维 | 1% | 逆向操作胜率加成 |
-| 老熊记忆 | 3% | 模式记忆容量 ×2 |
-
-### 3.2 喂策略 — 教熊猫交易（猎手 · 混合输入）
-
-**MVP 主路径**：Dashboard **规则积木编辑器**（指标 + 条件 + 买/卖）组装四层 JSON，**直接提交、默认不调 LLM**。  
-**进阶路径**：可选自然语言文本 → DeepSeek V3 解析 → 结果灌入积木可编辑 → 再提交。
-
-```
-路径 A（默认 · 积木）：
-  用户选哲学 + 添加 signal_rules 行 + 仓位/风控滑块
-  → 前端校验（RuleEngine 试编译）
-  → POST /api/panda/:id/strategy { parsed }
-  → 存库、激活、算 strategy_hash、触发残影
-
-路径 B（可选 · 文本）：
-  用户输入自然语言（10–2000 字）
-  → POST … { raw_text, parse_with_llm: true }
-  → DeepSeek V3 解析为四层 JSON
-  → 前端 StrategyPreview / 积木可改后再存
-
-共通：
-  → 熊猫「学习中…」动画
-  → 策略熟练度从 0 起（除非与新策略哈希相近）
-  → 性格×策略匹配度
-  → strategy_hash 写链上 dynamic_field
-  → 完整策略 PostgreSQL + Walrus 备份
-```
-
-**策略四层**：
-
-```
-哲学层 Philosophy    → 趋势跟踪 / 逆向抄底 / 直觉驱动 / 网格 / custom
-仓位层 Position      → fixed(5%) / kelly / grid；max_position_pct 1%–25%
-信号层 Signal Rules  → 多条规则数组（见下）；MVP 引擎支持 RSI / MA20 / MACD / PRICE
-风控层 Risk Mgmt     → stop_loss_pct / take_profit_pct / max_drawdown_pct
-```
-
-**信号层（猎手积木）**：
-
-| 字段 | 说明 |
-|------|------|
-| `indicator` | `RSI` \| `MA20` \| `MACD` \| `PRICE`（与 `RuleEngine` 一致） |
-| `condition` | 如 `"< 30"`、`cross_above`、`death_cross` |
-| `threshold` | 数值型条件必填（RSI/PRICE）；交叉类可省略 |
-| `action` | `BUY` \| `SELL` |
-| `weight` | **预留**，MVP 引擎未参与计分，前端不展示 |
-
-约束：至少 **1** 条、最多 **8** 条可编译规则；仅 `parsed` 提交时服务端生成 `raw_text` 摘要供历史展示。
-
-**单策略 vs 多规则**：
-
-- 每只熊猫 **同时仅 1 份** `active_strategy`（换策 deactivate 旧策略）。
-- **一份策略内可有多条** `signal_rules`（如 RSI 买 + RSI 卖 + MACD 死叉卖）。
-- 换策后 **旧策略不以第二主脑并行**，而以 **策略残影**（Step 4 融合，权重衰减）干扰新策略。
-
-**Step 1 多规则计分（投票制）**：
-
-```
-signed = (买入命中条数 - 卖出命中条数) / 已编译规则总条数
-方向 = sign(signed)；强度 = |signed|
-```
-
-同 tick 买卖各命中 1 条且共 4 条规则 → `signed = 0`（观望/无方向）。规则越多、命中越少 → 原始信号越弱。前端决策链 Step 1 须展示命中明细。
-
-**策略熟练度渐进式生效**：
-
-```
-proficiency 0-20:   偏差 ±30%（笨拙学习期）
-proficiency 20-50:  偏差 ±15%
-proficiency 50-80:  偏差 ±5%
-proficiency 80-100: 偏差 0%（完美执行）
-```
-
-### 3.3 换策略 — 策略残影机制 ✨ 取代原"熟练度打折"
-
-> **C7 修正**：原 PRD 说"新旧策略有重叠经验时打 7 折"。正式设计为**衰减式残影**。
-
-```
-用户更换策略时：
-1. 旧策略熟练度归档，不删除
-2. 残影权重随时间衰减：
-   0-50笔:    ghost_weight = 0.40（旧策略强烈干扰）
-   50-150笔:  ghost_weight = 0.20
-   150-300笔: ghost_weight = 0.08
-   300笔+:    ghost_weight = 0（残影消失）
-3. 干扰公式：final_signal = new × (1-ghost) + old × ghost
-4. 频繁换策(30天>3次) → 衰减速度减半
-5. 多残影同时存在 → 总 ghost_weight 封顶 0.50
-```
-
-### 3.4 模拟盘训练 — 熊猫在战斗
-
-```
-市场数据输入 (DeepBook 链上事件 + 外部 API)
-→ 8 步决策管线（<50ms，服务端计算）
-→ 执行分 >0.65 执行 / 0.40-0.65 观望 / <0.40 忽视   ← C12 修正
-→ 模拟盘引擎: 计算盈亏、滑点、手续费
-→ 经验引擎: 记录模式记忆、更新资产专精度
-→ 情绪引擎: 连赢 → 兴奋 → 贪婪 / 连亏 → 谨慎 → 恐慌
-→ 每 50 笔交易: Merkle Root 上链   ← C1 修正
-→ WebSocket 实时推送到前端          ← C4 修正
-```
-
-**时间流速**：1x / 10x / 100x / 跳到结果
-- 快进模式（10x/100x/instant）= 纯规则引擎，不调 LLM
-- 快进结束后，LLM 批量生成熊猫日记总结
-
-### 3.5 成长与进化
-
-| 阶段 | 经验 | 权重分配 | 熊猫行为 |
-|------|------|---------|---------|
-| 🐣 幼年 | 0-25 | 性格 55% + 策略 35% + 经验 10% | 笨拙、不可预测 |
-| 🐼 成长 | 25-65 | 策略 50% + 性格 30% + 经验 20% | 策略起效，偶尔反叛 |
-| 🐻 成熟 | 65-100 | 经验 50% + 策略 30% + 性格 20% | 自主风格，频繁反叛 |
-
-**反叛**：成熟期熊猫可能拒绝用户策略。这是经验权重 > 策略权重的数学结果。
-
-### 3.6 NFT 转让
-
-- 通过 Sui Kiosk 上架/购买
-- `is_trading` 锁定防止交易中转让
-- 版税 2-5%（Kiosk 协议层强制执行）
-- 经验随 NFT 转移（Walrus blob_id 在 dynamic_field 中）
-- 转让后情绪重置为「专注」
-
-### 3.7 签到与成就
-
-**签到**：每日签到获取奖励，连续签到额外加成
-**成就**：系统自动检测条件 → 解锁 → 链上记录（不可伪造）
-
----
-
-## 四、6 维度决策引擎
-
-### 4.1 完整 8 步决策公式
-
-> 以 agent-design.md 为准，C6 修正后的版本。
-
-```
-Step 1: 策略原始信号  S_raw = RuleEngine.match(market, strategy.signalRules)
-                        + 直觉信号 (仅当 S_raw=0 且 intuition>0 时)
-
-Step 2: 策略熟练度噪声 S_prof = S_raw × (1 + noise(proficiency) × boldness/100)
-
-Step 3: 经验修正      S_exp  = 模式记忆修正 + 资产专精修正 + 错误反省修正
-
-Step 4: 融合          S_fuse = S_prof × w_strategy + S_exp × w_experience
-                      (权重随成长阶段变化，见上表)
-
-Step 5: 性格过滤      S_pers = S_fuse × boldness_factor
-                      + 入场延迟(patience)
-                      + 直觉权重(intuition × proficiency)
-
-Step 6: 环境适配      S_env  = S_pers × 环境感知系数
-                      × 多资产相关性修正(Lv.3+可感知)
-
-Step 7: 社交偏移      S_social = S_env + contrarian_bias
-                      (MVP: 偏移=0，社交模块暂不做)
-
-Step 8: 情绪扭曲      S_final = S_social × emotion_coefficient
-                      × (1 - patience/100)  ← C9/C15: patience 即情绪稳定性
-
-执行判定:
-  S_final > 0.65  → 执行
-  S_final 0.40-0.65 → 观望 / 模糊区 → 可能触发 Agent Coordinator
-  S_final < 0.40  → 忽视信号
-```
-
-### 4.2 Agent Coordinator 介入条件
-
-| 条件 | 处理 |
-|------|------|
-| 信号模糊区 (0.40-0.65) | 等待 LLM Agent (3s timeout) |
-| 策略-经验冲突 | 等待 LLM Agent 调解 |
-| 情绪极端 (贪婪/恐慌) | 等待 LLM Agent 评估 |
-| 用户主动提问 | 触发 Agent 回答 |
-| 超时 (>3s) | 用规则引擎预决策 |
-
-信号明确 (>0.65 或 <0.40) → 直接执行，Agent 结果做熊猫自语。
-
-### 4.3 情绪状态机
-
-```
-专注 Focused (默认)
-  连赢 3 次 → 兴奋 Excited
-  单次大亏 >5% → 谨慎 Cautious
-
-兴奋 Excited
-  连赢 5 次 → 贪婪 Greedy
-  连亏 2 次 → 专注
-
-贪婪 Greedy → ×1.3 (仓位 1.6×)
-  盈利低于预期 → 专注
-
-谨慎 Cautious → ×0.85
-  回撤 >10% → 恐慌 Panicking
-
-恐慌 Panicking → ×0.5
-  连续 10 次无操作 + 长期亏损 → 麻木 Numb
-  天赋「竹林禅心」→ 永不恐慌，最低谨慎
-
-麻木 Numb → ×0.6
-  回撤 <5% + 5 次无操作 → 专注
-```
-
-**情绪透明度**（半透明设计）：
-- 表情/颜色/动作间接展示情绪
-- 不显示数值系数
-- 用户通过观察推断 → 建立情感连接
-
-### 4.4 环境感知
-
-| 等级 | 经验 | 感知能力 |
-|------|------|---------|
-| Lv.1 | 0-25 | 价格方向 + 单资产波动率 |
-| Lv.2 | 25-50 | + 趋势强度 + 成交量异动 |
-| Lv.3 | 50-80 | + 市场状态(牛/熊/震荡) + 多资产相关性 |
-| Lv.4 | 80-100 | + 宏观情绪 + 异常资金流 + 周期切换 |
-
-未感知 → 信号 ×0.7
-
-**多资产相关性**（Lv.3+ 可感知）：
-- BTC/ETH/SUI 滚动 30 天 Pearson 相关系数
-- 相关性 >0.7 且已持仓 → 新信号 ×0.5
-
-### 4.5 社交影响
-
-**MVP 不做**。正式版接入：
-- 师承（排名前 10% 可当导师）
-- 群体信号（>30% 熊猫同方向 → 群体偏移）
-- 竞争压力（排名下滑 → 焦虑）
-
----
-
-## 五、经验引擎（5 子系统）
-
-所有数据存 **PostgreSQL**（C2 修正，不是 SQLite），定期同步 Walrus 备份。
-
-| 子系统 | 存储 | 修正方式 |
-|--------|------|---------|
-| 模式记忆 | experience_patterns 表 | 形态相似度 × 历史胜率偏移 |
-| 资产专精 | experience_mastery 表 | (mastery-50)/200 加成 |
-| 错误反省 | experience_mistakes 表 | 警惕系数 × (-0.10) |
-| 周期认知 | experience_cycles 表 | 亲历周期 → 匹配加成 |
-| 社交关系 | MVP 不做 | — |
-
----
-
-## 六、道具系统
-
-> **C13 修正**：MVP 只有冷静竹。经验书、策略卡为正式版。
-
-| 道具 | 获取方式 | 效果 | 频率限制 |
-|------|---------|------|---------|
-| 🎋 冷静竹 | 每日免费 1 次 | 重置情绪为「专注」 | 每日 0:00 UTC 重置 |
-| 📖 经验书 | 正式版 | 经验获取 ×2 (24h) | — |
-| 📋 策略卡 | 正式版 | 预置专业策略模板 | — |
-
----
-
-## 七、页面清单
-
-| 页面 | 路由 | 核心功能 |
-|------|------|---------|
-| Landing | `/` | 产品首页、引导连接钱包 |
-| Onboarding | `/onboarding` | 新用户问卷（5 步） ✨ 新增 |
-| Mint | `/mint` | 铸造熊猫 NFT |
-| Dashboard | `/dashboard/[id]` | 模拟盘、K 线图、决策链、策略输入 |
-| Market | `/market` | NFT 市场（Kiosk 集成） |
-| Leaderboard | `/leaderboard` | 排行榜（多维度） |
-| Achievements | `/achievements` | 成就系统 |
-| Profile | `/profile` | 我的熊猫、签到、统计 |
-
----
-
-## 八、上链 vs 不上链
-
-| 数据 | 是否上链 | 原因 |
-|------|----------|------|
-| 性格五轴 + 天赋 | ✅ 上链 | NFT 稀缺性根基 |
-| 策略哈希 | ✅ 上链 (Dynamic Field) | 证明策略不被偷换 |
-| 经验等级里程碑 | ✅ 上链 (Dynamic Field) | 证明成长路径真实 |
-| 决策日志 Merkle Root | ✅ 上链 (Dynamic Field) | 每 50 笔证明完整性 |
-| 成就解锁 | ✅ 上链 (Dynamic Field) | 不可伪造 |
-| 生命周期事件 | ✅ 上链 (Event) | 铸造/转让/重置/休眠 |
-| 每笔交易细节 | ❌ PostgreSQL + Walrus | 数据量大 |
-| 情绪状态日志 | ❌ 内存 / PostgreSQL | 实时状态 |
-| 熊猫日记文本 | ❌ PostgreSQL | 展示层 |
-| 签到记录 | ❌ PostgreSQL | 低价值高频 |
-| 胜率/交易统计 | ❌ PostgreSQL | 链下计算（C11 修正） |
-
----
-
-## 九、经济模型
-
-| 来源 | 模式 | MVP |
-|------|------|-----|
-| 熊猫铸造 | ~0.03 SUI gas（免费铸造） | ✅ |
-| 熊猫转让版税 | 2-5%（Kiosk 强制） | ✅ |
-| 签到奖励 | 连续签到积分 | ✅ |
-| 策略模板市场 | 平台抽成 10% | 正式版 |
-| Pro 订阅 | 月费（实盘接入等） | 正式版 |
-
----
-
-## 十、DeepBook 集成（双层使用）
-
-| 层 | 用途 | 实现 |
-|----|------|------|
-| 数据源 | 链上订单簿事件 → K 线 + 指标 → Redis | **独立 `market-monitor/`**；DeepBook **v3** + Sui RPC 只读（见 `docs/market-monitor-design.md`） |
-| 模拟执行 | MVP 链下模拟；可选 testnet 挂单 | `backend` 内 `deepbook/simulator`；非行情采集 |
-
----
-
-## 十一、信任模型
-
-### MVP：Merkle Root 兜底
-
-```
-每 50 笔交易 → 计算 Merkle Root → 提交链上 Dynamic Field
-任何人可验证单条交易日志属于已提交的 Merkle Tree
-信任等级：事后可验证（不可篡改），但无法证明"AI 确实跑了"
-```
-
-### 正式版：Nautilus TEE 升级
-
-```
-决策引擎跑在 Nautilus TEE (AWS Nitro) 内
-→ 密码学 attestation 证明"这个决策确实是由这只熊猫的性格参数驱动的"
-→ Merkle Root 保留为辅助验证层
+```text
+A generic LLM that happens to hold a Sui token.
 ```
 
 ---
 
-## 十二、与 Sui 生态关系
+## 3. MVP Product Thesis
 
+MVP should not rely on DeepBook testnet liquidity for training quality. Testnet pools are sparse and may not reflect real market execution. Therefore MVP uses a two-track model:
+
+```text
+Track A — Training Truth
+DeepBook mainnet real market data
+→ Panda decision
+→ backend paper margin ledger
+→ PnL, reviews, skill updates
+
+Track B — Chain Execution Proof
+Same Panda decision intent
+→ testnet PTB
+→ PandaCoin / PandaVault demo action
+→ TradingPolicy check
+→ on-chain event + tx digest
 ```
-TradingPanda
-    ├── 铸造 NFT ──────── Sui Move / sui::random
-    ├── 交易市场 ──────── Sui Kiosk (版税强制执行)
-    ├── 模拟盘数据 ────── DeepBook (链上订单簿)
-    ├── 经验备份 ──────── Walrus (去中心化存储)
-    ├── 信任证明 ──────── Merkle Root → Nautilus TEE
-    ├── 社交登录 ──────── zkLogin (Google/Apple)
-    └── NFT 元数据 ────── Sui Display Standard
+
+This means:
+
+```text
+Real market intelligence comes from mainnet.
+Real autonomous chain behavior is demonstrated on testnet.
+The two are linked by decision_hash and trade_fact_id.
+```
+
+### 3.1 MVP Non-Negotiables
+
+- The Panda must monitor real Sui market data, with DeepBook as the primary source.
+- The Panda must make autonomous buy/sell/hold decisions without user clicking every time.
+- Every execution must be bounded by a user-created TradingPolicy.
+- Mode 1 paper trades must check the same policy rules as chain execution.
+- Mode 2 selected demo trades must be real testnet PTB transactions.
+- Profit and loss must be calculated from mainnet reference prices, not testnet toy liquidity.
+- Each closed trade must produce a fact record and a review.
+- Skill memory must be updated only from reviewed trade outcomes, not from raw LLM claims.
+- Users must be able to pause or revoke the Panda agent.
+
+### 3.2 Resolved Architecture Decisions
+
+| Decision | MVP answer |
+|---|---|
+| PandaVault object model | `PandaVault` is a shared object so the user and authorized agent can interact with the same bounded execution container through Move checks. |
+| TradingPolicy object model | `TradingPolicy` is a standalone object, not a dynamic field attached to Panda. It is shared/readable by agent PTBs and mutable only through owner-gated entry functions. |
+| Agent Signer | MVP uses one environment-level testnet Agent Signer. Each Panda policy authorizes that signer address, and Move checks policy/vault/panda bindings on every demo PTB. |
+| Agent Signer rotation | Rotation means generating a new backend signer, then requiring users to sign a `TradingPolicy` update that changes `authorized_agent` and increments `policy_version`. |
+| Agent Signer revocation | Users can pause policy or revoke the agent. Mode 1 backend checks and Mode 2 Move checks must both block execution after revocation. |
+| Mode 2 frequency | Mode 2 does not run for every signal. It runs for selected Chain Proof Moments and supports user-triggered manual proof for a specific Trade Fact. |
+| Market pair selection | MVP promotes the most liquid DeepBook mainnet pairs available at release, using volume, spread, orderbook depth, and monitor health as ranking inputs. |
+
+---
+
+## 4. Core Modes
+
+### 4.1 Mode 1 — Training Ledger
+
+Mode 1 is the default MVP mode. It uses real mainnet market data and a backend virtual margin ledger.
+
+```text
+Real DeepBook market data
+→ Panda decision
+→ policy check in backend
+→ virtual buy/sell/borrow/repay
+→ fact table
+→ review
+→ skill memory update
+```
+
+Mode 1 does not submit a PTB for every buy or sell, because no real chain asset moves during the paper trade. It still uses chain objects for identity, authorization, policy, and proof.
+
+Mode 1 PTBs:
+
+- Mint Panda NFT.
+- Create PandaVault.
+- Create or update TradingPolicy.
+- Pause or revoke the policy.
+- Submit Merkle root of trade facts.
+- Submit skill hash / memory digest.
+
+Mode 1 does not use PTB for:
+
+- Every virtual BUY.
+- Every virtual SELL.
+- Every internal borrow/repay ledger entry.
+
+The user-facing explanation:
+
+```text
+The Panda practices in a backend dojo, but the dojo rules are copied from its real on-chain collar.
+```
+
+### 4.2 Mode 2 — PandaCoin Chain Execution Demo
+
+Mode 2 proves that the Panda can execute real Sui transactions autonomously without depending on weak DeepBook testnet liquidity.
+
+The user or system mints a testnet training token:
+
+```text
+PANDA_CREDIT or BAMBOO
+```
+
+The Panda executes a real testnet PTB:
+
+```text
+execute_demo_trade(
+  vault,
+  policy,
+  side,
+  pair,
+  notional,
+  mainnet_reference_price,
+  decision_hash
+)
+```
+
+The Move module checks TradingPolicy and emits a chain event. The backend still computes PnL from mainnet DeepBook data.
+
+Mode 2 is not triggered for every Panda signal. It creates selected Chain Proof Moments.
+
+Automatic proof eligibility:
+
+```text
+side in BUY | SELL
+final_score >= 0.75
+mode_2_demo_enabled = true
+pair in demo_supported_pairs
+policy allows the pair and notional
+cooldown passed, default one proof per Panda per 30 minutes
+daily proof cap not exceeded, default 10 proofs per Panda per day
+```
+
+Manual proof:
+
+```text
+User may click "Prove on-chain" for a specific Trade Fact.
+Manual proof still must pass TradingPolicy, cooldown, daily cap, and idempotency checks.
+```
+
+Mode 2 proves:
+
+- Agent Signer can submit a PTB 24/7.
+- TradingPolicy is enforced by Move.
+- PandaVault is a bounded execution container.
+- The on-chain event links to the off-chain trade fact.
+
+Mode 2 does not claim:
+
+- Testnet pool prices are economically meaningful.
+- PandaCoin is a real-money asset.
+- Testnet execution PnL is the training truth.
+- Every training trade needs a separate on-chain transaction.
+
+### 4.3 Future Mode 3 — Real Agent Wallet
+
+Mode 3 is out of MVP. It would allow real assets to be placed into a PandaVault and traded through DeepBook or DeepBook Margin under TradingPolicy constraints.
+
+Mode 3 requires:
+
+- Stronger risk controls.
+- User warnings.
+- Production key custody design.
+- Real asset vault accounting.
+- DeepBook execution integration.
+- Slippage and partial fill handling.
+- Legal and product risk review.
+
+---
+
+## 5. Domain Model
+
+### 5.1 Panda NFT
+
+The Panda NFT is the agent identity. Its personality is generated at mint time and should remain immutable.
+
+Immutable personality:
+
+- Boldness.
+- Patience.
+- Intuition.
+- Focus.
+- Contrarian.
+- Talent.
+
+Mutable agent state should not be mixed into the immutable personality. It belongs in separate objects or off-chain facts.
+
+### 5.2 TradingPolicy
+
+TradingPolicy is the Panda's risk collar. It defines what the Panda is allowed to do.
+
+MVP object decision:
+
+```text
+TradingPolicy is a standalone shared object.
+It is not stored as a dynamic field under Panda.
+Owner-only entry functions control update, pause, and revoke.
+Agent PTBs may read/check it but cannot loosen it.
+```
+
+Example fields:
+
+```text
+panda_id
+owner
+authorized_agent
+mode
+allowed_pairs
+max_notional_per_trade
+max_daily_loss
+max_leverage
+max_open_positions
+expires_at
+paused
+policy_version
+policy_hash
+```
+
+Policy update rules:
+
+- Users may always tighten policy immediately.
+- Users may loosen policy only by signing a new Sui transaction.
+- Panda agents may suggest policy changes but cannot grant themselves more power.
+- Policy updates must emit events.
+
+### 5.3 PandaVault
+
+PandaVault is the bounded account controlled by a Panda under TradingPolicy.
+
+MVP object decision:
+
+```text
+PandaVault is a shared object.
+It is not the user's whole wallet.
+It is the bounded container that demo_executor can mutate only after TradingPolicy checks.
+```
+
+In Mode 1:
+
+```text
+PandaVault = on-chain training account license and proof anchor
+```
+
+In Mode 2:
+
+```text
+PandaVault = testnet PandaCoin execution container
+```
+
+In future Mode 3:
+
+```text
+PandaVault = real asset vault
+```
+
+PandaVault must never represent the user's whole wallet. It is a limited container.
+
+### 5.4 Agent Signer
+
+Agent Signer is a Sui key controlled by the backend execution service. It signs transactions for an authorized Panda agent.
+
+MVP development key model:
+
+```text
+One environment-level testnet Agent Signer is used for all Pandas.
+Each TradingPolicy stores authorized_agent = AGENT_SIGNER_ADDRESS.
+Move checks panda_id, policy_id, vault_id, policy_version, limits, and paused state.
+```
+
+This is acceptable only because MVP Mode 2 uses testnet PandaCoin and does not move real user assets. It is not the target design for Mode 3 real funds.
+
+Important rule:
+
+```text
+The chain does not sign for the user.
+The user authorizes an agent address.
+The agent address signs future bounded transactions.
+Move enforces the boundary.
+```
+
+The user can revoke the Agent Signer by updating or pausing TradingPolicy.
+
+Rotation / revocation rules:
+
+- Backend generates a new testnet signer and exposes its address for future policies.
+- Existing users must sign a `TradingPolicy` update to rotate `authorized_agent`.
+- Old signer transactions fail once policy version or authorized agent no longer matches.
+- `pause_policy` blocks both backend paper execution and Move demo execution.
+- `revoke_agent` clears or invalidates `authorized_agent`.
+- Production real-asset mode must use per-user, per-panda, session-key, or KMS-backed signer isolation before any real funds are allowed.
+
+### 5.5 PandaCoin
+
+PandaCoin is a testnet-only training token used for Mode 2 chain execution proof.
+
+It is not:
+
+- A real investment token.
+- A substitute for USDC.
+- A source of economic PnL.
+
+It is:
+
+- A demo credit.
+- A testnet action medium.
+- A way to show real PTB execution without relying on testnet DEX liquidity.
+
+### 5.6 Trade Fact
+
+A Trade Fact is the canonical record of a Panda decision and execution.
+
+It should include:
+
+- Market snapshot.
+- Decision snapshot.
+- Policy snapshot.
+- Ledger snapshot before.
+- Execution snapshot.
+- Ledger snapshot after.
+- Outcome.
+- Review.
+- Skill memory references.
+
+Trade Facts are the source of truth for reviews and skill updates.
+
+### 5.7 Skill Memory
+
+Skill Memory is what the Panda has learned from reviewed outcomes. It is not a raw conversation log.
+
+Skill Memory should be updated only after:
+
+- A trade closes.
+- PnL is known.
+- Review is generated.
+- Evidence supports or rejects a hypothesis.
+
+---
+
+## 6. User Journey
+
+### 6.1 Mint Panda
+
+```text
+User connects wallet or zkLogin
+→ User signs mint transaction
+→ Panda NFT is created
+→ Personality is generated by sui::random
+→ Backend registers Panda
+→ Frontend shows identity, personality, and first training prompt
+```
+
+### 6.2 Create Agent Wallet
+
+```text
+User opens "Create Agent Wallet"
+→ Chooses mode: Training Ledger
+→ Sets budget, max trade size, daily loss, allowed pairs
+→ Reviews authorized_agent address
+→ Signs transaction
+→ PandaVault + TradingPolicy are created
+```
+
+This is the moment the Panda receives its collar and food bowl.
+
+### 6.3 Start Training
+
+```text
+User starts training
+→ Backend starts PandaActor
+→ market-monitor publishes real DeepBook ticks
+→ PandaActor consumes market ticks
+→ Panda makes decisions
+→ executor checks policy
+→ paper ledger executes or rejects
+→ frontend receives market.tick and panda events
+```
+
+### 6.4 Execute Demo Chain Action
+
+If Mode 2 demo is enabled:
+
+```text
+Panda decision produces OrderIntent
+→ Trade Fact is committed
+→ proof selector marks it as a Chain Proof Moment
+→ ChainExecutionWorker constructs testnet PTB
+→ Agent Signer signs
+→ Move checks TradingPolicy
+→ PandaCoin / vault action occurs
+→ DemoTradeExecuted event emitted
+→ tx_digest attached to Trade Fact
+```
+
+### 6.5 Review And Learn
+
+```text
+Position closes
+→ PnL becomes known
+→ Review engine compares decision reason against market outcome
+→ Winning or losing hypothesis is extracted
+→ evidence is linked from Trade Facts
+→ Skill Memory is updated
+→ skill hash / memory digest is periodically submitted on-chain
 ```
 
 ---
 
-## 十三、竞品差异
+## 7. Market Data Strategy
 
-| | RaidenX | WaterX | Griffain | **TradingPanda** |
-|---|---------|--------|----------|-----------------|
-| 定位 | AI 交易工具 | AI 交易引擎 | 自然语言交易 | **AI 交易养成** |
-| 用户角色 | 交易者 | 交易者 | 用户 | **训练者/主人** |
-| 情感连接 | 无 | 无 | 无 | **宠物养成** |
-| AI 角色 | 工具 | 引擎 | 助手 | **伙伴/学徒** |
-| NFT 价值 | 无 | 无 | 无 | **性格稀缺性+训练价值** |
+### 7.1 Primary Source
+
+DeepBook is the primary source for MVP. Pair promotion should be liquidity-first rather than narrative-first.
+
+Ranking inputs:
+
+- Recent 24h / 7d fill volume.
+- Tightness of spread.
+- Orderbook depth around mid price.
+- Frequency of fresh candles.
+- Market-monitor health for the pair.
+- Availability of stable quote pairs, especially USDC-style quote markets.
+
+Priority pairs:
+
+```text
+SUI_USDC
+DEEP_USDC
+WAL_USDC
+NS_USDC
+```
+
+If the local indexer or current deployment only supports existing MVP pool names, the system may temporarily map to:
+
+```text
+DEEP/SUI
+SUI/DBUSDC
+```
+
+But product language should target mainnet DeepBook pairs, not sparse testnet-only pairs.
+
+### 7.2 Market Monitor Responsibilities
+
+market-monitor must:
+
+- Read DeepBook fills / trades.
+- Build OHLCV candles.
+- Fetch orderbook snapshots.
+- Compute indicators.
+- Detect market regime.
+- Publish market ticks over Redis.
+- Provide historical candles over REST.
+
+Default event path:
+
+```text
+DeepBook mainnet
+→ market-monitor
+→ Redis market:tick:{pair}
+→ backend MarketDataConsumer
+→ PandaActor
+→ frontend WebSocket Hub
+```
+
+### 7.3 Future Auxiliary Sources
+
+After DeepBook is stable, add sources in this order:
+
+| Priority | Venue | Role |
+|---|---|---|
+| 1 | Cetus | First AMM reference source |
+| 2 | Turbos | Second AMM reference source |
+| 3 | Bluefin | Secondary venue / price confirmation |
+| 4 | FlowX | Aggregated quote reference |
+
+These sources should not replace DeepBook in MVP. They become market divergence and liquidity signals.
 
 ---
 
-## 十四、边界场景
+## 8. Decision And Execution Loop
 
-| 场景 | 处理 |
-|------|------|
-| 熊猫一直亏损 | 情绪→恐慌→麻木→提示换策略/用冷静竹/重置 |
-| 用户弃坑(30天) | 熊猫休眠，经验每周衰减 -1%（最低 50%） |
-| 频繁换策 | 策略残影加重惩罚，熊猫提示"有点混乱" |
-| 网络断开 | 缓存最后状态，恢复后断点续传 |
-| 链拥堵 | 不影响链下模拟，链上确认后更新 |
-| 模拟资金归零 | 自动重置为 $10,000，经验不丢 |
+### 8.1 Decision Loop
+
+```text
+market.tick
+→ normalize market data
+→ load Panda personality
+→ load active strategy
+→ load skill memory
+→ run decision pipeline
+→ produce OrderIntent
+```
+
+OrderIntent fields:
+
+```text
+panda_id
+pair
+side: BUY | SELL | HOLD
+mode
+notional
+reference_price
+max_slippage
+reason
+decision_hash
+policy_version
+```
+
+### 8.2 Policy Gate
+
+Every executable OrderIntent must pass a policy gate.
+
+Mode 1:
+
+```text
+Backend policy gate checks the cached policy and records the policy snapshot.
+```
+
+Mode 2:
+
+```text
+Move policy gate checks the on-chain TradingPolicy during PTB execution.
+```
+
+Policy failures produce rejected intents, not silent drops.
+
+### 8.3 Execution Results
+
+Possible statuses:
+
+```text
+DECIDED
+REJECTED_BY_POLICY
+PAPER_EXECUTED
+CHAIN_SUBMITTED
+CHAIN_CONFIRMED
+CHAIN_FAILED
+POSITION_CLOSED
+REVIEWED
+SKILL_UPDATED
+```
+
+### 8.4 Chain Proof Selection
+
+The proof selector decides whether a Trade Fact should create a `chain_proof_requested` async job.
+
+Default automatic rules:
+
+```text
+side != HOLD
+zone == EXECUTE
+final_score >= 0.75
+trade_fact has not already been proven
+policy.mode allows panda_coin_demo
+policy.paused == false
+panda proof cooldown has passed
+panda daily proof cap has capacity
+```
+
+Manual rules:
+
+```text
+User may request proof for an existing Trade Fact from the Chain Proof Panel.
+Manual proof uses the same TradingPolicy and idempotency checks.
+Manual proof may bypass score threshold, but not policy, cooldown, duplicate, or daily cap checks.
+```
+
+Idempotency:
+
+```text
+proof_key = trade_fact_id + policy_version + decision_hash
+```
+
+Duplicate proof jobs for the same proof key must resolve to the existing chain execution log.
 
 ---
 
-## 十五、路线图
+## 9. Ledger And PnL
 
-| 阶段 | 时间 | 目标 |
-|------|------|------|
-| **黑客松 MVP** | 2026/5-6 | 铸造+喂策略+模拟盘+市场+排行榜+成就+签到+问卷 |
-| **测试网** | 7 月 | 情绪系统完善、环境感知 Lv.1-3、DeepBook 实时数据 |
-| **主网 Alpha** | 9 月 | Walrus 完整集成、Kiosk 市场上线、Nautilus TEE |
-| **主网 Beta** | 11 月 | 社交模块、师承、策略模板 NFT 市场 |
-| **Pro 版** | 2027 Q1 | 实盘接入、高级策略库、多熊猫 Portfolio |
+### 9.1 Paper Margin Ledger
+
+Mode 1 uses a backend paper margin ledger.
+
+Core concepts:
+
+```text
+cash_balance
+debt_balance
+equity
+positions
+realized_pnl
+unrealized_pnl
+ledger_entries
+```
+
+MVP limitations:
+
+- Long-only.
+- Borrow virtual quote asset only.
+- No short selling.
+- No real interest rate.
+- No real liquidation engine.
+- Max leverage enforced by policy.
+
+### 9.2 Closing A Trade
+
+A trade outcome is only final when a position is reduced or closed.
+
+```text
+BUY opens or increases exposure
+SELL reduces or closes exposure
+Closed portion produces realized PnL
+Realized PnL triggers review
+```
+
+Unrealized PnL can inform risk, but should not update Skill Memory as proven learning.
 
 ---
 
-## 十六、验收标准（MVP）
+## 10. Review And Learning
 
-- [ ] 新用户完成问卷 → 铸造熊猫 → 喂策略 → 模拟盘 全流程通畅
-- [ ] 决策链可视化（8 步展开）正确展示
-- [ ] 情绪通过表情/颜色间接展示，不暴露数值
-- [ ] 策略残影在换策后可感知（熊猫行为有旧策略干扰）
-- [ ] Merkle Root 每 50 笔交易上链
-- [ ] NFT 市场买卖通过 Kiosk 完成
-- [ ] DeepBook 数据正确拉取并构建 K 线
-- [ ] 排行榜/成就/签到功能完整
-- [ ] Battle Case 4 个案例回归通过
-- [ ] 决策引擎测试覆盖率 ≥80%
+### 10.1 Review Objective
+
+The Panda must not simply say "I won because I am smart." It must argue from evidence.
+
+Each review should answer:
+
+- What did I believe at decision time?
+- What market evidence supported it?
+- What actually happened?
+- Was the decision right for the right reason?
+- Was it profitable due to luck, signal quality, or risk management?
+- What hypothesis should be reinforced or weakened?
+
+### 10.2 Hypothesis Lifecycle
+
+```text
+proposed
+→ supported
+→ verified
+→ weakened
+→ retired
+```
+
+Only verified or strongly supported hypotheses can update Skill Memory.
+
+### 10.3 Skill Update Rules
+
+Skill update must include:
+
+- A natural language rule.
+- Evidence references.
+- Confidence score.
+- Affected pair or regime.
+- Version hash.
+
+Example:
+
+```text
+When SUI_USDC is ranging and RSI recovers from below 30 while orderbook imbalance flips positive, small long entries have historically outperformed immediate full-size entries.
+```
 
 ---
 
-## 附录 A：关键用户情感节点
+## 11. On-Chain Design
 
-| 时刻 | 情感 | 触发 |
-|------|------|------|
-| 🎉 惊喜 | 铸造到稀有天赋 | 1-2% 概率 |
-| 🤔 好奇 | 熊猫第一次"犯错" | 熟练度 <20% |
-| 😤 焦虑 | 情绪失控不敢交易 | 连亏→恐慌 |
-| 😲 震惊 | 熊猫第一次反叛 | 成熟期经验>策略 |
-| 😌 成就感 | 熊猫自主盈利 | 成熟期连续正确 |
-| 🥺 不舍 | 转让熊猫 | 写训练者留言 |
+### 11.1 Move Modules To Add
 
-## 附录 B：文档索引
+New modules:
 
-| 文档 | 职责 | 与本 PRD 关系 |
-|------|------|-------------|
-| `contract-design.md` | Move 合约详细设计 | 第八节"上链"的实现 |
-| `database-schema.md` | PostgreSQL 表设计 | 第五节"经验引擎"的存储 |
-| `agent-design.md` | 决策引擎详细设计 | 第四节"决策公式"的实现 |
-| `api-specification.md` | REST + WS + RPC 接口 | 前后端通信契约 |
-| `backend-design.md` | 服务架构设计 | 第二节"架构"的实现 |
-| `frontend-design.md` | 前端页面设计 | 第七节"页面清单"的实现 |
-| `whitepaper.md` | 白皮书 | 面向外部的产品总结 |
-| `product-description.md` | Why Sui | 技术选型理由 |
-| `panda-character-design.md` | 熊猫视觉设计 | NFT 图片生成规范 |
-| `testing-strategy.md` | 测试策略 | 验收验证方法 |
+| Module | Purpose |
+|---|---|
+| `trading_policy.move` | Create, update, pause, revoke Panda TradingPolicy |
+| `panda_vault.move` | Create PandaVault and bind it to Panda + policy |
+| `panda_coin.move` | Mint / manage testnet training token |
+| `demo_executor.move` | Execute Mode 2 PandaCoin demo trades with policy checks |
+
+Existing modules remain:
+
+| Module | Role |
+|---|---|
+| `panda.move` | Panda NFT and immutable personality |
+| `strategy.move` | Strategy hash snapshots |
+| `experience.move` | Experience milestones and Walrus blob pointer |
+| `trust_proof.move` | Merkle roots for trade facts |
+
+### 11.2 Required Events
+
+```text
+TradingPolicyCreated
+TradingPolicyUpdated
+TradingPolicyPaused
+AgentAuthorized
+AgentRevoked
+PandaVaultCreated
+DemoTradeExecuted
+SkillDigestSubmitted
+TradeBatchRootSubmitted
+```
+
+### 11.3 PTB Usage
+
+PTB is used when a user or Agent Signer submits a real Sui transaction.
+
+MVP PTBs:
+
+- Mint Panda.
+- Create PandaVault.
+- Create TradingPolicy.
+- Update / pause / revoke policy.
+- Execute PandaCoin demo trade.
+- Submit trade batch Merkle root.
+- Submit skill digest.
+
+Do not say "PTB signature" in product copy. Use:
+
+```text
+User signs a Sui transaction containing a PTB.
+```
+
+---
+
+## 12. Backend Design Requirements
+
+### 12.1 New Services
+
+| Service | Responsibility |
+|---|---|
+| `PolicyGate` | Load, validate, and snapshot TradingPolicy before hot-path paper execution |
+| `LedgerService` | Execute virtual ledger mutations in the same DB transaction as Trade Fact commit |
+| `TradeFactWriter` | Create OrderIntent, TradeFact, ledger records, and async jobs atomically |
+| `QueueDispatcher` | Claim durable `async_jobs` and dispatch background workers |
+| `ProofSelector` | Decide which Trade Facts become Chain Proof Moments |
+| `ChainExecutionWorker` | Execute selected Mode 2 PandaCoin demo PTBs |
+| `ReviewWorker` | Produce evidence-backed reviews after realized PnL is known |
+| `SkillMemoryWorker` | Update Panda skill memory from reviewed outcomes |
+| `MerkleWorker` | Batch Trade Fact roots and submit proof anchors |
+| `WalrusSyncWorker` | Archive review and skill memory snapshots |
+| `AgentSignerService` | Sign authorized testnet PTBs for selected Mode 2 proofs |
+
+### 12.2 New Tables
+
+Recommended tables:
+
+```text
+panda_vaults
+trading_policies
+order_intents
+panda_accounts
+panda_positions
+ledger_entries
+trade_facts
+trade_reviews
+skill_memories
+skill_versions
+chain_execution_logs
+async_jobs
+outbox_events
+```
+
+Existing `trades` can remain for compatibility, but the canonical new record should be `trade_facts`.
+
+### 12.3 Redis Events
+
+Market events:
+
+```text
+market:tick:{pair}
+market:heartbeat
+```
+
+Panda events:
+
+```text
+panda:{panda_id}:decision
+panda:{panda_id}:order_intent
+panda:{panda_id}:execution
+panda:{panda_id}:review
+panda:{panda_id}:skill
+panda:{panda_id}:emotion
+async:wakeup
+```
+
+---
+
+## 13. Frontend Requirements
+
+### 13.1 New Product Areas
+
+| Area | User sees |
+|---|---|
+| Agent Wallet Setup | Budget, allowed pairs, daily loss, max trade size, authorized agent |
+| Policy Collar | Visual explanation of current constraints |
+| PandaVault | Training balance, positions, debt, equity |
+| Market Radar | DeepBook chart, orderbook, indicators, market regime |
+| Decision Timeline | Why Panda bought/sold/held |
+| Chain Proof Panel | tx digest, event, policy version, decision hash |
+| Review Journal | Win/loss analysis and skill changes |
+| Emergency Controls | Pause, revoke agent, tighten policy |
+
+### 13.2 User Copy Guidelines
+
+Use:
+
+```text
+Training Ledger
+PandaVault
+TradingPolicy
+Agent Signer
+Demo Chain Execution
+Skill Memory
+Trade Fact
+```
+
+Avoid:
+
+```text
+Fake trading
+Toy money
+PTB signature
+AI controls your wallet
+Guaranteed learning
+Guaranteed profit
+```
+
+---
+
+## 14. Trust And Safety
+
+### 14.1 Safety Boundaries
+
+- Panda cannot access the user's entire wallet.
+- Agent Signer can only act through authorized policy paths.
+- User can pause or revoke policy.
+- Policy loosening requires user-signed transaction.
+- Mode 2 PandaCoin has no real economic value.
+- Mainnet PnL is simulated from real prices, not guaranteed profit.
+
+### 14.2 Failure Handling
+
+| Failure | Required behavior |
+|---|---|
+| market-monitor down | Pause decisions or mark market stale |
+| Redis down | No new decisions; show degraded status |
+| policy cache stale | Refetch policy before execution |
+| paper ledger execution fails | Mark intent failed; no position update |
+| testnet PTB fails | Mark chain execution failed; keep paper trade status separate |
+| agent signer unavailable | Continue Mode 1; disable Mode 2 proof |
+| max loss reached | Auto-pause execution |
+
+---
+
+## 15. MVP Scope
+
+### 15.1 In Scope
+
+- Panda mint.
+- Real DeepBook market monitor.
+- Panda decision loop.
+- Training Ledger with virtual margin.
+- TradingPolicy creation and updates.
+- PandaVault creation.
+- Backend policy checks for every paper execution.
+- Selected PandaCoin testnet demo execution.
+- Environment-level Agent Signer for MVP Mode 2.
+- Trade Facts.
+- Durable async job queue for chain proof, review, skill, Merkle, and Walrus work.
+- Evidence-backed reviews.
+- Skill Memory updates.
+- Merkle root or skill digest submission.
+- Frontend dashboard for policy, ledger, decisions, reviews, and chain proofs.
+
+### 15.2 Out Of Scope
+
+- Real mainnet asset trading.
+- Real borrowing or DeepBook Margin.
+- Short selling.
+- Production custody.
+- Per-panda production signer isolation.
+- DAO governance.
+- Fully decentralized AI compute.
+- Nautilus / TEE proof.
+- Multi-agent portfolio optimization.
+- Real PandaCoin economic value.
+
+---
+
+## 16. Success Metrics
+
+### 16.1 Product Metrics
+
+- User can understand what the Panda is allowed to do before training starts.
+- User can start a Panda training session in under 5 minutes after mint.
+- User can see why each trade was accepted, rejected, or executed.
+- User can pause the Panda in one action.
+- User can inspect at least one chain proof for a Panda action.
+
+### 16.2 Technical Metrics
+
+- market-monitor publishes healthy ticks for selected DeepBook pairs.
+- Decision-to-paper-execution latency is under 2 seconds in normal operation.
+- Policy is snapshotted for every OrderIntent.
+- Chain proof selector creates at most one proof job per `trade_fact_id + policy_version + decision_hash`.
+- Every closed trade has a review.
+- Every skill update links to evidence.
+- Mode 2 demo PTB succeeds on testnet for a selected policy-compliant Chain Proof Moment.
+- Policy-violating demo PTB aborts.
+
+---
+
+## 17. Acceptance Criteria
+
+- [ ] User mints a Panda NFT with immutable personality.
+- [ ] User creates PandaVault and TradingPolicy with a signed Sui transaction.
+- [ ] User can view authorized_agent and policy limits.
+- [ ] market-monitor streams real DeepBook market data.
+- [ ] Panda creates BUY / SELL / HOLD decisions from real market data.
+- [ ] Every executable decision creates an OrderIntent.
+- [ ] Mode 1 checks policy before paper execution.
+- [ ] Policy violation creates a rejected intent.
+- [ ] Paper ledger updates cash, debt, equity, and positions.
+- [ ] Closing a position creates realized PnL.
+- [ ] Closed trade produces a review.
+- [ ] Review can update Skill Memory only with evidence.
+- [ ] Proof selector creates `chain_proof_requested` only for eligible Chain Proof Moments.
+- [ ] User can manually request on-chain proof for an existing Trade Fact.
+- [ ] Mode 2 executes a selected testnet PandaCoin PTB through Agent Signer.
+- [ ] Mode 2 chain event includes decision_hash and policy_version.
+- [ ] Frontend shows tx digest for Mode 2.
+- [ ] User can pause policy.
+- [ ] Paused policy blocks both paper execution and demo PTB.
+- [ ] Trade batch Merkle root or skill digest can be submitted on-chain.
+
+---
+
+## 18. Roadmap
+
+| Phase | Goal |
+|---|---|
+| MVP | Mainnet DeepBook data + Training Ledger + PandaVault + TradingPolicy + PandaCoin demo PTB |
+| Testnet Alpha | Stronger review engine, skill memory versioning, richer chain proof panel |
+| Mainnet Alpha | Mainnet market monitoring at production quality, Walrus memory backups |
+| Real Wallet Beta | Real asset PandaVault, strict policy controls, user-approved execution |
+| Future Pro | DeepBook Margin, AMM venue comparison, advanced autonomous risk guard |
+
+---
+
+## 19. Resolved Decisions And Remaining Questions
+
+Resolved:
+
+| Question | Decision |
+|---|---|
+| PandaVault object type | Shared object |
+| TradingPolicy object type | Standalone shared object |
+| Agent Signer development model | One environment-level testnet signer for MVP; rotate by user-signed policy update; revoke by pause/revoke policy |
+| Mode 2 frequency | Selected automatic Chain Proof Moments plus manual user-triggered proof |
+| Pair selection | Promote most liquid DeepBook mainnet pairs available at launch |
+
+Remaining:
+
+1. What is the exact PandaCoin name and symbol?
+2. What minimum evidence threshold allows a review to update Skill Memory?
+3. Which exact DeepBook mainnet pair IDs are liquid and available in the target deployment environment?
+
+---
+
+## 20. Document Index
+
+| Document | Relationship |
+|---|---|
+| `docs/architecture.md` | Current service topology; must be updated after this PRD |
+| `docs/market-monitor-design.md` | Existing market-monitor design; remains the base for real market data |
+| `docs/agent-design.md` | Existing decision pipeline; should be extended with policy gate and skill memory |
+| `docs/database-schema.md` | Existing DB design; should be extended with vault/policy/fact tables |
+| `docs/contract-design.md` | Existing Move design; should be extended with PandaVault, TradingPolicy, PandaCoin |
+| `docs/product-description.md` | Public product story; should be rewritten around Autonomous Agent Wallet |

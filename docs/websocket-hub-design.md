@@ -1,7 +1,7 @@
 # WebSocket Hub — Cloudflare Workers + Durable Objects
 
 > 将「实时推送层」从 Vercel（无长连接）迁出，由 **Cloudflare Workers + Durable Objects（DO）** 承载；与既有 **Python Decision Engine（Render）+ Redis Pub/Sub** 对齐。  
-> **最后更新**：2026-05-20
+> **最后更新**：2026-06-17（PRD v3.1：Hub 转发 Training Ledger、Chain Proof、Review、Skill Memory 事件）
 
 ---
 
@@ -34,7 +34,7 @@
                     │
                     │  Upstash SUBSCRIBE：
                     │    market:tick:*  → 转发 K 线/行情（subscribe.market）
-                    │    panda:*        → 转发熊猫事件（subscribe.simulation）
+                    │    panda:*        → 转发熊猫事件（subscribe.simulation / agent training）
                     ▼
               单连接最多 3 条 socket
 
@@ -114,7 +114,7 @@ Render:  PandaActor(pnd_A) ──PUBLISH──► Redis channel panda:pnd_A:deci
 CF:      DO(user:U) 已订阅该频道 ──WSS──► 用户 U 的浏览器
 ```
 
-**与 Postgres 的分工**：完整八步决策链写入 `trades.decision_details`；WSS 只推 `trade.executed` / `simulation.tick` 等摘要事件（见 `api-specification.md` §4.3），**不**逐步推送 S1–S8。
+**与 Postgres 的分工**：完整 OrderIntent、Trade Fact、policy snapshot、review、chain execution log 写入 PostgreSQL；WSS 只推摘要事件（decision、order intent、execution/proof status、review、skill），**不**承载权威业务状态。
 
 ### 3.4 行情数据：经 Upstash 订阅，禁止直连 market-monitor
 
@@ -142,9 +142,18 @@ Hub 与 DE **同级**消费 `market:tick`；**同一包** `MarketEvent` 保证�
 | 频道 | 是否必须 | 用途 |
 |------|----------|------|
 | `market:tick:{pair}` | **必须** | K 线实时更新（`MarketEvent.candle` + 价格）；`subscribe.market` 后转发 |
-| `panda:{id}:decision` / `emotion` / `experience` / `diary` | **必须** | 熊猫实时事件（DE 发布） |
+| `panda:{id}:decision` / `order_intent` / `execution` / `review` / `skill` / `emotion` / `experience` / `diary` | **必须** | 熊猫实时事件（DE / workers 发布） |
 | `market:candles:*` | 不订 | 与 `market:tick` 重复；除非未来拆瘦 payload |
-| `simulation.tick` | 视产品 | 通常已含在 `panda:*` 或 DE 组包 channel |
+| `simulation.tick` | 兼容 | 旧模拟盘摘要；新实现优先使用 `panda:{id}:*` 事件 |
+
+Chain Proof Panel depends on:
+
+| Redis channel | WS event intent |
+|---|---|
+| `panda:{id}:order_intent` | Show policy result and proof eligibility |
+| `panda:{id}:execution` | Show Training Ledger execution, Mode 2 proof status, tx digest, or failure |
+| `panda:{id}:review` | Show evidence-backed win/loss review |
+| `panda:{id}:skill` | Show Skill Memory version changes |
 
 前端：**仅** `NEXT_PUBLIC_WS_URL`；历史 K 线走 **REST**（见 `docs/market-monitor-design.md` §7）。
 

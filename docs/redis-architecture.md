@@ -1,7 +1,7 @@
 # Redis 架构与部署（推荐方案）
 
 > 汇总仓库内工程约束与 **2026-05-15** 调研结论（Obsidian：`research/redis-architecture-research.md`）。  
-> **最后更新**：2026-05-19（无 `redis-pubsub` 服务；DE / Hub 直连 Upstash）
+> **最后更新**：2026-06-17（PRD v3.1：Redis 仍非 durable queue；新增 `async:wakeup` 与 Chain Proof 事件）
 
 ---
 
@@ -13,7 +13,7 @@
 | 能否在 Cloudflare Workers 内跑原生 Redis | **否** — Workers 无持久 TCP listen、无 OS 级进程、128MB 隔离、无状态模型，与 Redis 服务器模型根本冲突 |
 | 是否需要独立 `redis-pubsub/` 服务 | **否** — Upstash TS SDK 原生支持 SUBSCRIBE（HTTP 长轮询），DE 直连 TCP，无需中间桥 |
 | **MVP 推荐托管** | **Upstash Redis（Valkey 兼容）** — Serverless、REST + TCP 双端、与 CF/Python 均兼容 |
-| 推荐消息流 | **market-monitor → Redis → DE / Hub**；**DE → Redis `panda:*` → Hub → WSS**；**Hub 直连 Upstash REST** |
+| 推荐消息流 | **market-monitor → Redis → DE / Hub**；**DE/Workers → Redis `panda:*` / `async:wakeup` → Hub/Workers**；**Hub 直连 Upstash REST** |
 | MVP 增量成本（Redis 本身） | **$0/月**（Upstash 免费层约 10k cmd/天，配额以官网为准） |
 
 ---
@@ -22,7 +22,7 @@
 
 | # | 用途 | 典型数据结构 | 说明 |
 |---|------|----------------|------|
-| 1 | **Pub/Sub 总线** | Channel 消息 | DE 发 `panda:*` → Hub → 前端；**最不可替代** |
+| 1 | **Pub/Sub 总线** | Channel 消息 | DE 发 `panda:*` → Hub → 前端；worker 发 `async:wakeup` 唤醒；**最不可替代** |
 | 2 | **市场数据广播** | Channel | `market:tick:{pair}`；monitor 发布；**DE + Hub** 订阅；前端 K 线 **同源**（方案甲） |
 | 3 | **响应缓存** | String + TTL | 熊猫快照、排行榜、市场列表 |
 | 4 | **Nonce / 短时认证态** | String + TTL（如 5min） | 登录 challenge 等 |
@@ -30,6 +30,13 @@
 | 6 | **限流计数** | INCR + TTL | HTTP / WSS 侧计数 |
 
 用途 1–2 对 Redis 依赖最深；3–6 理论上可迁到别处，但会增复杂度 — **MVP 采用方案 A：同一 Upstash 实例承担六类**（见调研 §二）。
+
+PRD v3.1 队列边界：
+
+```text
+Redis is realtime and wakeup only.
+PostgreSQL async_jobs is the durable queue of record.
+```
 
 **简化结论（2026-05-19）**：DE（Render）和 CF Hub（Workers）均**直连 Upstash**，无需中间桥接服务。Upstash TS SDK 的 `subscribe()` 通过 HTTP 长轮询实现，延迟约 100-200ms，对 TradingPanda 决策频率完全够用。
 
@@ -136,6 +143,10 @@ DeepBook v3 ──Sui RPC──► market-monitor/ (Render)
 | Redis channel | 发布方 | 订阅方 | 用途 |
 |---------------|--------|--------|------|
 | `panda:{id}:decision` | PandaActor / Broadcaster | WS Hub、（可选）调试工具 | 交易决策（BUY/SELL/HOLD 等） |
+| `panda:{id}:order_intent` | PandaActor / TradeFactWriter | WS Hub | OrderIntent 与 policy gate 摘要 |
+| `panda:{id}:execution` | LedgerService / ChainExecutionWorker | WS Hub | Training Ledger 执行结果、Chain Proof tx digest / failure |
+| `panda:{id}:review` | ReviewWorker | WS Hub | 胜负复盘完成 |
+| `panda:{id}:skill` | SkillMemoryWorker | WS Hub | Skill Memory 更新 |
 | `panda:{id}:emotion` | 情绪状态机 | WS Hub | 情绪迁移 |
 | `panda:{id}:experience` | 经验引擎 | WS Hub | 经验变更 |
 | `panda:{id}:diary` | Agent / 日记任务 | WS Hub | 日记生成 |
@@ -143,6 +154,7 @@ DeepBook v3 ──Sui RPC──► market-monitor/ (Render)
 | `market:fill:{pair}` | market-monitor（可选） | 调试 | 单笔成交归一化 |
 | `market:candles:1m:{pair}` | market-monitor（可选） | 调试 | 瘦 OHLCV；MVP 用 `market:tick` 即可 |
 | `market:heartbeat` | market-monitor | 运维 / DE 降级判断 | 存活与各 pool 最后事件时间 |
+| `async:wakeup` | TradeFactWriter / API / worker | QueueDispatcher | 唤醒 worker 轮询 PostgreSQL `async_jobs`；不是任务载体 |
 | `walrus:synced` | Walrus 同步 Worker | WS Hub | 备份/链上同步通知 |
 
 **与 WebSocket 事件名的关系**：Redis payload 仍遵循 `docs/api-specification.md` §4.3 的 `event` + `payload` 外壳；**频道名**与 **WS `event` 字符串**不必相同，但 Hub 转发时应保持 body 契约一致。
@@ -190,6 +202,7 @@ DeepBook v3 ──Sui RPC──► market-monitor/ (Render)
 | 日期 | 变更 | 原因 |
 |------|------|------|
 | 2026-05-19 | 去掉独立 `redis-pubsub/` 服务，DE 和 Hub 直连 Upstash | Upstash TS SDK 原生支持 SUBSCRIBE，无需中间桥；简化架构降低运维成本 |
+| 2026-06-17 | PRD v3.1 对齐：新增 `panda:{id}:order_intent/execution/review/skill` 与 `async:wakeup`；明确 Redis 不是 durable queue | 支持 Chain Proof Moment、Review、Skill Memory 的实时展示；可靠任务以 PostgreSQL `async_jobs` 为准 |
 
 ---
 

@@ -4,6 +4,18 @@
 > 基于：product-design.md / technical-feasibility-study.md / cost-model.md
 > 架构：**Next.js Gateway（Vercel）** + **WebSocket Hub（CF）** + **Market Monitor（Render，DeepBook v3）** + **Decision Engine（Render）**
 
+> **PRD v3.1 对齐说明（2026-06-17）**：本文件保留早期 Decision Engine 与 simulation API 的实现细节。新的产品/架构真相以 `docs/PRD.md` v3.1、`docs/architecture.md`、`spec.md` 为准：DeepBook mainnet + Training Ledger 是训练真相；`PandaVault` 为 shared object；`TradingPolicy` 为 standalone shared object；Mode 2 只对 selected Chain Proof Moment 提交 testnet PandaCoin PTB；`async_jobs` 是 durable queue，Redis 只负责 Pub/Sub 与 worker wakeup。
+
+### v3.1 模块映射
+
+| 旧称呼 | v3.1 对齐称呼 |
+|---|---|
+| simulation / 模拟盘 | Training Ledger / Agent Wallet Training |
+| trade row | OrderIntent + Trade Fact + ledger entries |
+| ExecutionService | Hot path `PolicyGate` + `LedgerService` + `TradeFactWriter`; async `ProofSelector` + `ChainExecutionWorker` |
+| DeepBook Testnet execution | Out of training truth; only testnet PandaCoin PTB proof remains |
+| Merkle worker direct after trade count | Async `MerkleWorker` triggered from durable `async_jobs` |
+
 ---
 
 ## 一、架构总览
