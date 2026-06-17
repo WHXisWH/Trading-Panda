@@ -14,6 +14,8 @@ const densityClass: Record<ProductDensity, string> = {
 
 interface ProductPageShellProps {
   density?: ProductDensity;
+  /** Lock content to one viewport below the navbar (no page scroll). */
+  fitViewport?: boolean;
   children: ReactNode;
   className?: string;
 }
@@ -21,14 +23,23 @@ interface ProductPageShellProps {
 /** Black-gold product canvas for MVP journey pages (Epic 10 visual system). */
 export function ProductPageShell({
   density = "medium",
+  fitViewport = false,
   children,
   className,
 }: ProductPageShellProps) {
   return (
-    <div className="min-h-[calc(100dvh-var(--navbar-height))] text-product-text">
+    <div
+      className={clsx(
+        "text-product-text",
+        fitViewport
+          ? "flex h-full min-h-0 flex-col overflow-hidden"
+          : "min-h-[calc(100dvh-var(--navbar-height))]",
+      )}
+    >
       <div
         className={clsx(
-          "relative mx-auto w-full px-4 py-8 md:px-6",
+          "relative mx-auto w-full px-4 md:px-6",
+          fitViewport ? "flex min-h-0 flex-1 flex-col overflow-hidden !py-2 md:!py-3" : "py-8",
           densityClass[density],
           className,
         )}

@@ -2,7 +2,7 @@
 
 > 本文档以「忒修斯之船」方式持续维护：只换木板、不换整船。部署事实变更时同步更新对应段落；任何改动必须在本文末尾「§9 变更日志」追加一行。
 >
-> **最后同步**：2026-06-17（Supabase DB schema 升级至 Alembic head）
+> **最后同步**：2026-06-17（Epic 1-10 自动化复验）
 
 ---
 
@@ -37,7 +37,7 @@ TradingPanda 是 Sui 链上的 **AI 交易宠物养成系统**，目标是 Sui O
 |--------|------|------|------|
 | 骨架搭建 | ✅ 完成 | 100% | frontend/backend/contracts 目录结构、CLAUDE.md、DEV_CONTEXT.md |
 | Sui Move 合约 | 🟡 Testnet 已 publish | 80% | `sui client publish` 至 Testnet（Package `0x5950…1465`）；`mint::mint` + DF 初始化；UpgradeCap 在 `0xa459…7bf3`；Kiosk/版税深化待做 |
-| PostgreSQL Schema | ✅ v3.1 Schema 已落地 | 100% | Supabase `dpezgzzvbpemlgxdogue` 已从 `002` 升级至 Alembic head `006_trust_merkle_columns`；`verify_db.py` 覆盖 31 张表 + 8 个关键索引 |
+| PostgreSQL Schema | ✅ v3.1 Schema 已落地 | 100% | Supabase `dpezgzzvbpemlgxdogue` 已从 `002` 升级至 Alembic head `006_trust_merkle_columns`；`verify_db.py` 覆盖 31 张表 + 8 个关键索引 + `006` Merkle 新列 |
 | 铸造流程（Mint） | 🟢 Epic 1 完成 | 100% | `/mint` 按 `page-mint.md`：PandaCarouselStage + WalletSignatureModal + toast + MintDetails drawer → `/agent-wallet`；链上 mint 仅身份；DB 注册幂等 + tx digest 重试同步 |
 | 策略解析 | ✅ Epic 2 完成 | 100% | `POST/GET /panda/:id/strategy` + `validate`；积木 `StrategyBuilder`；LLM 5/min；`strategy_history` ghost 0.40 |
 | 8步决策引擎 | 🟡 MVP 实现 | 75% | `decision_pipeline` 八步公式 + `RuleEngine` + `PandaActor` + Redis `market:tick:*` 订阅；Agent/Merkle 链上提交待完善 |
@@ -253,7 +253,7 @@ PostgreSQL 完整表定义见 `docs/database-schema.md`。Alembic 迁移位于 `
 `order_intents` · `ledger_entries` · `trade_facts` · `trade_reviews` ·
 `skill_memories` · `skill_versions` · `chain_execution_logs` · `async_jobs` · `outbox_events`
 
-**当前迁移状态**：`001_initial_core` → `002_panda_subscribed_pools` → `003_growth_experience` → `004_v31_agent_wallet` → `005_chain_proof_idempotency` → **`006_trust_merkle_columns`**（head）。Supabase 项目 `dpezgzzvbpemlgxdogue` 已于 2026-06-17 执行 `python -m alembic upgrade head` 并通过 `python scripts/verify_db.py`：31 张表 + 8 个关键索引均为 `ok`。本地/新环境：`alembic upgrade head` → `python scripts/verify_db.py` → `python scripts/seed_dev.py`。
+**当前迁移状态**：`001_initial_core` → `002_panda_subscribed_pools` → `003_growth_experience` → `004_v31_agent_wallet` → `005_chain_proof_idempotency` → **`006_trust_merkle_columns`**（head）。Supabase 项目 `dpezgzzvbpemlgxdogue` 已于 2026-06-17 执行 `python -m alembic upgrade head` 并通过 `python scripts/verify_db.py`：31 张表 + 8 个关键索引 + `merkle_roots.root_type/start_fact_id/end_fact_id` 均为 `ok`。本地/新环境：`alembic upgrade head` → `python scripts/verify_db.py` → `python scripts/seed_dev.py`。
 
 ---
 
@@ -417,3 +417,6 @@ Package ID：**0x595087bb3e5f6c5011585797e4eb4db513b55d39ce84f984bb357e9375c1146
 | 2026-06-17 | **`/mint` 仪式页对齐 prototype**：去掉 `#0d1421` 独立底；`ProductPageShell` + 圆形 `mint-stage`（金绿 halo/ring/floor glow）；熊猫 **210px**（移动 150px）；舞台 caption 英文 preset 名（`stageLabelEn`）；Hero 戏剧大字 + `GasFeeHint` 产品样式；导航保留 | `mint.smoke.test.ts` 5/5；验收：连钱包→轮播英文 preset→mint 流程 |
 | 2026-06-17 | **Navbar 钱包下拉修复**：`product-panel` 默认 `overflow:hidden` 裁切地址下拉；Navbar/`header` 改 `overflow-visible`；下拉改用独立暗色面板 + `z-index` 高于顶栏 | 登录后点击地址应完整显示 Profile/Dashboard/Logout 菜单 |
 | 2026-06-17 | **Supabase 数据库落地修复**：诊断 `dpezgzzvbpemlgxdogue` 连接与 schema 状态；真实网络下 DNS/TCP/SQL 可达，根因是 `alembic_version` 停在 `002_panda_subscribed_pools`、public 仅 7 张表；已执行 `python -m alembic upgrade head` 升级 `003`→`004`→`005`→`006`。 | `python -m alembic current -v` 显示 `006_trust_merkle_columns (head)`；`python scripts/verify_db.py` 通过：31 张表 + 8 个关键索引全部 `ok`；`docs/epic-verification-record.md` §1/§3.0 已更新 |
+| 2026-06-17 | **`/mint` 单屏无滚动**：`mint/layout` 锁定视口高度；`ProductPageShell.fitViewport` + 三行 grid（hero / stage / actions）；舞台与熊猫尺寸改用 `dvh` 自适应；Gas 提示 `compact` 单行 | 桌面/移动 `/mint` 不应出现垂直滚动条；各 mint 状态（连接/铸造/成功）同屏展示 |
+| 2026-06-17 | **`/mint` 垂直居中聚簇**：Hero/Stage/Actions 收入 `mint-ritual-cluster` 整体居中；收紧区块间距；舞台放大至 `48dvh` / 熊猫 `21dvh` | 视觉上不再贴顶/贴底；舞台更突出 |
+| 2026-06-17 | **Epic 1-10 自动化复验与验证链路修复**：按 `docs/epic-verification-record.md` 复跑 Move/backend/frontend/market-monitor/websocket/DB 关键验证；`verify_db.py` 增加 `006` Merkle 新列检查；frontend `type-check` 改用独立 `tsconfig.typecheck.json`，避免 `.next/types` 与增量缓存假失败。 | `python scripts/verify_db.py` 通过：31 张表 + 8 个关键索引 + `merkle_roots.root_type/start_fact_id/end_fact_id`；`npm run build` 与 `npm run type-check` 通过；未覆盖钱包/浏览器 E2E、真实 testnet PTB、Walrus、50 笔训练闭环 |

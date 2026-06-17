@@ -1,6 +1,6 @@
 # TradingPanda — Epic Verification Record
 
-> **Last updated**: 2026-06-17 (Supabase DB landed to Alembic head)  
+> **Last updated**: 2026-06-17 (Epic 1-10 automated re-verification)  
 > **Purpose**: 记录 Autonomous Agent Wallet MVP 各 Epic 的交付物、验证命令与实测结果（如实、可追溯）  
 > **Source of truth**: `dev-docs/TODO.md` · `docs/PRD.md` v3.1 · `dev-docs/DEV_CONTEXT.md`
 
@@ -21,13 +21,13 @@
 
 | 项 | 记录 |
 |----|------|
-| 最近验证日期 | 2026-06-17（Supabase DB 落地复验） |
+| 最近验证日期 | 2026-06-17（Epic 1-10 自动化复验） |
 | OS | macOS |
 | Python | 3.10.0（pyenv） |
 | Node | 见 `frontend/package.json` engines |
 | 数据库 | `backend/.env` → Supabase 直连 `db.dpezgzzvbpemlgxdogue.supabase.co:5432/postgres` |
 | DB 连通性 | ✅ 可达；`python -m alembic current -v` 显示 `006_trust_merkle_columns (head)` |
-| Schema 验证 | ✅ `python scripts/verify_db.py`：31 张表 + 8 个关键索引全部 `ok` |
+| Schema 验证 | ✅ `python scripts/verify_db.py`：31 张表 + 8 个关键索引 + `merkle_roots` 3 个 `006` 新列全部 `ok` |
 | 影响范围 | 依赖 PostgreSQL 的 schema 验证已解除阻塞；业务级集成/E2E 仍需按各 Epic 手测或自动化复跑 |
 
 **DB 可达时通用验收命令：**
@@ -38,6 +38,23 @@ alembic upgrade head
 alembic current
 python scripts/verify_db.py
 ```
+
+### 1.1 2026-06-17 Automated Verification Delta
+
+本轮按 §2 Epic 顺序复跑自动化验证。历史段落中保留的旧失败记录不删除；下表为当前最新结论。
+
+| Epic | 最新自动化结果 | 仍未覆盖 / 阻塞 |
+|------|----------------|-----------------|
+| 1 Mint | Move `mint_tests` 3/3；backend mint pytest 11/11；frontend vitest 9/9；type-check ✅ | 钱包实铸 + 浏览器 E2E 未跑 |
+| 2 Agent Wallet | Move 27/27；backend wallet/safety/signer pytest 19/19；Supabase `verify_db.py` ✅；frontend build/type-check ✅ | PTB → mirror sync → train 全链路未手测 |
+| 3 Market Monitor | market-monitor 专项 20/20；monitor full 51/51；backend market pytest 8/8；websocket vitest 17/17 | mainnet live launch pairs + frontend E2E 未跑 |
+| 4 Strategy | backend strategy pytest 19/19 与 31/31；routeJump vitest 4/4；type-check ✅ | DB/API save→reload 与浏览器手测未跑 |
+| 5 Training Ledger | backend hot path pytest 22/22；import smoke ✅；Supabase `verify_db.py` ✅；type-check ✅ | Redis/DB 真实训练热路径 E2E 未跑 |
+| 6 Chain Proof | backend proof/signer/worker pytest 14/14；safety/signer 9/9；Move 27/27；type-check ✅ | 真实 testnet PTB / digest UI 未跑 |
+| 7 Review | backend review/migration pytest 11/11；review logic 6/6；type-check ✅ | API/JWT/DB workflow 未跑 |
+| 8 Safety | backend safety/wallet/policy/signer pytest 21/21；Move 27/27；type-check ✅ | owner action 链上手测、DB job cancel E2E 未跑 |
+| 9 Trust | Merkle pytest 16/16；migration tests 9/9；Alembic head `006`；`verify_db.py` 已校验 `006` 新列；Move 27/27 | 真实 Sui Merkle/Skill PTB、Walrus 上传、50 笔训练闭环未跑 |
+| 10 Frontend | vitest 9/9；`npm run type-check` ✅；`npm run build` ✅ | 浏览器桌面/移动 E2E 与 Playwright/截图回归未跑 |
 
 ---
 
@@ -219,7 +236,7 @@ rg -n 'commit_tick|order_intents|trade_facts' backend/app/engine/panda_actor.py 
 | F | Testnet RPC：`sui_getObject` Package | ✅ PASS | `0x5950…1465` → `type: package` |
 | G | Testnet RPC：`sui_getObject` PandaRegistry | ✅ PASS | `0x5cbf…baa5` → `…::panda_registry::PandaRegistry`，包 ID 与 F 一致 |
 | H | 文档交叉：Package / Registry ID | ✅ PASS | `DEV_CONTEXT.md` §3 · `contracts/DEPLOY.md` · `frontend/.env.example` · `backend/.env.example` 一致 |
-| I | `POST /panda/mint` 幂等 HTTP 集成 | ⏸ 未跑 | 依赖 PostgreSQL（§1 DB 不可达） |
+| I | `POST /panda/mint` 幂等 HTTP 集成 | ⏸ 未跑 | Supabase schema 已可达；路由级 HTTP/JWT 集成未执行 |
 | J | 浏览器手测：Connect → Sign → Mint → Reveal → Agent Wallet | ⏸ 未跑 | 需本地四服务 + 钱包 + Testnet SUI；本验证会话未执行 |
 | K | 链上实铸 + DB 行校验 | ⏸ 未跑 | 需 J 完成后查 `pandas` 表 `active_vault_id`/`active_policy_id` 为 NULL |
 
@@ -303,8 +320,8 @@ psql "$DATABASE_URL" -c "SELECT id, sui_object_id, active_vault_id, active_polic
 | 后端单元测试 | ✅ 通过（11/11）；缺路由级集成 |
 | 前端单元/smoke | ✅ 通过（9/9）；缺浏览器 E2E |
 | 链上 Package/Registry | ✅ RPC 实测存在且 ID 一致 |
-| 手测 / DB 落地 / 实铸 E2E | ⏸ 本环境未执行（DB 不可达 + 无钱包手测） |
-| **Epic 1 整体** | **⚠️ 部分验证** — 代码与自动化测试达标；完整用户旅程与 DB 幂等 HTTP 待 DB 可达 + 手测复验后升为 ✅ |
+| 手测 / DB 写入 / 实铸 E2E | ⏸ 本环境未执行（无钱包手测；HTTP/JWT 集成未跑） |
+| **Epic 1 整体** | **⚠️ 部分验证** — 代码与自动化测试达标；完整用户旅程与 DB 幂等 HTTP 待手测/集成复验后升为 ✅ |
 
 ---
 
@@ -330,9 +347,9 @@ psql "$DATABASE_URL" -c "SELECT id, sui_object_id, active_vault_id, active_polic
 |------|---------|----------|----------|------|
 | 2.1 Move Contracts | 7/7 | ✅ | ✅ Move test | 事件 `TradingPolicyCreated/Updated/Paused` · `AgentRevoked` · `PandaVaultCreated` 均在源码 |
 | 2.2 Contract Tests | 6/6 | ✅ | ✅ 12/12 PASS | 含 pause/revoke/stale version/mismatch/demo_executor |
-| 2.3 Database Mirror | 6/6 | ✅ | ⏸ DB 不可达 | ORM + migration 已写；`verify_db.py` 本环境 Timeout |
+| 2.3 Database Mirror | 6/6 | ✅ | ✅ DB schema 已落地 | Supabase `verify_db.py` 通过；mirror 业务读写仍需 E2E |
 | 2.4 Backend APIs | 5/5 | ✅ | ⚠️ 仅服务层单测 | 4 条 REST 路由已实现；**无** HTTP 集成测试 |
-| 2.5 Frontend | 8/8 | ✅ | ⚠️ type-check ✅ · build ❌ | `/agent-wallet` prerender 失败（见下） |
+| 2.5 Frontend | 8/8 | ✅ | ✅ type-check + build ✅ | `/agent-wallet` prerender 历史失败已在本轮构建复验中解除 |
 
 #### Verification Runs (2026-06-17)
 
@@ -341,8 +358,8 @@ psql "$DATABASE_URL" -c "SELECT id, sui_object_id, active_vault_id, active_polic
 | A | `cd contracts && sui move test` | ✅ PASS | **27/27**；其中 `agent_wallet_tests` **12/12** |
 | B | `cd backend && pytest tests/test_agent_wallet.py tests/test_migration_004.py tests/test_safety.py tests/test_agent_signer.py -q` | ✅ PASS | **19 passed**（policy 校验 5 · migration 静态 5 · owner-action 解析 2 · PolicyGate 3 · agent_signer 3） |
 | C | `cd frontend && npm run type-check` | ✅ PASS | 零 TS 错误；agent-wallet 组件/服务/hook 类型通过 |
-| D | `cd frontend && npm run build` | ❌ FAIL | `/agent-wallet` prerender error：`useSearchParams()` 需 Suspense 边界（Next.js 14） |
-| E | `python scripts/verify_db.py` | ❌ FAIL | `asyncio.TimeoutError`（Supabase 直连不可达，见 §1） |
+| D | `cd frontend && npm run build` | ✅ PASS | 生产构建通过；35/35 static pages generated |
+| E | `python scripts/verify_db.py` | ✅ PASS | Supabase schema：31 张表 + 8 个关键索引 + `006` 新列全部 `ok` |
 | F | 静态：API 路由注册 | ✅ PASS | `router.py` → `panda_agent_wallet` 挂载于 `/panda` |
 | G | 静态：训练门禁接线 | ✅ PASS | `panda_simulation.py:start_simulation` 调用 `require_active_wallet` |
 | H | HTTP/E2E：链上 PTB → sync → 前端 | ⏸ 未跑 | 需 testnet 钱包 + 运行 backend + 浏览器手测 |
@@ -409,11 +426,10 @@ curl -sS -X POST -H "Authorization: Bearer $JWT" -H "Content-Type: application/j
 cd frontend && npm run type-check
 ```
 
-**生产构建（当前失败，需修复后复验）：**
+**生产构建（本轮已复验通过）：**
 
 ```bash
 cd frontend && npm run build
-# 失败点：src/app/agent-wallet/page.tsx 使用 useSearchParams 但未包 Suspense
 ```
 
 **浏览器手测清单：**
@@ -440,9 +456,9 @@ python scripts/verify_db.py
 |------|------|
 | 无 `test_agent_wallet_api.py` HTTP 集成测试 | API 契约仅靠静态 + 手测 |
 | 无 `simulation/start` 门禁 pytest | `require_active_wallet` 未自动化 |
-| DB 本环境不可达 | migration 落地与 mirror 读写未实测 |
+| mirror 读写缺 E2E | schema 已落地；PTB sync 后的真实 mirror 写入未手测 |
 | 无 testnet E2E（PTB → sync → train） | Done standard 全链路未闭环验证 |
-| `npm run build` `/agent-wallet` 失败 | Vercel 生产部署该页可能失败 |
+| 浏览器/钱包 E2E 未跑 | Vercel 构建已通过；真实签名流程仍需手测 |
 
 #### Verdict
 
@@ -450,8 +466,8 @@ python scripts/verify_db.py
 |------|------|
 | Move 合约 + 单元测试 | ✅ 通过 |
 | Backend 服务逻辑 + migration 脚本 | ✅ 通过（静态/单测） |
-| Backend API + DB 落地 | ⏸ / ⚠️ 未完整验证 |
-| Frontend 实现 | ⚠️ 代码齐全；build 未通过 |
+| Backend API + DB 落地 | ⚠️ schema 已验证；HTTP/mirror E2E 未完整验证 |
+| Frontend 实现 | ✅ type-check 与 production build 通过 |
 | Epic 2 完整闭环（链上 + mirror + 训练门禁 E2E） | ⚠️ 部分完成 |
 
 ---
@@ -656,8 +672,8 @@ redis-cli -u "$REDIS_URL" PSUBSCRIBE 'market:tick:*'
 | E4-5 | 静态：frontend 5 个交付文件存在 | ✅ PASS | page + 4 components |
 | E4-6 | `npx vitest run src/lib/ui/routeJump.test.ts` | ✅ PASS | **4 passed**（含 `strategyPath`） |
 | E4-7 | `rg` 设计组件名 vs 实现 | ⚠️ 部分 | `NaturalLanguageHintBox` / `RuleBlockEditor` / `SaveStrategyButton` **未独立命名**；复用 `StrategyBuilder` |
-| E4-8 | `npm run type-check`（frontend 全量） | ❌ FAIL | `TS6053`：缺少 `.next/types/**`（需先 `next dev`/`next build` 生成）；**非 Strategy 源码类型错误** |
-| E4-9 | HTTP API 手测 / TestClient + 真实 DB | ⏸ 未跑 | §1 DB 不可达；无 `test_panda_strategy_api.py` |
+| E4-8 | `npm run type-check`（frontend 全量） | ✅ PASS | 本轮改用 `tsconfig.typecheck.json`，避免 `.next/types/**` 缺失造成假失败 |
+| E4-9 | HTTP API 手测 / TestClient + 真实 DB | ⏸ 未跑 | Supabase schema 已可达；无 `test_panda_strategy_api.py`，API/JWT workflow 未执行 |
 | E4-10 | 浏览器 `/strategy/:id` 手测 | ⏸ 未跑 | 需 frontend + backend + JWT + panda 数据 |
 
 #### 推荐验证命令（可复制）
@@ -808,8 +824,8 @@ curl -s -X POST "$BACKEND/panda/{PANDA_ID}/strategy/validate" \
 | E5-3 | 静态：API 路由注册 | ✅ PASS | `router.py` 含 `panda_training`；3× `GET /training/*` |
 | E5-4 | 静态：EventPublisher 频道 | ✅ PASS | `order_intent` / `execution` / `policy_rejected` / `market_stale` |
 | E5-5 | 静态：前端 training 资产 | ✅ PASS | 页面 + 7 组件 + 3 BFF 路由 + `training.service.ts` |
-| E5-6 | `cd frontend && npx tsc --noEmit \| rg training` | ✅ PASS | 无 training 相关 TS 错误（全量 tsc 另有 chain-proof 预存错误） |
-| E5-7 | `python scripts/verify_db.py` | ❌ FAIL | `asyncio.TimeoutError` ~70s（见 §1） |
+| E5-6 | `cd frontend && npm run type-check` | ✅ PASS | 全量 TS 类型检查通过 |
+| E5-7 | `python scripts/verify_db.py` | ✅ PASS | Supabase schema：31 张表 + 8 个关键索引 + `006` 新列全部 `ok` |
 | E5-8 | 缺口扫描：`async_jobs` in TradeFactWriter | ⚠️ GAP | grep 无匹配；TODO 5.2 声称含 async_jobs |
 | E5-9 | 缺口扫描：`publish_policy_paused` 调用点 | ⚠️ GAP | 仅定义于 `event_publisher.py`，热路径未调用 |
 | E5-10 | 缺口扫描：Ledger 集成 / rollback 测试 | ❌ GAP | `tests/` 无 `commit_tick` / `apply_execution` / rollback |
@@ -948,8 +964,8 @@ redis-cli -u "$REDIS_URL" PSUBSCRIBE "panda:$PANDA_ID:*"
 | 6.1 | paused / revoked / expired | ✅ | ✅ paused + revoked tests | **expired** 无独立 abort 用例 |
 | 6.1 | cooldown / daily cap（链上） | ⚠️ | ⏸ | 字段存于 `TradingPolicy`，**`assert_trade_allowed` 未校验**；由 backend `ProofSelector` 负责 |
 | 6.1 | `DemoTradeExecuted` 事件字段 | ✅ | ✅ 静态 + legal trade test | 链上为 `trade_fact_id_hash`（bytes），非明文 id |
-| 6.2 | `chain_execution_logs` 表 | ✅ | ⚠️ | ORM + `004` 迁移脚本；**本环境 DB 不可达，未落地验证** |
-| 6.2 | proof_key / tx / status / retryable | ✅ | ⚠️ | `005` 脚本 + 静态测试；列未在 DB 实测 |
+| 6.2 | `chain_execution_logs` 表 | ✅ | ✅ | Supabase schema head 已验证；业务写入仍缺集成测 |
+| 6.2 | proof_key / tx / status / retryable | ✅ | ✅ | `005` 结构已随 head/schema 复验；worker 写入仍缺 DB 集成测 |
 | 6.2 | idempotency（fact+version+hash） | ✅ | ⚠️ | `proof_key` SHA256 + DB unique index 脚本；**无集成测试** |
 | 6.3 | `ProofSelector` | ✅ | ✅ 7 pytest | |
 | 6.3 | 自动资格 score≥0.75 等 | ✅ | ✅ 单元测试 | EXECUTE 侧由 `BUY/SELL` 侧别检查近似 |
@@ -975,8 +991,8 @@ redis-cli -u "$REDIS_URL" PSUBSCRIBE "panda:$PANDA_ID:*"
 | 4 | `cd frontend && pnpm type-check` | ✅ PASS | 零 TS 错误 |
 | 5 | `cd frontend && pnpm exec vitest run src/lib/ui/routeJump.test.ts` | ✅ PASS | 4 passed（含 `chainProofPath`） |
 | 6 | 静态交付物存在性（§ Deliverables 文件表） | ✅ PASS | 6/6 backend 核心文件存在 |
-| 7 | `cd frontend && pnpm build` | ❌ FAIL | 构建失败于 **`/agent-wallet`**（`useSearchParams` 缺 Suspense），**非 `/chain-proof`**；`/chain-proof` 已包 `Suspense` |
-| 8 | DB：`alembic_current` + `chain_execution_logs.retryable` | ❌ FAIL | `TimeoutError`（25s），与 §1 一致 |
+| 7 | `cd frontend && npm run build` | ✅ PASS | 生产构建通过；历史 `/agent-wallet` prerender 阻塞已解除 |
+| 8 | DB：`alembic current` + `verify_db.py` | ✅ PASS | Supabase 位于 `006_trust_merkle_columns`；schema 验证通过 |
 | 9 | 真实 testnet PTB + tx digest 上链 | ⏸ 未跑 | 需 `CHAIN_PROOF_ENABLED=true` + `AGENT_SIGNER_PRIVATE_KEY` + 已 publish 的 `demo_executor` |
 | 10 | 浏览器 E2E：`/chain-proof?panda=&fact=` → Prove → digest | ⏸ 未跑 | 需全栈 + Trade Fact 种子数据 |
 
@@ -1021,9 +1037,9 @@ curl -X POST -H "Authorization: Bearer $JWT" \
 1. **无** `process_chain_proof_job` / `request_chain_proof` 的 PostgreSQL 集成测试（duplicate、failure+retryable、ledger 余额不变）。
 2. **无** 端到端自动化（Trade Fact → job → worker → digest UI）。
 3. **无** 本环境真实 testnet 交易回执验证（仅 dry-run digest 单测）。
-4. Migration `005` 与 `retryable` 列 **未在可达 DB 上执行**。
+4. `chain_execution_logs` 结构已随 Supabase head/schema 复验；但 worker 对 `retryable`/duplicate/failure 的真实写入未做 DB 集成测试。
 5. Move 层 **未** 在 `demo_executor` 路径校验 proof cooldown / daily cap（由 backend 负责，与 spec 部分一致但链上 collar 较窄）。
-6. 全站 `pnpm build` 因 Epic 2 `/agent-wallet` 问题失败，不单独代表 Chain Proof 页不可用。
+6. 全站 `npm run build` 本轮已通过；Chain Proof 真实链上 proof 仍需 testnet smoke。
 
 #### Verdict
 
@@ -1032,9 +1048,9 @@ curl -X POST -H "Authorization: Bearer $JWT" \
 | Move 合约 + 单元测试 | ✅ 通过 |
 | Backend 服务 / Worker 代码 | ✅ 已交付 |
 | Backend 集成 / E2E / 真实 testnet | ⏸ 未验证 |
-| DB migration `005` 落地 | ⏸ 未验证（环境阻塞） |
+| DB migration `005` 落地 | ✅ 已通过 Supabase head/schema 复验 |
 | Frontend 类型 + 路由 | ✅ 通过 |
-| Frontend build（全站） | ❌ 阻塞于 `/agent-wallet` |
+| Frontend build（全站） | ✅ 通过 |
 | Epic 6 完整闭环 | ⚠️ **部分完成** — 可合并代码并继续 Epic 11 前须补 DB 集成 + E2E +（可选）testnet smoke |
 
 ---
@@ -1107,9 +1123,9 @@ curl -X POST -H "Authorization: Bearer $JWT" \
 | 6 | `rg publish_review\\|publish_skill` worker 调用 | ❌ GAP | 仅在 `event_publisher.py` 定义；worker **未 publish** |
 | 7 | 前端文件存在性 | ✅ PASS | `/review` page + 4 components + 4 BFF routes + `review.service.ts` |
 | 8 | `tsc --noEmit \| rg review` | ✅ PASS | review 相关文件无 TS 错误 |
-| 9 | `cd frontend && npx tsc --noEmit`（全量） | ❌ FAIL | 缺 `.next/types/**` 构建产物（**非 Epic 7 源码错误**） |
-| 10 | Review API HTTP 集成（需 JWT + DB） | ⏸ SKIP | §1 DB 不可达 |
-| 11 | `alembic upgrade head` + `verify_db.py` v3.1 表 | ⏸ SKIP | §1 DB 不可达 |
+| 9 | `cd frontend && npm run type-check`（全量） | ✅ PASS | 改用 `tsconfig.typecheck.json`，不依赖 `.next/types/**` |
+| 10 | Review API HTTP 集成（需 JWT + DB） | ⏸ SKIP | Supabase schema 已可达；API/JWT workflow 未执行 |
+| 11 | `alembic upgrade head` + `verify_db.py` v3.1 表 | ✅ PASS | Supabase 位于 `006` head；schema 验证通过 |
 | 12 | 浏览器 `/review?panda=&fact=` 手测 | ⏸ SKIP | 需运行 frontend + 后端 + 已有关闭 Trade Fact 数据 |
 
 #### Verification Methods（如何复验）
@@ -1226,7 +1242,7 @@ npm run build   # 生成 .next/types 后可消除全量 tsc 假失败
 | 2 | `cd backend && pytest tests/test_safety.py tests/test_policy_gate.py tests/test_agent_signer.py -q` | ✅ PASS | **16/16**（见 §3.8.1 用例映射） |
 | 3 | `cd frontend && pnpm exec tsc --noEmit` | ✅ PASS | 零 TS 错误（含 Safety 类型与页面） |
 | 4 | 静态交付物检查（关键文件 + 符号存在） | ✅ PASS | `pause_policy` / `panda_safety` / `EmergencyControlsPage` / `buildTightenPolicyTx` 等 |
-| 5 | `cd frontend && pnpm run build` | ❌ FAIL | **非 Epic 8 专属**：`/agent-wallet` 缺 Suspense 导致 prerender 失败；`/safety/[id]` 未单独报错 |
+| 5 | `cd frontend && npm run build` | ✅ PASS | 生产构建通过；`/safety/[id]` 未单独报错 |
 | 6 | `pytest` 集成：`cancel_pending_chain_proof_jobs` / `sync_owner_action_from_tx` | ⏸ 未跑 | 无对应测试文件；依赖 PostgreSQL 的 API 集成 ⏸（见 §1） |
 | 7 | 浏览器手测：Pause → 签名 → mirror 更新 | ⏸ 未跑 | 需本地 wallet + 已 publish 合约 + backend |
 | 8 | Testnet 链上 owner action（pause/revoke/tighten PTB） | ⏸ 未跑 | 需钱包签名与 republish 后 `tighten_policy` 入口 |
@@ -1308,7 +1324,7 @@ print('static OK')
 | 代码交付（TODO §8 勾选） | ✅ 与 `dev-docs/TODO.md` 一致 |
 | 合约 + 单元测试自动化 | ✅ 通过 |
 | 前端类型 / 静态结构 | ✅ 通过 |
-| 全站 `pnpm run build` | ❌ 失败（`/agent-wallet` Suspense，非 Safety 专属） |
+| 全站 `npm run build` | ✅ 通过 |
 | DB / API / 链上 / 浏览器 E2E | ⏸ 未验证（环境或未执行） |
 | **Epic 8 完整闭环** | **⚠️ 部分验证** — 自动化层可合并；生产验收需补 §3.8.2 + DB/链上手测 |
 
@@ -1371,10 +1387,10 @@ print('static OK')
 | E | Epic 9 模块 import 冒烟 | ✅ PASS | 7 个模块可 import；`merkle_submit_enabled=True` |
 | F | 静态接线：`queue_dispatcher` job types | ✅ PASS | `merkle_batch_ready` / `skill_digest_requested` / `walrus_archive_requested` |
 | G | 静态：`panda_actor` 改 enqueue | ✅ PASS | `_enqueue_merkle_batch`；无 `persist_merkle_batch` 同步调用 |
-| H | `cd frontend && pnpm type-check` | ✅ PASS | 零 TS 错误（2026-06-17 复验） |
+| H | `cd frontend && npm run type-check` | ✅ PASS | 零 TS 错误（2026-06-17 复验） |
 | I | Epic 9 相关 TS 文件过滤检查 | ✅ PASS | trust / TrainingStatusStrip 无专属错误 |
-| J | `alembic current` | ❌ FAIL | `asyncpg` **TimeoutError**（见 §1）；`006` **未在本环境落地** |
-| K | `python scripts/verify_db.py` | ⏸ 未跑 | 依赖 DB；且脚本**尚未**校验 `006` 新列 |
+| J | `alembic current` | ✅ PASS | `006_trust_merkle_columns (head)` |
+| K | `python scripts/verify_db.py` | ✅ PASS | 31 张表 + 8 个关键索引 + `merkle_roots.root_type/start_fact_id/end_fact_id` 全部 `ok` |
 | L | 真实 Sui Merkle / Skill digest PTB | ⏸ 未跑 | 需 `SUI_PRIVATE_KEY` + `ADMIN_CAP_ID` + 合约 **republish** |
 | M | 真实 Walrus 上传 | ⏸ 未跑 | 需可达 `WALRUS_PUBLISHER_URL`；仅测 unconfigured skip |
 | N | 浏览器 Training Ledger Merkle 条 | ⏸ 未跑 | 需登录 + 有 Panda + JWT |
@@ -1487,8 +1503,7 @@ curl -s -H "Authorization: Bearer $JWT" \
 
 | 缺口 | 说明 |
 |------|------|
-| 无 `test_migration_006.py` | `006` 列仅 ORM + migration 文件，无专用结构单测 |
-| `verify_db.py` 未覆盖 `006` 列 | 仅列 `merkle_roots` 表名，不查 `root_type` 等 |
+| 无 `test_migration_006.py` | `verify_db.py` 已覆盖 `006` 新列；仍缺专用 migration 单测 |
 | 无 Merkle/Skill DB 集成测 | Worker 与 `merkle_roots` / `skill_versions` 写回未在 pytest+PG 验证 |
 | 链上提交仅 dry-run | 本环境未配置私钥；且 `submit_skill_digest` 需合约 republish |
 | Walrus 仅 unconfigured 路径 | 未对真实 publisher 做上传/回写集成测 |
@@ -1501,7 +1516,7 @@ curl -s -H "Authorization: Bearer $JWT" \
 |------|------|
 | 代码 / 单测 / Move 测试 | ✅ 通过 |
 | 迁移脚本（链上 head） | ✅ 通过（静态） |
-| 数据库落地（`006`） | ⏸ 未验证（§1 DB 不可达） |
+| 数据库落地（`006`） | ✅ 已通过 Supabase `alembic current` + `verify_db.py` 复验 |
 | 真实链上 Merkle / Skill digest | ⏸ 未验证 |
 | 真实 Walrus 上传 | ⏸ 未验证 |
 | 前端类型 / 接线 | ✅ 通过 |
@@ -1529,7 +1544,7 @@ curl -s -H "Authorization: Bearer $JWT" \
 
 | 小节 | TODO 勾选 | 验证结论 |
 |------|-----------|----------|
-| 10.1 共享交互系统 | 5/5 ✅ | ⚠️ 代码存在；build 阻塞项见下表 |
+| 10.1 共享交互系统 | 5/5 ✅ | ✅ 代码存在；build/type-check 已通过 |
 | 10.2 页面构建 | 7/7 ✅ | ⚠️ 路由与组件齐全；视觉对齐未做像素级对比 |
 | 10.3 视觉系统 | 4/4 ✅ | ⚠️ product token 已落地；Chain Proof 首屏仍有 mono id |
 
@@ -1540,8 +1555,8 @@ curl -s -H "Authorization: Bearer $JWT" \
 | # | 命令 / 检查 | 结果 | 详情 |
 |---|-------------|------|------|
 | A | `cd frontend && pnpm exec vitest run` | ✅ PASS | 2 files, **9** tests passed（`routeJump` 4 + `mint.smoke` 5） |
-| B | `cd frontend && pnpm exec tsc --noEmit` | ❌ FAIL | `TS6053`：`.next/types/**/*.ts` 缺失（无完整 `next build` 产物时常见）；**不代表 src 类型错误** |
-| C | `cd frontend && pnpm run build` | ❌ FAIL | 编译与 **Linting and checking validity of types** 通过；静态导出失败：`/agent-wallet` 的 `useSearchParams()` **未包在 `<Suspense>`**（Next.js prerender error） |
+| B | `cd frontend && npm run type-check` | ✅ PASS | 改用 `tsconfig.typecheck.json`，不依赖 `.next/types` 生成状态 |
+| C | `cd frontend && npm run build` | ✅ PASS | 生产构建通过；35/35 static pages generated |
 | D | 静态：Epic 10 交付文件存在性 | ✅ PASS | `src/lib/ui/*` · `Modal` · `Drawer` · `ProductPageShell` · `safety/[id]/page.tsx` 均存在 |
 | E | 静态：`ProductPageShell` + `DisclosureL0` 接线 | ✅ PASS | agent-wallet / strategy / training-ledger / chain-proof / review / safety 已接；mint 用 `bg-[#0d1421]` 低密度舞台（未用 Shell，符合 mint 设计） |
 | F | 静态：Drawer 移动端 bottom sheet | ✅ PASS | `Drawer.tsx`：`inset-x-0 bottom-0 max-h-[85dvh]` + `md:right-0` 右侧抽屉 |
@@ -1557,11 +1572,11 @@ curl -s -H "Authorization: Bearer $JWT" \
 # 1) 单元 / smoke（Epic 10 直接覆盖）
 cd frontend && pnpm exec vitest run
 
-# 2) 生产构建（Epic 10 当前阻塞点）
-cd frontend && pnpm run build
+# 2) 生产构建
+cd frontend && npm run build
 
-# 3) 类型检查（建议先 build 一次，或清理陈旧 .next）
-cd frontend && pnpm run build && pnpm run type-check
+# 3) 类型检查（不依赖 .next/types）
+cd frontend && npm run type-check
 
 # 4) 静态：旅程路由 helper
 cd frontend && pnpm exec vitest run src/lib/ui/routeJump.test.ts
@@ -1581,17 +1596,16 @@ rg 'bottom-0|md:right-0' frontend/src/components/ui/Drawer.tsx
 
 #### Known Gaps（如实）
 
-1. **`pnpm build` 失败**：`/agent-wallet` 需像 `/chain-proof`、`/review` 一样拆 `Suspense` 边界，否则 Epic 11「frontend build」验收无法通过。  
-2. **Chain Proof 首屏证据**：仍显示 signer 地址与 object 短 id，与 `docs/design`「L2 默认隐藏」不完全一致。  
-3. **移动端/桌面布局**：仅有 CSS 响应式类，**无**自动化截图或 Playwright 回归。  
-4. **Landing `/` 与 legacy `/dashboard`**：仍为浅色 SaaS 风格，不在 Epic 10 MVP 七页清单内，但未统一黑金 product 主题。
+1. **Chain Proof 首屏证据**：仍显示 signer 地址与 object 短 id，与 `docs/design`「L2 默认隐藏」不完全一致。  
+2. **移动端/桌面布局**：仅有 CSS 响应式类，**无**自动化截图或 Playwright 回归。  
+3. **Landing `/` 与 legacy `/dashboard`**：仍为浅色 SaaS 风格，不在 Epic 10 MVP 七页清单内，但未统一黑金 product 主题。
 
 #### Verdict
 
 | 层级 | 结论 |
 |------|------|
 | 共享交互代码与旅程路由 | ✅ 已交付且 vitest 通过 |
-| Next.js 生产构建 | ❌ 未通过（agent-wallet Suspense） |
+| Next.js 生产构建 | ✅ 已通过 |
 | 设计对齐（首屏证据 / 双端布局） | ⚠️ 部分满足；需手测与 Chain Proof 披露修补 |
 | Epic 10 完整闭环 | ⚠️ **部分完成** — 可合并代码，但不宜标为全绿验收 |
 
@@ -1609,6 +1623,7 @@ _待补充：端到端 demo 脚本、Battle Case 回归、MVP 验收清单逐项
 
 | 日期 | 变更 |
 |------|------|
+| 2026-06-17 | **Epic 1-10 自动化复验 + 验证链路修复**：复跑 Move/backend/frontend/monitor/websocket/DB 关键验证；修复 `verify_db.py` 未校验 `006` 新列的问题，现覆盖 `merkle_roots.root_type/start_fact_id/end_fact_id`；修复 frontend `type-check` 依赖 `.next/types`/增量缓存导致的假失败，新增独立 `tsconfig.typecheck.json`；`npm run build` 与 `npm run type-check` 均通过。未覆盖项仍为钱包/浏览器 E2E、真实 testnet PTB、Walrus、50 笔训练闭环等 |
 | 2026-06-17 | **Supabase DB 落地复验**：真实网络下确认 `db.dpezgzzvbpemlgxdogue.supabase.co:5432/postgres` DNS/TCP/SQL 可达；根因是数据库停在 `002_panda_subscribed_pools` 且 public 仅 7 张表；执行 `python -m alembic upgrade head` 至 `006_trust_merkle_columns (head)`；`python scripts/verify_db.py` 通过 31 张表 + 8 个关键索引；§1 与 §3.0 更新为 ✅ |
 | 2026-06-17 | **Epic 0 补全**：术语审计 + legacy 产品文案重命名；`api-specification.md` v3.1 端点表（22 条）；`spec.md` §8 REST 映射；确认 `PandaActor`→`TradeFactWriter` 热路径；§3.0 checklist 全绿（DB 落地仍 ⏸） |
 | 2026-06-17 | **Epic 9 自动验证**：pytest Merkle 16/16、`sui move test` 27/27、Alembic head=`006_trust_merkle_columns`、前端 `pnpm type-check` ✅；`alembic current` Timeout、`006` 未落地、真实链上 PTB/Walrus 上传/E2E 50 笔/浏览器 smoke ⏸；§3.9 完整记录；判定 **⚠️ 部分验证** |

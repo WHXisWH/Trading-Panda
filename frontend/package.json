@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit",
+    "type-check": "tsc --noEmit --incremental false -p tsconfig.typecheck.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "panda:rig:estimate": "node scripts/estimate-experience-rig.mjs",

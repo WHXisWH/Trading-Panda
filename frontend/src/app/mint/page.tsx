@@ -75,46 +75,51 @@ export default function MintPage() {
   const showRevealed = isSuccess && revealedStats;
 
   return (
-    <ProductPageShell density="low" className="!py-4 md:!py-6">
-      <div className="mint-ritual-screen mx-auto w-full max-w-4xl">
-        {existingPandas && existingPandas.length > 0 && effectiveStatus === "connecting" && jwt && (
-          <div className="product-chip rounded-2xl px-4 py-2.5 text-[11px]">
-            You already have {existingPandas.length} Panda
-            {existingPandas.length > 1 ? "s" : ""}.{" "}
-            <Link
-              href={`/agent-wallet?panda=${existingPandas[0].id}`}
-              className="text-product-green underline"
-            >
-              Continue Agent Wallet setup
-            </Link>
+    <ProductPageShell density="low" fitViewport className="!py-0">
+      <div className="mint-ritual-screen mx-auto h-full w-full max-w-4xl">
+        <div className="mint-ritual-cluster">
+          <div className="mint-hero-row">
+            {existingPandas && existingPandas.length > 0 && effectiveStatus === "connecting" && jwt && (
+              <div className="product-chip rounded-2xl px-3 py-1.5 text-[10px]">
+                You already have {existingPandas.length} Panda
+                {existingPandas.length > 1 ? "s" : ""}.{" "}
+                <Link
+                  href={`/agent-wallet?panda=${existingPandas[0].id}`}
+                  className="text-product-green underline"
+                >
+                  Continue Agent Wallet setup
+                </Link>
+              </div>
+            )}
+
+            <MintHeroCopy
+              subtitle={
+                effectiveStatus === "connecting"
+                  ? "Connect your Sui wallet to mint a unique on-chain agent identity."
+                  : isPendingChain
+                    ? "Transaction pending — your Panda personality is being sealed on-chain."
+                    : undefined
+              }
+            />
           </div>
-        )}
 
-        <MintHeroCopy
-          subtitle={
-            effectiveStatus === "connecting"
-              ? "Connect your Sui wallet to mint a unique on-chain agent identity."
-              : isPendingChain
-                ? "Transaction pending — your Panda personality is being sealed on-chain."
-                : undefined
-          }
-        />
+          <div className="mint-stage-slot">
+            <PandaStageHalo dimmed={showStageDimmed} revealed={!!showRevealed}>
+              <PandaCarouselStage
+                activeStats={showRevealed ? revealedStats : null}
+                paused={isSuccess}
+                slowed={isPendingChain}
+              />
+            </PandaStageHalo>
+          </div>
 
-        <PandaStageHalo dimmed={showStageDimmed} revealed={!!showRevealed}>
-          <PandaCarouselStage
-            activeStats={showRevealed ? revealedStats : null}
-            paused={isSuccess}
-            slowed={isPendingChain}
-          />
-        </PandaStageHalo>
-
-        <div className="mint-action-zone flex w-full max-w-sm flex-col items-center gap-4">
+          <div className="mint-action-zone">
           {effectiveStatus === "connecting" && (
             <>
-              <Button size="lg" className="min-w-[240px]" onClick={() => setConnectOpen(true)}>
+              <Button size="lg" className="min-w-[220px]" onClick={() => setConnectOpen(true)}>
                 Connect Wallet
               </Button>
-              <GasFeeHint muted />
+              <GasFeeHint muted compact />
             </>
           )}
 
@@ -123,22 +128,22 @@ export default function MintPage() {
               {pendingRegistration && effectiveStatus === "error" ? (
                 <Button
                   size="lg"
-                  className="min-w-[240px]"
+                  className="min-w-[220px]"
                   onClick={() => void handleRetryRegistration()}
                 >
                   Retry backend sync
                 </Button>
               ) : (
-                <Button size="lg" className="min-w-[240px]" onClick={openSignModal}>
+                <Button size="lg" className="min-w-[220px]" onClick={openSignModal}>
                   Mint Panda NFT
                 </Button>
               )}
-              <GasFeeHint />
+              <GasFeeHint compact />
             </>
           )}
 
           {isPendingChain && (
-            <Button size="lg" loading disabled className="min-w-[240px]">
+            <Button size="lg" loading disabled className="min-w-[220px]">
               {effectiveStatus === "signing"
                 ? "Awaiting signature…"
                 : effectiveStatus === "registering"
@@ -148,10 +153,10 @@ export default function MintPage() {
           )}
 
           {effectiveStatus === "error" && errorMessage && (
-            <div className="max-w-sm space-y-3 text-center">
-              <p className="text-[13px] text-product-red">{errorMessage}</p>
+            <div className="max-w-sm space-y-2 text-center">
+              <p className="text-[12px] leading-snug text-product-red">{errorMessage}</p>
               {errorKind === "insufficient_gas" && (
-                <p className="text-[11px] text-product-muted">
+                <p className="text-[10px] text-product-muted">
                   <a
                     href="https://faucet.testnet.sui.io/"
                     target="_blank"
@@ -163,11 +168,11 @@ export default function MintPage() {
                 </p>
               )}
               {pendingRegistration ? (
-                <Button size="lg" onClick={() => void handleRetryRegistration()}>
+                <Button size="md" onClick={() => void handleRetryRegistration()}>
                   Retry backend sync
                 </Button>
               ) : (
-                <Button size="lg" variant="outline" onClick={reset}>
+                <Button size="md" variant="outline" onClick={reset}>
                   Try again
                 </Button>
               )}
@@ -175,17 +180,16 @@ export default function MintPage() {
           )}
 
           {isSuccess && result && (
-            <div className="flex w-full flex-col items-center gap-3">
-              <p className="text-center text-[13px] text-[#c6c8b9]">
-                Your Panda identity is ready. Set up an Agent Wallet to grant bounded training
-                permissions.
+            <div className="flex w-full flex-col items-center gap-2">
+              <p className="max-w-sm text-center text-[12px] leading-snug text-[#c6c8b9]">
+                Identity ready. Set up an Agent Wallet for bounded training permissions.
               </p>
               <Link href={agentWalletSetupPath(result.pandaId)}>
-                <Button size="lg" className="min-w-[240px]">
+                <Button size="lg" className="min-w-[220px]">
                   Create Agent Wallet
                 </Button>
               </Link>
-              <div className="flex flex-wrap justify-center gap-2">
+              <div className="flex flex-wrap justify-center gap-1.5">
                 <Button size="sm" variant="ghost" onClick={() => setDetailsOpen(true)}>
                   View mint details
                 </Button>
@@ -195,6 +199,7 @@ export default function MintPage() {
               </div>
             </div>
           )}
+        </div>
         </div>
       </div>
 

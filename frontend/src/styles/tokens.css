@@ -130,14 +130,15 @@
 
   /* ========== Layout ========== */
   --navbar-height: 72px;
+  --mint-chrome-offset: calc(var(--navbar-height) + 1.25rem);
   --page-max-width: 1440px;
   --page-mint-max-width: 800px;
   --sidebar-width: 220px;
   --panda-avatar-dashboard: 80px;
-  --panda-avatar-mint: 210px;
-  --mint-stage-size: min(460px, 72vw);
-  --mint-stage-size-mobile: min(300px, 76vw);
-  --mint-panda-size: min(210px, 46vw);
-  --mint-panda-size-mobile: min(150px, 50vw);
+  --panda-avatar-mint: min(230px, 21dvh, 48vw);
+  --mint-stage-size: min(520px, 48dvh, 78vw);
+  --mint-stage-size-mobile: min(320px, 42dvh, 82vw);
+  --mint-panda-size: min(230px, 21dvh, 48vw);
+  --mint-panda-size-mobile: min(160px, 17dvh, 54vw);
   --panda-avatar-card: 80px;
 }

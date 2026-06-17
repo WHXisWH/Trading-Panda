@@ -2,9 +2,23 @@ import { clsx } from "clsx";
 
 interface GasFeeHintProps {
   muted?: boolean;
+  compact?: boolean;
 }
 
-export function GasFeeHint({ muted = false }: GasFeeHintProps) {
+export function GasFeeHint({ muted = false, compact = false }: GasFeeHintProps) {
+  if (compact) {
+    return (
+      <p
+        className={clsx(
+          "font-mono text-[10px] tracking-wide",
+          muted ? "text-product-muted/80" : "text-product-muted",
+        )}
+      >
+        ~0.01 SUI · Sui Testnet
+      </p>
+    );
+  }
+
   return (
     <div
       className={clsx(

@@ -62,6 +62,14 @@ V31_INDEXES = (
     "idx_chain_execution_logs_idempotency",
 )
 
+REQUIRED_COLUMNS = {
+    "merkle_roots": (
+        "root_type",
+        "start_fact_id",
+        "end_fact_id",
+    ),
+}
+
 
 async def _table_exists(conn, name: str) -> bool:
     result = await conn.execute(
@@ -85,6 +93,21 @@ async def _index_exists(conn, name: str) -> bool:
             ")"
         ),
         {"name": name},
+    )
+    return bool(result.scalar())
+
+
+async def _column_exists(conn, table: str, column: str) -> bool:
+    result = await conn.execute(
+        text(
+            "SELECT EXISTS ("
+            "  SELECT 1 FROM information_schema.columns "
+            "  WHERE table_schema = 'public' "
+            "    AND table_name = :table_name "
+            "    AND column_name = :column_name"
+            ")"
+        ),
+        {"table_name": table, "column_name": column},
     )
     return bool(result.scalar())
 
@@ -114,6 +137,14 @@ async def main() -> int:
                 print(f"index {index}: {status}")
                 if not exists:
                     return 3
+
+            for table, columns in REQUIRED_COLUMNS.items():
+                for column in columns:
+                    exists = await _column_exists(conn, table, column)
+                    status = "ok" if exists else "MISSING"
+                    print(f"column {table}.{column}: {status}")
+                    if not exists:
+                        return 4
 
             rev = await conn.execute(
                 text("SELECT version_num FROM alembic_version LIMIT 1")
