@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect } from "react";
 import { AgentWalletDetailsDrawer } from "@/components/agent-wallet/AgentWalletDetailsDrawer";
 import { AgentWalletPageSkeleton } from "@/components/agent-wallet/AgentWalletPageSkeleton";
@@ -10,7 +9,6 @@ import { PolicyCollarEditor } from "@/components/agent-wallet/PolicyCollarEditor
 import { PolicyPreviewSummary } from "@/components/agent-wallet/PolicyPreviewSummary";
 import { WalletSignatureModal } from "@/components/mint/WalletSignatureModal";
 import { DisclosureL0, DisclosureL1 } from "@/lib/ui/disclosure";
-import { safetyPath, strategyPath, trainingLedgerPath } from "@/lib/ui/routeJump";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useAgentWallet } from "@/hooks/useAgentWallet";
@@ -94,7 +92,11 @@ export function AgentWalletPageContent({ jwt, panda }: AgentWalletPageProps) {
       ) : null}
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
-        <PandaPermissionCard panda={panda} status={wallet.status} />
+        <PandaPermissionCard
+          panda={panda}
+          status={wallet.status}
+          onViewObjects={() => wallet.setDetailsOpen(true)}
+        />
 
         <Card className="space-y-6 p-5 md:p-6">
           {isReady ? (
@@ -116,24 +118,6 @@ export function AgentWalletPageContent({ jwt, panda }: AgentWalletPageProps) {
                   onClick={() => wallet.saveTrainingBudget()}
                 >
                   Update training budget
-                </Button>
-                <Link href={strategyPath(panda.id)}>
-                  <Button size="lg" variant="outline">
-                    Feed strategy
-                  </Button>
-                </Link>
-                <Link href={trainingLedgerPath(panda.id)}>
-                  <Button size="lg" variant="outline">
-                    Training Ledger
-                  </Button>
-                </Link>
-                <Link href={safetyPath(panda.id)}>
-                  <Button size="sm" variant="ghost">
-                    Safety
-                  </Button>
-                </Link>
-                <Button size="lg" variant="outline" onClick={() => wallet.setDetailsOpen(true)}>
-                  View objects
                 </Button>
               </div>
             </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useCurrentAccount, useSignAndExecuteTransaction } from "@mysten/dapp-kit";
 import {
   fetchAgentWalletStatus,
@@ -18,6 +19,7 @@ import {
   toastSuccess,
   toastSyncing,
 } from "@/lib/ui/productToast";
+import { trainingLedgerPath } from "@/lib/ui/routeJump";
 import { useZkLoginWallet } from "@/hooks/useZkLoginWallet";
 import {
   DEFAULT_POLICY_DRAFT,
@@ -29,6 +31,7 @@ export type AgentWalletStep = "draft" | "review" | "signing" | "active" | "ready
 export type SetupPhase = "idle" | "preparing" | "awaiting_wallet" | "syncing";
 
 export function useAgentWallet(jwt: string | null, pandaId: string | null, pandaSuiObjectId: string | null) {
+  const router = useRouter();
   const account = useCurrentAccount();
   const zkLoginWallet = useZkLoginWallet();
   const signAndExecute = useSignAndExecuteTransaction() as {
@@ -193,6 +196,9 @@ export function useAgentWallet(jwt: string | null, pandaId: string | null, panda
       setStep(synced.setup_state === "ready" ? "ready" : "active");
       setToast("Agent Wallet active");
       toastSuccess("Agent Wallet active");
+      if (synced.setup_state === "ready") {
+        router.push(trainingLedgerPath(pandaId, { feedStrategy: true }));
+      }
     } catch (err) {
       const parsed = parseMintError(err);
 
@@ -228,6 +234,7 @@ export function useAgentWallet(jwt: string | null, pandaId: string | null, panda
     pandaId,
     pandaSuiObjectId,
     signAndExecute,
+    router,
     zkLoginWallet,
   ]);
 
@@ -242,6 +249,9 @@ export function useAgentWallet(jwt: string | null, pandaId: string | null, panda
       setStep(synced.setup_state === "ready" ? "ready" : "active");
       setToast("Mirror synced");
       toastSuccess("Mirror synced");
+      if (synced.setup_state === "ready") {
+        router.push(trainingLedgerPath(pandaId, { feedStrategy: true }));
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Sync failed";
       setErrorMessage(message);
@@ -249,7 +259,7 @@ export function useAgentWallet(jwt: string | null, pandaId: string | null, panda
     } finally {
       setSetupPhase("idle");
     }
-  }, [draft, jwt, pandaId, txDigest]);
+  }, [draft, jwt, pandaId, router, txDigest]);
 
   const saveTrainingBudget = useCallback(async () => {
     if (!jwt || !pandaId) return;

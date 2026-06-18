@@ -25,6 +25,8 @@ import { tradesToChartMarkers } from "@/lib/chart/tradeMarkers";
 import type { TradeRecordApi } from "@/types/trading";
 import type { CandlesResponse, MarketInterval, MarketTickPayload, WsConnectionStatus } from "@/types/ws";
 
+type ChartVariant = "light" | "product";
+
 interface Props {
   pool: DeepbookPool;
   interval?: MarketInterval;
@@ -40,7 +42,49 @@ interface Props {
   onRefresh?: () => void;
   trades?: TradeRecordApi[];
   className?: string;
+  variant?: ChartVariant;
 }
+
+const CHART_THEMES: Record<
+  ChartVariant,
+  {
+    layout: { background: string; textColor: string };
+    grid: { vertLines: string; horzLines: string };
+    borderColor: string;
+    crosshair: { vertLine: string; horzLine: string };
+    upColor: string;
+    downColor: string;
+    volumeUp: string;
+    volumeDown: string;
+  }
+> = {
+  light: {
+    layout: { background: "#ffffff", textColor: "#777" },
+    grid: { vertLines: "rgba(237, 232, 220, 0.75)", horzLines: "rgba(237, 232, 220, 0.75)" },
+    borderColor: "#ede8dc",
+    crosshair: {
+      vertLine: "rgba(45, 90, 61, 0.35)",
+      horzLine: "rgba(45, 90, 61, 0.25)",
+    },
+    upColor: "#2d5a3d",
+    downColor: "#c23a3a",
+    volumeUp: "rgba(45, 90, 61, 0.35)",
+    volumeDown: "rgba(194, 58, 58, 0.35)",
+  },
+  product: {
+    layout: { background: "#0a0c0a", textColor: "#8a9a8a" },
+    grid: { vertLines: "rgba(225, 186, 92, 0.08)", horzLines: "rgba(225, 186, 92, 0.08)" },
+    borderColor: "rgba(225, 186, 92, 0.15)",
+    crosshair: {
+      vertLine: "rgba(109, 255, 144, 0.35)",
+      horzLine: "rgba(109, 255, 144, 0.25)",
+    },
+    upColor: "#6dff90",
+    downColor: "#ff6b6b",
+    volumeUp: "rgba(109, 255, 144, 0.28)",
+    volumeDown: "rgba(255, 107, 107, 0.28)",
+  },
+};
 
 const INTERVALS: MarketInterval[] = ["1m", "5m", "15m"];
 
@@ -167,11 +211,25 @@ function statusLabel(status: WsConnectionStatus | undefined): string {
   return "WSS 未连接";
 }
 
-function statusClass(status: WsConnectionStatus | undefined): string {
-  if (status === "open") return "bg-primary-50 text-primary-600";
-  if (status === "connecting") return "bg-[var(--color-warning-bg)] text-neutral-900";
-  if (status === "error") return "bg-[var(--color-seal-bg)] text-loss";
-  return "bg-neutral-100 text-neutral-500";
+function statusClass(status: WsConnectionStatus | undefined, isProduct: boolean): string {
+  if (status === "open") {
+    return isProduct
+      ? "border border-product-green/30 bg-product-green/10 text-product-green"
+      : "bg-primary-50 text-primary-600";
+  }
+  if (status === "connecting") {
+    return isProduct
+      ? "border border-product-amber/30 bg-product-amber/10 text-product-amber"
+      : "bg-[var(--color-warning-bg)] text-neutral-900";
+  }
+  if (status === "error") {
+    return isProduct
+      ? "border border-product-red/30 bg-product-red/10 text-product-red"
+      : "bg-[var(--color-seal-bg)] text-loss";
+  }
+  return isProduct
+    ? "border border-product-line bg-product-panel-soft text-product-muted"
+    : "bg-neutral-100 text-neutral-500";
 }
 
 function isCandlestickData(data: unknown): data is CandlestickData {
@@ -199,7 +257,10 @@ export function CandlestickChart({
   onRefresh,
   trades = [],
   className,
+  variant = "light",
 }: Props) {
+  const isProduct = variant === "product";
+  const theme = CHART_THEMES[variant];
   const poolOptions = availablePools.length > 0 ? availablePools : [...DEEPBOOK_MVP_POOLS];
   const canSwitchPools = onPoolChange != null && poolOptions.length > 1;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -251,23 +312,23 @@ export function CandlestickChart({
     }
     const chart = createChart(containerRef.current, {
       layout: {
-        background: { type: ColorType.Solid, color: "#ffffff" },
-        textColor: "#777",
+        background: { type: ColorType.Solid, color: theme.layout.background },
+        textColor: theme.layout.textColor,
       },
       crosshair: {
         mode: CrosshairMode.Normal,
-        vertLine: { color: "rgba(45, 90, 61, 0.35)", style: LineStyle.Dashed },
-        horzLine: { color: "rgba(45, 90, 61, 0.25)", style: LineStyle.Dashed },
+        vertLine: { color: theme.crosshair.vertLine, style: LineStyle.Dashed },
+        horzLine: { color: theme.crosshair.horzLine, style: LineStyle.Dashed },
       },
       grid: {
-        vertLines: { color: "rgba(237, 232, 220, 0.75)" },
-        horzLines: { color: "rgba(237, 232, 220, 0.75)" },
+        vertLines: { color: theme.grid.vertLines },
+        horzLines: { color: theme.grid.horzLines },
       },
       rightPriceScale: {
-        borderColor: "#ede8dc",
+        borderColor: theme.borderColor,
       },
       timeScale: {
-        borderColor: "#ede8dc",
+        borderColor: theme.borderColor,
         timeVisible: true,
         secondsVisible: false,
       },
@@ -276,11 +337,11 @@ export function CandlestickChart({
     });
 
     const candleSeries = chart.addCandlestickSeries({
-      upColor: "#2d5a3d",
-      downColor: "#c23a3a",
+      upColor: theme.upColor,
+      downColor: theme.downColor,
       borderVisible: false,
-      wickUpColor: "#2d5a3d",
-      wickDownColor: "#c23a3a",
+      wickUpColor: theme.upColor,
+      wickDownColor: theme.downColor,
     });
     candleSeries.priceScale().applyOptions({
       scaleMargins: { top: 0.08, bottom: 0.28 },
@@ -364,7 +425,7 @@ export function CandlestickChart({
       maFastRef.current = null;
       maSlowRef.current = null;
     };
-  }, []);
+  }, [theme]);
 
   useEffect(() => {
     if (!seriesRef.current || !volumeRef.current) {
@@ -400,15 +461,12 @@ export function CandlestickChart({
     volumeRef.current.update({
       time,
       value: candle.volume,
-      color:
-        candle.close >= candle.open
-          ? "rgba(45, 90, 61, 0.35)"
-          : "rgba(194, 58, 58, 0.35)",
+      color: candle.close >= candle.open ? theme.volumeUp : theme.volumeDown,
     });
     if (followRealtime) {
       chartRef.current?.timeScale().scrollToRealTime();
     }
-  }, [lastTick]);
+  }, [lastTick, theme]);
 
   useEffect(() => {
     if (!seriesRef.current) {
@@ -453,8 +511,23 @@ export function CandlestickChart({
   const showOverlay = historyLoading || historyError || !hasCandles;
 
   return (
-    <section className={clsx("flex min-w-0 max-w-full flex-col overflow-hidden rounded-lg border border-[var(--color-border)] bg-white", className)}>
-      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-[var(--color-border)] bg-neutral-100 px-3 py-2">
+    <section
+      className={clsx(
+        "flex min-w-0 max-w-full flex-col overflow-hidden",
+        isProduct
+          ? "bg-transparent"
+          : "rounded-lg border border-[var(--color-border)] bg-white",
+        className,
+      )}
+    >
+      <div
+        className={clsx(
+          "flex min-w-0 flex-wrap items-center justify-between gap-3 px-3 py-2",
+          isProduct
+            ? "border-b border-product-line/60"
+            : "border-b border-[var(--color-border)] bg-neutral-100",
+        )}
+      >
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           <div className="flex items-center gap-2">
             {canSwitchPools ? (
@@ -467,105 +540,156 @@ export function CandlestickChart({
                 options={poolOptions.map((p) => ({ value: p, label: p }))}
               />
             ) : (
-              <span className="font-mono text-sm font-medium text-neutral-900">{pool}</span>
+              <span
+                className={clsx(
+                  "font-mono text-sm font-medium",
+                  isProduct ? "text-product-gold" : "text-neutral-900",
+                )}
+              >
+                {pool}
+              </span>
             )}
-            <span className={clsx("rounded px-2 py-1 text-[10px]", statusClass(marketStatus))}>
+            <span className={clsx("rounded px-2 py-1 text-[10px]", statusClass(marketStatus, isProduct))}>
               {statusLabel(marketStatus)}
             </span>
           </div>
-          <span className="font-mono text-[24px] font-bold leading-none text-neutral-900">
+          <span
+            className={clsx(
+              "font-mono text-[24px] font-bold leading-none",
+              isProduct ? "text-product-text" : "text-neutral-900",
+            )}
+          >
             {formatPrice(displayPrice)}
           </span>
           <span
             className={clsx(
               "text-sm font-medium",
-              isUp ? "text-profit" : "text-loss",
+              isUp
+                ? isProduct
+                  ? "text-product-green"
+                  : "text-profit"
+                : isProduct
+                  ? "text-product-red"
+                  : "text-loss",
             )}
           >
             {isUp ? "+" : ""}
             {changePct.toFixed(2)}%
           </span>
           {lastTickAgeSec != null && (
-            <span className="text-[10px] text-neutral-500">
-              tick {lastTickAgeSec}s 前
+            <span className="text-[10px] text-product-muted">
+              tick {lastTickAgeSec}s ago
             </span>
           )}
           {lastTick?.stale && (
-            <span className="rounded bg-[var(--color-warning-bg)] px-2 py-0.5 text-[10px] text-neutral-900">
-              行情延迟
+            <span
+              className={clsx(
+                "rounded px-2 py-0.5 text-[10px]",
+                isProduct
+                  ? "border border-product-amber/30 bg-product-amber/10 text-product-amber"
+                  : "bg-[var(--color-warning-bg)] text-neutral-900",
+              )}
+            >
+              Stale tick
             </span>
           )}
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
-          <div className="flex overflow-hidden rounded border border-[var(--color-border)] bg-white">
+          <div
+            className={clsx(
+              "flex overflow-hidden rounded-full",
+              isProduct ? "gap-1" : "rounded border border-[var(--color-border)] bg-white",
+            )}
+          >
             {INTERVALS.map((item) => (
               <button
                 key={item}
                 type="button"
                 onClick={() => onIntervalChange?.(item)}
                 className={clsx(
-                  "h-8 px-2.5 font-mono text-[11px]",
-                  item === interval
-                    ? "bg-primary-500 text-white"
-                    : "text-neutral-500 hover:bg-primary-50",
+                  isProduct
+                    ? clsx(
+                        "product-toggle-chip !px-2.5 !py-1.5 !text-[10px]",
+                        item === interval && "product-toggle-chip-active",
+                      )
+                    : clsx(
+                        "h-8 px-2.5 font-mono text-[11px]",
+                        item === interval
+                          ? "bg-primary-500 text-white"
+                          : "text-neutral-500 hover:bg-primary-50",
+                      ),
                 )}
               >
                 {item}
               </button>
             ))}
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              chartRef.current?.timeScale().fitContent();
-            }}
-            className="h-8 rounded border border-[var(--color-border)] bg-white px-2 text-[11px] text-ink-600 hover:bg-primary-50"
+          <ChartToolButton
+            isProduct={isProduct}
+            onClick={() => chartRef.current?.timeScale().fitContent()}
           >
-            适配
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowMa((v) => !v)}
-            className={clsx(
-              "h-8 rounded border px-2 text-[11px]",
-              showMa
-                ? "border-primary-500 bg-primary-50 text-primary-600"
-                : "border-[var(--color-border)] bg-white text-neutral-500 hover:bg-primary-50",
-            )}
-          >
+            Fit
+          </ChartToolButton>
+          <ChartToolButton isProduct={isProduct} active={showMa} onClick={() => setShowMa((v) => !v)}>
             MA
-          </button>
-          <button
-            type="button"
+          </ChartToolButton>
+          <ChartToolButton
+            isProduct={isProduct}
+            active={followRealtime}
             onClick={() => setFollowRealtime((v) => !v)}
-            className={clsx(
-              "h-8 rounded border px-2 text-[11px]",
-              followRealtime
-                ? "border-primary-500 bg-primary-50 text-primary-600"
-                : "border-[var(--color-border)] bg-white text-neutral-500 hover:bg-primary-50",
-            )}
           >
-            实时
-          </button>
-          <button
-            type="button"
+            Live
+          </ChartToolButton>
+          <ChartToolButton
+            isProduct={isProduct}
             onClick={onRefresh}
             disabled={historyLoading}
-            className="h-8 rounded border border-[var(--color-border)] bg-white px-2 text-[11px] text-ink-600 hover:bg-primary-50 disabled:opacity-50"
           >
-            刷新
-          </button>
+            Refresh
+          </ChartToolButton>
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-[var(--color-border)] px-3 py-2 text-[11px] text-neutral-500">
-        <span>{visibleCandle?.time ?? "等待数据"}</span>
-        <span>O <b className="font-mono text-neutral-900">{formatPrice(visibleCandle?.open)}</b></span>
-        <span>H <b className="font-mono text-profit">{formatPrice(visibleCandle?.high)}</b></span>
-        <span>L <b className="font-mono text-loss">{formatPrice(visibleCandle?.low)}</b></span>
-        <span>C <b className="font-mono text-neutral-900">{formatPrice(visibleCandle?.close)}</b></span>
-        <span>V <b className="font-mono text-neutral-900">{formatVolume(visibleCandle?.volume)}</b></span>
+      <div
+        className={clsx(
+          "flex flex-wrap items-center gap-x-4 gap-y-1 border-b px-3 py-2 text-[11px]",
+          isProduct
+            ? "border-product-line/60 text-product-muted"
+            : "border-[var(--color-border)] text-neutral-500",
+        )}
+      >
+        <span>{visibleCandle?.time ?? "Waiting for data"}</span>
+        <span>
+          O{" "}
+          <b className={clsx("font-mono", isProduct ? "text-product-text" : "text-neutral-900")}>
+            {formatPrice(visibleCandle?.open)}
+          </b>
+        </span>
+        <span>
+          H{" "}
+          <b className={clsx("font-mono", isProduct ? "text-product-green" : "text-profit")}>
+            {formatPrice(visibleCandle?.high)}
+          </b>
+        </span>
+        <span>
+          L{" "}
+          <b className={clsx("font-mono", isProduct ? "text-product-red" : "text-loss")}>
+            {formatPrice(visibleCandle?.low)}
+          </b>
+        </span>
+        <span>
+          C{" "}
+          <b className={clsx("font-mono", isProduct ? "text-product-text" : "text-neutral-900")}>
+            {formatPrice(visibleCandle?.close)}
+          </b>
+        </span>
+        <span>
+          V{" "}
+          <b className={clsx("font-mono", isProduct ? "text-product-text" : "text-neutral-900")}>
+            {formatVolume(visibleCandle?.volume)}
+          </b>
+        </span>
         {showMa && maLegend && (
           <>
             <span style={{ color: MA_FAST_COLOR }}>
@@ -582,21 +706,38 @@ export function CandlestickChart({
       <div className="relative min-h-[360px] md:min-h-[440px] xl:min-h-[52dvh]">
         <div ref={containerRef} className="absolute inset-0 min-w-0 max-w-full" />
         {showOverlay && (
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-white/70 px-4">
-            <div className="max-w-sm rounded-lg border border-[var(--color-border)] bg-white/95 px-4 py-3 text-center shadow-sm">
-              <p className="text-sm font-semibold text-ink-800">
+          <div
+            className={clsx(
+              "pointer-events-none absolute inset-0 flex items-center justify-center px-4",
+              isProduct ? "bg-black/50" : "bg-white/70",
+            )}
+          >
+            <div
+              className={clsx(
+                "max-w-sm rounded-xl px-4 py-3 text-center shadow-sm",
+                isProduct
+                  ? "border border-product-line bg-product-panel"
+                  : "rounded-lg border border-[var(--color-border)] bg-white/95",
+              )}
+            >
+              <p
+                className={clsx(
+                  "text-sm font-semibold",
+                  isProduct ? "text-product-text" : "text-ink-800",
+                )}
+              >
                 {historyLoading
-                  ? "正在加载 K 线"
+                  ? "Loading candles"
                   : historyError
-                    ? "K 线数据不可用"
-                    : "等待 DeepBook K 线"}
+                    ? "Candle data unavailable"
+                    : "Waiting for DeepBook candles"}
               </p>
-              <p className="mt-1 text-[11px] leading-5 text-neutral-500">
+              <p className="mt-1 text-[11px] leading-5 text-product-muted">
                 {historyLoading
-                  ? "正在从 market-monitor 拉取历史 candles。"
+                  ? "Pulling historical candles from market-monitor."
                   : historyError
                     ? historyError
-                    : "需要 market-monitor 连接 DeepBook 并提供 candles；有实时 tick 后图表会继续更新。"}
+                    : "Market-monitor must publish candles; live ticks will update the chart."}
               </p>
             </div>
           </div>
@@ -604,11 +745,69 @@ export function CandlestickChart({
       </div>
 
       {(historyError || trades.length > 0) && (
-        <div className="flex flex-wrap items-center gap-3 border-t border-[var(--color-border)] px-3 py-2 text-[10px] text-neutral-500">
-          {historyError && <span className="text-loss">REST candles: error</span>}
-          {trades.length > 0 && <span>K 线标记：{trades.length} 笔 Panda 成交</span>}
+        <div
+          className={clsx(
+            "flex flex-wrap items-center gap-3 border-t px-3 py-2 text-[10px]",
+            isProduct
+              ? "border-product-line/60 text-product-muted"
+              : "border-[var(--color-border)] text-neutral-500",
+          )}
+        >
+          {historyError && (
+            <span className={isProduct ? "text-product-red" : "text-loss"}>
+              REST candles: error
+            </span>
+          )}
+          {trades.length > 0 && <span>Chart markers: {trades.length} Panda trades</span>}
         </div>
       )}
     </section>
+  );
+}
+
+function ChartToolButton({
+  isProduct,
+  active,
+  disabled,
+  onClick,
+  children,
+}: {
+  isProduct: boolean;
+  active?: boolean;
+  disabled?: boolean;
+  onClick?: () => void;
+  children: React.ReactNode;
+}) {
+  if (isProduct) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        className={clsx(
+          "product-toggle-chip !px-2.5 !py-1.5 !text-[10px]",
+          active && "product-toggle-chip-active",
+          disabled && "opacity-50",
+        )}
+      >
+        {children}
+      </button>
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={clsx(
+        "h-8 rounded border px-2 text-[11px]",
+        active
+          ? "border-primary-500 bg-primary-50 text-primary-600"
+          : "border-[var(--color-border)] bg-white text-neutral-500 hover:bg-primary-50",
+        disabled && "opacity-50",
+      )}
+    >
+      {children}
+    </button>
   );
 }

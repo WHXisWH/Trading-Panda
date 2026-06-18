@@ -10,12 +10,12 @@ interface Props {
 }
 
 const EMOTION_LABELS: Record<string, string> = {
-  focused: "专注",
-  excited: "兴奋",
-  greedy: "贪婪",
-  cautious: "谨慎",
-  panicking: "恐慌",
-  numb: "麻木",
+  focused: "Focused",
+  excited: "Excited",
+  greedy: "Greedy",
+  cautious: "Cautious",
+  panicking: "Panicking",
+  numb: "Numb",
 };
 
 export function PandaAgentStatus({ emotion, lastIntent, skillVersion = 0 }: Props) {
@@ -24,33 +24,42 @@ export function PandaAgentStatus({ emotion, lastIntent, skillVersion = 0 }: Prop
   const intentStatus = lastIntent?.status ?? "—";
 
   return (
-    <div className="rounded-xl border border-[var(--color-border)] bg-white p-4">
-      <h3 className="text-sm font-bold text-neutral-900">Panda Agent</h3>
-      <dl className="mt-3 space-y-2 text-[12px]">
-        <div className="flex justify-between">
-          <dt className="text-neutral-500">Mood</dt>
-          <dd className="font-medium">{mood}</dd>
-        </div>
-        <div className="flex justify-between">
-          <dt className="text-neutral-500">Skill version</dt>
-          <dd>{skillVersion}</dd>
-        </div>
-        <div className="flex justify-between">
-          <dt className="text-neutral-500">Latest intent</dt>
-          <dd className={clsx(intentSide === "HOLD" && "text-neutral-600")}>{intentSide}</dd>
-        </div>
-        <div className="flex justify-between">
-          <dt className="text-neutral-500">Intent status</dt>
-          <dd
-            className={clsx(
-              intentStatus === "EXECUTED" && "text-emerald-600",
-              intentStatus === "REJECTED" && "text-red-600",
-            )}
-          >
-            {intentStatus}
-          </dd>
-        </div>
+    <div className="product-panel p-4">
+      <p className="product-eyebrow">Panda Agent</p>
+      <dl className="mt-4 space-y-0">
+        <MetricRow label="Mood" value={mood} />
+        <MetricRow label="Skill version" value={String(skillVersion)} />
+        <MetricRow
+          label="Latest intent"
+          value={intentSide}
+          valueClass={intentSide === "HOLD" ? "text-product-muted" : "text-product-gold"}
+        />
+        <MetricRow
+          label="Intent status"
+          value={intentStatus}
+          valueClass={clsx(
+            intentStatus === "EXECUTED" && "text-product-green",
+            intentStatus === "REJECTED" && "text-product-red",
+          )}
+        />
       </dl>
+    </div>
+  );
+}
+
+function MetricRow({
+  label,
+  value,
+  valueClass,
+}: {
+  label: string;
+  value: string;
+  valueClass?: string;
+}) {
+  return (
+    <div className="product-metric-row">
+      <span>{label}</span>
+      <strong className={valueClass}>{value}</strong>
     </div>
   );
 }

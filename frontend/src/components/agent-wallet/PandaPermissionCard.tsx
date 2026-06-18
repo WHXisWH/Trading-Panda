@@ -1,7 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { clsx } from "clsx";
 import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { safetyPath } from "@/lib/ui/routeJump";
 import type { AgentWalletStatusApi } from "@/types/agent-wallet";
 import type { PandaSummaryApi } from "@/types/panda";
 import { formatPaperUsd } from "@/lib/agentWallet/paperUsd";
@@ -9,6 +12,7 @@ import { formatPaperUsd } from "@/lib/agentWallet/paperUsd";
 interface PandaPermissionCardProps {
   panda: PandaSummaryApi;
   status: AgentWalletStatusApi | null;
+  onViewObjects?: () => void;
 }
 
 function truncateId(id: string | null | undefined): string {
@@ -40,11 +44,12 @@ function StatusBadge({
   );
 }
 
-export function PandaPermissionCard({ panda, status }: PandaPermissionCardProps) {
+export function PandaPermissionCard({ panda, status, onViewObjects }: PandaPermissionCardProps) {
   const vaultReady = Boolean(status?.vault?.sui_object_id);
   const policyReady = Boolean(status?.policy?.sui_object_id);
   const signerReady = Boolean(status?.authorized_agent_configured);
   const trainingBudget = status?.vault?.training_budget;
+  const hasObjects = vaultReady || policyReady;
 
   return (
     <Card className="space-y-4 p-5">
@@ -92,6 +97,26 @@ export function PandaPermissionCard({ panda, status }: PandaPermissionCardProps)
           </dd>
         </div>
       </dl>
+
+      {status?.setup_state === "ready" ? (
+        <div className="space-y-2 border-t border-product-line/40 pt-4">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="w-full"
+            disabled={!hasObjects || !onViewObjects}
+            onClick={onViewObjects}
+          >
+            View on-chain objects
+          </Button>
+          <Link href={safetyPath(panda.id)} className="block">
+            <Button type="button" size="sm" variant="ghost" className="w-full">
+              Emergency controls
+            </Button>
+          </Link>
+        </div>
+      ) : null}
     </Card>
   );
 }

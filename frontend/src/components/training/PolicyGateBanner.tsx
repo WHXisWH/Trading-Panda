@@ -13,10 +13,10 @@ export function PolicyGateBanner({ status, message }: Props) {
   }
 
   const styles = {
-    pass: "border-emerald-200 bg-emerald-50 text-emerald-800",
-    reject: "border-red-200 bg-red-50 text-red-800",
-    paused: "border-amber-200 bg-amber-50 text-amber-900",
-    stale: "border-neutral-200 bg-neutral-50 text-neutral-700",
+    pass: "border-product-green/35 bg-product-green/10 text-product-green",
+    reject: "border-product-red/45 bg-product-red/15 text-product-red",
+    paused: "border-product-amber/40 bg-product-amber/10 text-product-amber",
+    stale: "border-product-line bg-product-panel-soft text-product-muted",
   };
 
   const labels = {
@@ -27,9 +27,9 @@ export function PolicyGateBanner({ status, message }: Props) {
   };
 
   return (
-    <div className={clsx("rounded-lg border px-3 py-2 text-[12px]", styles[status])}>
-      <span className="font-semibold">{labels[status]}</span>
-      {message ? <span className="ml-2">{message}</span> : null}
+    <div className={clsx("rounded-xl border px-3 py-2.5 text-[12px]", styles[status])}>
+      <span className="font-bold">{labels[status]}</span>
+      {message ? <span className="ml-2 opacity-90">{message}</span> : null}
     </div>
   );
 }

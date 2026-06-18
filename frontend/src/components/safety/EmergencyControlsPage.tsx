@@ -2,23 +2,22 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import {
-  PausePolicyCard,
-  RevokeAgentCard,
-  TightenLimitsCard,
-} from "@/components/safety/SafetyActionCards";
 import { OwnerSignatureModal } from "@/components/safety/OwnerSignatureModal";
-import { PendingJobsWarning } from "@/components/safety/PendingJobsWarning";
+import { OwnerControlStrip } from "@/components/safety/OwnerControlStrip";
 import {
   PolicyResultPanel,
   TightenLimitsDrawer,
 } from "@/components/safety/PolicyResultPanel";
-import { RiskStatusBanner } from "@/components/safety/RiskStatusBanner";
+import { PendingJobsStrip } from "@/components/safety/PendingJobsStrip";
+import { RiskStatusHero } from "@/components/safety/RiskStatusHero";
+import { SafetyActionDeck } from "@/components/safety/SafetyActionDeck";
+import { SafetyConsequencePanel } from "@/components/safety/SafetyConsequencePanel";
+import { SafetyPageSkeleton } from "@/components/safety/SafetyPageSkeleton";
 import { DisclosureL0 } from "@/lib/ui/disclosure";
-import { agentWalletSetupPath, trainingLedgerPath } from "@/lib/ui/routeJump";
+import { agentWalletSetupPath } from "@/lib/ui/routeJump";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/hooks/useAuth";
-import { useSafetyControls } from "@/hooks/useSafetyControls";
+import { useSafetyControls, type SafetyActionKind } from "@/hooks/useSafetyControls";
 import { DEFAULT_POLICY_DRAFT, type PolicyDraft } from "@/types/agent-wallet";
 
 interface Props {
@@ -29,6 +28,7 @@ export function EmergencyControlsPage({ pandaId }: Props) {
   const { jwt } = useAuth();
   const [tightenDraft, setTightenDraft] = useState<PolicyDraft>(DEFAULT_POLICY_DRAFT);
   const [currentDraft, setCurrentDraft] = useState<PolicyDraft>(DEFAULT_POLICY_DRAFT);
+  const [highlightedAction, setHighlightedAction] = useState<SafetyActionKind | null>(null);
 
   const controls = useSafetyControls(jwt, pandaId, tightenDraft, currentDraft);
   const status = controls.status;
@@ -47,18 +47,28 @@ export function EmergencyControlsPage({ pandaId }: Props) {
     };
     setCurrentDraft(next);
     setTightenDraft(next);
-  }, [status?.policy]);
+  }, [status?.policy, status?.vault?.training_budget]);
 
   const isPaused = useMemo(
     () => status?.risk_status === "paused" || Boolean(status?.policy?.paused),
     [status],
   );
 
-  if (!status) {
-    return <div className="py-12 text-center text-[13px] text-product-muted">Loading safety…</div>;
+  const handleSelectAction = (action: SafetyActionKind) => {
+    setHighlightedAction(action);
+  };
+
+  const handleSignFromPanel = () => {
+    if (!highlightedAction || highlightedAction === "tighten") return;
+    controls.openAction(highlightedAction);
+  };
+
+  if (controls.isStatusLoading || !status) {
+    return <SafetyPageSkeleton />;
   }
 
   const noWallet = status.risk_status === "no_wallet";
+  const controlsBusy = controls.isLoading;
 
   return (
     <div className="space-y-6">
@@ -69,19 +79,15 @@ export function EmergencyControlsPage({ pandaId }: Props) {
       />
 
       {controls.errorMessage ? (
-        <div className="rounded-lg border border-product-red/40 bg-product-red/10 px-4 py-2 text-[13px] text-product-red">
+        <div className="rounded-xl border border-product-red/40 bg-product-red/10 px-4 py-2 text-[13px] text-product-red">
           {controls.errorMessage}
         </div>
       ) : null}
 
-      <RiskStatusBanner
-        status={status.risk_status}
-        policyVersion={status.policy?.version}
-        mirrorSyncStatus={status.mirror_sync_status}
-      />
+      <RiskStatusHero status={status.risk_status} pandaId={noWallet ? undefined : pandaId} />
 
       {noWallet ? (
-        <div className="rounded-xl border border-product-line bg-product-panel p-6 text-center">
+        <div className="product-panel p-6 text-center">
           <p className="text-[13px] text-product-muted">
             Create Agent Wallet before using safety controls.
           </p>
@@ -91,42 +97,41 @@ export function EmergencyControlsPage({ pandaId }: Props) {
         </div>
       ) : (
         <>
-          <div className="grid gap-4 md:grid-cols-3">
-            <PausePolicyCard
-              title={isPaused ? "Resume policy" : "Pause policy"}
-              consequence={
-                isPaused
-                  ? "Resume Training Ledger when market and strategy are healthy."
-                  : "Immediate stop for paper execution and queued Chain Proof jobs."
+          <OwnerControlStrip status={status} />
+
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+            <SafetyConsequencePanel
+              status={status}
+              highlightedAction={highlightedAction}
+              currentDraft={currentDraft}
+              tightenDraft={tightenDraft}
+              isPaused={isPaused}
+              onSign={handleSignFromPanel}
+              onEditTighten={() => controls.setTightenDrawerOpen(true)}
+              signDisabled={
+                controlsBusy ||
+                (highlightedAction === "pause" && !status.can_pause) ||
+                (highlightedAction === "unpause" && !status.can_unpause) ||
+                (highlightedAction === "revoke" && !status.can_revoke)
               }
-              detail="Reviews can still complete. The Panda cannot unpause itself."
-              actionLabel={isPaused ? "Resume execution" : "Pause now"}
-              onAction={() => controls.openAction(isPaused ? "unpause" : "pause")}
-              disabled={controls.isLoading || (!status.can_pause && !status.can_unpause)}
-              danger={!isPaused}
             />
-            <RevokeAgentCard
-              title="Revoke agent"
-              consequence="Disable testnet Agent Signer for Chain Proof."
-              detail="Also pauses policy. Cannot be undone without new Agent Wallet setup."
-              actionLabel="Revoke authorized agent"
-              onAction={() => controls.openAction("revoke")}
-              disabled={controls.isLoading || !status.can_revoke}
-            />
-            <TightenLimitsCard
-              onAction={() => controls.openAction("tighten")}
-              disabled={controls.isLoading || !status.can_tighten}
+
+            <SafetyActionDeck
+              isPaused={isPaused}
+              highlightedAction={highlightedAction}
+              canPause={status.can_pause}
+              canUnpause={status.can_unpause}
+              canRevoke={status.can_revoke}
+              canTighten={status.can_tighten}
+              disabled={controlsBusy}
+              onSelect={handleSelectAction}
             />
           </div>
 
-          <PendingJobsWarning
+          <PendingJobsStrip
             jobs={status.pending_chain_proof_jobs}
             onViewDetails={() => controls.setResultDrawerOpen(true)}
           />
-
-          <Link href={trainingLedgerPath(pandaId)}>
-            <Button variant="outline">Back to Training</Button>
-          </Link>
         </>
       )}
 
@@ -142,14 +147,16 @@ export function EmergencyControlsPage({ pandaId }: Props) {
         }
         onMaxDailyLossChange={(v: number) => setTightenDraft((d) => ({ ...d, maxDailyLoss: v }))}
         onConfirm={() => controls.executeOwnerAction("tighten", tightenDraft)}
-        loading={controls.isLoading}
+        loading={controlsBusy}
       />
 
       <OwnerSignatureModal
         open={controls.signModalOpen}
         onOpenChange={controls.setSignModalOpen}
-        action={controls.pendingAction === "tighten" ? null : controls.pendingAction}
-        loading={controls.isLoading}
+        action={
+          controls.pendingAction === "tighten" ? null : controls.pendingAction
+        }
+        loading={controlsBusy}
         onConfirm={() => {
           if (controls.pendingAction) {
             void controls.executeOwnerAction(controls.pendingAction);

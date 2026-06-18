@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { EmergencyControlsPage } from "@/components/safety/EmergencyControlsPage";
+import { SafetyPageSkeleton } from "@/components/safety/SafetyPageSkeleton";
 import { ProductPageShell } from "@/components/layout/ProductPageShell";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/hooks/useAuth";
@@ -22,8 +23,8 @@ export default function SafetyRoutePage({ params }: { params: { id: string } }) 
 
   if (!jwt || isLoading) {
     return (
-      <ProductPageShell density="urgent" className="py-12 text-center text-[13px] text-product-muted">
-        Loading safety controls…
+      <ProductPageShell density="urgent">
+        <SafetyPageSkeleton message="Loading safety controls…" />
       </ProductPageShell>
     );
   }

@@ -27,6 +27,7 @@ export function useSafetyControls(
   };
 
   const [status, setStatus] = useState<SafetyStatusApi | null>(null);
+  const [isStatusLoading, setIsStatusLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [lastTxDigest, setLastTxDigest] = useState<string | null>(null);
@@ -36,13 +37,23 @@ export function useSafetyControls(
   const [resultDrawerOpen, setResultDrawerOpen] = useState(false);
 
   const refreshStatus = useCallback(async () => {
-    if (!jwt || !pandaId) return;
-    const data = await fetchSafetyStatus(jwt, pandaId);
-    setStatus(data);
+    if (!jwt || !pandaId) {
+      setIsStatusLoading(false);
+      return;
+    }
+    setIsStatusLoading(true);
+    try {
+      const data = await fetchSafetyStatus(jwt, pandaId);
+      setStatus(data);
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : "Failed to load safety status");
+    } finally {
+      setIsStatusLoading(false);
+    }
   }, [jwt, pandaId]);
 
   useEffect(() => {
-    refreshStatus().catch((err: Error) => setErrorMessage(err.message));
+    void refreshStatus();
   }, [refreshStatus]);
 
   const openAction = useCallback((action: SafetyActionKind) => {
@@ -145,6 +156,7 @@ export function useSafetyControls(
 
   return {
     status,
+    isStatusLoading,
     isLoading,
     errorMessage,
     lastTxDigest,

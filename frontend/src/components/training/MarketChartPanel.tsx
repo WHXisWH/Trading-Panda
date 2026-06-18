@@ -5,11 +5,11 @@ import { CandlestickChart } from "@/components/trading/CandlestickChart";
 
 type Props = ComponentProps<typeof CandlestickChart>;
 
-/** Training Ledger chart panel — wraps shared CandlestickChart with cockpit chrome. */
+/** Training Ledger chart panel — cockpit chrome with product visual system. */
 export function MarketChartPanel(props: Props) {
   return (
-    <div className="rounded-xl border border-[var(--color-border)] bg-white p-2">
-      <CandlestickChart {...props} />
+    <div className="product-panel overflow-hidden p-0">
+      <CandlestickChart variant="product" {...props} />
     </div>
   );
 }

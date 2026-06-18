@@ -26,8 +26,13 @@ export function strategyPath(pandaId: string): string {
   return `/strategy/${encodeURIComponent(pandaId)}`;
 }
 
-export function trainingLedgerPath(pandaId: string): string {
-  return `/training-ledger/${encodeURIComponent(pandaId)}`;
+export function trainingLedgerPath(
+  pandaId: string,
+  options?: { feedStrategy?: boolean },
+): string {
+  return withQuery(`/training-ledger/${encodeURIComponent(pandaId)}`, {
+    feed: options?.feedStrategy ? "strategy" : undefined,
+  });
 }
 
 export function chainProofPath(pandaId: string, tradeFactId?: string): string {

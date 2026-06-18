@@ -9,16 +9,15 @@ interface Props {
   onSelect?: (intent: OrderIntentApi) => void;
 }
 
-export function DecisionTimeline({
-  intents,
-  selectedId,
-  onSelect,
-}: Props) {
+export function DecisionTimeline({ intents, selectedId, onSelect }: Props) {
   if (intents.length === 0) {
     return (
-      <p className="rounded-xl border border-dashed border-[var(--color-border)] p-4 text-center text-[12px] text-neutral-500">
-        No decisions yet — start training to watch the Panda react to live ticks.
-      </p>
+      <div className="product-panel px-4 py-8 text-center">
+        <p className="text-[13px] font-medium text-product-text">No decisions yet</p>
+        <p className="mt-1 text-[12px] text-product-muted">
+          Start training to watch the Panda react to live DeepBook ticks.
+        </p>
+      </div>
     );
   }
 
@@ -30,24 +29,26 @@ export function DecisionTimeline({
           type="button"
           onClick={() => onSelect?.(intent)}
           className={clsx(
-            "flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-[12px] transition-colors",
+            "flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left text-[12px] transition-colors",
             selectedId === intent.id
-              ? "border-emerald-400 bg-emerald-50"
-              : "border-[var(--color-border)] bg-white hover:bg-neutral-50",
+              ? "border-product-green/50 bg-product-green/10"
+              : "border-product-line bg-black/20 hover:border-product-gold/30 hover:bg-white/[0.03]",
           )}
         >
-          <span className="font-medium">
+          <span className="font-semibold text-product-text">
             {intent.side} · {intent.pair}
           </span>
           <span
             className={clsx(
-              intent.status === "EXECUTED" && "text-emerald-600",
-              intent.status === "REJECTED" && "text-red-600",
+              "font-medium",
+              intent.status === "EXECUTED" && "text-product-green",
+              intent.status === "REJECTED" && "text-product-red",
+              intent.status !== "EXECUTED" && intent.status !== "REJECTED" && "text-product-muted",
             )}
           >
             {intent.status}
           </span>
-          <span className="text-neutral-500">
+          <span className="font-mono text-[11px] text-product-muted">
             {intent.final_score != null ? intent.final_score.toFixed(2) : "—"}
           </span>
         </button>

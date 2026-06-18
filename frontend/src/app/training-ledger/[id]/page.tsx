@@ -1,19 +1,21 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { ProductPageShell } from "@/components/layout/ProductPageShell";
 import { DisclosureL0 } from "@/lib/ui/disclosure";
 import { chainProofPath, reviewPath, safetyPath } from "@/lib/ui/routeJump";
-import { SimulationStatusBar } from "@/components/trading/SimulationStatusBar";
 import { DecisionTimeline } from "@/components/training/DecisionTimeline";
 import { LedgerSummaryStrip } from "@/components/training/LedgerSummaryStrip";
 import { MarketChartPanel } from "@/components/training/MarketChartPanel";
 import { PandaAgentStatus } from "@/components/training/PandaAgentStatus";
 import { PolicyGateBanner } from "@/components/training/PolicyGateBanner";
 import { TradeFactDrawer } from "@/components/training/TradeFactDrawer";
+import { TrainingControlBar } from "@/components/training/TrainingControlBar";
 import { TrainingStatusStrip } from "@/components/training/TrainingStatusStrip";
+import { FeedStrategyDrawer } from "@/components/training/FeedStrategyDrawer";
 import { useAuth } from "@/hooks/useAuth";
 import { useMarketWs } from "@/hooks/useMarketWs";
 import { useSimulationSession } from "@/hooks/useSimulationSession";
@@ -32,13 +34,16 @@ const FRESH_TICK_MAX_AGE_SEC = 120;
 
 export default function TrainingLedgerPage({ params }: { params: { id: string } }) {
   const pandaId = params.id;
+  const searchParams = useSearchParams();
   const { jwt } = useAuth();
   const [pool, setPool] = useState<DeepbookPool>("DEEP/SUI");
   const [interval, setInterval] = useState<MarketInterval>("1m");
   const [selectedIntent, setSelectedIntent] = useState<OrderIntentApi | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [strategyDrawerOpen, setStrategyDrawerOpen] = useState(false);
+  const [didAutoPromptStrategy, setDidAutoPromptStrategy] = useState(false);
 
-  const { data: panda } = useQuery({
+  const { data: panda, refetch: refetchPanda } = useQuery({
     queryKey: ["panda-detail", pandaId, jwt],
     enabled: !!jwt,
     queryFn: () => fetchPandaDetail(jwt!, pandaId),
@@ -121,6 +126,15 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
 
   const lastIntent = ledger?.last_order_intent ?? intents[0] ?? null;
 
+  useEffect(() => {
+    if (!panda || didAutoPromptStrategy) return;
+    const shouldOpenFromRoute = searchParams.get("feed") === "strategy";
+    if (shouldOpenFromRoute || !hasStrategy) {
+      setStrategyDrawerOpen(true);
+      setDidAutoPromptStrategy(true);
+    }
+  }, [didAutoPromptStrategy, hasStrategy, panda, searchParams]);
+
   return (
     <ProductPageShell density="high" className="space-y-4">
       <DisclosureL0
@@ -139,7 +153,7 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
         merkleStatus={merkleStatus}
       />
 
-      <SimulationStatusBar
+      <TrainingControlBar
         pandaId={pandaId}
         phase={session.phase}
         speed={session.speed}
@@ -152,7 +166,7 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
         lastTickAgeSec={lastTickAgeSec}
         onSpeedChange={session.setSpeed}
         onToggleTraining={handleToggleTraining}
-        onOpenStrategy={() => {}}
+        onFeedStrategy={() => setStrategyDrawerOpen(true)}
       />
 
       <div className="grid gap-4 lg:grid-cols-[240px_1fr_280px]">
@@ -184,31 +198,34 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
             initialCapital={session.initialCapital}
           />
           <PolicyGateBanner status={policyBanner?.status ?? null} message={policyBanner?.message} />
-          <div className="flex flex-wrap gap-2 text-[12px]">
+          <div className="product-panel flex flex-wrap gap-3 px-4 py-3">
             <Link
               href={chainProofPath(pandaId)}
-              className="text-product-green underline-offset-2 hover:underline"
+              className="text-[12px] font-medium text-product-green underline-offset-2 hover:underline"
             >
               Chain Proof
             </Link>
-            <Link
-              href={reviewPath(pandaId)}
-              className="text-product-gold underline-offset-2 hover:underline"
-            >
-              Review Journal
+            <Link href={reviewPath(pandaId)}>
+              <span className="text-[12px] font-medium text-product-gold underline-offset-2 hover:underline">
+                Review Journal
+              </span>
             </Link>
-            <Link
-              href={safetyPath(pandaId)}
-              className="text-product-red underline-offset-2 hover:underline"
-            >
-              Safety
+            <Link href={safetyPath(pandaId)}>
+              <span className="text-[12px] font-medium text-product-red underline-offset-2 hover:underline">
+                Emergency controls
+              </span>
             </Link>
           </div>
         </div>
       </div>
 
-      <section>
-        <h2 className="mb-2 text-sm font-bold text-neutral-900">Decision timeline</h2>
+      <section className="space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="product-field-label">Decision timeline</h2>
+          {intents.length > 0 ? (
+            <span className="text-[11px] text-product-muted">{intents.length} events</span>
+          ) : null}
+        </div>
         <DecisionTimeline
           intents={intents}
           selectedId={selectedIntent?.id}
@@ -221,6 +238,18 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
         onOpenChange={setDrawerOpen}
         intent={selectedIntent}
         tradeFact={selectedTradeFact}
+      />
+
+      <FeedStrategyDrawer
+        open={strategyDrawerOpen}
+        onOpenChange={setStrategyDrawerOpen}
+        jwt={jwt}
+        pandaId={pandaId}
+        panda={panda}
+        onSaved={() => {
+          setStrategyDrawerOpen(false);
+          void refetchPanda();
+        }}
       />
     </ProductPageShell>
   );

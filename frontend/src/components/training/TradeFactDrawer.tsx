@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Drawer } from "@/components/ui/Drawer";
 import { Button } from "@/components/ui/Button";
+import { TruncatedEvidence } from "@/lib/ui/disclosure";
 import { chainProofPath, reviewPath } from "@/lib/ui/routeJump";
 import type { OrderIntentApi, TradeFactApi } from "@/types/autonomous-wallet";
 
@@ -23,42 +24,38 @@ export function TradeFactDrawer({ open, onOpenChange, intent, tradeFact }: Props
       description="Market, policy, and ledger snapshot for the selected decision."
     >
       {intent ? (
-        <section className="space-y-2 text-[12px]">
-          <h4 className="font-semibold text-neutral-900">Order Intent</h4>
-          <Row label="Side" value={intent.side} />
-          <Row label="Pair" value={intent.pair} />
-          <Row label="Status" value={intent.status} />
-          <Row label="Notional" value={String(intent.notional)} />
-          <Row label="Reference price" value={String(intent.reference_price)} />
-          <Row label="Decision hash" value={intent.decision_hash} mono />
+        <section className="space-y-3">
+          <h4 className="product-field-label">Order Intent</h4>
+          <EvidenceRow label="Side" value={intent.side} />
+          <EvidenceRow label="Pair" value={intent.pair} />
+          <EvidenceRow label="Status" value={intent.status} />
+          <EvidenceRow label="Notional" value={String(intent.notional)} />
+          <EvidenceRow label="Reference price" value={String(intent.reference_price)} />
+          <TruncatedEvidence label="Decision hash" value={intent.decision_hash} />
           {intent.rejection_reason ? (
-            <Row label="Rejection" value={intent.rejection_reason} />
+            <EvidenceRow label="Rejection" value={intent.rejection_reason} />
           ) : null}
         </section>
       ) : (
-        <p className="text-[12px] text-neutral-500">Select a decision row to inspect evidence.</p>
+        <p className="text-[12px] text-product-muted">Select a decision row to inspect evidence.</p>
       )}
       {tradeFact ? (
-        <section className="mt-4 space-y-2 border-t border-[var(--color-border)] pt-4 text-[12px]">
-          <h4 className="font-semibold text-neutral-900">Trade Fact</h4>
-          <Row label="Fact id" value={tradeFact.id} mono />
-          <Row label="Fact hash" value={tradeFact.fact_hash} mono />
-          <Row label="Proof status" value={tradeFact.proof_status} />
+        <section className="mt-6 space-y-3 border-t border-product-line pt-4">
+          <h4 className="product-field-label">Trade Fact</h4>
+          <TruncatedEvidence label="Fact id" value={tradeFact.id} />
+          <TruncatedEvidence label="Fact hash" value={tradeFact.fact_hash} />
+          <EvidenceRow label="Proof status" value={tradeFact.proof_status} />
           {tradeFact.realized_pnl != null ? (
-            <Row label="Realized PnL" value={tradeFact.realized_pnl.toFixed(4)} />
+            <EvidenceRow label="Realized PnL" value={tradeFact.realized_pnl.toFixed(4)} />
           ) : null}
           {intent ? (
             <div className="mt-4 flex flex-wrap gap-2 border-t border-product-line pt-4">
               <Link href={chainProofPath(intent.panda_id, tradeFact.id)}>
-                <Button size="sm" variant="outline">
-                  Chain Proof
-                </Button>
+                <Button size="sm" variant="outline">Chain Proof</Button>
               </Link>
               {tradeFact.realized_pnl != null ? (
                 <Link href={reviewPath(intent.panda_id, tradeFact.id)}>
-                  <Button size="sm" variant="ghost">
-                    Review
-                  </Button>
+                  <Button size="sm" variant="ghost">Review</Button>
                 </Link>
               ) : null}
             </div>
@@ -69,11 +66,11 @@ export function TradeFactDrawer({ open, onOpenChange, intent, tradeFact }: Props
   );
 }
 
-function Row({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+function EvidenceRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-neutral-500">{label}</span>
-      <span className={mono ? "break-all font-mono text-[11px]" : ""}>{value}</span>
+    <div className="product-metric-row">
+      <span>{label}</span>
+      <strong>{value}</strong>
     </div>
   );
 }
