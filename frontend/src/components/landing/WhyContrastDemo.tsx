@@ -26,19 +26,23 @@ function usePrefersReducedMotion(): boolean {
 export function WhyContrastDemo() {
   const [activeTab, setActiveTab] = useState<WhyDemoTab>("blindTrust");
   const reducedMotion = usePrefersReducedMotion();
+  const isBlindTrust = activeTab === "blindTrust";
 
   return (
-    <div className="product-panel group relative overflow-hidden rounded-[2rem] border border-product-line/80 bg-white/[0.02] p-5 shadow-2xl backdrop-blur-xl sm:rounded-[2.5rem] sm:p-8 md:p-10">
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-product-green/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
-
-      <div className="relative mb-8 flex rounded-2xl border border-product-line bg-black/35 p-1.5">
+    <div
+      className={clsx(
+        "why-contrast-shell p-5 sm:p-8 md:p-10",
+        isBlindTrust ? "why-contrast-shell--red" : "why-contrast-shell--green",
+      )}
+    >
+      <div className="relative mb-8 flex why-contrast-tab-rail">
         <button
           type="button"
           onClick={() => setActiveTab("blindTrust")}
           className={clsx(
-            "flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-3.5 font-mono text-[10px] font-black uppercase tracking-[0.16em] transition-all sm:px-4 sm:text-[11px]",
-            activeTab === "blindTrust"
-              ? "border border-product-red/30 bg-product-red/10 text-product-red shadow-[0_0_20px_rgba(255,95,86,0.18)]"
+            "why-contrast-tab flex flex-1 items-center justify-center gap-2 px-3 py-3.5 font-mono text-[10px] font-black uppercase tracking-[0.16em] sm:px-4 sm:text-[11px]",
+            isBlindTrust
+              ? "why-contrast-tab--active-red"
               : "text-product-muted hover:text-product-text",
           )}
         >
@@ -49,9 +53,9 @@ export function WhyContrastDemo() {
           type="button"
           onClick={() => setActiveTab("yourPanda")}
           className={clsx(
-            "flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-3.5 font-mono text-[10px] font-black uppercase tracking-[0.16em] transition-all sm:px-4 sm:text-[11px]",
-            activeTab === "yourPanda"
-              ? "border border-product-green/35 bg-product-green/12 text-product-green shadow-[var(--glow-green)]"
+            "why-contrast-tab flex flex-1 items-center justify-center gap-2 px-3 py-3.5 font-mono text-[10px] font-black uppercase tracking-[0.16em] sm:px-4 sm:text-[11px]",
+            !isBlindTrust
+              ? "why-contrast-tab--active-green"
               : "text-product-muted hover:text-product-text",
           )}
         >
@@ -60,7 +64,7 @@ export function WhyContrastDemo() {
         </button>
       </div>
 
-      {activeTab === "blindTrust" ? (
+      {isBlindTrust ? (
         <p className="relative mb-6 text-base leading-relaxed text-product-muted sm:text-lg">
           {WHY_COPY.painQuestion.before}{" "}
           <span className="font-semibold text-product-red">{WHY_COPY.painQuestion.highlight}</span>
@@ -70,7 +74,7 @@ export function WhyContrastDemo() {
 
       <div className="relative min-h-[17rem] font-mono text-sm">
         <AnimatePresence mode="wait">
-          {activeTab === "blindTrust" ? (
+          {isBlindTrust ? (
             <motion.div
               key="blindTrust"
               initial={reducedMotion ? false : { opacity: 0, y: 10 }}
@@ -85,8 +89,8 @@ export function WhyContrastDemo() {
                 />
                 {WHY_DEMO.blindTrust.alert}
               </div>
-              <div className="space-y-3 rounded-3xl border border-product-red/20 bg-product-red/5 p-5 sm:p-6">
-                <div className="flex items-center justify-between border-b border-product-red/10 pb-3">
+              <div className="why-contrast-panel--red space-y-3 p-5 sm:p-6">
+                <div className="why-contrast-divider--red flex items-center justify-between pb-3">
                   <span className="font-mono text-[10px] font-black uppercase tracking-wider text-product-muted">
                     {WHY_DEMO.blindTrust.modeLabel}
                   </span>
@@ -119,12 +123,12 @@ export function WhyContrastDemo() {
                 </div>
               </div>
 
-              <div className="space-y-3 rounded-3xl border border-product-green/20 bg-product-green/[0.06] p-5 sm:p-6">
-                <div className="flex flex-wrap gap-2 border-b border-product-green/10 pb-3">
-                  <span className="product-chip border-product-green/30 bg-product-green/10 text-product-green">
+              <div className="why-contrast-panel--green space-y-3 p-5 sm:p-6">
+                <div className="why-contrast-divider--green flex flex-wrap gap-2 pb-3">
+                  <span className="why-contrast-badge why-contrast-badge--green">
                     {WHY_DEMO.yourPanda.badges.boundedAutonomy}
                   </span>
-                  <span className="product-chip border-product-gold/30 bg-product-gold/10 text-product-gold">
+                  <span className="why-contrast-badge why-contrast-badge--gold">
                     {WHY_DEMO.yourPanda.badges.rulesYouOwn}
                   </span>
                 </div>

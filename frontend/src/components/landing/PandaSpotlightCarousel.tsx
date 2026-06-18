@@ -80,7 +80,7 @@ export function PandaSpotlightCarousel() {
     <section
       aria-label="Panda agent archetype carousel"
       className={clsx(
-        "relative min-h-[620px] overflow-visible rounded-[32px] border border-product-line bg-[#060806] p-4 shadow-[var(--shadow-product)] sm:p-6 lg:min-h-[690px] lg:p-8",
+        "hero-spotlight-card min-h-[620px] p-4 sm:p-6 lg:min-h-[690px] lg:p-8",
         tone.glow,
       )}
       onMouseEnter={() => setIsPaused(true)}
@@ -89,10 +89,17 @@ export function PandaSpotlightCarousel() {
       onBlur={() => setIsPaused(false)}
     >
       <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[32px]">
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(225,186,92,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(109,255,144,0.045)_1px,transparent_1px)] bg-[length:56px_56px] opacity-35 [mask-image:radial-gradient(circle_at_52%_38%,black,transparent_76%)]" />
-        <div className="absolute inset-x-10 top-16 h-px bg-gradient-to-r from-transparent via-product-green/35 to-transparent" />
-        <div className="absolute -right-24 top-16 h-80 w-80 rounded-full bg-product-gold/10 blur-3xl" />
-        <div className="absolute -left-20 bottom-16 h-72 w-72 rounded-full bg-product-green/10 blur-3xl" />
+        <div className="hero-spotlight-grid" />
+        <div className="hero-spotlight-vignette" />
+        <div className="hero-spotlight-rim" />
+        <div className="hero-spotlight-corner hero-spotlight-corner--tl" />
+        <div className="hero-spotlight-corner hero-spotlight-corner--tr" />
+        <div className="hero-spotlight-corner hero-spotlight-corner--bl" />
+        <div className="hero-spotlight-corner hero-spotlight-corner--br" />
+        <div className="absolute inset-x-10 top-[4.5rem] h-px bg-gradient-to-r from-transparent via-product-green/30 to-transparent" />
+        <div className="absolute -right-24 top-12 h-80 w-80 rounded-full bg-product-gold/12 blur-3xl" />
+        <div className="absolute -left-20 bottom-12 h-72 w-72 rounded-full bg-product-green/10 blur-3xl" />
+        <div className="absolute left-1/2 top-[38%] h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full bg-product-green/[0.04] blur-3xl" />
       </div>
 
       <div className="relative z-10 flex h-full min-h-[560px] flex-col justify-between gap-6">
@@ -164,7 +171,7 @@ export function PandaSpotlightCarousel() {
         </div>
 
         <div className="grid gap-4">
-          <div className="rounded-3xl border border-product-line bg-black/35 p-4 backdrop-blur">
+          <div className="hero-spotlight-glass p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className={clsx("font-mono text-[11px] font-extrabold uppercase tracking-wider", tone.text)}>
@@ -197,7 +204,7 @@ export function PandaSpotlightCarousel() {
                     "group rounded-2xl border p-2 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-product-green/45",
                     selected
                       ? "border-product-green/55 bg-product-green/10 shadow-[var(--glow-green)]"
-                      : "border-product-line bg-white/[0.035] hover:border-product-gold/35 hover:bg-white/[0.055]",
+                      : "border-product-line/80 bg-white/[0.04] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-product-gold/35 hover:bg-white/[0.07]",
                   )}
                 >
                   <div className="mx-auto h-16 w-16 overflow-hidden rounded-full bg-[#efece3] ring-1 ring-product-gold/25">
@@ -308,8 +315,8 @@ function SceneNode({
   return (
     <div
       className={clsx(
-        "rounded-2xl border bg-black/30 px-3 py-2 backdrop-blur",
-        emphasized ? "border-product-green/35" : "border-product-line",
+        "hero-spotlight-glass px-3 py-2",
+        emphasized && "hero-spotlight-glass--emphasis",
       )}
     >
       <p className="font-mono text-[10px] font-extrabold uppercase tracking-wider text-product-muted">
