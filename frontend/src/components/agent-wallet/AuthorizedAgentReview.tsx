@@ -36,7 +36,7 @@ export function AuthorizedAgentReview({
       confirmLabel="Create PandaVault + Policy"
       onConfirm={onConfirm}
     >
-      <dl className="space-y-2 rounded-xl border border-product-line bg-white/[0.03] p-4 text-[13px]">
+      <dl className="agent-wallet-inset space-y-2 p-4 text-[13px]">
         <div className="flex justify-between gap-2">
           <dt className="text-product-muted">Training budget (USD)</dt>
           <dd className="text-product-text">{formatPaperUsd(draft.trainingBudget)}</dd>

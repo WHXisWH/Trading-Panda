@@ -20,13 +20,13 @@ export function AgentWalletPageSkeleton({
         <Skeleton variant="product" className="h-4 w-[min(100%,28rem)] rounded-lg" />
       </header>
 
-      <div className="flex flex-wrap gap-2 rounded-xl border border-product-line/40 bg-product-panel/50 px-3 py-2.5">
+      <div className="agent-wallet-status-strip flex flex-wrap gap-2 px-3.5 py-2.5">
         <Skeleton variant="product" className="h-7 w-24 rounded-full" />
         <Skeleton variant="product" className="h-7 w-28 rounded-full" />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
-        <div className="product-panel space-y-4 p-5">
+        <section className="agent-wallet-card space-y-4 p-5">
           <Skeleton variant="product" className="h-3 w-28 rounded-full" />
           <Skeleton variant="product" className="h-6 w-40 rounded-lg" />
           <Skeleton variant="product" className="h-3 w-full max-w-xs rounded-lg" />
@@ -38,16 +38,16 @@ export function AgentWalletPageSkeleton({
               </div>
             ))}
           </div>
-        </div>
+        </section>
 
-        <div className="product-panel space-y-5 p-5 md:p-6">
+        <section className="agent-wallet-card space-y-5 p-5 md:p-6">
           <div className="space-y-2">
             <Skeleton variant="product" className="h-3 w-24 rounded-full" />
             <Skeleton variant="product" className="h-7 w-36 rounded-lg" />
             <Skeleton variant="product" className="h-3 w-full max-w-md rounded-lg" />
           </div>
 
-          <div className="product-form-surface space-y-5 p-4 md:p-5">
+          <div className="agent-wallet-inset space-y-5 p-4 md:p-5">
             <div className="space-y-3">
               <Skeleton variant="product" className="h-3 w-28 rounded-full" />
               <div className="flex flex-wrap gap-2">
@@ -57,7 +57,7 @@ export function AgentWalletPageSkeleton({
               </div>
             </div>
 
-            <div className="grid gap-4 border-t border-product-line/30 pt-5 sm:grid-cols-2">
+            <div className="agent-wallet-divider grid gap-4 pt-5 sm:grid-cols-2">
               <div className="space-y-2">
                 <Skeleton variant="product" className="h-3 w-32 rounded-full" />
                 <Skeleton variant="product" className="h-11 w-full rounded-[14px]" />
@@ -68,7 +68,7 @@ export function AgentWalletPageSkeleton({
               </div>
             </div>
 
-            <div className="space-y-2 border-t border-product-line/30 pt-5">
+            <div className="agent-wallet-divider space-y-2 pt-5">
               <Skeleton variant="product" className="h-3 w-24 rounded-full" />
               <Skeleton variant="product" className="h-11 w-full rounded-[14px]" />
             </div>
@@ -76,7 +76,7 @@ export function AgentWalletPageSkeleton({
 
           <Skeleton variant="product" className="h-28 w-full rounded-[18px]" />
           <Skeleton variant="product" className="h-11 w-44 rounded-xl" />
-        </div>
+        </section>
       </div>
 
       <p className="flex items-center justify-center gap-2 font-mono text-[11px] tracking-wide text-product-muted">

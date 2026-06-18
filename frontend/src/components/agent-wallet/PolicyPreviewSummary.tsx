@@ -19,8 +19,8 @@ function MetricRow({ label, value }: { label: string; value: string }) {
 
 export function PolicyPreviewSummary({ draft, agentAddress }: PolicyPreviewSummaryProps) {
   return (
-    <aside className="rounded-[18px] border border-product-line/80 bg-white/[0.035] p-4">
-      <div className="flex items-baseline justify-between gap-3 border-b border-product-line/40 pb-3">
+    <aside className="agent-wallet-preview p-4 md:p-5">
+      <div className="flex items-baseline justify-between gap-3 border-b border-[rgba(109,255,144,0.12)] pb-3">
         <span className="font-mono text-[10px] font-black uppercase tracking-wider text-product-green">
           Collar preview
         </span>

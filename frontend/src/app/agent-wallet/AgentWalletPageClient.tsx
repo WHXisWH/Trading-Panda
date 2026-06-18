@@ -39,7 +39,7 @@ export default function AgentWalletPageClient() {
       <ProductPageShell className="flex min-h-[50vh] flex-col items-center justify-center gap-4 py-12">
         <p className="text-[13px] text-product-muted">Mint a Panda before setting up Agent Wallet.</p>
         <Link href="/mint">
-          <Button>Mint Panda</Button>
+          <Button className="agent-wallet-btn-primary">Mint Panda</Button>
         </Link>
       </ProductPageShell>
     );

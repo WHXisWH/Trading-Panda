@@ -45,8 +45,8 @@ export function AllowedPairsSelector({
             disabled={disabled}
             onClick={() => toggle(pair)}
             className={clsx(
-              "product-toggle-chip",
-              active && "product-toggle-chip-active",
+              "agent-wallet-pair-chip",
+              active && "agent-wallet-pair-chip-active",
               disabled && "cursor-not-allowed opacity-60",
             )}
           >
@@ -95,7 +95,7 @@ export function PolicyCollarEditor({
         </p>
       </header>
 
-      <div className="product-form-surface space-y-5 p-4 md:p-5">
+      <div className="agent-wallet-inset space-y-5 p-4 md:p-5">
         <FormSection
           title="Training funds"
           description={`${PAPER_BALANCE_DISCLAIMER} for the Training Ledger.`}

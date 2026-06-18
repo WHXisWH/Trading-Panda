@@ -10,7 +10,6 @@ import { PolicyPreviewSummary } from "@/components/agent-wallet/PolicyPreviewSum
 import { WalletSignatureModal } from "@/components/mint/WalletSignatureModal";
 import { DisclosureL0, DisclosureL1 } from "@/lib/ui/disclosure";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
 import { useAgentWallet } from "@/hooks/useAgentWallet";
 import type { PandaSummaryApi } from "@/types/panda";
 
@@ -52,6 +51,7 @@ export function AgentWalletPageContent({ jwt, panda }: AgentWalletPageProps) {
       />
 
       <DisclosureL1
+        className="agent-wallet-status-strip px-3.5 py-2.5"
         items={[
           {
             label: "Setup",
@@ -67,17 +67,13 @@ export function AgentWalletPageContent({ jwt, panda }: AgentWalletPageProps) {
       />
 
       {setupStatusMessage ? (
-        <div className="rounded-xl border border-product-amber/30 bg-product-amber/10 px-4 py-2 text-[13px] text-product-amber">
-          {setupStatusMessage}
-        </div>
+        <div className="agent-wallet-alert agent-wallet-alert--amber">{setupStatusMessage}</div>
       ) : null}
       {wallet.toast ? (
-        <div className="rounded-xl border border-product-green/30 bg-product-green/10 px-4 py-2 text-[13px] text-product-green">
-          {wallet.toast}
-        </div>
+        <div className="agent-wallet-alert agent-wallet-alert--green">{wallet.toast}</div>
       ) : null}
       {wallet.errorMessage ? (
-        <div className="rounded-xl border border-product-red/40 bg-product-red/10 px-4 py-2 text-[13px] text-product-red">
+        <div className="agent-wallet-alert agent-wallet-alert--red">
           {wallet.errorMessage}
           {wallet.txDigest && !hasVault ? (
             <button
@@ -98,7 +94,7 @@ export function AgentWalletPageContent({ jwt, panda }: AgentWalletPageProps) {
           onViewObjects={() => wallet.setDetailsOpen(true)}
         />
 
-        <Card className="space-y-6 p-5 md:p-6">
+        <section className="agent-wallet-card space-y-6 p-5 md:p-6">
           {isReady ? (
             <div className="space-y-5">
               <PolicyCollarEditor
@@ -113,6 +109,7 @@ export function AgentWalletPageContent({ jwt, panda }: AgentWalletPageProps) {
               <div className="flex flex-wrap gap-3">
                 <Button
                   size="lg"
+                  className="agent-wallet-btn-primary"
                   loading={wallet.isSavingBudget}
                   disabled={wallet.isSavingBudget || wallet.isSetupPending}
                   onClick={() => wallet.saveTrainingBudget()}
@@ -131,7 +128,7 @@ export function AgentWalletPageContent({ jwt, panda }: AgentWalletPageProps) {
                 disabled={editorLocked || wallet.isSavingBudget}
               />
               <PolicyPreviewSummary draft={wallet.draft} agentAddress={wallet.agentAddress} />
-              <div className="flex flex-wrap gap-3 border-t border-product-line/40 pt-5">
+              <div className="agent-wallet-divider flex flex-wrap gap-3 pt-5">
                 {!wallet.hasChainSigner ? (
                   <p className="w-full text-[12px] text-product-amber">
                     Connect a Sui wallet or sign in with Google to approve on-chain setup.
@@ -146,6 +143,7 @@ export function AgentWalletPageContent({ jwt, panda }: AgentWalletPageProps) {
                 ) : null}
                 <Button
                   size="lg"
+                  className="agent-wallet-btn-primary"
                   loading={wallet.isValidating || wallet.isSetupPending}
                   disabled={
                     wallet.isValidating ||
@@ -159,14 +157,19 @@ export function AgentWalletPageContent({ jwt, panda }: AgentWalletPageProps) {
                   {wallet.isValidating ? "Checking setup…" : "Confirm training setup"}
                 </Button>
                 {hasVault ? (
-                  <Button size="lg" variant="outline" onClick={() => wallet.setDetailsOpen(true)}>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="agent-wallet-btn-secondary"
+                    onClick={() => wallet.setDetailsOpen(true)}
+                  >
                     View objects
                   </Button>
                 ) : null}
               </div>
             </div>
           )}
-        </Card>
+        </section>
       </div>
 
       <AuthorizedAgentReview
