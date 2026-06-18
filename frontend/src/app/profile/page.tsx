@@ -254,10 +254,8 @@ function PandaSidebarCard({
       onClick={onSelect}
       aria-pressed={isSelected}
       className={clsx(
-        "product-panel flex min-w-[220px] shrink-0 items-center gap-3 p-3 text-left transition-colors xl:min-w-0 xl:w-full",
-        isSelected
-          ? "border-product-green/45 bg-product-green/[0.08] ring-1 ring-product-green/30"
-          : "hover:border-product-line/80 hover:bg-white/[0.03]",
+        "profile-sidebar-item flex min-w-[220px] shrink-0 items-center gap-3 p-3 text-left xl:min-w-0 xl:w-full",
+        isSelected && "profile-sidebar-item--selected",
       )}
     >
       <ProfilePandaPortrait panda={panda} size="sidebar" />
@@ -291,9 +289,9 @@ function SelectedPandaDetailCard({
   const status = primaryStatusLabel(panda, detail, agentWallet);
 
   return (
-    <section className="product-panel overflow-hidden p-0">
+    <section className="profile-card overflow-hidden p-0">
       <div className="flex flex-col">
-        <div className="relative flex items-center justify-center border-b border-product-line/50 bg-[radial-gradient(circle_at_50%_28%,rgba(109,255,144,0.16),transparent_34%),linear-gradient(180deg,rgba(225,186,92,0.12),transparent)] px-6 py-8">
+        <div className="relative flex items-center justify-center border-b border-white/[0.06] bg-[radial-gradient(circle_at_50%_22%,rgba(109,255,144,0.2),transparent_38%),radial-gradient(circle_at_80%_80%,rgba(225,186,92,0.1),transparent_42%),linear-gradient(180deg,rgba(255,255,255,0.04),transparent)] px-6 py-8">
           <ProfilePandaPortrait panda={panda} size="detail" />
         </div>
 
@@ -301,9 +299,6 @@ function SelectedPandaDetailCard({
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <StatusBadge status={status} />
-              <span className="product-chip rounded-full px-2.5 py-1 text-[10px]">
-                {panda.talent.name}
-              </span>
             </div>
             <h2 className="mt-4 truncate text-2xl font-bold text-product-text">{name}</h2>
             <p className="mt-1 text-sm text-product-muted">
@@ -321,7 +316,7 @@ function SelectedPandaDetailCard({
             />
           </div>
 
-          <div className="rounded-2xl border border-product-line bg-product-panel-soft/70 p-4">
+          <div className="profile-inset p-4">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="product-field-label">Next action</p>
@@ -370,32 +365,21 @@ function CheckinCard({
   const last7 = buildLast7(checkin?.history ?? []);
 
   return (
-    <section className="product-panel space-y-4 p-5">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-product-gold/25 bg-product-gold/10 text-product-gold">
-            <Flame className="h-5 w-5" />
-          </div>
-          <div>
-            <p className="product-field-label">Daily Check-in</p>
-            {isLoading ? (
-              <Skeleton variant="product" className="mt-2 h-4 w-24" />
-            ) : (
-              <p className="mt-1 text-sm font-semibold text-product-text">
-                {checkin?.streak ?? 0}-day streak
-              </p>
-            )}
-          </div>
+    <section className="profile-card flex flex-col gap-4 p-5">
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-product-gold/20 bg-gradient-to-br from-product-gold/16 to-product-gold/6 text-product-gold shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+          <Flame className="h-5 w-5" />
         </div>
-        <Button
-          size="sm"
-          variant={checkin?.checked_in_today ? "ghost" : "gold"}
-          disabled={checkin?.checked_in_today || isClaiming}
-          loading={isClaiming}
-          onClick={onClaim}
-        >
-          {checkin?.checked_in_today ? "Checked" : "Check in"}
-        </Button>
+        <div>
+          <p className="product-field-label">Daily Check-in</p>
+          {isLoading ? (
+            <Skeleton variant="product" className="mt-2 h-4 w-24" />
+          ) : (
+            <p className="mt-1 text-sm font-semibold text-product-text">
+              {checkin?.streak ?? 0}-day streak
+            </p>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-7 gap-1.5">
@@ -403,10 +387,10 @@ function CheckinCard({
           <div key={day.date} className="min-w-0" title={day.date}>
             <div
               className={clsx(
-                "flex h-8 items-center justify-center rounded-lg border font-mono text-[10px] font-bold",
+                "flex h-8 items-center justify-center rounded-lg font-mono text-[10px] font-bold",
                 day.done
-                  ? "border-product-green/45 bg-product-green/15 text-product-green"
-                  : "border-product-line bg-product-panel-soft text-product-muted",
+                  ? "border border-product-green/35 bg-gradient-to-b from-product-green/20 to-product-green/8 text-product-green shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]"
+                  : "border border-white/[0.05] bg-white/[0.03] text-product-muted",
               )}
             >
               {day.done ? <Check className="h-3.5 w-3.5" /> : day.label}
@@ -414,6 +398,17 @@ function CheckinCard({
           </div>
         ))}
       </div>
+
+      <Button
+        size="sm"
+        variant={checkin?.checked_in_today ? "ghost" : "gold"}
+        disabled={checkin?.checked_in_today || isClaiming}
+        loading={isClaiming}
+        onClick={onClaim}
+        className="w-full"
+      >
+        {checkin?.checked_in_today ? "Checked" : "Check in"}
+      </Button>
     </section>
   );
 }
@@ -426,9 +421,9 @@ function AccountCard({ walletAddress }: { walletAddress: string | null }) {
   };
 
   return (
-    <section className="product-panel space-y-4 p-5">
+    <section className="profile-card space-y-4 p-5">
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-product-line bg-white/[0.04] text-product-muted">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.08] bg-gradient-to-br from-white/[0.07] to-white/[0.02] text-product-muted shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
           <Wallet className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
@@ -441,7 +436,7 @@ function AccountCard({ walletAddress }: { walletAddress: string | null }) {
           type="button"
           onClick={copy}
           disabled={!walletAddress}
-          className="rounded-full border border-white/10 bg-white/[0.04] p-2 text-product-muted transition-colors hover:border-product-line hover:text-product-text disabled:opacity-40"
+          className="rounded-full border border-white/[0.08] bg-white/[0.04] p-2 text-product-muted transition-colors hover:border-white/[0.14] hover:bg-white/[0.07] hover:text-product-text disabled:opacity-40"
           aria-label="Copy wallet address"
         >
           <Copy className="h-4 w-4" />
@@ -453,13 +448,13 @@ function AccountCard({ walletAddress }: { walletAddress: string | null }) {
 
 function TrainingSummary({ metrics }: { metrics: SummaryMetric[] }) {
   return (
-    <section className="product-panel space-y-3 p-5">
+    <section className="profile-card space-y-3 p-5">
       <p className="product-field-label">Training Summary</p>
       <div className="grid gap-2">
         {metrics.map((metric) => (
           <div
             key={metric.label}
-            className="flex items-center justify-between gap-3 rounded-xl border border-product-line bg-product-panel-soft/70 px-3 py-2.5"
+            className="profile-inset flex items-center justify-between gap-3 px-3 py-2.5"
           >
             <p className="text-[11px] text-product-muted">{metric.label}</p>
             <p className="font-mono text-sm font-bold text-product-text">{metric.value}</p>
@@ -472,8 +467,8 @@ function TrainingSummary({ metrics }: { metrics: SummaryMetric[] }) {
 
 function NoPandaState() {
   return (
-    <div className="product-panel flex min-h-[420px] flex-col items-center justify-center p-8 text-center">
-      <div className="flex h-16 w-16 items-center justify-center rounded-full border border-product-gold/25 bg-product-gold/10 text-product-gold">
+    <div className="profile-card flex min-h-[420px] flex-col items-center justify-center p-8 text-center">
+      <div className="flex h-16 w-16 items-center justify-center rounded-full border border-product-gold/20 bg-gradient-to-br from-product-gold/16 to-product-gold/6 text-product-gold shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
         <PawPrint className="h-8 w-8" />
       </div>
       <h2 className="mt-5 text-xl font-bold text-product-text">Mint your first Panda</h2>
@@ -500,8 +495,8 @@ function EmptyPanel({
   body: string;
 }) {
   return (
-    <div className="product-panel max-w-md p-8 text-center">
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-product-line bg-white/[0.04] text-product-muted">
+    <div className="profile-card max-w-md p-8 text-center">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-white/[0.08] bg-gradient-to-br from-white/[0.07] to-white/[0.02] text-product-muted">
         {icon}
       </div>
       <h2 className="mt-5 text-lg font-bold text-product-text">{title}</h2>
@@ -517,15 +512,15 @@ function ProfileSkeleton() {
         <Skeleton variant="product" className="h-4 w-24 shrink-0 rounded-md" />
         <div className="mt-3 flex min-h-0 flex-1 gap-3 overflow-hidden xl:flex-col">
           {Array.from({ length: 3 }).map((_, index) => (
-            <Skeleton key={index} variant="product" className="h-[74px] min-w-[220px] rounded-[20px] xl:min-w-0 xl:w-full" />
+            <Skeleton key={index} variant="product" className="h-[74px] min-w-[220px] rounded-2xl border-0 xl:min-w-0 xl:w-full" />
           ))}
         </div>
       </div>
-      <Skeleton variant="product" className="h-[380px] rounded-[20px]" />
+      <Skeleton variant="product" className="h-[380px] rounded-[22px]" />
       <div className="space-y-4">
-        <Skeleton variant="product" className="h-28 rounded-[20px]" />
-        <Skeleton variant="product" className="h-36 rounded-[20px]" />
-        <Skeleton variant="product" className="h-52 rounded-[20px]" />
+        <Skeleton variant="product" className="h-28 rounded-[22px]" />
+        <Skeleton variant="product" className="h-36 rounded-[22px]" />
+        <Skeleton variant="product" className="h-52 rounded-[22px]" />
       </div>
     </div>
   );
@@ -533,7 +528,7 @@ function ProfileSkeleton() {
 
 function StatusBadge({ status }: { status: string }) {
   return (
-    <span className="rounded-full border border-product-line bg-product-panel-soft px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-product-muted">
+    <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-product-muted">
       {status}
     </span>
   );
@@ -549,7 +544,7 @@ function MetricTile({
   loading?: boolean;
 }) {
   return (
-    <div className="rounded-2xl border border-product-line bg-product-panel-soft/70 p-3">
+    <div className="profile-inset p-3">
       <p className="product-field-label">{label}</p>
       {loading ? (
         <Skeleton variant="product" className="mt-2 h-5 w-20" />

@@ -2,7 +2,7 @@
 
 > 本文档以「忒修斯之船」方式持续维护：只换木板、不换整船。部署事实变更时同步更新对应段落；任何改动必须在本文末尾「§9 变更日志」追加一行。
 >
-> **最后同步**：2026-06-19（Hero Spotlight 卡片质感升级）
+> **最后同步**：2026-06-19（Profile 页卡片质感升级）
 
 ---
 
@@ -531,3 +531,4 @@ Package ID：**0x595087bb3e5f6c5011585797e4eb4db513b55d39ce84f984bb357e9375c1146
 | 2026-06-18 | **Landing Control the Panda 质感升级** | `SafetySection` 移除 `product-panel`/全部 border 与 ring；新增 `SafetyGlassPanel`（无边框多层 shadow + 径向暗角 + 淡网格，对齐 How It Works 预览窗）；action/stack/blocked 卡片改 inset 凹陷 + 语义角光；Live controls chip 去 border。 | 无白边/蓝边/金边硬框，纯 shadow 分层；`pnpm type-check` 通过。 |
 | 2026-06-19 | **Landing Hero Spotlight 卡片质感升级** | `PandaSpotlightCarousel` 去掉纯黑 `#060806` 底；新增 `hero-spotlight-card` 多层渐变 + 扫描线 + 径向暗角 + 四角 bracket + 顶沿 rim 光；内部 SceneNode / archetype 面板改用 `hero-spotlight-glass` inset 玻璃质感。 | Hero 右侧卡片与 Safety / How It Works 预览窗视觉语言一致；`pnpm type-check` 通过。 |
 | 2026-06-19 | **Landing Why 对比卡片质感升级** | `WhyContrastDemo` 移除 `product-panel` 与全部可见 border；新增 `why-contrast-shell` 无边框多层 shadow + 径向暗角 + 扫描线；tab rail / 红绿内容面板改 inset 语义渐变；切换 tab 时外缘红/绿环境光微变。 | Why 右侧卡片无白边，与 Hero / Safety 质感一致；`pnpm type-check` 通过。 |
+| 2026-06-19 | **Profile 移除天赋标签** | `SelectedPandaDetailCard` 删除 `panda.talent.name` chip（如「无天赋」「反向嗅觉」）。 | Profile 详情区仅保留状态 badge，不再展示天赋名标签。 |
