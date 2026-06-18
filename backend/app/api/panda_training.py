@@ -37,6 +37,9 @@ def _intent_dict(row: OrderIntent) -> dict:
         "proof_eligible": row.proof_eligible,
         "status": row.status,
         "rejection_reason": row.rejection_reason,
+        "market_snapshot": row.market_snapshot,
+        "decision_snapshot": row.decision_snapshot,
+        "policy_snapshot": row.policy_snapshot,
         "created_at": row.created_at.isoformat() if row.created_at else None,
     }
 
@@ -54,7 +57,13 @@ def _trade_fact_dict(row: TradeFact) -> dict:
         "realized_pnl": float(row.realized_pnl) if row.realized_pnl is not None else None,
         "realized_pnl_pct": float(row.realized_pnl_pct) if row.realized_pnl_pct else None,
         "review_status": row.review_status,
+        "market_snapshot": row.market_snapshot,
+        "decision_snapshot": row.decision_snapshot,
+        "policy_snapshot": row.policy_snapshot,
+        "ledger_snapshot_before": row.ledger_snapshot_before,
         "ledger_snapshot_after": row.ledger_snapshot_after,
+        "execution_snapshot": row.execution_snapshot,
+        "outcome": row.outcome,
         "created_at": row.created_at.isoformat() if row.created_at else None,
     }
 

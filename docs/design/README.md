@@ -65,8 +65,9 @@ The key improvement is information-density control. Not every page is a cockpit.
 | [Chain Proof](page-chain-proof.md) | Prove selected action with testnet PTB | J6 | Proof console |
 | [Review](page-review.md) | Turn closed trades into learning | J7 | Evidence journal |
 | [Safety](page-safety.md) | Pause, revoke, or tighten the Panda | J8 | Emergency controls |
+| [Profile](page-profile.md) | Return the user to the right Panda training action | Account center | Continuation hub |
 
-Future pages such as Landing, Panda Profile, Leaderboard, Achievements, Marketplace, and Panda Lab are intentionally out of scope for this design pass.
+Future pages such as Landing, Panda detail, Leaderboard, Achievements, Marketplace, and Panda Lab are intentionally out of scope for this design pass.
 
 ---
 

@@ -4,6 +4,10 @@ TradingPanda is a Sui-native autonomous agent wallet training system. The langua
 
 ## Language
 
+**Sui-native Autonomous Agent Wallet**:
+The product category for a Panda agent whose identity, authority boundary, and proof trail are anchored in Sui.
+_Avoid_: AI trading pet as the primary category, generic AI trading bot, operating system
+
 **Panda**:
 An autonomous trading agent represented by a Sui NFT with immutable personality traits.
 _Avoid_: Bot, pet-only character, generic AI assistant
@@ -12,9 +16,25 @@ _Avoid_: Bot, pet-only character, generic AI assistant
 The chain identity of a Panda and the source of its immutable personality.
 _Avoid_: Account, wallet
 
+**Profile**:
+The user's account center for identity, check-in, owned Pandas, and aggregate training status.
+_Avoid_: Panda detail page, single-Panda dossier, Training Ledger
+
+**Primary Panda**:
+The Panda surfaced first in the user's Profile as the most relevant continuation point for training.
+_Avoid_: Favorite NFT, account avatar, selected trade
+
 **Agent Wallet**:
 The product concept of a Panda acting under user-defined authority and risk limits.
 _Avoid_: User wallet, AI wallet with unlimited access
+
+**Real Agent Wallet**:
+The north-star product mode where a Panda can autonomously trade assets placed inside a PandaVault, with every action constrained by the user's TradingPolicy.
+_Avoid_: Unbounded real-asset control, profit guarantee, MVP paper ledger
+
+**Bounded Autonomy**:
+The promise that a Panda may decide and act independently only inside user-defined authority and risk limits.
+_Avoid_: Unlimited automation, manual signal clicking, custodial wallet control
 
 **TradingPolicy**:
 The standalone shared Move object that defines what a Panda is allowed to do.
@@ -31,6 +51,14 @@ _Avoid_: User signer, chain auto-signer, wallet owner
 **Training Ledger**:
 The paper execution environment where Panda trades are settled against real market reference prices.
 _Avoid_: Fake trading, toy market
+
+**Ledger Delta**:
+The visible account or position change caused by a settled paper execution in the Training Ledger.
+_Avoid_: Database diff, raw ledger entry
+
+**Training Session**:
+A user-started observation window in which a Panda is allowed to watch market events and propose autonomous OrderIntents. It does not mean manual trading control.
+_Avoid_: Manual trading session, order entry mode
 
 **PandaCoin**:
 A testnet-only training token used to prove bounded chain execution.

@@ -558,6 +558,71 @@
   }
 }
 
+@keyframes pandaTagDriftA {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(6px, -10px, 0);
+  }
+}
+
+@keyframes pandaTagDriftB {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(-8px, 8px, 0);
+  }
+}
+
+@keyframes pandaTagDriftC {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(10px, 6px, 0);
+  }
+}
+
+@keyframes pandaTagDriftD {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(-6px, -8px, 0);
+  }
+}
+
+.animate-panda-tag-a {
+  animation: pandaTagDriftA 5.5s ease-in-out infinite;
+}
+
+.animate-panda-tag-b {
+  animation: pandaTagDriftB 6.2s ease-in-out infinite;
+}
+
+.animate-panda-tag-c {
+  animation: pandaTagDriftC 5s ease-in-out infinite;
+}
+
+.animate-panda-tag-d {
+  animation: pandaTagDriftD 6.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-panda-tag-a,
+  .animate-panda-tag-b,
+  .animate-panda-tag-c,
+  .animate-panda-tag-d {
+    animation: none;
+  }
+}
+
 @media (min-width: 768px) {
   @keyframes drawerIn {
     from {

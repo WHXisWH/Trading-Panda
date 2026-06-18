@@ -9,6 +9,7 @@ import { DisclosureL0 } from "@/lib/ui/disclosure";
 import { chainProofPath, reviewPath, safetyPath } from "@/lib/ui/routeJump";
 import { DecisionTimeline } from "@/components/training/DecisionTimeline";
 import { LedgerSummaryStrip } from "@/components/training/LedgerSummaryStrip";
+import { LatestDecisionCard } from "@/components/training/LatestDecisionCard";
 import { MarketChartPanel } from "@/components/training/MarketChartPanel";
 import { PandaAgentStatus } from "@/components/training/PandaAgentStatus";
 import { PolicyGateBanner } from "@/components/training/PolicyGateBanner";
@@ -16,10 +17,15 @@ import { TradeFactDrawer } from "@/components/training/TradeFactDrawer";
 import { TrainingControlBar } from "@/components/training/TrainingControlBar";
 import { TrainingStatusStrip } from "@/components/training/TrainingStatusStrip";
 import { FeedStrategyDrawer } from "@/components/training/FeedStrategyDrawer";
+import {
+  buildTrainingPreflightItems,
+  summarizeLatestDecision,
+} from "@/components/training/trainingLedgerView";
 import { useAuth } from "@/hooks/useAuth";
 import { useMarketWs } from "@/hooks/useMarketWs";
 import { useSimulationSession } from "@/hooks/useSimulationSession";
 import { resolveSubscribedPools, type DeepbookPool } from "@/lib/constants/deepbookPools";
+import { fetchAgentWalletStatus } from "@/services/agentWallet.service";
 import { fetchPandaDetail } from "@/services/panda.service";
 import {
   fetchOrderIntents,
@@ -29,6 +35,7 @@ import {
 import { fetchLatestMerkleStatus } from "@/services/trust.service";
 import type { OrderIntentApi, TradeFactApi } from "@/types/autonomous-wallet";
 import type { MarketInterval } from "@/types/ws";
+import { sameMarketPair } from "@/lib/market/canonicalMarketPair";
 
 const FRESH_TICK_MAX_AGE_SEC = 120;
 
@@ -39,6 +46,7 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
   const [pool, setPool] = useState<DeepbookPool>("DEEP/SUI");
   const [interval, setInterval] = useState<MarketInterval>("1m");
   const [selectedIntent, setSelectedIntent] = useState<OrderIntentApi | null>(null);
+  const [selectedTradeFactId, setSelectedTradeFactId] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [strategyDrawerOpen, setStrategyDrawerOpen] = useState(false);
   const [didAutoPromptStrategy, setDidAutoPromptStrategy] = useState(false);
@@ -49,14 +57,40 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
     queryFn: () => fetchPandaDetail(jwt!, pandaId),
   });
 
+  const { data: walletStatus } = useQuery({
+    queryKey: ["agent-wallet-status", pandaId, jwt],
+    enabled: !!jwt,
+    queryFn: () => fetchAgentWalletStatus(jwt!, pandaId),
+  });
+
   const hasStrategy = Boolean(panda?.active_strategy_id);
   const subscribedPools = useMemo(
     () => resolveSubscribedPools(panda?.subscribed_pools),
     [panda?.subscribed_pools],
   );
+  const currentPairAllowed = useMemo(
+    () => subscribedPools.some((item) => sameMarketPair(item, pool)),
+    [pool, subscribedPools],
+  );
+  const currentPairSubscribed = currentPairAllowed;
+  const walletReady = Boolean(walletStatus?.can_start_training);
+  const policyPaused = Boolean(walletStatus?.policy?.paused);
+
+  useEffect(() => {
+    if (subscribedPools.length === 0) return;
+    const preferred = subscribedPools.includes(pool) ? pool : subscribedPools[0];
+    if (preferred !== pool) {
+      setPool(preferred);
+    }
+  }, [pool, subscribedPools]);
 
   const session = useSimulationSession(pandaId, hasStrategy);
-  const market = useMarketWs({ pool, interval });
+  const market = useMarketWs({
+    pool,
+    pairs: [pool],
+    interval,
+    enabled: !!jwt,
+  });
 
   const { data: ledger, refetch: refetchLedger } = useQuery({
     queryKey: ["training-ledger", pandaId, jwt],
@@ -92,7 +126,25 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
   const marketFresh =
     lastTickAgeSec == null ? market.status === "open" : lastTickAgeSec <= FRESH_TICK_MAX_AGE_SEC;
 
+  const latestSummary = useMemo(
+    () =>
+      summarizeLatestDecision({
+        intent: ledger?.last_order_intent ?? intents[0] ?? null,
+        tradeFact: ledger?.last_trade_fact ?? tradeFacts[0] ?? null,
+      }),
+    [intents, ledger?.last_order_intent, ledger?.last_trade_fact, tradeFacts],
+  );
+
   const policyBanner = useMemo(() => {
+    if (!walletReady) {
+      return { status: "paused" as const, message: "Agent Wallet setup is required before training." };
+    }
+    if (!hasStrategy) {
+      return { status: "paused" as const, message: "Feed strategy first." };
+    }
+    if (!currentPairAllowed) {
+      return { status: "reject" as const, message: `${pool} is not authorized or subscribed.` };
+    }
     if (!marketFresh) {
       return { status: "stale" as const, message: "DeepBook tick is stale — Panda holds." };
     }
@@ -103,15 +155,15 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
     if (latest?.status === "EXECUTED") {
       return { status: "pass" as const, message: null };
     }
-    return null;
-  }, [intents, marketFresh]);
+    return { status: "neutral" as const, message: null };
+  }, [currentPairAllowed, hasStrategy, intents, marketFresh, pool, walletReady]);
 
   const selectedTradeFact: TradeFactApi | null = useMemo(() => {
-    if (!selectedIntent) {
+    if (!selectedTradeFactId) {
       return null;
     }
-    return tradeFacts.find((f) => f.order_intent_id === selectedIntent.id) ?? null;
-  }, [selectedIntent, tradeFacts]);
+    return tradeFacts.find((f) => f.id === selectedTradeFactId) ?? null;
+  }, [selectedTradeFactId, tradeFacts]);
 
   const handleSelectIntent = useCallback((intent: OrderIntentApi) => {
     setSelectedIntent(intent);
@@ -135,6 +187,21 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
     }
   }, [didAutoPromptStrategy, hasStrategy, panda, searchParams]);
 
+  const preflightItems = useMemo(
+    () =>
+      buildTrainingPreflightItems({
+        walletReady,
+        hasStrategy,
+        policyPaused,
+        currentPair: pool,
+        currentPairAllowed,
+        currentPairSubscribed,
+        wsStatus: market.status,
+        lastTickAgeSec,
+      }),
+    [currentPairAllowed, currentPairSubscribed, hasStrategy, lastTickAgeSec, market.status, pool, policyPaused, walletReady],
+  );
+
   return (
     <ProductPageShell density="high" className="space-y-4">
       <DisclosureL0
@@ -150,6 +217,7 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
         policyVersion={ledger?.policy_version ?? session.simStatus?.policy_version}
         marketFresh={marketFresh}
         wsStatus={market.status}
+        policyPaused={policyPaused}
         merkleStatus={merkleStatus}
       />
 
@@ -159,6 +227,9 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
         speed={session.speed}
         subscribedPools={subscribedPools}
         hasStrategy={hasStrategy}
+        walletReady={walletReady}
+        policyPaused={policyPaused}
+        currentPairAllowed={currentPairAllowed}
         actorActive={session.actorActive}
         tradeCount={session.tradeCount}
         wsStatus={market.status}
@@ -167,14 +238,27 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
         onSpeedChange={session.setSpeed}
         onToggleTraining={handleToggleTraining}
         onFeedStrategy={() => setStrategyDrawerOpen(true)}
+        onManagePair={() => setStrategyDrawerOpen(true)}
+        preflightItems={preflightItems}
+      />
+
+      <LatestDecisionCard
+        pandaId={pandaId}
+        summary={latestSummary}
+        onInspect={(summary) => {
+          if (summary.intent) {
+            setSelectedIntent(summary.intent);
+            setSelectedTradeFactId(summary.tradeFactId);
+          } else if (summary.tradeFact) {
+            setSelectedIntent(summary.intent);
+            setSelectedTradeFactId(summary.tradeFact.id);
+          }
+          setDrawerOpen(true);
+        }}
       />
 
       <div className="grid gap-4 lg:grid-cols-[240px_1fr_280px]">
-        <PandaAgentStatus
-          emotion={session.emotion}
-          lastIntent={lastIntent}
-          skillVersion={0}
-        />
+        <PandaAgentStatus emotion={session.emotion} lastIntent={lastIntent} skillVersion={0} />
         <MarketChartPanel
           pool={pool}
           interval={interval}
@@ -192,17 +276,10 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
           trades={session.trades}
         />
         <div className="space-y-3">
-          <LedgerSummaryStrip
-            ledger={ledger}
-            equity={session.equity}
-            initialCapital={session.initialCapital}
-          />
-          <PolicyGateBanner status={policyBanner?.status ?? null} message={policyBanner?.message} />
+          <LedgerSummaryStrip ledger={ledger} equity={session.equity} initialCapital={session.initialCapital} />
+          <PolicyGateBanner status={policyBanner.status} message={policyBanner.message} />
           <div className="product-panel flex flex-wrap gap-3 px-4 py-3">
-            <Link
-              href={chainProofPath(pandaId)}
-              className="text-[12px] font-medium text-product-green underline-offset-2 hover:underline"
-            >
+            <Link href={chainProofPath(pandaId)} className="text-[12px] font-medium text-product-green underline-offset-2 hover:underline">
               Chain Proof
             </Link>
             <Link href={reviewPath(pandaId)}>
@@ -222,15 +299,9 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
       <section className="space-y-3">
         <div className="flex items-center justify-between gap-3">
           <h2 className="product-field-label">Decision timeline</h2>
-          {intents.length > 0 ? (
-            <span className="text-[11px] text-product-muted">{intents.length} events</span>
-          ) : null}
+          {intents.length > 0 ? <span className="text-[11px] text-product-muted">{intents.length} events</span> : null}
         </div>
-        <DecisionTimeline
-          intents={intents}
-          selectedId={selectedIntent?.id}
-          onSelect={handleSelectIntent}
-        />
+        <DecisionTimeline intents={intents} selectedId={selectedIntent?.id} onSelect={handleSelectIntent} />
       </section>
 
       <TradeFactDrawer

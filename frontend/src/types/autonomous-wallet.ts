@@ -32,6 +32,19 @@ export type SkillMemoryStatus =
   | "weakened"
   | "retired";
 
+export interface LedgerSnapshotPositionApi {
+  asset: string;
+  quantity: number;
+}
+
+export interface LedgerSnapshotApi extends Record<string, unknown> {
+  cash_balance?: number;
+  equity?: number;
+  realized_pnl?: number;
+  unrealized_pnl?: number;
+  positions?: LedgerSnapshotPositionApi[];
+}
+
 export interface PandaVaultApi {
   id: string;
   panda_id: string;
@@ -90,6 +103,10 @@ export interface OrderIntentApi {
   proof_key: string | null;
   status: IntentStatus;
   rejection_reason: string | null;
+  market_snapshot?: Record<string, unknown>;
+  decision_snapshot?: Record<string, unknown>;
+  policy_snapshot?: Record<string, unknown>;
+  created_at?: string | null;
 }
 
 export interface TradeFactApi {
@@ -108,6 +125,13 @@ export interface TradeFactApi {
   opened_at?: string | null;
   closed_at?: string | null;
   decision_snapshot?: Record<string, unknown>;
+  market_snapshot?: Record<string, unknown>;
+  policy_snapshot?: Record<string, unknown>;
+  ledger_snapshot_before?: LedgerSnapshotApi;
+  ledger_snapshot_after?: LedgerSnapshotApi;
+  execution_snapshot?: Record<string, unknown>;
+  outcome?: Record<string, unknown>;
+  created_at?: string | null;
 }
 
 export interface ChainProofEligibilityApi {

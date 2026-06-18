@@ -111,6 +111,24 @@ export function statsFromPanda(panda: {
   };
 }
 
+export function statsFromPandaSummary(panda: {
+  personality: {
+    boldness: number;
+    patience: number;
+    intuition: number;
+    focus: number;
+    contrarian: number;
+  };
+  emotion_state?: string;
+  experience_level?: number;
+}): PandaStats {
+  return statsFromPanda({
+    ...panda.personality,
+    emotion_state: panda.emotion_state,
+    experience_level: panda.experience_level,
+  });
+}
+
 export const emotionFilterParams: Record<
   PandaEmotion,
   { inkBlur: number; saturation: number; opacity: number }

@@ -6,9 +6,13 @@ import { getFullnodeUrl } from "@mysten/sui/client";
 import { Toaster } from "sonner";
 import { useState } from "react";
 import { OnboardingGuard } from "@/components/auth/OnboardingGuard";
+import { SafeWalletAutoConnect } from "@/components/auth/SafeWalletAutoConnect";
 import { WalletAuthSync } from "@/components/auth/WalletAuthSync";
 import { ZkLoginResultToast } from "@/components/auth/ZkLoginResultToast";
-import { walletSupportsPersonalMessageLogin } from "@/lib/sui/walletCompat";
+import {
+  isLoginCompatibleWallet,
+  sanitizeWalletConnectionStorage,
+} from "@/lib/sui/walletConnection";
 
 const SUI_NETWORK =
   (process.env.NEXT_PUBLIC_SUI_NETWORK as "testnet" | "mainnet") ?? "testnet";
@@ -16,18 +20,7 @@ const SUI_NETWORK =
 /** Prefer official Sui Wallet / Slush over Suiet for personal-message login. */
 const PREFERRED_WALLETS = ["Sui Wallet", "Slush"];
 
-function loginWalletFilter(wallet: {
-  features: Record<string, unknown>;
-}): boolean {
-  const f = wallet.features as {
-    "sui:signTransaction"?: unknown;
-    "sui:signTransactionBlock"?: unknown;
-    "sui:signPersonalMessage"?: unknown;
-    "sui:signMessage"?: unknown;
-  };
-  const canSignTx = Boolean(f["sui:signTransaction"] || f["sui:signTransactionBlock"]);
-  return canSignTx && walletSupportsPersonalMessageLogin(f);
-}
+sanitizeWalletConnectionStorage();
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -49,11 +42,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
         defaultNetwork={SUI_NETWORK}
       >
         <WalletProvider
-          autoConnect
+          autoConnect={false}
           preferredWallets={PREFERRED_WALLETS}
-          walletFilter={loginWalletFilter}
+          walletFilter={isLoginCompatibleWallet}
           stashedWallet={{ name: "TradingPanda", network: SUI_NETWORK }}
         >
+          <SafeWalletAutoConnect />
           <WalletAuthSync />
           <ZkLoginResultToast />
           <OnboardingGuard>{children}</OnboardingGuard>

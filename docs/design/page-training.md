@@ -22,6 +22,14 @@ Execution = Training Ledger paper trade
 Optional proof = selected testnet PandaCoin PTB later
 ```
 
+Primary posture:
+
+```text
+Observation and audit first; session controls second.
+```
+
+The first viewport should answer whether the Panda is credibly training and what just happened. It should not behave like a manual trading terminal or a generic simulation dashboard.
+
 ---
 
 ## 2. User Mental Model
@@ -114,11 +122,34 @@ Mobile should prioritize chart, Panda state, and latest decision. Details move i
 ## 7. User Interactions
 
 - Start or stop training session.
-- Select one of the allowed/liquid pairs.
+- Select one of the authorized and subscribed pairs.
 - Click a decision row to inspect why it bought, sold, held, or got rejected.
 - Open the Trade Fact drawer.
 - Jump from an eligible Trade Fact to Chain Proof.
 - Jump from a closed trade to Review.
+
+Start and stop are session-level controls only. Users must not manually buy, sell, close, or otherwise inject trades from this page.
+
+Pair selection changes the current training or observation context only inside the Panda's existing authorized and subscribed pool set. Adding pools, expanding pair authority, or changing risk limits belongs outside Training Ledger.
+
+## 7.1 Pre-Flight Boundary
+
+Hard blockers:
+
+- No active PandaVault or Agent Wallet setup.
+- No active TradingPolicy.
+- No active strategy.
+- Current pair is not authorized by TradingPolicy.
+- Current pair is not in the Panda's subscribed training pools.
+
+Soft warnings:
+
+- WebSocket is still connecting.
+- Last tick is stale, such as older than 120 seconds.
+- Historical candles are temporarily unavailable.
+- Latest ledger or Trade Fact sync is delayed.
+
+Hard blockers prevent training from starting. Soft warnings allow the user to start or wait while the page clearly states that the Panda is waiting for fresh DeepBook input or delayed evidence.
 
 ---
 
@@ -133,6 +164,8 @@ Show:
 - Decision status: `HOLD`, `ORDER_INTENT`, `REJECTED_BY_POLICY`, `PAPER_EXECUTED`.
 - Trade Fact id and decision hash.
 - Ledger balance and position deltas.
+- Policy snapshot summary: version, authorized pair, max notional, daily loss limit, pass/reject reason.
+- Ledger before/after summary and latest Ledger Delta.
 
 Do not show:
 
@@ -141,6 +174,7 @@ Do not show:
 - Hidden LLM chain-of-thought.
 - Private signer configuration.
 - Testnet PTB details unless user enters Chain Proof.
+- Full raw JSON by default.
 
 ---
 
@@ -159,6 +193,8 @@ Main CTA flow:
 ```text
 Start Training → Actor starting toast → Waiting → Tick → Decision → Policy → Ledger → Fact
 ```
+
+Chain Proof and Review are entered primarily from a selected Trade Fact. Global links may remain as secondary navigation, but proving or reviewing should preserve the selected `trade_fact_id` context.
 
 ---
 

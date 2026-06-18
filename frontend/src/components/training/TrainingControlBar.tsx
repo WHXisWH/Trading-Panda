@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/Button";
 import type { SessionPhase } from "@/hooks/useSimulationSession";
 import type { WsConnectionStatus } from "@/types/ws";
 import type { DeepbookPool } from "@/lib/constants/deepbookPools";
+import { agentWalletSetupPath, safetyPath } from "@/lib/ui/routeJump";
+import type { TrainingPreflightItem } from "./trainingLedgerView";
 
 const FRESH_TICK_MAX_AGE_SEC = 120;
 const SPEEDS = ["1×", "10×", "100×", "跳到结果"] as const;
@@ -18,6 +20,9 @@ interface Props {
   speed: string;
   subscribedPools: DeepbookPool[];
   hasStrategy: boolean;
+  walletReady: boolean;
+  policyPaused: boolean;
+  currentPairAllowed: boolean;
   actorActive: boolean;
   tradeCount: number;
   wsStatus: WsConnectionStatus;
@@ -26,6 +31,8 @@ interface Props {
   onSpeedChange: (speed: string) => void;
   onToggleTraining: () => void;
   onFeedStrategy: () => void;
+  onManagePair?: () => void;
+  preflightItems: TrainingPreflightItem[];
 }
 
 const PHASE_LABEL: Record<SessionPhase, string> = {
@@ -145,6 +152,9 @@ export function TrainingControlBar({
   speed,
   subscribedPools,
   hasStrategy,
+  walletReady,
+  policyPaused,
+  currentPairAllowed,
   actorActive,
   tradeCount,
   wsStatus,
@@ -153,6 +163,8 @@ export function TrainingControlBar({
   onSpeedChange,
   onToggleTraining,
   onFeedStrategy,
+  onManagePair,
+  preflightItems,
 }: Props) {
   const wsInfo = WS_LABELS[wsStatus];
   const isRunning = phase === "running";
@@ -161,7 +173,7 @@ export function TrainingControlBar({
   const [checklistOpen, setChecklistOpen] = useState(false);
   const checklistRef = useRef<HTMLDivElement>(null);
 
-  const checklist = buildChecklist({
+  const checklist = preflightItems.length > 0 ? preflightItems : buildChecklist({
     hasStrategy,
     subscribedPools,
     wsStatus,
@@ -273,6 +285,11 @@ export function TrainingControlBar({
         <Button size="sm" variant="outline" onClick={handleFeedStrategy}>
           Feed strategy
         </Button>
+        {onManagePair ? (
+          <Button size="sm" variant="ghost" onClick={onManagePair}>
+            Pair
+          </Button>
+        ) : null}
 
         <div className="relative" ref={checklistRef}>
           {isRunning ? (
@@ -316,6 +333,20 @@ export function TrainingControlBar({
                     Feed strategy
                   </Button>
                 )}
+                {!walletReady ? (
+                  <Link href={agentWalletSetupPath(pandaId)}>
+                    <Button size="sm" variant="outline" type="button">
+                      Fix wallet
+                    </Button>
+                  </Link>
+                ) : null}
+                {policyPaused ? (
+                  <Link href={safetyPath(pandaId)}>
+                    <Button size="sm" variant="ghost" type="button">
+                      Open safety
+                    </Button>
+                  </Link>
+                ) : null}
                 <Button size="sm" onClick={handleConfirmStart} disabled={!requiredOk}>
                   {requiredOk && !allOk ? "Start anyway" : "Confirm start"}
                 </Button>
