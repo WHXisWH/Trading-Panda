@@ -114,12 +114,10 @@ export function buildTrainingPreflightItems({
     },
     {
       label: "Pair",
-      ok: currentPairAllowed && currentPairSubscribed,
+      ok: currentPairAllowed,
       detail: !currentPairAllowed
         ? `${currentPair} is not authorized`
-        : !currentPairSubscribed
-          ? `${currentPair} is not subscribed`
-          : `${currentPair} authorized + subscribed`,
+        : `${currentPair} authorized`,
       required: true,
     },
     {

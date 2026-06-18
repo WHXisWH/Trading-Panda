@@ -7,9 +7,11 @@ from urllib.parse import unquote
 
 from fastapi import FastAPI, HTTPException, Query
 
-from broadcast.schemas import pool_to_pair
+from broadcast.schemas import pool_to_pair, normalize_pool_name
+from candles_page import DEFAULT_PAGE_LIMIT, MAX_PAGE_LIMIT
 from config import get_settings
 from monitor import MarketMonitorService
+from pipeline.kline_aggregate import interval_to_seconds
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -61,33 +63,47 @@ async def list_pairs() -> dict:
 
 
 def _normalize_pool_param(pool: str) -> str:
-    """Accept DEEP/SUI path segment or DEEP%2FSUI (decoded by Starlette)."""
-    return unquote(pool.strip())
+    """Accept DEEP/SUI, DEEP-SUI, DEEP%2FSUI → DeepBook pool_name DEEP_SUI."""
+    return normalize_pool_name(unquote(pool.strip()))
 
 
 @app.get("/candles")
 async def get_candles_query(
     pool: str = Query(..., description="Pool name, e.g. DEEP/SUI"),
     interval: str = Query(default="1m"),
-    limit: int = Query(default=100, ge=1, le=500),
+    limit: int = Query(default=DEFAULT_PAGE_LIMIT, ge=1, le=MAX_PAGE_LIMIT),
+    before: int | None = Query(
+        default=None,
+        description="Unix seconds — return candles strictly before this time (lazy load)",
+    ),
 ) -> dict[str, Any]:
-    return await _candles_response(_normalize_pool_param(pool), interval, limit)
+    return await _candles_response(_normalize_pool_param(pool), interval, limit, before)
 
 
 @app.get("/candles/{pool:path}")
 async def get_candles_path(
     pool: str,
     interval: str = Query(default="1m"),
-    limit: int = Query(default=100, ge=1, le=500),
+    limit: int = Query(default=DEFAULT_PAGE_LIMIT, ge=1, le=MAX_PAGE_LIMIT),
+    before: int | None = Query(default=None),
 ) -> dict[str, Any]:
-    return await _candles_response(_normalize_pool_param(pool), interval, limit)
+    return await _candles_response(_normalize_pool_param(pool), interval, limit, before)
 
 
-async def _candles_response(pool: str, interval: str, limit: int) -> dict[str, Any]:
+async def _candles_response(
+    pool: str,
+    interval: str,
+    limit: int,
+    before: int | None,
+) -> dict[str, Any]:
     if monitor is None:
         raise HTTPException(status_code=503, detail="monitor not ready")
-    candles = await monitor.get_candles(pool, interval=interval, limit=limit)
-    if not candles:
+    try:
+        interval_to_seconds(interval)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    page = await monitor.get_candles_page(pool, interval=interval, limit=limit, before=before)
+    if not page.candles:
         raise HTTPException(
             status_code=404,
             detail=f"no candle data for pool={pool!r}",
@@ -97,6 +113,9 @@ async def _candles_response(pool: str, interval: str, limit: int) -> dict[str, A
         "pool": pool,
         "pair": pair,
         "interval": interval,
+        "has_more": page.has_more,
+        "oldest_t": page.oldest_t,
+        "newest_t": page.newest_t,
         "candles": [
             {
                 "t": int(c.timestamp),
@@ -106,6 +125,6 @@ async def _candles_response(pool: str, interval: str, limit: int) -> dict[str, A
                 "c": c.close,
                 "v": c.volume,
             }
-            for c in candles
+            for c in page.candles
         ],
     }

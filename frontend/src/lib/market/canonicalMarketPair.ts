@@ -20,3 +20,8 @@ export function dedupeMarketPairs(pairs: string[]): string[] {
 export function sameMarketPair(a: string, b: string): boolean {
   return canonicalMarketPair(a).toUpperCase() === canonicalMarketPair(b).toUpperCase();
 }
+
+/** Agent Wallet `allowed_pairs` — canonical labels for UI + market API. */
+export function resolveAuthorizedPools(raw: readonly string[] | undefined): string[] {
+  return dedupeMarketPairs([...(raw ?? [])]);
+}

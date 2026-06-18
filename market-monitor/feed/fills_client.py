@@ -175,6 +175,9 @@ class FillsClient:
         alt2 = key.replace("/", "_")
         if alt2 in self._pool_directory and not is_fallback_pool(key):
             return self._pool_directory[alt2]
+        alt3 = key.replace("-", "_")
+        if alt3 in self._pool_directory and alt3 != key:
+            return self._pool_directory[alt3]
         return None
 
     async def resolve_pool_key(self, pool: str) -> str | None:
@@ -305,6 +308,7 @@ class FillsClient:
         limit: int,
         since_sec: float | None = None,
         lookback_sec: float | None = None,
+        before_sec: float | None = None,
     ) -> list[FillRow]:
         schema = self._schema
         pool_key = await self.resolve_pool_key(pool)
@@ -319,34 +323,65 @@ class FillsClient:
         )
 
         if schema.id_col:
+            select_id = f"{schema.id_col} AS fill_id"
+            order_by = f"{schema.id_col} ASC"
+        else:
+            select_id = (
+                f"ROW_NUMBER() OVER (ORDER BY {schema.ts_expr} ASC)::bigint AS fill_id"
+            )
+            order_by = f"{schema.ts_expr} ASC"
+
+        if before_sec is not None:
             query = f"""
                 SELECT
-                    {schema.id_col} AS fill_id,
+                    {select_id},
                     {schema.ts_expr} AS ts_sec,
                     {schema.price_expr}::double precision AS price_raw,
                     {schema.qty_expr}::double precision AS qty_raw
                 FROM order_fills
                 WHERE {schema.pool_col}::text = $1
                   AND {schema.ts_expr} >= $2
-                ORDER BY {schema.id_col} ASC
+                  AND {schema.ts_expr} < $3
+                ORDER BY {order_by}
                 LIMIT 500000
             """
+            args: tuple[Any, ...] = (pool_key, start, before_sec)
         else:
             query = f"""
                 SELECT
-                    ROW_NUMBER() OVER (ORDER BY {schema.ts_expr} ASC)::bigint AS fill_id,
+                    {select_id},
                     {schema.ts_expr} AS ts_sec,
                     {schema.price_expr}::double precision AS price_raw,
                     {schema.qty_expr}::double precision AS qty_raw
                 FROM order_fills
                 WHERE {schema.pool_col}::text = $1
                   AND {schema.ts_expr} >= $2
-                ORDER BY {schema.ts_expr} ASC
+                ORDER BY {order_by}
                 LIMIT 500000
             """
+            args = (pool_key, start)
+
         async with self._pool.acquire() as conn:
-            rows = await conn.fetch(query, pool_key, start)
+            rows = await conn.fetch(query, *args)
         return [self._row_to_fill(r) for r in rows]
+
+    async def get_candles_page(
+        self,
+        pool: str,
+        interval: str,
+        limit: int,
+        *,
+        before_sec: float | None = None,
+        start_sec: float | None = None,
+    ) -> list[Candle]:
+        fills = await self.fetch_fills_window(
+            pool,
+            interval,
+            limit,
+            since_sec=start_sec,
+            before_sec=before_sec,
+        )
+        return fills_to_candles(fills, interval, limit)
 
     async def get_candles(
         self,

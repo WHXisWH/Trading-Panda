@@ -3,11 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { clsx } from "clsx";
-import { Tooltip } from "@/components/ui/Tooltip";
 import { Button } from "@/components/ui/Button";
 import type { SessionPhase } from "@/hooks/useSimulationSession";
 import type { WsConnectionStatus } from "@/types/ws";
-import type { DeepbookPool } from "@/lib/constants/deepbookPools";
 import { agentWalletSetupPath, safetyPath } from "@/lib/ui/routeJump";
 import type { TrainingPreflightItem } from "./trainingLedgerView";
 
@@ -18,7 +16,7 @@ interface Props {
   pandaId: string;
   phase: SessionPhase;
   speed: string;
-  subscribedPools: DeepbookPool[];
+  subscribedPools: string[];
   hasStrategy: boolean;
   walletReady: boolean;
   policyPaused: boolean;
@@ -31,7 +29,6 @@ interface Props {
   onSpeedChange: (speed: string) => void;
   onToggleTraining: () => void;
   onFeedStrategy: () => void;
-  onManagePair?: () => void;
   preflightItems: TrainingPreflightItem[];
 }
 
@@ -74,7 +71,7 @@ function buildChecklist({
   lastTickAgeSec,
 }: {
   hasStrategy: boolean;
-  subscribedPools: DeepbookPool[];
+  subscribedPools: string[];
   wsStatus: WsConnectionStatus;
   lastTickAgeSec: number | null | undefined;
 }): ChecklistItem[] {
@@ -93,7 +90,7 @@ function buildChecklist({
       detail:
         subscribedPools.length > 0
           ? subscribedPools.join(" · ")
-          : "Select at least one pool",
+          : "Configure allowed pairs in Agent Wallet",
       required: true,
     },
     {
@@ -163,7 +160,6 @@ export function TrainingControlBar({
   onSpeedChange,
   onToggleTraining,
   onFeedStrategy,
-  onManagePair,
   preflightItems,
 }: Props) {
   const wsInfo = WS_LABELS[wsStatus];
@@ -285,11 +281,6 @@ export function TrainingControlBar({
         <Button size="sm" variant="outline" onClick={handleFeedStrategy}>
           Feed strategy
         </Button>
-        {onManagePair ? (
-          <Button size="sm" variant="ghost" onClick={onManagePair}>
-            Pair
-          </Button>
-        ) : null}
 
         <div className="relative" ref={checklistRef}>
           {isRunning ? (
@@ -340,6 +331,13 @@ export function TrainingControlBar({
                     </Button>
                   </Link>
                 ) : null}
+                {subscribedPools.length === 0 ? (
+                  <Link href={agentWalletSetupPath(pandaId)}>
+                    <Button size="sm" variant="outline" type="button">
+                      Configure pairs
+                    </Button>
+                  </Link>
+                ) : null}
                 {policyPaused ? (
                   <Link href={safetyPath(pandaId)}>
                     <Button size="sm" variant="ghost" type="button">
@@ -354,15 +352,6 @@ export function TrainingControlBar({
             </div>
           )}
         </div>
-
-        <Tooltip content="Manage subscribed pools">
-          <Link
-            href={`/pools?panda=${pandaId}`}
-            className="text-[11px] text-product-muted transition-colors hover:text-product-gold"
-          >
-            {subscribedPools.join(" · ")}
-          </Link>
-        </Tooltip>
       </div>
     </div>
   );

@@ -144,9 +144,9 @@ export default function DashboardPage({ params }: { params: { id: string } }) {
   });
 
   // ── Pool change handler ──
-  const handlePoolChange = async (next: DeepbookPool) => {
-    if (!subscribedPools.includes(next)) return;
-    setPool(next);
+  const handlePoolChange = async (next: string) => {
+    if (!subscribedPools.includes(next as DeepbookPool)) return;
+    setPool(next as DeepbookPool);
     if (!jwt) return;
     const subs = [next, ...subscribedPools.filter((p) => p !== next)] as DeepbookPool[];
     localStorage.setItem(POOLS_STORAGE_KEY, JSON.stringify(subs));
@@ -154,7 +154,7 @@ export default function DashboardPage({ params }: { params: { id: string } }) {
     try {
       await updatePandaPools(jwt, params.id, {
         subscribed_pools: subs,
-        primary_pool: next,
+        primary_pool: next as DeepbookPool,
       });
       await qc.invalidateQueries({ queryKey: ["panda", params.id] });
     } catch {

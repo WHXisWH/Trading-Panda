@@ -1,6 +1,5 @@
 import type { ApiResult } from "@/types/api";
 import { isApiError } from "@/types/api";
-import type { DeepbookPool } from "@/lib/constants/deepbookPools";
 import type { SimulationSpeed } from "@/types/trading";
 
 function authHeaders(jwt: string): HeadersInit {
@@ -15,7 +14,7 @@ export interface SimulationStartResult {
   panda_id: string;
   status: string;
   speed: SimulationSpeed;
-  subscribed_pools: DeepbookPool[];
+  subscribed_pools: string[];
 }
 
 export interface SimulationStatusResult {
@@ -42,7 +41,7 @@ async function parseError(res: Response, json: ApiResult<unknown>): Promise<neve
 export async function startTraining(
   jwt: string,
   pandaId: string,
-  opts: { speed: string; subscribedPools: DeepbookPool[] },
+  opts: { speed: string; subscribedPools: string[] },
 ): Promise<SimulationStartResult> {
   const res = await fetch(`/api/panda/${pandaId}/simulation/start`, {
     method: "POST",

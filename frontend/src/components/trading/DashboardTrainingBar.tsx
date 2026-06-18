@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { SimulationControls } from "@/components/trading/SimulationControls";
-import type { DeepbookPool } from "@/lib/constants/deepbookPools";
+import { agentWalletSetupPath } from "@/lib/ui/routeJump";
 
 interface Props {
   pandaId: string;
   focus: number;
-  subscribedPools: DeepbookPool[];
+  subscribedPools: string[];
   simSpeed: string;
   simRunning: boolean;
   canTrain: boolean;
@@ -68,10 +68,10 @@ export function DashboardTrainingBar({
           {simRunning ? "⏸ 暂停训练" : "▶ 开始训练"}
         </button>
         <Link
-          href={`/pools?panda=${pandaId}&focus=${focus}`}
+          href={agentWalletSetupPath(pandaId)}
           className="text-[11px] text-primary-500 hover:underline"
         >
-          管理交易池
+          配置交易池
           {subscribedPools.length ? ` (${subscribedPools.join(" · ")})` : ""} →
         </Link>
       </div>

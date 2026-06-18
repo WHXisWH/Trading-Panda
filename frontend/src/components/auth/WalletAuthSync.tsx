@@ -14,6 +14,7 @@ import {
   isWalletAutoLoginSuppressedByOAuth,
 } from "@/lib/sui/zkLogin";
 import { isAccountOnAppNetwork, networkMismatchHint } from "@/lib/sui/network";
+import { resolveEffectiveAccessToken } from "@/lib/auth/accessToken";
 import { useAuthStore } from "@/stores/authStore";
 
 export function WalletAuthSync() {
@@ -21,7 +22,7 @@ export function WalletAuthSync() {
   const { currentWallet } = useCurrentWallet();
   const { user, accessToken, jwt, clearAuth, walletAutoLoginSuppressed, authMethod } =
     useAuthStore();
-  const token = accessToken ?? jwt;
+  const token = resolveEffectiveAccessToken(accessToken, jwt);
   const { loginWithWallet } = useWalletLogin();
   const loginRef = useRef(loginWithWallet);
   loginRef.current = loginWithWallet;

@@ -62,6 +62,11 @@ def pool_to_pair(pool: str) -> str:
     return pool.replace("_", "-")
 
 
+def normalize_pool_name(pool: str) -> str:
+    """Map UI/API pair labels to DeepBook indexer pool_name (BASE_QUOTE)."""
+    return pool.strip().replace("-", "_").replace("/", "_")
+
+
 def pair_to_asset(pair: str) -> str:
     """SUI-USDC → SUI; DEEP/SUI → DEEP."""
     token = pair.split("-")[0].split("_")[0]

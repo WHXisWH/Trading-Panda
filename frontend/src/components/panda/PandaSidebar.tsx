@@ -9,6 +9,7 @@ import { EmotionIndicator } from "./EmotionIndicator";
 import { PERSONALITY_AXES, type PersonalityKey } from "@/lib/personality";
 import { getGrowthStage } from "@/utils/pandaHelper";
 import { Select } from "@/components/ui/Select";
+import { agentWalletSetupPath } from "@/lib/ui/routeJump";
 
 interface Props {
   variant?: "default" | "dashboard-left";
@@ -135,7 +136,7 @@ export function PandaSidebar({
       )}
 
       <Link
-        href={`/pools?panda=${pandaId}&focus=${focus}`}
+        href={agentWalletSetupPath(pandaId)}
         className="text-center text-[11px] text-primary-500 hover:underline"
       >
         配置交易池 →

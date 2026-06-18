@@ -1,6 +1,6 @@
 import json
 
-from broadcast.schemas import MarketEvent, PairMetaPayload, pool_to_pair
+from broadcast.schemas import MarketEvent, PairMetaPayload, normalize_pool_name, pool_to_pair
 
 
 def test_market_event_extended_fields() -> None:
@@ -44,6 +44,13 @@ def test_market_event_extended_fields() -> None:
 def test_pool_to_pair_slash_preserved() -> None:
     assert pool_to_pair("DEEP/SUI") == "DEEP/SUI"
     assert pool_to_pair("SUI_USDC") == "SUI-USDC"
+
+
+def test_normalize_pool_name() -> None:
+    assert normalize_pool_name("DEEP-SUI") == "DEEP_SUI"
+    assert normalize_pool_name("DEEP/SUI") == "DEEP_SUI"
+    assert normalize_pool_name("SUI_USDC") == "SUI_USDC"
+    assert normalize_pool_name("SUI-USDC") == "SUI_USDC"
 
 
 def test_market_event_json_roundtrip() -> None:

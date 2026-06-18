@@ -16,11 +16,8 @@ import {
   LineStyle,
 } from "lightweight-charts";
 import { clsx } from "clsx";
-import {
-  DEEPBOOK_MVP_POOLS,
-  type DeepbookPool,
-} from "@/lib/constants/deepbookPools";
 import { Select } from "@/components/ui/Select";
+import { MARKET_INTERVAL_OPTIONS } from "@/lib/market/chartIntervals";
 import { tradesToChartMarkers } from "@/lib/chart/tradeMarkers";
 import type { TradeRecordApi } from "@/types/trading";
 import type { CandlesResponse, MarketInterval, MarketTickPayload, WsConnectionStatus } from "@/types/ws";
@@ -28,18 +25,25 @@ import type { CandlesResponse, MarketInterval, MarketTickPayload, WsConnectionSt
 type ChartVariant = "light" | "product";
 
 interface Props {
-  pool: DeepbookPool;
+  pool: string;
   interval?: MarketInterval;
   onIntervalChange?: (interval: MarketInterval) => void;
-  /** Pools the user may switch to (scheme A: `subscribed_pools` only). */
-  availablePools?: DeepbookPool[];
-  onPoolChange?: (pool: DeepbookPool) => void;
+  /** Pools the user may switch to (Agent Wallet `allowed_pairs`). */
+  availablePools?: string[];
+  onPoolChange?: (pool: string) => void;
+  /** When false, pool switcher is rendered externally (e.g. Training Ledger header row). */
+  showPoolSelector?: boolean;
+  /** When false, interval switcher is rendered externally. */
+  showIntervalSelector?: boolean;
   history?: CandlesResponse | null;
   lastTick?: MarketTickPayload | null;
   marketStatus?: WsConnectionStatus;
   historyLoading?: boolean;
   historyError?: string | null;
   onRefresh?: () => void;
+  hasMore?: boolean;
+  loadingMore?: boolean;
+  onLoadMore?: () => void;
   trades?: TradeRecordApi[];
   className?: string;
   variant?: ChartVariant;
@@ -86,7 +90,7 @@ const CHART_THEMES: Record<
   },
 };
 
-const INTERVALS: MarketInterval[] = ["1m", "5m", "15m"];
+const LOAD_MORE_THRESHOLD = 25;
 
 type HoverCandle = {
   time: string;
@@ -247,22 +251,29 @@ export function CandlestickChart({
   pool,
   interval = "1m",
   onIntervalChange,
-  availablePools = [...DEEPBOOK_MVP_POOLS],
+  availablePools = [],
   onPoolChange,
+  showPoolSelector = true,
+  showIntervalSelector = true,
   history,
   lastTick,
   marketStatus,
   historyLoading,
   historyError,
   onRefresh,
+  hasMore = false,
+  loadingMore = false,
+  onLoadMore,
   trades = [],
   className,
   variant = "light",
 }: Props) {
   const isProduct = variant === "product";
   const theme = CHART_THEMES[variant];
-  const poolOptions = availablePools.length > 0 ? availablePools : [...DEEPBOOK_MVP_POOLS];
-  const canSwitchPools = onPoolChange != null && poolOptions.length > 1;
+  const poolOptions = availablePools.length > 0 ? availablePools : [pool];
+  const canSwitchPools =
+    showPoolSelector && onPoolChange != null && poolOptions.length > 1;
+  const canSwitchInterval = showIntervalSelector && onIntervalChange != null;
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
@@ -273,6 +284,16 @@ export function CandlestickChart({
   const [hoverCandle, setHoverCandle] = React.useState<HoverCandle | null>(null);
   const [followRealtime, setFollowRealtime] = React.useState(true);
   const [showMa, setShowMa] = React.useState(true);
+  const rangeRef = useRef<{ oldest: number | null; newest: number | null }>({
+    oldest: null,
+    newest: null,
+  });
+  const onLoadMoreRef = useRef(onLoadMore);
+  const hasMoreRef = useRef(hasMore);
+  const loadingMoreRef = useRef(loadingMore);
+  onLoadMoreRef.current = onLoadMore;
+  hasMoreRef.current = hasMore;
+  loadingMoreRef.current = loadingMore;
 
   const displayPrice =
     lastTick?.price ??
@@ -399,6 +420,19 @@ export function CandlestickChart({
       });
     };
     chart.subscribeCrosshairMove(handleCrosshair);
+    chart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+      if (
+        !range ||
+        range.from == null ||
+        !hasMoreRef.current ||
+        loadingMoreRef.current
+      ) {
+        return;
+      }
+      if (range.from < LOAD_MORE_THRESHOLD) {
+        onLoadMoreRef.current?.();
+      }
+    });
 
     chartRef.current = chart;
     seriesRef.current = candleSeries;
@@ -437,14 +471,31 @@ export function CandlestickChart({
     volumeRef.current.setData(volumes);
     maFastRef.current?.setData(showMa ? maFromCandles(candles, MA_FAST_PERIOD) : []);
     maSlowRef.current?.setData(showMa ? maFromCandles(candles, MA_SLOW_PERIOD) : []);
-    if (candles.length > 0) {
+    const oldestTime = candles[0]?.time;
+    const newestTime = candles[candles.length - 1]?.time;
+    const oldest = typeof oldestTime === "number" ? oldestTime : null;
+    const newest = typeof newestTime === "number" ? newestTime : null;
+    const prev = rangeRef.current;
+    const isPrepend =
+      prev.oldest != null &&
+      oldest != null &&
+      oldest < prev.oldest &&
+      newest === prev.newest;
+    if (candles.length > 0 && !isPrepend) {
       chartRef.current?.timeScale().fitContent();
     }
+    rangeRef.current = { oldest, newest };
   }, [history, showMa]);
 
   useEffect(() => {
     const candle = lastTick?.candle;
-    if (!seriesRef.current || !volumeRef.current || !candle || !lastTick?.timestamp) {
+    if (
+      interval !== "1m" ||
+      !seriesRef.current ||
+      !volumeRef.current ||
+      !candle ||
+      !lastTick?.timestamp
+    ) {
       return;
     }
     const time = toChartTime(lastTick.timestamp);
@@ -466,7 +517,7 @@ export function CandlestickChart({
     if (followRealtime) {
       chartRef.current?.timeScale().scrollToRealTime();
     }
-  }, [lastTick, theme]);
+  }, [interval, lastTick, theme]);
 
   useEffect(() => {
     if (!seriesRef.current) {
@@ -536,7 +587,7 @@ export function CandlestickChart({
                 aria-label="交易池"
                 className="w-auto font-mono"
                 value={pool}
-                onValueChange={(v) => onPoolChange!(v as DeepbookPool)}
+                onValueChange={(v) => onPoolChange!(v)}
                 options={poolOptions.map((p) => ({ value: p, label: p }))}
               />
             ) : (
@@ -596,41 +647,18 @@ export function CandlestickChart({
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
-          <div
-            className={clsx(
-              "flex overflow-hidden rounded-full",
-              isProduct ? "gap-1" : "rounded border border-[var(--color-border)] bg-white",
-            )}
-          >
-            {INTERVALS.map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => onIntervalChange?.(item)}
-                className={clsx(
-                  isProduct
-                    ? clsx(
-                        "product-toggle-chip !px-2.5 !py-1.5 !text-[10px]",
-                        item === interval && "product-toggle-chip-active",
-                      )
-                    : clsx(
-                        "h-8 px-2.5 font-mono text-[11px]",
-                        item === interval
-                          ? "bg-primary-500 text-white"
-                          : "text-neutral-500 hover:bg-primary-50",
-                      ),
-                )}
-              >
-                {item}
-              </button>
-            ))}
-          </div>
-          <ChartToolButton
-            isProduct={isProduct}
-            onClick={() => chartRef.current?.timeScale().fitContent()}
-          >
-            Fit
-          </ChartToolButton>
+          {canSwitchInterval ? (
+            <Select
+              size="sm"
+              aria-label="Candle interval"
+              className={clsx(
+                "ledger-chart-select w-auto font-mono",
+              )}
+              value={interval}
+              onValueChange={(value) => onIntervalChange!(value as MarketInterval)}
+              options={MARKET_INTERVAL_OPTIONS}
+            />
+          ) : null}
           <ChartToolButton isProduct={isProduct} active={showMa} onClick={() => setShowMa((v) => !v)}>
             MA
           </ChartToolButton>
@@ -700,7 +728,10 @@ export function CandlestickChart({
             </span>
           </>
         )}
-        <span className="ml-auto">DeepBook · {interval} · {candleCount} bars</span>
+        <span className="ml-auto">
+          DeepBook · {interval} · {candleCount} bars
+          {loadingMore ? " · loading…" : hasMore ? " · scroll for more" : " · 1y max"}
+        </span>
       </div>
 
       <div className="relative min-h-[360px] md:min-h-[440px] xl:min-h-[52dvh]">

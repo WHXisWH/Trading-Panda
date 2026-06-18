@@ -13,7 +13,6 @@ import {
 } from "@/services/simulation.service";
 import { fetchTrades } from "@/services/trades.service";
 import type { DecisionLog, TradeRecordApi } from "@/types/trading";
-import type { DeepbookPool } from "@/lib/constants/deepbookPools";
 import { tradeToDecisionLog } from "@/components/trading/TradeHistory";
 
 /**
@@ -50,7 +49,7 @@ export interface SimulationSession {
   emotion: string | null;
 
   setSpeed: (speed: string) => void;
-  toggleTraining: (subscribedPools: DeepbookPool[]) => Promise<void>;
+  toggleTraining: (authorizedPools: string[]) => Promise<void>;
   selectTrade: (trade: TradeRecordApi) => void;
   clearReview: () => void;
   refetchStatus: () => void;
@@ -141,7 +140,7 @@ export function useSimulationSession(
   });
 
   const toggleTraining = useCallback(
-    async (subscribedPools: DeepbookPool[]) => {
+    async (authorizedPools: string[]) => {
       if (!jwt) return;
       if (!hasStrategy && !isRunning) {
         toast.error("请先教给熊猫策略");
@@ -158,7 +157,7 @@ export function useSimulationSession(
           setPhase("starting");
           const data = await startTraining(jwt, pandaId, {
             speed,
-            subscribedPools,
+            subscribedPools: authorizedPools,
           });
           setSimulationId(data.simulation_id);
           setPhase("running");

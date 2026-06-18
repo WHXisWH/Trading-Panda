@@ -20,7 +20,16 @@ export interface WsServerEvent<T = Record<string, unknown>> {
   request_id?: string;
 }
 
-export type MarketInterval = "1m" | "5m" | "15m";
+export type MarketInterval = "1m" | "5m" | "15m" | "1h" | "4h" | "1d";
+
+export interface CandleBar {
+  t: number;
+  o: number;
+  h: number;
+  l: number;
+  c: number;
+  v: number;
+}
 
 export interface SubscribeMarketPayload {
   assets?: string[];
@@ -57,12 +66,8 @@ export interface CandlesResponse {
   pool: string;
   pair: string;
   interval: string;
-  candles: Array<{
-    t: number;
-    o: number;
-    h: number;
-    l: number;
-    c: number;
-    v: number;
-  }>;
+  has_more?: boolean;
+  oldest_t?: number | null;
+  newest_t?: number | null;
+  candles: CandleBar[];
 }

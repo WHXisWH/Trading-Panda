@@ -36,7 +36,8 @@ class Settings(BaseSettings):
     ohlcv_limit: int = 60  # env: OHLCV_LIMIT
     # PG order_fills lookback (seconds). Poll: recent window for ticks; REST: chart history.
     fills_poll_lookback_sec: int = 259_200  # 72h — env: FILLS_POLL_LOOKBACK_SEC
-    fills_lookback_sec: int = 2_592_000  # 30d — env: FILLS_LOOKBACK_SEC
+    fills_lookback_sec: int = 2_592_000  # 30d — env: FILLS_LOOKBACK_SEC (PG tick poll)
+    candles_history_max_sec: int = 365 * 86400  # 1y soft cap — env: CANDLES_HISTORY_MAX_SEC
     orderbook_depth: int = 10
     orderbook_level: int = 2
     publish_heartbeat_sec: float = 30.0

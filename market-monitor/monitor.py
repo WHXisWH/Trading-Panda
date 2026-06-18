@@ -4,6 +4,8 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
+import httpx
+
 from broadcast.publisher import RedisPublisher
 from broadcast.schemas import (
     CandlePayload,
@@ -11,6 +13,12 @@ from broadcast.schemas import (
     PairMetaPayload,
     pair_to_asset,
     pool_to_pair,
+)
+from candles_page import (
+    CandlesPageResult,
+    build_page_result,
+    clamp_limit,
+    compute_indexer_window,
 )
 from config import Settings
 from feed.deepbook_client import Candle, DeepBookClient, PoolCatalogEntry
@@ -162,16 +170,49 @@ class MarketMonitorService:
         interval: str | None = None,
         limit: int | None = None,
     ) -> list[Candle]:
+        page = await self.get_candles_page(
+            pool,
+            interval=interval,
+            limit=limit,
+            before=None,
+        )
+        return page.candles
+
+    async def get_candles_page(
+        self,
+        pool: str,
+        interval: str | None = None,
+        limit: int | None = None,
+        before: int | None = None,
+    ) -> CandlesPageResult:
         period = interval or self._settings.candle_period
-        count = limit or self._settings.ohlcv_limit
-        if self._use_pg_ohlcv():
-            return await self._fills.get_candles(
-                pool,
-                period,
-                count,
-                lookback_sec=float(self._settings.fills_lookback_sec),
-            )
-        return await self._client.get_ohlcv(pool, period=period, limit=count)
+        count = clamp_limit(limit or self._settings.ohlcv_limit)
+        now = time.time()
+        start_time, end_time = compute_indexer_window(period, count, before, now=now)
+        try:
+            if self._use_pg_ohlcv():
+                raw = await self._fills.get_candles_page(
+                    pool,
+                    period,
+                    count,
+                    before_sec=float(before) if before is not None else None,
+                    start_sec=float(start_time),
+                )
+            else:
+                raw = await self._client.get_ohlcv(
+                    pool,
+                    period=period,
+                    limit=count,
+                    start_time=start_time,
+                    end_time=end_time,
+                )
+        except httpx.HTTPStatusError as exc:
+            logger.warning("candles fetch failed for %s: %s", pool, exc)
+            raw = []
+        except Exception as exc:
+            logger.warning("candles fetch error for %s: %s", pool, exc)
+            raw = []
+        return build_page_result(raw, count, before, now=now)
 
     async def list_ranked_pairs(self) -> list[RankedPair]:
         if self._state.ranked_pairs:

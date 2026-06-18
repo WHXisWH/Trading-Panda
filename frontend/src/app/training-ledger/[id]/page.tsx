@@ -22,9 +22,9 @@ import {
   summarizeLatestDecision,
 } from "@/components/training/trainingLedgerView";
 import { useAuth } from "@/hooks/useAuth";
-import { useMarketWs } from "@/hooks/useMarketWs";
+import { useMarketCandles } from "@/hooks/useMarketCandles";
 import { useSimulationSession } from "@/hooks/useSimulationSession";
-import { resolveSubscribedPools, type DeepbookPool } from "@/lib/constants/deepbookPools";
+import { resolveAuthorizedPools, sameMarketPair } from "@/lib/market/canonicalMarketPair";
 import { fetchAgentWalletStatus } from "@/services/agentWallet.service";
 import { fetchPandaDetail } from "@/services/panda.service";
 import {
@@ -35,15 +35,12 @@ import {
 import { fetchLatestMerkleStatus } from "@/services/trust.service";
 import type { OrderIntentApi, TradeFactApi } from "@/types/autonomous-wallet";
 import type { MarketInterval } from "@/types/ws";
-import { sameMarketPair } from "@/lib/market/canonicalMarketPair";
-
-const FRESH_TICK_MAX_AGE_SEC = 120;
 
 export default function TrainingLedgerPage({ params }: { params: { id: string } }) {
   const pandaId = params.id;
   const searchParams = useSearchParams();
   const { jwt } = useAuth();
-  const [pool, setPool] = useState<DeepbookPool>("DEEP/SUI");
+  const [pool, setPool] = useState("");
   const [interval, setInterval] = useState<MarketInterval>("1m");
   const [selectedIntent, setSelectedIntent] = useState<OrderIntentApi | null>(null);
   const [selectedTradeFactId, setSelectedTradeFactId] = useState<string | null>(null);
@@ -64,32 +61,34 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
   });
 
   const hasStrategy = Boolean(panda?.active_strategy_id);
-  const subscribedPools = useMemo(
-    () => resolveSubscribedPools(panda?.subscribed_pools),
-    [panda?.subscribed_pools],
+  const authorizedPools = useMemo(
+    () => resolveAuthorizedPools(walletStatus?.policy?.allowed_pairs),
+    [walletStatus?.policy?.allowed_pairs],
   );
   const currentPairAllowed = useMemo(
-    () => subscribedPools.some((item) => sameMarketPair(item, pool)),
-    [pool, subscribedPools],
+    () => authorizedPools.some((item) => sameMarketPair(item, pool)),
+    [pool, authorizedPools],
   );
   const currentPairSubscribed = currentPairAllowed;
   const walletReady = Boolean(walletStatus?.can_start_training);
   const policyPaused = Boolean(walletStatus?.policy?.paused);
 
   useEffect(() => {
-    if (subscribedPools.length === 0) return;
-    const preferred = subscribedPools.includes(pool) ? pool : subscribedPools[0];
+    if (authorizedPools.length === 0) return;
+    const preferred = authorizedPools.find((item) => sameMarketPair(item, pool))
+      ? pool
+      : authorizedPools[0];
     if (preferred !== pool) {
       setPool(preferred);
     }
-  }, [pool, subscribedPools]);
+  }, [pool, authorizedPools]);
 
   const session = useSimulationSession(pandaId, hasStrategy);
-  const market = useMarketWs({
+  const market = useMarketCandles({
     pool,
     pairs: [pool],
     interval,
-    enabled: !!jwt,
+    enabled: !!panda && !!pool,
   });
 
   const { data: ledger, refetch: refetchLedger } = useQuery({
@@ -121,10 +120,19 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
   });
 
   const lastTickAgeSec = market.lastTick?.timestamp
-    ? Math.max(0, Math.floor(Date.now() / 1000 - market.lastTick.timestamp))
-    : null;
-  const marketFresh =
-    lastTickAgeSec == null ? market.status === "open" : lastTickAgeSec <= FRESH_TICK_MAX_AGE_SEC;
+    ? Math.max(
+        0,
+        Math.floor(
+          Date.now() / 1000 -
+            (market.lastTick.timestamp > 1e12
+              ? market.lastTick.timestamp / 1000
+              : market.lastTick.timestamp),
+        ),
+      )
+    : market.history?.newest_t
+      ? Math.max(0, Math.floor(Date.now() / 1000 - market.history.newest_t))
+      : null;
+  const marketFresh = market.marketFresh;
 
   const latestSummary = useMemo(
     () =>
@@ -171,10 +179,10 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
   }, []);
 
   const handleToggleTraining = useCallback(async () => {
-    await session.toggleTraining(subscribedPools);
+    await session.toggleTraining(authorizedPools);
     void refetchLedger();
     void refetchIntents();
-  }, [session, subscribedPools, refetchLedger, refetchIntents]);
+  }, [session, authorizedPools, refetchLedger, refetchIntents]);
 
   const lastIntent = ledger?.last_order_intent ?? intents[0] ?? null;
 
@@ -225,7 +233,7 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
         pandaId={pandaId}
         phase={session.phase}
         speed={session.speed}
-        subscribedPools={subscribedPools}
+        subscribedPools={authorizedPools}
         hasStrategy={hasStrategy}
         walletReady={walletReady}
         policyPaused={policyPaused}
@@ -238,7 +246,6 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
         onSpeedChange={session.setSpeed}
         onToggleTraining={handleToggleTraining}
         onFeedStrategy={() => setStrategyDrawerOpen(true)}
-        onManagePair={() => setStrategyDrawerOpen(true)}
         preflightItems={preflightItems}
       />
 
@@ -260,16 +267,22 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
       <div className="grid gap-6 lg:grid-cols-[240px_1fr_280px]">
         <PandaAgentStatus emotion={session.emotion} lastIntent={lastIntent} skillVersion={0} />
         <MarketChartPanel
+          pandaId={pandaId}
           pool={pool}
           interval={interval}
           onIntervalChange={setInterval}
-          availablePools={subscribedPools}
+          authorizedPools={authorizedPools}
           onPoolChange={setPool}
           history={market.history}
           lastTick={market.lastTick}
           marketStatus={market.status}
           historyLoading={market.historyLoading}
           historyError={market.historyError}
+          hasMore={market.hasMore}
+          loadingMore={market.loadingMore}
+          onLoadMore={() => {
+            void market.loadMoreOlder();
+          }}
           onRefresh={() => {
             void market.reloadHistory();
           }}

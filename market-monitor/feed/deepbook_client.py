@@ -138,10 +138,21 @@ class DeepBookClient:
         return parse_pool_catalog(data)
 
     async def get_ohlcv(
-        self, pool: str, period: str = "1m", limit: int = 60
+        self,
+        pool: str,
+        period: str = "1m",
+        limit: int = 60,
+        *,
+        start_time: int | None = None,
+        end_time: int | None = None,
     ) -> list[Candle]:
         path_pool = encode_pool_for_path(pool)
-        params = {"interval": period, "limit": limit}
+        params: dict[str, str | int] = {"interval": period, "limit": limit}
+        # DeepBook indexer expects millisecond Unix timestamps for window queries.
+        if start_time is not None:
+            params["start_time"] = int(start_time) * 1000
+        if end_time is not None:
+            params["end_time"] = int(end_time) * 1000
         async with httpx.AsyncClient(timeout=self._timeout) as client:
             r = await client.get(
                 f"{self._base}/ohclv/{path_pool}",

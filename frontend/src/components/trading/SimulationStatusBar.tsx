@@ -4,10 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { clsx } from "clsx";
 import { SimulationControls } from "@/components/trading/SimulationControls";
-import { Tooltip } from "@/components/ui/Tooltip";
+import { agentWalletSetupPath } from "@/lib/ui/routeJump";
 import type { SessionPhase } from "@/hooks/useSimulationSession";
 import type { WsConnectionStatus } from "@/types/ws";
-import type { DeepbookPool } from "@/lib/constants/deepbookPools";
 
 /** Ticks older than this are considered stale for the pre-start check. */
 const FRESH_TICK_MAX_AGE_SEC = 120;
@@ -17,7 +16,7 @@ interface Props {
   pandaName?: string;
   phase: SessionPhase;
   speed: string;
-  subscribedPools: DeepbookPool[];
+  subscribedPools: string[];
   hasStrategy: boolean;
   actorActive: boolean;
   tradeCount: number;
@@ -72,7 +71,7 @@ function buildChecklist({
   lastTickAgeSec,
 }: {
   hasStrategy: boolean;
-  subscribedPools: DeepbookPool[];
+  subscribedPools: string[];
   wsStatus: WsConnectionStatus;
   lastTickAgeSec: number | null | undefined;
 }): ChecklistItem[] {
@@ -324,14 +323,12 @@ export function SimulationStatusBar({
           )}
         </div>
 
-        <Tooltip content="管理交易池">
-          <Link
-            href={`/pools?panda=${pandaId}`}
-            className="text-[11px] text-ink-500 transition-colors hover:text-bamboo-600"
-          >
-            {subscribedPools.join(" · ")}
-          </Link>
-        </Tooltip>
+        <Link
+          href={agentWalletSetupPath(pandaId)}
+          className="text-[11px] text-ink-500 transition-colors hover:text-bamboo-600"
+        >
+          {subscribedPools.length > 0 ? subscribedPools.join(" · ") : "Configure pairs in Agent Wallet"}
+        </Link>
       </div>
     </div>
   );
