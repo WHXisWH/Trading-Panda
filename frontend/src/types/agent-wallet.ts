@@ -6,6 +6,7 @@ export type SetupState = "no_vault" | "active" | "mirror_syncing" | "ready";
 export type MirrorSyncStatus = "pending" | "synced" | "degraded";
 
 export interface PolicyDraft {
+  trainingBudget: number;
   allowedPairs: string[];
   maxNotionalPerTrade: number;
   maxDailyLoss: number;
@@ -50,7 +51,8 @@ export interface AgentWalletStatusApi {
 }
 
 export const DEFAULT_POLICY_DRAFT: PolicyDraft = {
-  allowedPairs: ["DEEP/SUI", "SUI/USDC"],
+  trainingBudget: 10_000,
+  allowedPairs: ["DEEP-SUI", "SUI-USDC"],
   maxNotionalPerTrade: 50,
   maxDailyLoss: 8,
   maxOpenPositions: 1,

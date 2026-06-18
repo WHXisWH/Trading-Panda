@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import { AgentWalletDetailsDrawer } from "@/components/agent-wallet/AgentWalletDetailsDrawer";
+import { AgentWalletPageSkeleton } from "@/components/agent-wallet/AgentWalletPageSkeleton";
 import { AuthorizedAgentReview } from "@/components/agent-wallet/AuthorizedAgentReview";
 import { PandaPermissionCard } from "@/components/agent-wallet/PandaPermissionCard";
 import { PolicyCollarEditor } from "@/components/agent-wallet/PolicyCollarEditor";
@@ -24,13 +25,25 @@ export function AgentWalletPageContent({ jwt, panda }: AgentWalletPageProps) {
   const wallet = useAgentWallet(jwt, panda.id, panda.sui_object_id);
   const isReady = wallet.status?.setup_state === "ready";
   const hasVault = Boolean(wallet.status?.vault?.sui_object_id);
-  const editorLocked = wallet.step === "signing" || isReady;
+  const editorLocked = wallet.step === "signing" || wallet.isSetupPending || isReady;
+  const setupStatusMessage =
+    wallet.setupPhase === "preparing"
+      ? "Preparing PandaVault + Policy transaction…"
+      : wallet.setupPhase === "awaiting_wallet"
+        ? "Confirm the transaction in your wallet."
+        : wallet.setupPhase === "syncing"
+          ? "Chain setup submitted — syncing backend mirror…"
+          : null;
 
   useEffect(() => {
     if (!wallet.toast) return;
     const t = window.setTimeout(() => wallet.setToast(null), 4000);
     return () => window.clearTimeout(t);
   }, [wallet]);
+
+  if (wallet.isStatusLoading) {
+    return <AgentWalletPageSkeleton message="Loading policy collar…" />;
+  }
 
   return (
     <div className="space-y-6">
@@ -55,6 +68,11 @@ export function AgentWalletPageContent({ jwt, panda }: AgentWalletPageProps) {
         ]}
       />
 
+      {setupStatusMessage ? (
+        <div className="rounded-xl border border-product-amber/30 bg-product-amber/10 px-4 py-2 text-[13px] text-product-amber">
+          {setupStatusMessage}
+        </div>
+      ) : null}
       {wallet.toast ? (
         <div className="rounded-xl border border-product-green/30 bg-product-green/10 px-4 py-2 text-[13px] text-product-green">
           {wallet.toast}
@@ -81,14 +99,28 @@ export function AgentWalletPageContent({ jwt, panda }: AgentWalletPageProps) {
         <Card className="space-y-6 p-5 md:p-6">
           {isReady ? (
             <div className="space-y-5">
-              <p className="text-[13px] text-product-muted">
-                PandaVault and TradingPolicy are active. Mirror status:{" "}
-                <strong className="text-product-text">{wallet.status?.mirror_sync_status}</strong>
-              </p>
+              <PolicyCollarEditor
+                draft={wallet.draft}
+                onChange={wallet.setDraft}
+                launchPairs={wallet.launchPairs}
+                fieldErrors={wallet.fieldErrors}
+                disabled={wallet.isSavingBudget || wallet.isSetupPending}
+                mode="budget"
+              />
               <PolicyPreviewSummary draft={wallet.draft} agentAddress={wallet.agentAddress} />
               <div className="flex flex-wrap gap-3">
+                <Button
+                  size="lg"
+                  loading={wallet.isSavingBudget}
+                  disabled={wallet.isSavingBudget || wallet.isSetupPending}
+                  onClick={() => wallet.saveTrainingBudget()}
+                >
+                  Update training budget
+                </Button>
                 <Link href={strategyPath(panda.id)}>
-                  <Button size="lg">Feed strategy</Button>
+                  <Button size="lg" variant="outline">
+                    Feed strategy
+                  </Button>
                 </Link>
                 <Link href={trainingLedgerPath(panda.id)}>
                   <Button size="lg" variant="outline">
@@ -112,16 +144,35 @@ export function AgentWalletPageContent({ jwt, panda }: AgentWalletPageProps) {
                 onChange={wallet.setDraft}
                 launchPairs={wallet.launchPairs}
                 fieldErrors={wallet.fieldErrors}
-                disabled={editorLocked || wallet.isLoading}
+                disabled={editorLocked || wallet.isSavingBudget}
               />
               <PolicyPreviewSummary draft={wallet.draft} agentAddress={wallet.agentAddress} />
               <div className="flex flex-wrap gap-3 border-t border-product-line/40 pt-5">
+                {!wallet.hasChainSigner ? (
+                  <p className="w-full text-[12px] text-product-amber">
+                    Connect a Sui wallet or sign in with Google to approve on-chain setup.
+                  </p>
+                ) : null}
+                {!wallet.agentAddress ? (
+                  <p className="w-full text-[12px] text-product-amber">
+                    Server agent signer is not configured. Set{" "}
+                    <span className="font-mono">AGENT_SIGNER_ADDRESS</span> on the backend to
+                    continue.
+                  </p>
+                ) : null}
                 <Button
                   size="lg"
-                  disabled={wallet.isLoading || !wallet.agentAddress}
+                  loading={wallet.isValidating || wallet.isSetupPending}
+                  disabled={
+                    wallet.isValidating ||
+                    wallet.isSetupPending ||
+                    wallet.isSavingBudget ||
+                    !wallet.agentAddress ||
+                    !wallet.hasChainSigner
+                  }
                   onClick={() => wallet.openReview()}
                 >
-                  Review Agent Signer
+                  {wallet.isValidating ? "Checking setup…" : "Confirm training setup"}
                 </Button>
                 {hasVault ? (
                   <Button size="lg" variant="outline" onClick={() => wallet.setDetailsOpen(true)}>
@@ -144,12 +195,12 @@ export function AgentWalletPageContent({ jwt, panda }: AgentWalletPageProps) {
 
       <WalletSignatureModal
         open={wallet.signModalOpen}
-        onOpenChange={wallet.setSignModalOpen}
+        onOpenChange={(open) => (open ? wallet.setSignModalOpen(true) : wallet.closeSignModal())}
         title="Create PandaVault + Policy"
         description="Sign to create shared PandaVault and TradingPolicy objects on Sui testnet."
-        confirmLabel={wallet.isLoading ? "Signing…" : "Approve setup"}
-        loading={wallet.isLoading}
-        onConfirm={wallet.executeSetup}
+        confirmLabel="Approve setup"
+        gasVariant="agent-wallet"
+        onConfirm={() => void wallet.executeSetup()}
       />
 
       <AgentWalletDetailsDrawer

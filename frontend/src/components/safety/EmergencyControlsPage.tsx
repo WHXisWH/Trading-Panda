@@ -36,6 +36,7 @@ export function EmergencyControlsPage({ pandaId }: Props) {
   useEffect(() => {
     if (!status?.policy) return;
     const next: PolicyDraft = {
+      trainingBudget: status.vault?.training_budget ?? DEFAULT_POLICY_DRAFT.trainingBudget,
       allowedPairs: status.policy.allowed_pairs,
       maxNotionalPerTrade: status.policy.max_notional_per_trade,
       maxDailyLoss: status.policy.max_daily_loss,

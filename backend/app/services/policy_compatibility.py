@@ -8,9 +8,9 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config import settings
 from app.db.models import Panda, TradingPolicy
 from app.schemas.strategy import ParsedStrategyLayers, PolicyConflictDetail
+from app.services.market_pairs import canonical_market_pair, configured_launch_pairs, resolve_launch_pairs
 
 
 DEFAULT_INITIAL_CAPITAL = 10_000.0
@@ -40,12 +40,11 @@ class PolicyCompatibilityResult:
 
 
 def _normalize_pair(pair: str) -> str:
-    return pair.strip().upper().replace("_", "/")
+    return canonical_market_pair(pair).upper()
 
 
 def _launch_pair_defaults() -> list[str]:
-    raw = settings.deepbook_launch_pairs or "DEEP/SUI,SUI/USDC"
-    return [_normalize_pair(p) for p in raw.split(",") if p.strip()]
+    return [_normalize_pair(p) for p in configured_launch_pairs()]
 
 
 def resolve_target_pairs(
@@ -94,7 +93,7 @@ async def load_panda_fallback_pairs(db: AsyncSession, panda_id: str) -> list[str
     pools = result.scalar_one_or_none()
     if isinstance(pools, list) and pools:
         return [_normalize_pair(str(p)) for p in pools]
-    return _launch_pair_defaults()
+    return [_normalize_pair(pair) for pair in await resolve_launch_pairs()]
 
 
 def check_policy_compatibility(

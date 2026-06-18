@@ -32,6 +32,7 @@ from app.services.policy_compatibility import (
     load_panda_fallback_pairs,
     resolve_target_pairs,
 )
+from app.services.agent_wallet import resolve_training_budget
 from app.services.strategy_rate_limit import check_llm_rate_limit
 
 DEFAULT_MARKET_SNAPSHOT: dict[str, Any] = {
@@ -263,10 +264,10 @@ async def validate_strategy_for_panda(
     db: AsyncSession,
     *,
     market_snapshot: dict[str, Any] | None = None,
-    initial_capital: float = 10_000.0,
 ) -> StrategyValidateData:
     policy_mirror = await load_active_trading_policy(db, panda_id)
     fallback_pairs = await load_panda_fallback_pairs(db, panda_id)
+    initial_capital = await resolve_training_budget(panda_id, db)
     return validate_strategy_body(
         body,
         market_snapshot=market_snapshot,

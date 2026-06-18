@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { AgentWalletPageContent } from "@/components/agent-wallet/AgentWalletPage";
+import { AgentWalletPageSkeleton } from "@/components/agent-wallet/AgentWalletPageSkeleton";
 import { ProductPageShell } from "@/components/layout/ProductPageShell";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/hooks/useAuth";
@@ -25,8 +26,10 @@ export default function AgentWalletPageClient() {
 
   if (!jwt || isLoading) {
     return (
-      <ProductPageShell className="py-12 text-center text-[13px] text-product-muted">
-        Loading…
+      <ProductPageShell density="medium">
+        <AgentWalletPageSkeleton
+          message={!jwt ? "Connecting session…" : "Loading your Panda…"}
+        />
       </ProductPageShell>
     );
   }

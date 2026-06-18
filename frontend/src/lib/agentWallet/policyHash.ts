@@ -1,13 +1,16 @@
 /** Hash allowed pairs for on-chain allowed_pairs_hash (sorted comma join). */
 
+import { canonicalMarketPair } from "@/lib/market/canonicalMarketPair";
+
 export async function computeAllowedPairsHash(pairs: string[]): Promise<Uint8Array> {
-  const normalized = [...pairs].map((p) => p.trim()).filter(Boolean).sort();
+  const normalized = [...pairs].map(canonicalMarketPair).filter(Boolean).sort();
   const payload = normalized.join(",");
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(payload));
   return new Uint8Array(digest);
 }
 
 export async function computePolicyHash(draft: {
+  trainingBudget: number;
   allowedPairs: string[];
   maxNotionalPerTrade: number;
   maxDailyLoss: number;
@@ -17,7 +20,8 @@ export async function computePolicyHash(draft: {
   proofMode: string;
 }): Promise<string> {
   const payload = JSON.stringify({
-    allowed_pairs: [...draft.allowedPairs].sort(),
+    training_budget: draft.trainingBudget,
+    allowed_pairs: [...draft.allowedPairs].map(canonicalMarketPair).filter(Boolean).sort(),
     max_notional_per_trade: draft.maxNotionalPerTrade,
     max_daily_loss: draft.maxDailyLoss,
     max_open_positions: draft.maxOpenPositions,

@@ -5,8 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Literal
 
-from app.config import settings
 from app.schemas.errors import ApiError, ApiErrorCode
+from app.services.package_ids import event_type_matches_package, package_ids_for_events
 from app.services.sui_rpc import get_transaction_block
 
 OwnerActionKind = Literal["pause", "unpause", "revoke", "tighten"]
@@ -69,12 +69,32 @@ def _find_created_object(
     return None
 
 
+def _find_mutated_panda_object(object_changes: list[dict[str, Any]]) -> str | None:
+    for change in object_changes:
+        if change.get("type") != "mutated":
+            continue
+        object_type = str(change.get("objectType", "")).lower()
+        if "::panda::panda" not in object_type:
+            continue
+        oid = change.get("objectId")
+        if oid:
+            return _normalize_object_id(str(oid))
+    return None
+
+
+def _is_agent_wallet_setup_event(ev_type: str) -> bool:
+    lowered = ev_type.lower()
+    return _event_suffix(lowered, "PandaVaultCreated") or _event_suffix(
+        lowered, "TradingPolicyCreated"
+    )
+
+
 def parse_setup_from_tx(
     events: list[dict[str, Any]],
     object_changes: list[dict[str, Any]],
-    package_id: str,
+    package_id: str | None = None,
 ) -> ParsedAgentWalletSetup | None:
-    pkg = package_id.lower().strip()
+    package_ids = package_ids_for_events() if not package_id else [package_id.lower().strip()]
     vault_id: str | None = None
     policy_id: str | None = None
     panda_id: str | None = None
@@ -85,7 +105,9 @@ def parse_setup_from_tx(
 
     for ev in events:
         ev_type = str(ev.get("type", "")).lower()
-        if pkg and pkg not in ev_type:
+        if not _is_agent_wallet_setup_event(ev_type) and not event_type_matches_package(
+            ev_type, package_ids
+        ):
             continue
         parsed = ev.get("parsedJson") or ev.get("parsed_json") or {}
         if not isinstance(parsed, dict):
@@ -109,6 +131,8 @@ def parse_setup_from_tx(
         vault_id = _find_created_object(object_changes, "::panda_vault::pandavault")
     if not policy_id:
         policy_id = _find_created_object(object_changes, "::trading_policy::tradingpolicy")
+    if not panda_id:
+        panda_id = _find_mutated_panda_object(object_changes)
 
     if not vault_id or not policy_id or not panda_id:
         return None
@@ -126,16 +150,16 @@ def parse_setup_from_tx(
 
 def parse_owner_action_from_tx(
     events: list[dict[str, Any]],
-    package_id: str,
+    package_id: str | None = None,
 ) -> ParsedOwnerAction | None:
-    pkg = package_id.lower().strip()
+    package_ids = package_ids_for_events() if not package_id else [package_id.lower().strip()]
     paused_event: dict[str, Any] | None = None
     revoked_event: dict[str, Any] | None = None
     updated_event: dict[str, Any] | None = None
 
     for ev in events:
         ev_type = str(ev.get("type", "")).lower()
-        if pkg and pkg not in ev_type:
+        if not event_type_matches_package(ev_type, package_ids):
             continue
         parsed = ev.get("parsedJson") or ev.get("parsed_json") or {}
         if not isinstance(parsed, dict):
@@ -203,7 +227,7 @@ async def fetch_setup_from_tx(
 
     events = tx.get("events") or []
     object_changes = tx.get("objectChanges") or []
-    parsed = parse_setup_from_tx(events, object_changes, settings.package_id)
+    parsed = parse_setup_from_tx(events, object_changes)
     if parsed is None:
         raise ApiError(
             ApiErrorCode.VALIDATION_ERROR,
@@ -233,7 +257,7 @@ async def fetch_owner_action_from_tx(
         raise ApiError(ApiErrorCode.PANDA_TX_FAILED, "Owner action transaction failed on chain")
 
     events = tx.get("events") or []
-    parsed = parse_owner_action_from_tx(events, settings.package_id)
+    parsed = parse_owner_action_from_tx(events)
     if parsed is None:
         raise ApiError(
             ApiErrorCode.VALIDATION_ERROR,

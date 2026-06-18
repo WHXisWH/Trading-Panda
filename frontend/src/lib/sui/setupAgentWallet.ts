@@ -1,8 +1,9 @@
 import { Transaction } from "@mysten/sui/transactions";
+import { packageIdForMoveCall } from "@/lib/sui/packageIds";
 import { computeAllowedPairsHash, computePolicyHash } from "@/lib/agentWallet/policyHash";
 import type { PolicyDraft } from "@/types/agent-wallet";
 
-const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID!;
+const PACKAGE_ID = packageIdForMoveCall();
 const CLOCK_OBJ = "0x0000000000000000000000000000000000000000000000000000000000000006";
 
 const MODE_TRAINING_LEDGER = 1;
@@ -13,15 +14,7 @@ export async function buildSetupAgentWalletTx(
   draft: PolicyDraft,
 ): Promise<Transaction> {
   const allowedPairsHash = await computeAllowedPairsHash(draft.allowedPairs);
-  const policyHashHex = await computePolicyHash({
-    allowedPairs: draft.allowedPairs,
-    maxNotionalPerTrade: draft.maxNotionalPerTrade,
-    maxDailyLoss: draft.maxDailyLoss,
-    maxOpenPositions: draft.maxOpenPositions,
-    cooldownMs: draft.cooldownMs,
-    maxProofsPerDay: draft.maxProofsPerDay,
-    proofMode: draft.proofMode,
-  });
+  const policyHashHex = await computePolicyHash(draft);
   const policyHashBytes = Uint8Array.from(
     policyHashHex.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16)),
   );
@@ -46,10 +39,4 @@ export async function buildSetupAgentWalletTx(
     ],
   });
   return tx;
-}
-
-export function extractTxDigest(result: unknown): string | null {
-  if (!result || typeof result !== "object") return null;
-  const r = result as { digest?: string; effects?: { transactionDigest?: string } };
-  return r.digest ?? r.effects?.transactionDigest ?? null;
 }

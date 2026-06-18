@@ -1,6 +1,7 @@
 "use client";
 
 import type { PolicyDraft } from "@/types/agent-wallet";
+import { formatPaperUsd } from "@/lib/agentWallet/paperUsd";
 
 interface PolicyPreviewSummaryProps {
   draft: PolicyDraft;
@@ -27,8 +28,9 @@ export function PolicyPreviewSummary({ draft, agentAddress }: PolicyPreviewSumma
       </div>
 
       <div className="pt-1">
+        <MetricRow label="Training budget (USD)" value={formatPaperUsd(draft.trainingBudget)} />
         <MetricRow label="Pairs" value={draft.allowedPairs.join(", ") || "none selected"} />
-        <MetricRow label="Max order" value={`${draft.maxNotionalPerTrade} training units`} />
+        <MetricRow label="Max order (USD)" value={formatPaperUsd(draft.maxNotionalPerTrade)} />
         <MetricRow label="Daily loss cap" value={`${draft.maxDailyLoss}%`} />
         <MetricRow
           label="Proof"

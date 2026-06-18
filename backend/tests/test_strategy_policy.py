@@ -102,6 +102,12 @@ def test_resolve_target_pairs_prefers_explicit():
     assert pairs == ["SUI/USDC"]
 
 
+def test_resolve_target_pairs_normalizes_deepbook_pool_name():
+    parsed = _parsed(target_pairs=["SUI_USDC"])
+    pairs = resolve_target_pairs(parsed, fallback_pairs=["DEEP/SUI"])
+    assert pairs == ["SUI-USDC"]
+
+
 def test_raise_policy_conflicts_on_feed_validation():
     from app.services.strategy_feed import _raise_policy_conflicts
     from app.schemas.strategy import PolicyConflictDetail

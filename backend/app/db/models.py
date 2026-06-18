@@ -325,6 +325,7 @@ class PandaVault(Base):
     base_asset = Column(Text, nullable=False, default="vUSDC")
     policy_id = Column(UUID(as_uuid=False), nullable=True)
     policy_version = Column(Integer, nullable=False, default=1)
+    training_budget = Column(Numeric(24, 8), nullable=False, default=10000)
     created_tx_digest = Column(Text)
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
     updated_at = Column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow)

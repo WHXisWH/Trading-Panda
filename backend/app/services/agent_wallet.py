@@ -19,10 +19,20 @@ from app.services.agent_wallet_event_parser import (
     fetch_owner_action_from_tx,
     fetch_setup_from_tx,
 )
+from app.services.market_pairs import (
+    _dedupe_pairs,
+    canonical_market_pair,
+    configured_launch_pairs,
+    resolve_launch_pairs,
+)
 from app.services.wallet_verify import normalize_sui_address
 
 SetupState = Literal["no_vault", "active", "mirror_syncing", "ready"]
 MirrorSyncStatus = Literal["pending", "synced", "degraded"]
+
+TRAINING_BUDGET_MIN = 100.0
+TRAINING_BUDGET_MAX = 1_000_000.0
+DEFAULT_TRAINING_BUDGET = 10_000.0
 
 
 def is_mirror_synced(vault: PandaVault | None, policy: TradingPolicy | None) -> bool:
@@ -32,10 +42,7 @@ def is_mirror_synced(vault: PandaVault | None, policy: TradingPolicy | None) -> 
 
 
 def launch_pairs() -> list[str]:
-    raw = settings.deepbook_launch_pairs.strip()
-    if not raw:
-        return ["DEEP/SUI", "SUI/USDC"]
-    return [p.strip() for p in raw.split(",") if p.strip()]
+    return configured_launch_pairs()
 
 
 def compute_policy_hash(
@@ -46,9 +53,11 @@ def compute_policy_hash(
     cooldown_ms: int,
     max_proofs_per_day: int,
     proof_mode: str,
+    training_budget: float = DEFAULT_TRAINING_BUDGET,
 ) -> str:
     payload = {
         "allowed_pairs": sorted(allowed_pairs),
+        "training_budget": training_budget,
         "max_notional_per_trade": max_notional_per_trade,
         "max_daily_loss": max_daily_loss,
         "max_open_positions": max_open_positions,
@@ -60,20 +69,107 @@ def compute_policy_hash(
     return digest
 
 
+def _training_budget_errors(
+    training_budget: float,
+    max_notional_per_trade: float,
+) -> list[dict[str, str]]:
+    errors: list[dict[str, str]] = []
+    if training_budget < TRAINING_BUDGET_MIN or training_budget > TRAINING_BUDGET_MAX:
+        errors.append(
+            {
+                "field": "training_budget",
+                "message": (
+                    f"Training budget must be between ${TRAINING_BUDGET_MIN:,.0f} "
+                    f"and ${TRAINING_BUDGET_MAX:,.0f} USD"
+                ),
+            }
+        )
+    if max_notional_per_trade > training_budget:
+        errors.append(
+            {
+                "field": "max_notional_per_trade",
+                "message": "Max order size (USD) cannot exceed training budget",
+            }
+        )
+    return errors
+
+
 def validate_policy_draft(
     allowed_pairs: list[str],
     max_notional_per_trade: float,
     max_daily_loss: float,
     max_open_positions: int,
     agent_signer_address: str | None,
+    *,
+    training_budget: float = DEFAULT_TRAINING_BUDGET,
+    cooldown_ms: int = 0,
+    max_proofs_per_day: int = 10,
+    proof_mode: str = "manual",
+) -> dict[str, Any]:
+    return validate_policy_draft_for_pairs(
+        allowed_pairs,
+        max_notional_per_trade,
+        max_daily_loss,
+        max_open_positions,
+        agent_signer_address,
+        launch_pairs(),
+        training_budget=training_budget,
+        cooldown_ms=cooldown_ms,
+        max_proofs_per_day=max_proofs_per_day,
+        proof_mode=proof_mode,
+    )
+
+
+async def validate_policy_draft_async(
+    allowed_pairs: list[str],
+    max_notional_per_trade: float,
+    max_daily_loss: float,
+    max_open_positions: int,
+    agent_signer_address: str | None,
+    *,
+    training_budget: float = DEFAULT_TRAINING_BUDGET,
+    cooldown_ms: int = 0,
+    max_proofs_per_day: int = 10,
+    proof_mode: str = "manual",
+) -> dict[str, Any]:
+    supported_pairs = await resolve_launch_pairs()
+    return validate_policy_draft_for_pairs(
+        allowed_pairs,
+        max_notional_per_trade,
+        max_daily_loss,
+        max_open_positions,
+        agent_signer_address,
+        supported_pairs,
+        training_budget=training_budget,
+        cooldown_ms=cooldown_ms,
+        max_proofs_per_day=max_proofs_per_day,
+        proof_mode=proof_mode,
+    )
+
+
+def validate_policy_draft_for_pairs(
+    allowed_pairs: list[str],
+    max_notional_per_trade: float,
+    max_daily_loss: float,
+    max_open_positions: int,
+    agent_signer_address: str | None,
+    supported_pairs: list[str],
+    *,
+    training_budget: float = DEFAULT_TRAINING_BUDGET,
+    cooldown_ms: int = 0,
+    max_proofs_per_day: int = 10,
+    proof_mode: str = "manual",
 ) -> dict[str, Any]:
     errors: list[dict[str, str]] = []
-    supported = set(launch_pairs())
+    supported = {canonical_market_pair(pair) for pair in supported_pairs}
+    normalized_allowed = [canonical_market_pair(pair) for pair in allowed_pairs]
 
-    if not allowed_pairs:
+    errors.extend(_training_budget_errors(training_budget, max_notional_per_trade))
+
+    if not normalized_allowed:
         errors.append({"field": "allowed_pairs", "message": "Select at least one trading pair"})
     else:
-        for pair in allowed_pairs:
+        for pair in normalized_allowed:
             if pair not in supported:
                 errors.append(
                     {
@@ -99,13 +195,14 @@ def validate_policy_draft(
         )
 
     policy_hash = compute_policy_hash(
-        allowed_pairs,
+        normalized_allowed,
         max_notional_per_trade,
         max_daily_loss,
         max_open_positions,
-        0,
-        10,
-        "manual",
+        cooldown_ms,
+        max_proofs_per_day,
+        proof_mode,
+        training_budget,
     )
     return {
         "valid": len(errors) == 0,
@@ -130,11 +227,13 @@ def _vault_dict(row: PandaVault) -> dict[str, Any]:
         "base_asset": row.base_asset,
         "policy_id": row.policy_id,
         "policy_version": row.policy_version,
+        "training_budget": float(row.training_budget),
     }
 
 
 def _policy_dict(row: TradingPolicy) -> dict[str, Any]:
-    pairs = row.allowed_pairs if isinstance(row.allowed_pairs, list) else []
+    raw = row.allowed_pairs if isinstance(row.allowed_pairs, list) else []
+    pairs = _dedupe_pairs([str(p) for p in raw])
     return {
         "id": row.id,
         "panda_id": row.panda_id,
@@ -227,7 +326,7 @@ async def get_setup_status(
         "authorized_agent_configured": bool(agent_addr),
         "agent_signer_address": agent_addr,
         "can_start_training": can_train,
-        "launch_pairs": launch_pairs(),
+        "launch_pairs": await resolve_launch_pairs(),
     }
 
 
@@ -242,6 +341,10 @@ async def sync_setup_from_tx(
         await db.execute(select(PandaVault).where(PandaVault.panda_id == panda.id))
     ).scalar_one_or_none()
     if existing_vault and existing_vault.sui_object_id:
+        if existing_vault.created_tx_digest and existing_vault.created_tx_digest == sui_tx_digest:
+            panda.active_vault_id = existing_vault.id
+            panda.active_policy_id = existing_vault.policy_id
+            return await get_setup_status(panda, db)
         raise ApiError(ApiErrorCode.VALIDATION_ERROR, "Agent Wallet already exists for this Panda")
 
     parsed: ParsedAgentWalletSetup = await fetch_setup_from_tx(
@@ -250,12 +353,16 @@ async def sync_setup_from_tx(
     )
 
     if draft:
-        validation = validate_policy_draft(
+        validation = await validate_policy_draft_async(
             draft.get("allowed_pairs", []),
             float(draft.get("max_notional_per_trade", 0)),
             float(draft.get("max_daily_loss", 0)),
             int(draft.get("max_open_positions", 1)),
             parsed.authorized_agent,
+            training_budget=float(draft.get("training_budget", DEFAULT_TRAINING_BUDGET)),
+            cooldown_ms=int(draft.get("cooldown_ms", 0)),
+            max_proofs_per_day=int(draft.get("max_proofs_per_day", 10)),
+            proof_mode=str(draft.get("proof_mode", "manual")),
         )
         if not validation["valid"]:
             raise ApiError(
@@ -276,9 +383,16 @@ async def sync_setup_from_tx(
                 "Authorized agent in transaction does not match environment signer",
             )
 
-    allowed_pairs = (draft or {}).get("allowed_pairs") or launch_pairs()[:2]
+    resolved_pairs = await resolve_launch_pairs()
+    draft_pairs = (draft or {}).get("allowed_pairs")
+    allowed_pairs = (
+        [canonical_market_pair(str(pair)) for pair in draft_pairs]
+        if isinstance(draft_pairs, list) and draft_pairs
+        else resolved_pairs[:2]
+    )
     max_notional = Decimal(str((draft or {}).get("max_notional_per_trade", 50)))
     max_daily_loss = Decimal(str((draft or {}).get("max_daily_loss", 8)))
+    training_budget = float((draft or {}).get("training_budget", DEFAULT_TRAINING_BUDGET))
     policy_hash = (draft or {}).get("policy_hash") or parsed.policy_hash or compute_policy_hash(
         allowed_pairs,
         float(max_notional),
@@ -287,6 +401,7 @@ async def sync_setup_from_tx(
         int((draft or {}).get("cooldown_ms", 0)),
         int((draft or {}).get("max_proofs_per_day", 10)),
         str((draft or {}).get("proof_mode", "manual")),
+        training_budget,
     )
 
     vault_id = str(uuid.uuid4())
@@ -302,8 +417,12 @@ async def sync_setup_from_tx(
         authorized_agent=parsed.authorized_agent,
         policy_id=policy_id,
         policy_version=parsed.policy_version,
+        training_budget=Decimal(str(training_budget)),
         created_tx_digest=sui_tx_digest,
     )
+    db.add(vault)
+    await db.flush()
+
     policy = TradingPolicy(
         id=policy_id,
         panda_id=panda.id,
@@ -327,12 +446,11 @@ async def sync_setup_from_tx(
         vault_id=vault_id,
         mode="training_ledger",
         base_asset="vUSDC",
-        cash_balance=Decimal("10000"),
-        equity=Decimal("10000"),
+        cash_balance=Decimal(str(training_budget)),
+        equity=Decimal(str(training_budget)),
         status="active",
     )
 
-    db.add(vault)
     db.add(policy)
     db.add(account)
     panda.active_vault_id = vault_id
@@ -402,6 +520,13 @@ async def sync_owner_action_from_tx(
             )
             if draft.get("policy_hash"):
                 policy.policy_hash = str(draft["policy_hash"])
+            if vault and draft.get("training_budget") is not None:
+                _apply_training_budget_change(
+                    vault,
+                    account=await _load_training_account(panda.id, vault.id, db),
+                    new_budget=float(draft["training_budget"]),
+                    max_notional=float(policy.max_notional_per_trade),
+                )
         if parsed.policy_version and parsed.policy_version > policy.version:
             policy.version = parsed.policy_version
         policy.paused = False
@@ -451,3 +576,111 @@ async def require_active_wallet(panda: Panda, db: AsyncSession) -> tuple[PandaVa
         raise ApiError(ApiErrorCode.POLICY_AGENT_REVOKED, "Authorized agent was revoked")
 
     return vault, policy
+
+
+async def _load_training_account(
+    panda_id: str,
+    vault_id: str,
+    db: AsyncSession,
+) -> PandaAccount | None:
+    return (
+        await db.execute(
+            select(PandaAccount).where(
+                PandaAccount.panda_id == panda_id,
+                PandaAccount.vault_id == vault_id,
+                PandaAccount.mode == "training_ledger",
+            )
+        )
+    ).scalar_one_or_none()
+
+
+def _apply_training_budget_change(
+    vault: PandaVault,
+    *,
+    account: PandaAccount | None,
+    new_budget: float,
+    max_notional: float,
+) -> None:
+    errors = _training_budget_errors(new_budget, max_notional)
+    if errors:
+        raise ApiError(
+            ApiErrorCode.VALIDATION_ERROR,
+            "Training budget update failed validation",
+            details={"errors": errors},
+        )
+    old_budget = float(vault.training_budget)
+    delta = new_budget - old_budget
+    if account is not None and delta < 0:
+        cash = float(account.cash_balance)
+        equity = float(account.equity)
+        if cash + delta < 0:
+            raise ApiError(
+                ApiErrorCode.VALIDATION_ERROR,
+                "Cannot reduce training budget below available cash",
+            )
+        if equity + delta < 0:
+            raise ApiError(
+                ApiErrorCode.VALIDATION_ERROR,
+                "Cannot reduce training budget below current equity",
+            )
+        account.cash_balance = Decimal(str(cash + delta))
+        account.equity = Decimal(str(equity + delta))
+    elif account is not None and delta > 0:
+        account.cash_balance = Decimal(str(float(account.cash_balance) + delta))
+        account.equity = Decimal(str(float(account.equity) + delta))
+    vault.training_budget = Decimal(str(new_budget))
+
+
+async def resolve_training_budget(panda_id: str, db: AsyncSession) -> float:
+    vault = (
+        await db.execute(
+            select(PandaVault)
+            .where(PandaVault.panda_id == panda_id)
+            .order_by(PandaVault.created_at.desc())
+        )
+    ).scalar_one_or_none()
+    if vault is not None and vault.training_budget is not None:
+        return float(vault.training_budget)
+    account = (
+        await db.execute(
+            select(PandaAccount).where(
+                PandaAccount.panda_id == panda_id,
+                PandaAccount.mode == "training_ledger",
+            )
+        )
+    ).scalar_one_or_none()
+    if account is not None and float(account.equity) > 0:
+        return float(account.equity)
+    return DEFAULT_TRAINING_BUDGET
+
+
+async def update_training_budget(
+    panda: Panda,
+    training_budget: float,
+    db: AsyncSession,
+) -> dict[str, Any]:
+    if not panda.active_vault_id:
+        raise ApiError(ApiErrorCode.VAULT_NOT_FOUND, "Agent Wallet setup required")
+
+    vault = (
+        await db.execute(select(PandaVault).where(PandaVault.id == panda.active_vault_id))
+    ).scalar_one_or_none()
+    if vault is None:
+        raise ApiError(ApiErrorCode.VAULT_NOT_FOUND, "PandaVault mirror not found")
+
+    policy = None
+    if panda.active_policy_id:
+        policy = (
+            await db.execute(select(TradingPolicy).where(TradingPolicy.id == panda.active_policy_id))
+        ).scalar_one_or_none()
+    max_notional = float(policy.max_notional_per_trade) if policy else training_budget
+
+    account = await _load_training_account(panda.id, vault.id, db)
+    _apply_training_budget_change(
+        vault,
+        account=account,
+        new_budget=training_budget,
+        max_notional=max_notional,
+    )
+    await db.commit()
+    return await get_setup_status(panda, db)

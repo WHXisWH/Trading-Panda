@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from app.config import settings
+from app.services.package_ids import package_ids_for_events
 from app.schemas.errors import ApiError, ApiErrorCode
 from app.services.sui_rpc import get_transaction_block
 
@@ -46,15 +47,15 @@ def _coerce_u64(value: Any) -> int:
     return int(value)
 
 
-def parse_mint_events_from_tx(events: list[dict[str, Any]], package_id: str) -> ParsedMintEvent | None:
+def parse_mint_events_from_tx(events: list[dict[str, Any]], package_id: str | None = None) -> ParsedMintEvent | None:
     """Extract personality + object_id from MintEvent or PandaMinted."""
-    pkg = package_id.lower().strip()
+    package_ids = package_ids_for_events() if not package_id else [package_id.lower().strip()]
     minted: ParsedMintEvent | None = None
     mint_event: ParsedMintEvent | None = None
 
     for ev in events:
         ev_type = str(ev.get("type", "")).lower()
-        if pkg and pkg not in ev_type:
+        if package_ids and not any(pkg in ev_type for pkg in package_ids):
             continue
         parsed = ev.get("parsedJson") or ev.get("parsed_json") or {}
         if not isinstance(parsed, dict):
@@ -98,7 +99,7 @@ async def fetch_parsed_mint_from_tx(
 ) -> ParsedMintEvent:
     """Load tx from RPC and parse mint fields."""
     pkg = (package_id or settings.package_id or "").strip()
-    if not pkg:
+    if not pkg and not package_ids_for_events():
         raise ApiError(
             ApiErrorCode.SERVICE_UNAVAILABLE,
             "PACKAGE_ID is not configured",

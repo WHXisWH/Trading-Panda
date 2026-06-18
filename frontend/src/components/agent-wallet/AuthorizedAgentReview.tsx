@@ -2,6 +2,7 @@
 
 import { Modal } from "@/components/ui/Modal";
 import type { PolicyDraft } from "@/types/agent-wallet";
+import { formatPaperUsd, PAPER_BALANCE_DISCLAIMER } from "@/lib/agentWallet/paperUsd";
 
 interface AuthorizedAgentReviewProps {
   open: boolean;
@@ -28,13 +29,18 @@ export function AuthorizedAgentReview({
       open={open}
       onOpenChange={onOpenChange}
       variant="product"
-      title="Review Agent Signer"
-      description="You authorize a bounded testnet signer — not your full wallet. Policy loosening always requires your signature."
+      size="lg"
+      title="Confirm training setup"
+      description={`${PAPER_BALANCE_DISCLAIMER}. Review collar limits before signing on testnet.`}
       cancelLabel="Back"
       confirmLabel="Create PandaVault + Policy"
       onConfirm={onConfirm}
     >
       <dl className="space-y-2 rounded-xl border border-product-line bg-white/[0.03] p-4 text-[13px]">
+        <div className="flex justify-between gap-2">
+          <dt className="text-product-muted">Training budget (USD)</dt>
+          <dd className="text-product-text">{formatPaperUsd(draft.trainingBudget)}</dd>
+        </div>
         <div className="flex justify-between gap-2">
           <dt className="text-product-muted">Signer address</dt>
           <dd className="font-mono text-[12px] text-product-text">{shortAddr(agentAddress)}</dd>
@@ -48,8 +54,8 @@ export function AuthorizedAgentReview({
           <dd className="text-product-text">{draft.allowedPairs.join(", ") || "—"}</dd>
         </div>
         <div className="flex justify-between gap-2">
-          <dt className="text-product-muted">Max notional</dt>
-          <dd className="text-product-text">{draft.maxNotionalPerTrade}</dd>
+          <dt className="text-product-muted">Max order (USD)</dt>
+          <dd className="text-product-text">{formatPaperUsd(draft.maxNotionalPerTrade)}</dd>
         </div>
       </dl>
     </Modal>

@@ -14,6 +14,7 @@ from app.config import settings
 from app.db.models import ChainExecutionLog, OrderIntent, TradeFact, TradingPolicy
 from app.schemas.errors import ApiError, ApiErrorCode
 from app.services.agent_wallet import launch_pairs
+from app.services.market_pairs import canonical_market_pair, resolve_launch_pairs
 from app.services.async_job_queue import enqueue_job
 from app.services.policy_gate import PolicyGate
 from app.services.policy_compatibility import PolicyMirror
@@ -55,6 +56,7 @@ def evaluate_eligibility(
     manual: bool = False,
     recent_proof_at: datetime | None = None,
     proofs_today: int = 0,
+    supported_pairs: list[str] | None = None,
 ) -> EligibilityResult:
     """Pure eligibility check — no DB writes."""
     enabled = settings.chain_proof_enabled if chain_proof_enabled is None else chain_proof_enabled
@@ -90,8 +92,8 @@ def evaluate_eligibility(
         elif final_score < threshold:
             reasons.append(f"Score {final_score:.2f} is below automatic proof threshold {threshold:.2f}")
 
-    pair = str(trade_fact.get("pair") or order_intent.get("pair") or "")
-    supported = set(launch_pairs())
+    pair = canonical_market_pair(str(trade_fact.get("pair") or order_intent.get("pair") or ""))
+    supported = set(supported_pairs or launch_pairs())
     if pair not in supported:
         reasons.append(f"Pair {pair} is not supported for testnet Chain Proof")
 
@@ -230,6 +232,7 @@ async def check_eligibility(
 ) -> EligibilityResult:
     fact, intent, policy = await load_proof_context(session, panda_id, trade_fact_id)
     recent_at, proofs_today = await _proof_usage(session, panda_id)
+    supported_pairs = await resolve_launch_pairs()
     return evaluate_eligibility(
         trade_fact=trade_fact_dict(fact),
         order_intent=order_intent_dict(intent),
@@ -237,6 +240,7 @@ async def check_eligibility(
         manual=manual,
         recent_proof_at=recent_at,
         proofs_today=proofs_today,
+        supported_pairs=supported_pairs,
     )
 
 

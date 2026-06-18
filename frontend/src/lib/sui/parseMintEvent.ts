@@ -3,7 +3,7 @@
  * Epic 1.1 — personality five axes · talent · object_id
  */
 
-const PACKAGE_ID = (process.env.NEXT_PUBLIC_PACKAGE_ID ?? "").toLowerCase();
+import { packageIdsForEventMatch } from "@/lib/sui/packageIds";
 
 export interface ParsedMintEvent {
   objectId: string;
@@ -40,15 +40,17 @@ type SuiEvent = {
 
 export function parseMintEventsFromList(
   events: SuiEvent[],
-  packageId: string = PACKAGE_ID,
+  packageIds: string | string[] = packageIdsForEventMatch(),
 ): ParsedMintEvent | null {
-  const pkg = packageId.toLowerCase();
+  const ids = (Array.isArray(packageIds) ? packageIds : [packageIds])
+    .map((id) => id.toLowerCase())
+    .filter(Boolean);
   let minted: ParsedMintEvent | null = null;
   let mintEvent: ParsedMintEvent | null = null;
 
   for (const ev of events) {
     const evType = String(ev.type ?? "").toLowerCase();
-    if (pkg && !evType.includes(pkg)) continue;
+    if (ids.length && !ids.some((id) => evType.includes(id))) continue;
     const parsed = (ev.parsedJson ?? ev.parsed_json ?? {}) as Record<string, unknown>;
     if (!parsed || typeof parsed !== "object") continue;
 

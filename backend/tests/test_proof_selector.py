@@ -101,6 +101,44 @@ def test_manual_still_requires_policy_pass():
     assert any("not allowed" in r.lower() or "not supported" in r.lower() for r in result.reasons)
 
 
+def test_dynamic_supported_pairs_allow_new_ranked_pair():
+    policy = PolicyMirror(
+        version=1,
+        allowed_pairs=["WAL-USDC"],
+        max_notional_per_trade=50.0,
+        max_daily_loss=8.0,
+        paused=False,
+    )
+    result = evaluate_eligibility(
+        trade_fact=_fact(pair="WAL-USDC"),
+        order_intent=_intent(pair="WAL-USDC", final_score=0.99),
+        policy=policy,
+        chain_proof_enabled=True,
+        manual=True,
+        supported_pairs=["SUI-USDC", "WAL-USDC"],
+    )
+    assert result.eligible is True
+
+
+def test_dynamic_supported_pairs_normalize_pool_underscore():
+    policy = PolicyMirror(
+        version=1,
+        allowed_pairs=["SUI-USDC"],
+        max_notional_per_trade=50.0,
+        max_daily_loss=8.0,
+        paused=False,
+    )
+    result = evaluate_eligibility(
+        trade_fact=_fact(pair="SUI_USDC"),
+        order_intent=_intent(pair="SUI_USDC", final_score=0.99),
+        policy=policy,
+        chain_proof_enabled=True,
+        manual=True,
+        supported_pairs=["SUI-USDC"],
+    )
+    assert result.eligible is True
+
+
 def test_disabled_chain_proof_blocks():
     result = evaluate_eligibility(
         trade_fact=_fact(),

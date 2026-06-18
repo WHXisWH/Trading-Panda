@@ -3,6 +3,8 @@
 > 版本 1.0 · 2026-05-08
 > 覆盖：合约、决策引擎、API、前端四层测试 + 决策引擎可视化工具设计
 
+> 本地人工联调说明：`docs/local-manual-test-guide.md`
+
 > **PRD v3.1 对齐说明（2026-06-17）**：早期“模拟盘”测试仍可作为兼容回归，但新增验收应以 `docs/PRD.md` v3.1、`docs/architecture.md`、`spec.md` 为准：Training Ledger 是 PnL 真相；Mode 2 只测试 selected/manual Chain Proof Moment 的 testnet PandaCoin PTB；`PandaVault` 是 shared object；`TradingPolicy` 是 standalone shared object；`async_jobs` 是 durable queue。
 
 ### v3.1 新增核心测试

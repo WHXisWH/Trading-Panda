@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     sui_wallet_address: str = ""
     admin_cap_id: str = ""
     package_id: str = ""
+    package_published_at: str = ""
     registry_id: str = ""
     achievement_registry_id: str = ""
     transfer_policy_id: str = ""
@@ -36,7 +37,8 @@ class Settings(BaseSettings):
     chain_proof_auto_score_threshold: float = 0.75
     chain_proof_cooldown_minutes: int = 30
     chain_proof_daily_cap: int = 10
-    deepbook_launch_pairs: str = "DEEP/SUI,SUI/USDC"
+    deepbook_launch_pairs: str = "DEEP-SUI,SUI-USDC"
+    market_monitor_url: str = "http://localhost:8001"
 
     # Walrus
     walrus_publisher_url: str = ""

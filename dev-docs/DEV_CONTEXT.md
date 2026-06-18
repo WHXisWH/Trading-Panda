@@ -100,8 +100,8 @@ Cache       → **Upstash Redis**（推荐；MVP 可与 Redis Cloud 互换直至
             用途：Pub/Sub（DE 发布；WS Hub 订阅）+ 响应缓存（TTL 60s）+ HTTP Rate Limit + Nonce 等（频道见 `docs/redis-architecture.md` §5）
 
 Blockchain  → Sui Testnet（**本项目首次正式 publish**，钱包 `0xa459…7bf3`）
-            Package ID（original-id，调用仍用此地址）：0x595087bb3e5f6c5011585797e4eb4db513b55d39ce84f984bb357e9375c11465
-            Package published-at（v4 链上对象）：0x00d500fb909a63177ae0f88812a06b0ba071e151dd5cb80e9f51af250d6a6339
+            Package ID（original-id，v1 发布 / 事件 lineage）：0x595087bb3e5f6c5011585797e4eb4db513b55d39ce84f984bb357e9375c11465
+            Package published-at（v4 链上对象，**PTB moveCall 须用此地址**）：0x00d500fb909a63177ae0f88812a06b0ba071e151dd5cb80e9f51af250d6a6339
             Package version：**4**（Sui CLI `testnet-v1.73.1` / protocol 126）
             PandaRegistry Object ID：0x5cbf822c3fe346d7001125ff0ad52d675611148b2c4734d1e200ebf23d53baa5
             AchievementRegistry Object ID：0x53c879bc3560a54548219f0a1f44dff471792c585a7b666829cfa08e722c8f8b
@@ -130,7 +130,8 @@ Blockchain  → Sui Testnet（**本项目首次正式 publish**，钱包 `0xa459
 | `NEXT_PUBLIC_WS_URL` | **唯一** WSS 基址（Hub：`market.tick` + 熊猫事件）；本地 `ws://127.0.0.1:8787/ws` |
 | `MARKET_MONITOR_URL` | BFF 代理历史 K 线（默认 `http://localhost:8001`） |
 | `NEXT_PUBLIC_SUI_NETWORK` | testnet / mainnet |
-| `NEXT_PUBLIC_PACKAGE_ID` | Move 合约 Package ID |
+| `NEXT_PUBLIC_PACKAGE_ID` | Move 合约 original-id（v1；事件 lineage） |
+| `NEXT_PUBLIC_PACKAGE_PUBLISHED_AT` | 最新 upgrade 对象 ID（v4；**PTB moveCall 目标**） |
 | `NEXT_PUBLIC_REGISTRY_ID` | PandaRegistry Shared Object ID |
 | `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | zkLogin Google OAuth Client ID |
 | `BACKEND_URL` | BFF 代理用 Python 基址（本地 `http://localhost:8000`；可与 `NEXT_PUBLIC_BACKEND_URL` 相同） |
@@ -147,12 +148,14 @@ Blockchain  → Sui Testnet（**本项目首次正式 publish**，钱包 `0xa459
 | `SUI_RPC_URL` | Sui 全节点 RPC（`https://fullnode.testnet.sui.io:443`） |
 | `SUI_PRIVATE_KEY` | 后端签名钱包私钥（Merkle Root / Skill Digest 上链用） |
 | `ADMIN_CAP_ID` | Move `AdminCap` Object ID（`trust_proof` 提交用） |
-| `PACKAGE_ID` | Move 合约 Package ID |
+| `PACKAGE_ID` | Move 合约 original-id（v1；事件 lineage） |
+| `PACKAGE_PUBLISHED_AT` | 最新 upgrade 对象 ID（v4；**PTB moveCall 目标**） |
 | `REGISTRY_ID` | PandaRegistry Shared Object ID |
 | `AGENT_SIGNER_ADDRESS` | v3.1 testnet Agent Signer 地址（Chain Proof PTB） |
 | `AGENT_SIGNER_PRIVATE_KEY` | Agent Signer 私钥（仅 testnet；Render Secret） |
 | `CHAIN_PROOF_ENABLED` | 是否启用 Mode 2 Chain Proof（默认 `false`） |
-| `DEEPBOOK_LAUNCH_PAIRS` | Training Ledger 默认 DeepBook mainnet 交易对（逗号分隔，如 `DEEP/SUI,SUI/USDC`） |
+| `DEEPBOOK_LAUNCH_PAIRS` | Agent Wallet pinned pairs，始终排在 market-monitor ranked pairs 前面；monitor 不可用时也作为 fallback（逗号分隔，如 `DEEP/SUI,SUI/USDC`） |
+| `MARKET_MONITOR_URL` | backend 读取 market-monitor `GET /pairs` ranked pairs 的基址（本地默认 `http://localhost:8001`），用于扩展 Agent Wallet/Strategy/Chain Proof pair 白名单 |
 | `WALRUS_PUBLISHER_URL` / `WALRUS_AGGREGATOR_URL` | Walrus 存取节点（review/skill 归档） |
 | `MERKLE_SUBMIT_ENABLED` | 是否尝试链上提交 Trade Fact Merkle root（默认 `true`，无密钥时 dry-run） |
 | `SKILL_DIGEST_ENABLED` | 是否尝试链上提交 skill digest（默认 `true`） |
@@ -447,3 +450,24 @@ Package ID：**0x595087bb3e5f6c5011585797e4eb4db513b55d39ce84f984bb357e9375c1146
 | 2026-06-18 | **TradingPanda PNG Logo 取代 SVG 版**：用户认为几何 SVG icon 质感不佳；改用 Panda Lab `panda_ink_base.png` 合成 PNG 徽章 logo（黑金六边形 Move-object 边界 + 金色 Policy Collar + 绿色 market pulse + 蓝色 proof/Sui sensor）。新增/更新 `docs/assets/logo/trading-panda-logo.png`、`trading-panda-logo-512.png`、`trading-panda-wordmark.png`、`frontend/public/assets/ui-logo.png`、`frontend/public/favicon.png`、`prototype/assets/trading-panda-logo.png`；前端 Navbar/首页/zkLogin/连接弹窗与 prototype `.logo`/`.mini-panda` 全部切换到 PNG；`docs/design/logo.md` 与 logo preview 同步 PNG 资产表。 | `file` 确认 PNG 为 RGBA；PIL 校验透明角正常；`rg` 确认 frontend/prototype/docs 活跃链路无旧 SVG logo 引用；`node --check prototype/journey.js` 通过；已人工视觉检查 icon 与 wordmark |
 | 2026-06-18 | **Navbar Logo 去框**：移除顶栏 logo 外层金边/渐变黑底装饰容器；改用轻微放大裁剪，隐藏 PNG 自带白边与黑底角 | 导航栏左侧仅显示六边形熊猫徽章，无额外边框 |
 | 2026-06-18 | **Navbar 对齐 prototype**：顶栏改用 `product-topbar`（等同 prototype `.topbar`，无 `product-panel::before` 光晕层）；logo 改用 `product-brand-logo`（44px contain + green drop-shadow）；`ui-logo.png` / favicon / prototype logo 去除 PNG 外圈黑底矩形蒙版 | 导航栏 logo 与 prototype 一致，仅保留六边形徽章透明底 |
+| 2026-06-18 | **本地人工测试说明文档**：新增 `docs/local-manual-test-guide.md`，按本地四服务联调（backend :8000、market-monitor :8001、websocket :8787、frontend :3000）整理环境变量、启动顺序、基础设施 smoke、完整用户旅程 U-01~U-10、负向测试、DB 抽查 SQL、最终验收表与已知本地风险；`docs/testing-strategy.md` 顶部加入入口链接。 | 文档明确 mainnet DeepBook 行情 + Sui Testnet 链上动作的测试边界，并标记 frontend pool 常量与 monitor mainnet pair 可能不一致的本地风险；未改代码、部署事实或 API 路径 |
+| 2026-06-18 | **`WalletSignatureModal` 对齐 product 视觉**：mint/agent-wallet 预签名确认弹窗改用共享 `Modal variant="product"`（暗色面板、`product-*` 文案色、GasFeeHint 产品样式），替换原白底 Radix Dialog。 | `/mint` 点击 Mint Panda NFT 后弹窗与黑金仪式页一致；`/agent-wallet` 创建 Vault 签名确认同步受益 |
+| 2026-06-18 | **`/agent-wallet` 页 product 视觉对齐**：权限卡/策略编辑器/预览摘要/Review 弹窗/详情 Drawer 统一 `product-*` 色板；表单改用 `Input`/`Select`；状态 Badge 与 Safety 页一致；toast/error 横幅改用 product 绿/红语义色。 | Agent Wallet 设置流程与 mint/safety 黑金视觉一致，不再出现白底 neutral 表单与弹窗 |
+| 2026-06-18 | **Agent Wallet 表单视觉升级**：新增 `FormField`/`FormSection` + `product-form-surface`/`product-toggle-chip`/`product-metric-row`；PolicyCollarEditor 分区布局（Market scope / Risk caps / Chain proof）；Input/Select 对齐 prototype 14px 圆角与 mono 数字字段。 | `/agent-wallet` 表单从扁平 neutral 堆叠改为黑金分区编辑面板 + 荧光绿 pair chip + metric 预览卡 |
+| 2026-06-18 | **Agent Wallet allowed pairs 接 market-monitor**：根因 backend `MARKET_MONITOR_URL=https://localhost:8001` 致 SSL 失败、`resolve_launch_pairs()` 回退仅 `DEEPBOOK_LAUNCH_PAIRS` 两项；`market_pairs._normalize_monitor_base_url` 本地 https→http；本地 `.env` 改为 `http://localhost:8001`。 | 重启 backend 后 `GET /panda/:id/agent-wallet` 的 `launch_pairs` 应合并 monitor `/pairs` 排名列表（含 SUI-USDC、WAL-USDC 等） |
+| 2026-06-18 | **Agent Wallet loading 骨架屏**：新增 `AgentWalletPageSkeleton`（双栏 permission + form 占位）；Suspense/熊猫列表/agent-wallet status 三阶段统一 product 骨架；`Skeleton variant="product"`。 | `/agent-wallet` 加载不再显示居中 Plain “Loading…” 文本 |
+| 2026-06-18 | **Agent Wallet pair 选择来源诊断**：确认 `/agent-wallet` Allowed pairs 不是读取 market-monitor `/pairs` 动态列表，而是由 backend `DEEPBOOK_LAUNCH_PAIRS` / `settings.deepbook_launch_pairs` 通过 `GET /panda/:id/agent-wallet` 返回 `launch_pairs`，前端 `useAgentWallet` 再传给 `PolicyCollarEditor` 渲染。 | 若页面只显示 2 个 pair，属于当前 launch pair 白名单/配置口径限制；要展示更多池需扩展 backend `DEEPBOOK_LAUNCH_PAIRS` 或改成从 market-monitor ranked pairs 同步。 |
+| 2026-06-18 | **Agent Wallet pairs 改为 market-monitor 动态来源**：新增 backend `services/market_pairs.py`，`GET /panda/:id/agent-wallet`、`validate-policy`、setup sync、Strategy fallback pairs、Chain Proof eligibility 统一优先读取 `MARKET_MONITOR_URL/pairs` 的 ranked `pairs[].pair`；`DEEPBOOK_LAUNCH_PAIRS` 降为 monitor 不可用 fallback；规范化 DeepBook pool `_`→`-`。 | `/agent-wallet` Allowed pairs 会随 market-monitor ranked pairs 扩展；monitor 不可用时仍回退旧两池；focused tests：`pytest tests/test_agent_wallet.py tests/test_proof_selector.py tests/test_strategy_policy.py -q` → **27 passed**。 |
+| 2026-06-18 | **Agent Wallet pinned pairs 合并修复**：`resolve_launch_pairs()` 改为先保留 `DEEPBOOK_LAUNCH_PAIRS` pinned pairs，再追加 market-monitor ranked pairs 和 monitor `launch_pairs`，去重保序；修复配置 `MARKET_MONITOR_URL` 后 `DEEP/SUI`、`SUI/USDC` 从页面消失的问题。 | `/agent-wallet` 应始终先显示 `DEEP/SUI`、`SUI/USDC`（若 backend env 如此配置），同时继续展示 monitor ranked pairs；focused tests：`pytest tests/test_agent_wallet.py tests/test_proof_selector.py tests/test_strategy_policy.py -q` → **28 passed**。 |
+| 2026-06-18 | **交易对格式统一与去重**：`canonical_market_pair` 将 `/`、`_` 统一为 `-`（`DEEP/SUI`→`DEEP-SUI`）；backend `resolve_launch_pairs()` / `_policy_dict` 与 frontend `canonicalMarketPair`/`dedupeMarketPairs` 按 canonical 去重；`AllowedPairsSelector` 用 `sameMarketPair` 匹配选中态；默认 `DEEPBOOK_LAUNCH_PAIRS=DEEP-SUI,SUI-USDC`。 | `/agent-wallet` Allowed pairs 不再同时出现 `DEEP/SUI` 与 `DEEP-SUI`；pytest `test_agent_wallet.py` 14/14、frontend `canonicalMarketPair.test.ts` 3/3 |
+| 2026-06-18 | **Agent Wallet Training budget（全栈）**：Alembic `007_training_budget_on_vault`；`PolicyDraft.training_budget` 100–1,000,000；setup sync 初始化 `panda_accounts`；`PATCH /panda/:id/agent-wallet/training-budget` 支持 setup 后修改；simulation start 禁止客户端 override `initial_capital`；strategy validate 读 vault budget；主 CTA **Confirm training setup**。 | `/agent-wallet` 首项为 Training budget；ready 态可 Update training budget；pytest `test_agent_wallet.py` 16/16 |
+| 2026-06-18 | **本地 Agent Signer 密钥**：`~/.local/bin/sui-testnet client new-address ed25519 trading-panda-agent`；`backend/.env` 写入 `AGENT_SIGNER_ADDRESS=0x79ff…87411` + `AGENT_SIGNER_PRIVATE_KEY`（keystore export）；`CHAIN_PROOF_ENABLED=false`；重启 backend `uvicorn main:app :8000`。 | `/agent-wallet` Confirm training setup 不再因 signer 缺失 disabled；Chain Proof 仍须 faucet gas + `CHAIN_PROOF_ENABLED=true` |
+| 2026-06-18 | **Agent Wallet review 弹窗 UX**：`openReview` 增加 `isValidating` + 主按钮 spinner/「Checking setup…」；`Modal size=lg`（560px）+ 大号 CTA 单行；Review/WalletSignature 弹窗加宽。 | 点击 Confirm training setup 校验期间有 loading；Create PandaVault + Policy 不再挤换行 |
+| 2026-06-18 | **Training budget 展示改 USD**：表单/预览/Review/Permission 卡统一 **Training budget (USD)**、**Max order size (USD)**、`$` 前缀输入、`formatPaperUsd`；免责声明 **Paper trading balance (USD)**。 | 用户侧不再出现 training units；backend 校验文案改为 USD |
+| 2026-06-18 | **Agent Wallet 签名弹窗 Gas 文案**：`GasFeeHint variant=agent-wallet`；说明 Vault+Policy 上链、paper balance 链下、用户钱包付 gas；Mint 仍用 mint 文案。 | Create PandaVault + Policy 弹窗不再显示 mint 误导句 |
+| 2026-06-18 | **Agent Wallet 签名流程修复**：`useAgentWallet` 拆分 `setupPhase`（preparing/awaiting_wallet/syncing）；点 Approve 后先关弹窗再签名；统一 `parseMintEvent.extractTxDigest` + zkLogin 双路径；失败用 sonner toast（不再被 overlay 挡住）；页面级 amber 进度条；`isSavingBudget` 与 setup 分离。 | 签完钱包应 toast + 同步；digest/sync 失败可见；不再误显 Signing… |
+| 2026-06-18 | **Package published-at 修复 agent_wallet PTB**：根因 original-id 仅 v1 十模块（无 `agent_wallet`）；新增 `NEXT_PUBLIC_PACKAGE_PUBLISHED_AT` / `PACKAGE_PUBLISHED_AT`（v4 `0x00d500…339`）；`packageIdForMoveCall()` 用于 PTB；事件解析匹配 original + published-at。 | Agent Wallet setup 不再报 `No module found with module name agent_wallet`；升级后须同步 env 并重启 frontend/backend |
+| 2026-06-18 | **Agent Wallet mirror sync 500 修复**：`sui_rpc.get_transaction_block` 现接受 `options`（含 `showObjectChanges`）；`fetch_setup_from_tx` 不再传仅 original-id 过滤事件；补 parser/RPC 单测。 | 链上 setup 成功后 `POST .../agent-wallet/sync` 不再 TypeError 500；已上链 tx 可用 Retry mirror sync |
+| 2026-06-18 | **Agent Wallet 事件解析 upgrade 兼容**：setup 事件按 `PandaVaultCreated`/`TradingPolicyCreated` 后缀匹配（不限 package 前缀）；`panda_id` 增加 `mutated ::panda::Panda` objectChanges 兜底；回归 digest `2wpy85…` + policy `0x264885…`。 | Retry mirror sync 可解析 v4 PTB + v2 事件 package 的 testnet setup tx |
+| 2026-06-18 | **Agent Wallet mirror sync FK 报错诊断（仅分析）**：定位 `POST /panda/:id/agent-wallet/sync` 在 `sync_setup_from_tx()` 同次 commit 中插入 `PandaVault`、`TradingPolicy`、`PandaAccount`，但 ORM 未声明 vault/account/policy relationship，flush 时可能先插 `panda_accounts`，触发 `panda_accounts.vault_id_fkey`。 | 链上 PTB 已成功；报错发生在本地 PostgreSQL mirror 写入阶段。建议修复方向：为模型加关系或分阶段 flush/commit，并补 setup sync 回归测试。 |
+| 2026-06-18 | **Agent Wallet mirror sync FK 修复**：`sync_setup_from_tx()` 改为先 `db.add(PandaVault)` + `await db.flush()`，确保本地 vault 行存在后再插入 `TradingPolicy` / `PandaAccount`；同一 `created_tx_digest` 的 retry mirror sync 幂等返回现有 setup 状态，不再误报 already exists。 | `pytest tests/test_agent_wallet.py -q` 18/18 通过；`python -m py_compile app/services/agent_wallet.py tests/test_agent_wallet.py` 通过。相邻 `test_proof_selector.py`/`test_strategy_policy.py` 当前仍有 5 个旧斜杠交易对断言失败，非本次 FK 修复引入。 |

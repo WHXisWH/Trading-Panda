@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import Any, Callable, Awaitable
 
 from app.config import settings
+from app.services.package_ids import package_id_for_move_call
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +56,7 @@ class TrustProofService:
 
         private_key = (settings.sui_private_key or "").strip()
         admin_cap_id = (settings.admin_cap_id or "").strip()
-        if not private_key or not admin_cap_id or not settings.package_id:
+        if not private_key or not admin_cap_id or not package_id_for_move_call():
             return self._dry_run_merkle(params)
 
         try:
@@ -73,7 +74,7 @@ class TrustProofService:
 
         private_key = (settings.sui_private_key or "").strip()
         admin_cap_id = (settings.admin_cap_id or "").strip()
-        if not private_key or not admin_cap_id or not settings.package_id:
+        if not private_key or not admin_cap_id or not package_id_for_move_call():
             return self._dry_run_skill(params)
 
         try:
@@ -113,8 +114,9 @@ class TrustProofService:
         cfg = SuiConfig.user_config(rpc_url=settings.sui_rpc_url, prv_keys=[private_key])
         client = SyncClient(cfg)
         tx = SyncTransaction(client=client)
+        package_id = package_id_for_move_call()
         tx.move_call(
-            target=f"{settings.package_id}::trust_proof::submit_merkle_root",
+            target=f"{package_id}::trust_proof::submit_merkle_root",
             arguments=[
                 params.panda_object_id,
                 admin_cap_id,
@@ -144,8 +146,9 @@ class TrustProofService:
         cfg = SuiConfig.user_config(rpc_url=settings.sui_rpc_url, prv_keys=[private_key])
         client = SyncClient(cfg)
         tx = SyncTransaction(client=client)
+        package_id = package_id_for_move_call()
         tx.move_call(
-            target=f"{settings.package_id}::trust_proof::submit_skill_digest",
+            target=f"{package_id}::trust_proof::submit_skill_digest",
             arguments=[
                 params.panda_object_id,
                 admin_cap_id,

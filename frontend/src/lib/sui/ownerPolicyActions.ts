@@ -1,8 +1,9 @@
 import { Transaction } from "@mysten/sui/transactions";
 import { computeAllowedPairsHash, computePolicyHash } from "@/lib/agentWallet/policyHash";
+import { packageIdForMoveCall } from "@/lib/sui/packageIds";
 import type { PolicyDraft } from "@/types/agent-wallet";
 
-const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID!;
+const PACKAGE_ID = packageIdForMoveCall();
 const CLOCK_OBJ = "0x0000000000000000000000000000000000000000000000000000000000000006";
 
 export async function buildPausePolicyTx(
@@ -32,15 +33,7 @@ export async function buildTightenPolicyTx(
   next: PolicyDraft,
 ): Promise<Transaction> {
   const allowedPairsHash = await computeAllowedPairsHash(next.allowedPairs);
-  const policyHashHex = await computePolicyHash({
-    allowedPairs: next.allowedPairs,
-    maxNotionalPerTrade: next.maxNotionalPerTrade,
-    maxDailyLoss: next.maxDailyLoss,
-    maxOpenPositions: next.maxOpenPositions,
-    cooldownMs: next.cooldownMs,
-    maxProofsPerDay: next.maxProofsPerDay,
-    proofMode: next.proofMode,
-  });
+  const policyHashHex = await computePolicyHash(next);
   const policyHashBytes = Uint8Array.from(
     policyHashHex.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16)),
   );

@@ -40,6 +40,7 @@ export async function syncOwnerAction(
       action,
       draft: draft
         ? {
+            training_budget: draft.trainingBudget,
             allowed_pairs: draft.allowedPairs,
             max_notional_per_trade: draft.maxNotionalPerTrade,
             max_daily_loss: draft.maxDailyLoss,

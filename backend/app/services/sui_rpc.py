@@ -23,18 +23,23 @@ async def sui_rpc(method: str, params: list[Any]) -> Any:
     return payload.get("result")
 
 
-async def get_transaction_block(digest: str) -> dict[str, Any]:
+DEFAULT_TX_BLOCK_OPTIONS: dict[str, bool] = {
+    "showInput": False,
+    "showEffects": True,
+    "showEvents": True,
+    "showObjectChanges": False,
+}
+
+
+async def get_transaction_block(
+    digest: str,
+    *,
+    options: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    query = {**DEFAULT_TX_BLOCK_OPTIONS, **(options or {})}
     return await sui_rpc(
         "sui_getTransactionBlock",
-        [
-            digest,
-            {
-                "showInput": False,
-                "showEffects": True,
-                "showEvents": True,
-                "showObjectChanges": False,
-            },
-        ],
+        [digest, query],
     )
 
 

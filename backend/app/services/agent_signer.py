@@ -9,6 +9,7 @@ from typing import Any, Callable, Awaitable
 
 from app.config import settings
 from app.schemas.errors import ApiError, ApiErrorCode
+from app.services.package_ids import package_id_for_move_call
 from app.services.wallet_verify import normalize_sui_address
 
 logger = logging.getLogger(__name__)
@@ -141,7 +142,7 @@ class AgentSignerService:
         from pysui import SuiConfig, SyncClient  # type: ignore[import-untyped]
         from pysui.sui.sui_txn import SyncTransaction  # type: ignore[import-untyped]
 
-        package_id = settings.package_id
+        package_id = package_id_for_move_call()
         if not package_id:
             raise ApiError(ApiErrorCode.AGENT_SIGNER_NOT_CONFIGURED, "PACKAGE_ID is not configured")
 

@@ -23,7 +23,7 @@ from app.db.models import Simulation, Trade, User
 from app.engine.actor_manager import actor_manager
 from app.schemas.common import error, success
 from app.schemas.errors import ApiError, ApiErrorCode
-from app.services.agent_wallet import require_active_wallet
+from app.services.agent_wallet import require_active_wallet, resolve_training_budget
 from app.services.pool_catalog import MVP_POOLS, normalize_subscribed_pools
 
 router = APIRouter()
@@ -32,7 +32,6 @@ router = APIRouter()
 class SimulationStartBody(BaseModel):
     speed: str = "1x"
     subscribed_pools: list[str] = Field(default_factory=lambda: ["DEEP/SUI"])
-    initial_capital: float = 10_000.0
     data_source: str = "deepbook"
 
 
@@ -87,6 +86,8 @@ async def start_simulation(
     except ApiError as exc:
         return JSONResponse(status_code=exc.status_code, content=error(exc.code.value, exc.message))
 
+    training_budget = await resolve_training_budget(panda.id, db)
+
     strategy = await _active_strategy(panda.id, db)
     if strategy is None:
         return JSONResponse(
@@ -123,7 +124,7 @@ async def start_simulation(
         strategy_id=strategy.id,
         status="running",
         speed=speed,
-        initial_capital=Decimal(str(body.initial_capital)),
+        initial_capital=Decimal(str(training_budget)),
         data_source=body.data_source,
     )
     db.add(sim)
@@ -136,7 +137,7 @@ async def start_simulation(
             sim_id,
             speed,
             subscribed_pools=pools,
-            initial_capital=float(body.initial_capital),
+            initial_capital=training_budget,
         )
     except RuntimeError as exc:
         sim.status = "stopped"
@@ -213,7 +214,8 @@ async def simulation_status(
     )
     sim = result.scalar_one_or_none()
     actor_state = await actor_manager.get_state(panda.id)
-    initial_capital = float(sim.initial_capital) if sim else 10_000.0
+    vault_budget = await resolve_training_budget(panda.id, db)
+    initial_capital = float(sim.initial_capital) if sim else vault_budget
 
     payload: dict = {
         "simulation_id": sim.id if sim else None,

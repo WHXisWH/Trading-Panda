@@ -23,6 +23,8 @@ interface ModalProps {
   onConfirm?: () => void;
   loading?: boolean;
   hideClose?: boolean;
+  /** md = 440px (default), lg = 560px for multi-field review modals */
+  size?: "md" | "lg";
 }
 
 export function Modal({
@@ -39,8 +41,10 @@ export function Modal({
   onConfirm,
   loading = false,
   hideClose = false,
+  size = "md",
 }: ModalProps) {
   const isProduct = variant === "product";
+  const isLarge = size === "lg";
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -48,7 +52,8 @@ export function Modal({
         <Dialog.Overlay className="fixed inset-0 z-[var(--z-overlay)] bg-black/55 backdrop-blur-[2px]" />
         <Dialog.Content
           className={clsx(
-            "fixed left-1/2 top-1/2 z-[var(--z-modal)] w-[min(440px,95vw)] -translate-x-1/2 -translate-y-1/2 rounded-xl p-6 shadow-lg animate-modal-in",
+            "fixed left-1/2 top-1/2 z-[var(--z-modal)] -translate-x-1/2 -translate-y-1/2 rounded-xl p-6 shadow-lg animate-modal-in",
+            isLarge ? "w-[min(560px,92vw)]" : "w-[min(440px,95vw)]",
             isProduct
               ? "border border-product-line bg-product-panel text-product-text"
               : "bg-white text-neutral-900",
@@ -94,14 +99,30 @@ export function Modal({
           {children ? <div className="mt-4">{children}</div> : null}
 
           {footer ?? (onConfirm ? (
-            <div className="mt-5 flex gap-2">
+            <div
+              className={clsx(
+                "mt-6 flex gap-3",
+                isLarge
+                  ? "flex-col-reverse sm:flex-row sm:items-center sm:justify-end"
+                  : "flex-row",
+              )}
+            >
               <Dialog.Close asChild>
-                <Button variant="outline" className="flex-1" disabled={loading}>
+                <Button
+                  variant="outline"
+                  size={isLarge ? "lg" : "md"}
+                  className={clsx(isLarge ? "sm:min-w-[7.5rem]" : "flex-1")}
+                  disabled={loading}
+                >
                   {cancelLabel}
                 </Button>
               </Dialog.Close>
               <Button
-                className={clsx("flex-1", danger && "bg-product-red hover:bg-product-red/90")}
+                size={isLarge ? "lg" : "md"}
+                className={clsx(
+                  isLarge ? "whitespace-nowrap sm:min-w-[15rem]" : "flex-1",
+                  danger && "bg-product-red hover:bg-product-red/90",
+                )}
                 loading={loading}
                 onClick={onConfirm}
               >

@@ -1,4 +1,5 @@
 import { Transaction } from "@mysten/sui/transactions";
+import { packageIdForMoveCall, packageIdsForEventMatch } from "@/lib/sui/packageIds";
 import { parseMintEventsFromList } from "@/lib/sui/parseMintEvent";
 
 /** Loosely typed tx block — avoids @mysten/sui version skew between dapp-kit and app. */
@@ -25,7 +26,7 @@ export type MintSuiClient = {
   }): Promise<MintTransactionBlock>;
 };
 
-const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID!;
+const PACKAGE_ID = packageIdForMoveCall();
 const REGISTRY_ID = process.env.NEXT_PUBLIC_REGISTRY_ID!;
 const RANDOM_OBJ = "0x0000000000000000000000000000000000000000000000000000000000000008";
 const CLOCK_OBJ  = "0x0000000000000000000000000000000000000000000000000000000000000006";
@@ -83,7 +84,7 @@ export function extractPandaObjectIdFromTxBlock(txBlock: MintTransactionBlock): 
         ? (e.parsedJson as Record<string, unknown>)
         : undefined,
   }));
-  const fromEvent = parseMintEventsFromList(events, PACKAGE_ID);
+  const fromEvent = parseMintEventsFromList(events, packageIdsForEventMatch());
   if (fromEvent?.objectId) return fromEvent.objectId;
 
   const created = (txBlock.objectChanges ?? []).filter((c) => c.type === "created");

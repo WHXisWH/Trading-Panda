@@ -45,6 +45,7 @@ export interface PandaVaultApi {
   base_asset: string;
   policy_id: string | null;
   policy_version: number;
+  training_budget?: number;
 }
 
 export interface TradingPolicyApi {

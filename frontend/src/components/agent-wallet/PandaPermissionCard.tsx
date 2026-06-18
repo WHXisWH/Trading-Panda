@@ -4,6 +4,7 @@ import { clsx } from "clsx";
 import { Card } from "@/components/ui/Card";
 import type { AgentWalletStatusApi } from "@/types/agent-wallet";
 import type { PandaSummaryApi } from "@/types/panda";
+import { formatPaperUsd } from "@/lib/agentWallet/paperUsd";
 
 interface PandaPermissionCardProps {
   panda: PandaSummaryApi;
@@ -43,6 +44,7 @@ export function PandaPermissionCard({ panda, status }: PandaPermissionCardProps)
   const vaultReady = Boolean(status?.vault?.sui_object_id);
   const policyReady = Boolean(status?.policy?.sui_object_id);
   const signerReady = Boolean(status?.authorized_agent_configured);
+  const trainingBudget = status?.vault?.training_budget;
 
   return (
     <Card className="space-y-4 p-5">
@@ -75,6 +77,12 @@ export function PandaPermissionCard({ panda, status }: PandaPermissionCardProps)
               readyLabel={`v${status?.policy?.version ?? 1}`}
               missingLabel="Missing"
             />
+          </dd>
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <dt className="text-product-muted">Training budget (USD)</dt>
+          <dd className="font-mono text-[12px] text-product-text">
+            {trainingBudget != null ? formatPaperUsd(trainingBudget) : "—"}
           </dd>
         </div>
         <div className="flex items-center justify-between gap-2">
