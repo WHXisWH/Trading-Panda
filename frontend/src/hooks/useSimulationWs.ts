@@ -1,8 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
-import { useWebSocket } from "@/hooks/useWebSocket";
+import { useHubWebSocket } from "@/providers/WebSocketProvider";
 import type { DecisionLog, TradeRecordApi } from "@/types/trading";
 import type { SubscribeSimulationPayload, WsServerEvent } from "@/types/ws";
 
@@ -64,14 +63,9 @@ function mapServerEvent(event: WsServerEvent): SimulationWsEvent {
 }
 
 export function useSimulationWs(options: UseSimulationWsOptions) {
-  const {
-    pandaId,
-    simulationId,
-    enabled = true,
-    onEvent,
-  } = options;
+  const { pandaId, simulationId, enabled = true, onEvent } = options;
 
-  const { accessToken } = useAuth();
+  const { sendCommand, isConnected, status, subscribeEvents } = useHubWebSocket();
   const [lastEvent, setLastEvent] = useState<SimulationWsEvent | null>(null);
   const onEventRef = useRef(onEvent);
   onEventRef.current = onEvent;
@@ -89,11 +83,7 @@ export function useSimulationWs(options: UseSimulationWsOptions) {
     onEventRef.current?.(mapped);
   }, []);
 
-  const ws = useWebSocket({
-    token: accessToken,
-    enabled: enabled && !!accessToken && !!pandaId && !!simulationId,
-    onEvent: handleEvent,
-  });
+  useEffect(() => subscribeEvents(handleEvent), [handleEvent, subscribeEvents]);
 
   const subscribe = useCallback(
     (override?: Partial<SubscribeSimulationPayload>) => {
@@ -102,12 +92,12 @@ export function useSimulationWs(options: UseSimulationWsOptions) {
       if (!id) {
         return false;
       }
-      return ws.sendCommand("subscribe.simulation", {
+      return sendCommand("subscribe.simulation", {
         panda_id: id,
         simulation_id: sim,
       });
     },
-    [pandaId, simulationId, ws],
+    [pandaId, simulationId, sendCommand],
   );
 
   const unsubscribe = useCallback(
@@ -116,25 +106,29 @@ export function useSimulationWs(options: UseSimulationWsOptions) {
       if (!id) {
         return false;
       }
-      return ws.sendCommand("unsubscribe.simulation", { panda_id: id });
+      return sendCommand("unsubscribe.simulation", { panda_id: id });
     },
-    [pandaId, ws],
+    [pandaId, sendCommand],
   );
 
   useEffect(() => {
-    if (!ws.isConnected || !pandaId) {
+    if (!enabled || !isConnected || !pandaId || !simulationId) {
       return;
     }
     subscribe();
     return () => {
       unsubscribe();
     };
-  }, [pandaId, simulationId, subscribe, unsubscribe, ws.isConnected]);
+  }, [enabled, isConnected, pandaId, simulationId, subscribe, unsubscribe]);
 
   return {
-    ...ws,
+    status,
+    isConnected,
     lastEvent,
     subscribe,
     unsubscribe,
+    sendCommand,
+    disconnect: () => false,
+    reconnect: () => false,
   };
 }

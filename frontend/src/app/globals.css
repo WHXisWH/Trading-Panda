@@ -973,6 +973,181 @@
     box-shadow: inset 0 0 0 1px rgba(225, 186, 92, 0.08);
   }
 
+  /* K-line chart metric rail — flex wrap, all metrics always visible */
+  .chart-metric-rail {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 10px;
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(225, 186, 92, 0.06);
+    background:
+      linear-gradient(165deg, rgba(109, 255, 144, 0.04) 0%, rgba(225, 186, 92, 0.03) 42%, rgba(0, 0, 0, 0.16) 100%),
+      rgba(6, 8, 6, 0.72);
+    box-shadow: inset 0 1px 0 rgba(225, 186, 92, 0.05);
+  }
+
+  .chart-feed-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-bottom: 1px solid rgba(225, 186, 92, 0.05);
+    background: rgba(0, 0, 0, 0.18);
+  }
+
+  .chart-feed-dot {
+    height: 7px;
+    width: 7px;
+    flex-shrink: 0;
+    border-radius: 999px;
+    background: rgba(138, 154, 138, 0.55);
+  }
+
+  .chart-feed-dot--live {
+    background: var(--color-neon-green);
+    box-shadow: 0 0 8px rgba(109, 255, 144, 0.55);
+  }
+
+  .chart-feed-dot--warn {
+    background: var(--color-product-amber);
+  }
+
+  .chart-feed-dot--off {
+    background: rgba(138, 154, 138, 0.45);
+  }
+
+  .chart-feed-text {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: rgba(138, 154, 138, 0.92);
+  }
+
+  .chart-feed-text--live {
+    color: rgba(200, 220, 200, 0.95);
+  }
+
+  .chart-feed-text--warn {
+    color: var(--color-product-amber);
+  }
+
+  .chart-feed-text--off {
+    color: rgba(138, 154, 138, 0.78);
+  }
+
+  .chart-metric-cell {
+    position: relative;
+    flex: 1 1 148px;
+    max-width: 100%;
+    border-radius: 16px;
+    padding: 12px 14px;
+    background:
+      linear-gradient(180deg, rgba(225, 186, 92, 0.045), rgba(0, 0, 0, 0.12)),
+      rgba(0, 0, 0, 0.32);
+    box-shadow:
+      inset 0 1px 0 rgba(225, 186, 92, 0.07),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.38),
+      0 10px 28px rgba(0, 0, 0, 0.22);
+  }
+
+  .chart-metric-cell::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: radial-gradient(ellipse 80% 55% at 50% -20%, rgba(109, 255, 144, 0.08), transparent 58%);
+    opacity: 0.85;
+  }
+
+  .chart-metric-cell > * {
+    position: relative;
+  }
+
+  .chart-metric-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(138, 154, 138, 0.92);
+  }
+
+  .chart-metric-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  .chart-metric-help {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 999px;
+    padding: 2px;
+    background: transparent;
+    color: rgba(138, 154, 138, 0.72);
+    cursor: help;
+    transition: color 140ms ease, background 140ms ease;
+  }
+
+  .chart-metric-help:hover,
+  .chart-metric-help:focus-visible {
+    color: rgba(225, 186, 92, 0.95);
+    background: rgba(225, 186, 92, 0.08);
+    outline: none;
+  }
+
+  .chart-metric-tooltip {
+    max-width: 16rem;
+    border: 1px solid rgba(225, 186, 92, 0.12);
+    background: rgba(8, 10, 8, 0.96) !important;
+    color: rgba(200, 220, 200, 0.92) !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  }
+
+  .chart-metric-value {
+    margin-top: 8px;
+    font-family: var(--font-mono);
+    font-size: clamp(1.05rem, 1.2vw, 1.35rem);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    word-break: break-word;
+  }
+
+  .chart-metric-value--price {
+    color: var(--color-gold);
+  }
+
+  .chart-metric-value--volume {
+    color: var(--color-product-blue);
+  }
+
+  .chart-metric-value--liquidity {
+    color: var(--color-neon-green);
+  }
+
+  .chart-metric-value--spread {
+    color: var(--color-product-amber);
+  }
+
+  .chart-metric-value--up {
+    color: var(--color-neon-green);
+  }
+
+  .chart-metric-value--down {
+    color: var(--color-product-red);
+  }
+
+  .chart-metric-value--muted {
+    color: var(--color-product-muted);
+  }
+
   .ledger-step-label {
     font-family: var(--font-mono);
     font-size: 10px;

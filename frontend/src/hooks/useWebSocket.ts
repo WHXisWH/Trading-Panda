@@ -4,6 +4,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { WsClientMessage, WsConnectionStatus, WsServerEvent } from "@/types/ws";
 import { buildWsUrl, getWsBaseUrl } from "@/lib/ws/url";
 
+/** Hub close codes — keep in sync with websocket/src/types.ts */
+const WS_CLOSE_RATE_LIMITED = 4008;
+const WS_CLOSE_TOO_MANY_CONNECTIONS = 4009;
+
+const MAX_RECONNECT_DELAY_MS = 60_000;
+
 export type UseWebSocketOptions = {
   /** JWT for Hub `?token=`; when null/undefined the socket stays idle */
   token: string | null | undefined;
@@ -14,6 +20,17 @@ export type UseWebSocketOptions = {
   reconnect?: boolean;
   reconnectDelayMs?: number;
 };
+
+function reconnectDelayMsForAttempt(
+  attempt: number,
+  baseMs: number,
+  closeCode: number,
+): number {
+  const capacityLimited =
+    closeCode === WS_CLOSE_TOO_MANY_CONNECTIONS || closeCode === WS_CLOSE_RATE_LIMITED;
+  const base = capacityLimited ? Math.max(baseMs, 10_000) : baseMs;
+  return Math.min(base * 1.5 ** attempt, MAX_RECONNECT_DELAY_MS);
+}
 
 export function useWebSocket(options: UseWebSocketOptions) {
   const {
@@ -29,6 +46,8 @@ export function useWebSocket(options: UseWebSocketOptions) {
   const [status, setStatus] = useState<WsConnectionStatus>("idle");
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reconnectAttemptRef = useRef(0);
+  const shouldReconnectRef = useRef(true);
   const handlersRef = useRef({ onEvent, onOpen, onClose });
 
   handlersRef.current = { onEvent, onOpen, onClose };
@@ -42,6 +61,8 @@ export function useWebSocket(options: UseWebSocketOptions) {
 
   const disconnect = useCallback(() => {
     clearReconnectTimer();
+    reconnectAttemptRef.current = 0;
+    shouldReconnectRef.current = false;
     const ws = wsRef.current;
     wsRef.current = null;
     if (ws && ws.readyState === WebSocket.OPEN) {
@@ -67,6 +88,24 @@ export function useWebSocket(options: UseWebSocketOptions) {
     [],
   );
 
+  const scheduleReconnect = useCallback(
+    (closeCode: number) => {
+      if (!reconnect || !enabled || !token) {
+        return;
+      }
+      clearReconnectTimer();
+      const attempt = reconnectAttemptRef.current;
+      const delay = reconnectDelayMsForAttempt(attempt, reconnectDelayMs, closeCode);
+      reconnectAttemptRef.current = attempt + 1;
+      reconnectTimer.current = setTimeout(() => {
+        connectRef.current?.();
+      }, delay);
+    },
+    [clearReconnectTimer, enabled, reconnect, reconnectDelayMs, token],
+  );
+
+  const connectRef = useRef<(() => void) | null>(null);
+
   const connect = useCallback(() => {
     if (!enabled || !token) {
       return;
@@ -78,8 +117,10 @@ export function useWebSocket(options: UseWebSocketOptions) {
     }
 
     clearReconnectTimer();
-    if (wsRef.current) {
-      wsRef.current.close();
+    shouldReconnectRef.current = true;
+    const existing = wsRef.current;
+    if (existing) {
+      existing.close(1000, "reconnect");
       wsRef.current = null;
     }
 
@@ -96,6 +137,7 @@ export function useWebSocket(options: UseWebSocketOptions) {
     wsRef.current = ws;
 
     ws.onopen = () => {
+      reconnectAttemptRef.current = 0;
       setStatus("open");
       handlersRef.current.onOpen?.();
     };
@@ -115,23 +157,17 @@ export function useWebSocket(options: UseWebSocketOptions) {
       wsRef.current = null;
       setStatus("closed");
       handlersRef.current.onClose?.(ev.code, ev.reason);
-      if (reconnect && enabled && token) {
-        reconnectTimer.current = setTimeout(() => {
-          connect();
-        }, reconnectDelayMs);
+      if (shouldReconnectRef.current) {
+        scheduleReconnect(ev.code);
       }
     };
 
     ws.onerror = () => {
       setStatus("error");
     };
-  }, [
-    clearReconnectTimer,
-    enabled,
-    reconnect,
-    reconnectDelayMs,
-    token,
-  ]);
+  }, [clearReconnectTimer, enabled, scheduleReconnect, token]);
+
+  connectRef.current = connect;
 
   useEffect(() => {
     if (!enabled || !token) {

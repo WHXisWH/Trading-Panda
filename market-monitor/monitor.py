@@ -639,6 +639,7 @@ class MarketMonitorService:
     def health_payload(self) -> dict[str, Any]:
         pools_out: dict[str, dict[str, Any]] = {}
         for pool, rt in self._state.pools.items():
+            meta = self._pair_meta_for_pool(pool)
             pools_out[rt.pair] = {
                 "pool": pool,
                 "last_event_ts": rt.last_candle_ts,
@@ -648,6 +649,11 @@ class MarketMonitorService:
                 "freshness_sec": rt.freshness_sec,
                 "spread_bps": rt.spread_bps,
                 "volume_24h": rt.volume_24h,
+                "bid_depth": rt.bid_depth,
+                "ask_depth": rt.ask_depth,
+                "base_decimals": meta.base_decimals,
+                "quote_decimals": meta.quote_decimals,
+                "stable_quote": meta.stable_quote,
             }
         ranked_out = [
             {

@@ -19,6 +19,11 @@ import { clsx } from "clsx";
 import { Select } from "@/components/ui/Select";
 import { MARKET_INTERVAL_OPTIONS } from "@/lib/market/chartIntervals";
 import { tradesToChartMarkers } from "@/lib/chart/tradeMarkers";
+import { formatMarketDateTime } from "@/lib/market/formatMarketTime";
+import { useUserTimeZone } from "@/hooks/useUserTimeZone";
+import { MarketChartToolbar } from "@/components/trading/MarketChartToolbar";
+import { MarketFeedStatus } from "@/components/trading/MarketFeedStatus";
+import type { PoolMarketStats } from "@/lib/market/poolStats";
 import type { TradeRecordApi } from "@/types/trading";
 import type { CandlesResponse, MarketInterval, MarketTickPayload, WsConnectionStatus } from "@/types/ws";
 
@@ -47,6 +52,10 @@ interface Props {
   trades?: TradeRecordApi[];
   className?: string;
   variant?: ChartVariant;
+  change24hPct?: number | null;
+  poolStats?: PoolMarketStats | null;
+  poolStatsLoading?: boolean;
+  toolbarLastPrice?: number;
 }
 
 const CHART_THEMES: Record<
@@ -190,23 +199,6 @@ function formatVolume(value: number | undefined): string {
   return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
-function formatTime(raw: number | string | undefined): string {
-  if (raw == null) {
-    return "--";
-  }
-  const n = typeof raw === "number" ? raw : Number(raw);
-  if (Number.isFinite(n)) {
-    const ms = n > 1e12 ? n : n * 1000;
-    return new Date(ms).toLocaleString("zh-CN", {
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  }
-  return String(raw);
-}
-
 function statusLabel(status: WsConnectionStatus | undefined): string {
   if (status === "open") return "WSS 已连接";
   if (status === "connecting") return "WSS 连接中";
@@ -267,9 +259,17 @@ export function CandlestickChart({
   trades = [],
   className,
   variant = "light",
+  change24hPct,
+  poolStats,
+  poolStatsLoading = false,
+  toolbarLastPrice,
 }: Props) {
   const isProduct = variant === "product";
   const theme = CHART_THEMES[variant];
+  const userTimeZone = useUserTimeZone();
+  const formatChartTimeRef = useRef(formatMarketDateTime);
+  formatChartTimeRef.current = (raw: number | string | undefined | null) =>
+    formatMarketDateTime(raw, userTimeZone);
   const poolOptions = availablePools.length > 0 ? availablePools : [pool];
   const canSwitchPools =
     showPoolSelector && onPoolChange != null && poolOptions.length > 1;
@@ -282,7 +282,6 @@ export function CandlestickChart({
   const maFastRef = useRef<ISeriesApi<"Line"> | null>(null);
   const maSlowRef = useRef<ISeriesApi<"Line"> | null>(null);
   const [hoverCandle, setHoverCandle] = React.useState<HoverCandle | null>(null);
-  const [followRealtime, setFollowRealtime] = React.useState(true);
   const [showMa, setShowMa] = React.useState(true);
   const rangeRef = useRef<{ oldest: number | null; newest: number | null }>({
     oldest: null,
@@ -296,7 +295,9 @@ export function CandlestickChart({
   loadingMoreRef.current = loadingMore;
 
   const displayPrice =
+    toolbarLastPrice ??
     lastTick?.price ??
+    lastTick?.candle?.close ??
     (history?.candles?.length
       ? history.candles[history.candles.length - 1].c
       : undefined);
@@ -305,24 +306,38 @@ export function CandlestickChart({
   const lastClose = history?.candles?.length
     ? history.candles[history.candles.length - 1].c
     : undefined;
-  const changePct =
+  const windowChangePct =
     firstClose && lastClose && firstClose > 0
       ? ((lastClose - firstClose) / firstClose) * 100
       : 0;
   const candleCount = history?.candles?.length ?? 0;
-  const lastTickAgeSec =
-    lastTick?.timestamp != null
-      ? Math.max(0, Math.floor(Date.now() / 1000 - (lastTick.timestamp > 1e12 ? lastTick.timestamp / 1000 : lastTick.timestamp)))
-      : null;
-  const visibleCandle = hoverCandle ?? (
-    history?.candles?.length
+  const latestBar = history?.candles?.length
+    ? history.candles[history.candles.length - 1]
+    : null;
+  const liveBar =
+    interval === "1m" && lastTick?.candle && lastTick.timestamp != null
       ? {
-          time: formatTime(history.candles[history.candles.length - 1].t),
-          open: history.candles[history.candles.length - 1].o,
-          high: history.candles[history.candles.length - 1].h,
-          low: history.candles[history.candles.length - 1].l,
-          close: history.candles[history.candles.length - 1].c,
-          volume: history.candles[history.candles.length - 1].v,
+          t:
+            lastTick.timestamp > 1e12
+              ? Math.floor(lastTick.timestamp / 1000)
+              : Math.floor(lastTick.timestamp),
+          o: lastTick.candle.open,
+          h: lastTick.candle.high,
+          l: lastTick.candle.low,
+          c: lastTick.candle.close,
+          v: lastTick.candle.volume,
+        }
+      : null;
+  const footerBar = liveBar ?? latestBar;
+  const visibleCandle = hoverCandle ?? (
+    footerBar
+      ? {
+          time: formatChartTimeRef.current(footerBar.t),
+          open: footerBar.o,
+          high: footerBar.h,
+          low: footerBar.l,
+          close: footerBar.c,
+          volume: footerBar.v,
         }
       : null
   );
@@ -408,7 +423,7 @@ export function CandlestickChart({
         ? param.seriesData.get(volumeRef.current)
         : undefined;
       setHoverCandle({
-        time: formatTime(param.time as number),
+        time: formatChartTimeRef.current(param.time as number),
         open: candle.open,
         high: candle.high,
         low: candle.low,
@@ -460,6 +475,15 @@ export function CandlestickChart({
       maSlowRef.current = null;
     };
   }, [theme]);
+
+  useEffect(() => {
+    chartRef.current?.applyOptions({
+      localization: {
+        timeFormatter: (time: UTCTimestamp) =>
+          formatChartTimeRef.current(time as number),
+      },
+    });
+  }, [userTimeZone]);
 
   useEffect(() => {
     if (!seriesRef.current || !volumeRef.current) {
@@ -514,9 +538,6 @@ export function CandlestickChart({
       value: candle.volume,
       color: candle.close >= candle.open ? theme.volumeUp : theme.volumeDown,
     });
-    if (followRealtime) {
-      chartRef.current?.timeScale().scrollToRealTime();
-    }
   }, [interval, lastTick, theme]);
 
   useEffect(() => {
@@ -557,9 +578,30 @@ export function CandlestickChart({
     };
   }, [history]);
 
-  const isUp = changePct >= 0;
+  const isUp = windowChangePct >= 0;
   const hasCandles = candleCount > 0;
   const showOverlay = historyLoading || historyError || !hasCandles;
+
+  const chartControls = (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {canSwitchInterval ? (
+        <Select
+          size="sm"
+          aria-label="Candle interval"
+          className={clsx("ledger-chart-select w-auto font-mono")}
+          value={interval}
+          onValueChange={(value) => onIntervalChange!(value as MarketInterval)}
+          options={MARKET_INTERVAL_OPTIONS}
+        />
+      ) : null}
+      <ChartToolButton isProduct={isProduct} active={showMa} onClick={() => setShowMa((v) => !v)}>
+        MA
+      </ChartToolButton>
+      <ChartToolButton isProduct={isProduct} onClick={onRefresh} disabled={historyLoading}>
+        Refresh
+      </ChartToolButton>
+    </div>
+  );
 
   return (
     <section
@@ -571,113 +613,58 @@ export function CandlestickChart({
         className,
       )}
     >
-      <div
-        className={clsx(
-          "flex min-w-0 flex-wrap items-center justify-between gap-3 px-3 py-2",
-          isProduct
-            ? "border-b border-product-line/60"
-            : "border-b border-[var(--color-border)] bg-neutral-100",
-        )}
-      >
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <div className="flex items-center gap-2">
-            {canSwitchPools ? (
-              <Select
-                size="sm"
-                aria-label="交易池"
-                className="w-auto font-mono"
-                value={pool}
-                onValueChange={(v) => onPoolChange!(v)}
-                options={poolOptions.map((p) => ({ value: p, label: p }))}
-              />
-            ) : (
-              <span
-                className={clsx(
-                  "font-mono text-sm font-medium",
-                  isProduct ? "text-product-gold" : "text-neutral-900",
-                )}
-              >
-                {pool}
+      {isProduct ? (
+        <>
+          <MarketFeedStatus
+            wsStatus={marketStatus}
+            lastTickTimestamp={lastTick?.timestamp ?? null}
+            tickStale={Boolean(lastTick?.stale)}
+          />
+          <MarketChartToolbar
+            lastPrice={displayPrice}
+            change24hPct={change24hPct}
+            poolStats={poolStats}
+            poolStatsLoading={poolStatsLoading}
+          />
+          <div className="flex items-center justify-end gap-2 border-b border-product-line/60 px-3 py-1.5">
+            {chartControls}
+          </div>
+        </>
+      ) : (
+        <div
+          className={clsx(
+            "flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-[var(--color-border)] bg-neutral-100 px-3 py-2",
+          )}
+        >
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2">
+              {canSwitchPools ? (
+                <Select
+                  size="sm"
+                  aria-label="Trading pool"
+                  className="w-auto font-mono"
+                  value={pool}
+                  onValueChange={(v) => onPoolChange!(v)}
+                  options={poolOptions.map((p) => ({ value: p, label: p }))}
+                />
+              ) : (
+                <span className="font-mono text-sm font-medium text-neutral-900">{pool}</span>
+              )}
+              <span className={clsx("rounded px-2 py-1 text-[10px]", statusClass(marketStatus, isProduct))}>
+                {statusLabel(marketStatus)}
               </span>
-            )}
-            <span className={clsx("rounded px-2 py-1 text-[10px]", statusClass(marketStatus, isProduct))}>
-              {statusLabel(marketStatus)}
+            </div>
+            <span className="font-mono text-[24px] font-bold leading-none text-neutral-900">
+              {formatPrice(displayPrice)}
+            </span>
+            <span className={clsx("text-sm font-medium", isUp ? "text-profit" : "text-loss")}>
+              {isUp ? "+" : ""}
+              {windowChangePct.toFixed(2)}%
             </span>
           </div>
-          <span
-            className={clsx(
-              "font-mono text-[24px] font-bold leading-none",
-              isProduct ? "text-product-text" : "text-neutral-900",
-            )}
-          >
-            {formatPrice(displayPrice)}
-          </span>
-          <span
-            className={clsx(
-              "text-sm font-medium",
-              isUp
-                ? isProduct
-                  ? "text-product-green"
-                  : "text-profit"
-                : isProduct
-                  ? "text-product-red"
-                  : "text-loss",
-            )}
-          >
-            {isUp ? "+" : ""}
-            {changePct.toFixed(2)}%
-          </span>
-          {lastTickAgeSec != null && (
-            <span className="text-[10px] text-product-muted">
-              tick {lastTickAgeSec}s ago
-            </span>
-          )}
-          {lastTick?.stale && (
-            <span
-              className={clsx(
-                "rounded px-2 py-0.5 text-[10px]",
-                isProduct
-                  ? "border border-product-amber/30 bg-product-amber/10 text-product-amber"
-                  : "bg-[var(--color-warning-bg)] text-neutral-900",
-              )}
-            >
-              Stale tick
-            </span>
-          )}
+          {chartControls}
         </div>
-
-        <div className="flex flex-wrap items-center gap-1.5">
-          {canSwitchInterval ? (
-            <Select
-              size="sm"
-              aria-label="Candle interval"
-              className={clsx(
-                "ledger-chart-select w-auto font-mono",
-              )}
-              value={interval}
-              onValueChange={(value) => onIntervalChange!(value as MarketInterval)}
-              options={MARKET_INTERVAL_OPTIONS}
-            />
-          ) : null}
-          <ChartToolButton isProduct={isProduct} active={showMa} onClick={() => setShowMa((v) => !v)}>
-            MA
-          </ChartToolButton>
-          <ChartToolButton
-            isProduct={isProduct}
-            active={followRealtime}
-            onClick={() => setFollowRealtime((v) => !v)}
-          >
-            Live
-          </ChartToolButton>
-          <ChartToolButton
-            isProduct={isProduct}
-            onClick={onRefresh}
-            disabled={historyLoading}
-          >
-            Refresh
-          </ChartToolButton>
-        </div>
-      </div>
+      )}
 
       <div
         className={clsx(

@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
-import { useWebSocket } from "@/hooks/useWebSocket";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useHubWebSocket } from "@/providers/WebSocketProvider";
 import { fetchMarketCandles } from "@/lib/market/candles";
+import { dedupeMarketPairs } from "@/lib/market/canonicalMarketPair";
 import type {
   CandlesResponse,
   MarketInterval,
@@ -36,13 +36,18 @@ export function useMarketWs(options: UseMarketWsOptions = {}) {
     onTick,
   } = options;
 
-  const { accessToken } = useAuth();
+  const { sendCommand, isConnected, status, subscribeEvents } = useHubWebSocket();
   const [lastTick, setLastTick] = useState<MarketTickPayload | null>(null);
   const [history, setHistory] = useState<CandlesResponse | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
   const onTickRef = useRef(onTick);
+  const marketSubKeyRef = useRef("");
   onTickRef.current = onTick;
+
+  const normalizedPairs = useMemo(() => dedupeMarketPairs(pairs), [pairs]);
+  const normalizedAssets = assets;
+  const wsEnabled = enabled && (normalizedAssets.length > 0 || normalizedPairs.length > 0);
 
   const handleEvent = useCallback((event: WsServerEvent) => {
     if (event.event !== "market.tick") {
@@ -53,17 +58,44 @@ export function useMarketWs(options: UseMarketWsOptions = {}) {
     onTickRef.current?.(payload);
   }, []);
 
-  const ws = useWebSocket({
-    token: accessToken,
-    enabled: enabled && (!!accessToken && (assets.length > 0 || pairs.length > 0)),
-    onEvent: handleEvent,
-  });
+  useEffect(() => subscribeEvents(handleEvent), [handleEvent, subscribeEvents]);
+
+  useEffect(() => {
+    if (!isConnected) {
+      marketSubKeyRef.current = "";
+      return;
+    }
+    if (!wsEnabled) {
+      if (marketSubKeyRef.current) {
+        marketSubKeyRef.current = "";
+        sendCommand("unsubscribe.market", {});
+      }
+      return;
+    }
+    const key = `${normalizedAssets.join(",")}|${normalizedPairs.join(",")}|${interval}`;
+    if (marketSubKeyRef.current === key) {
+      return;
+    }
+    marketSubKeyRef.current = key;
+    sendCommand("subscribe.market", {
+      assets: normalizedAssets,
+      pairs: normalizedPairs,
+      interval,
+    });
+  }, [
+    interval,
+    isConnected,
+    normalizedAssets,
+    normalizedPairs,
+    sendCommand,
+    wsEnabled,
+  ]);
 
   const subscribe = useCallback(
     (override?: SubscribeMarketPayload) => {
       const payload: SubscribeMarketPayload = {
-        assets: override?.assets ?? assets,
-        pairs: override?.pairs ?? pairs,
+        assets: override?.assets ?? normalizedAssets,
+        pairs: override?.pairs ?? normalizedPairs,
         interval: override?.interval ?? interval,
       };
       const hasAssets = (payload.assets?.length ?? 0) > 0;
@@ -71,25 +103,19 @@ export function useMarketWs(options: UseMarketWsOptions = {}) {
       if (!hasAssets && !hasPairs) {
         return false;
       }
-      return ws.sendCommand("subscribe.market", {
+      return sendCommand("subscribe.market", {
         assets: payload.assets ?? [],
         pairs: payload.pairs ?? [],
         interval: payload.interval ?? "1m",
       });
     },
-    [assets, interval, pairs, ws],
+    [interval, normalizedAssets, normalizedPairs, sendCommand],
   );
 
   const unsubscribe = useCallback(() => {
-    return ws.sendCommand("unsubscribe.market", {});
-  }, [ws]);
-
-  useEffect(() => {
-    if (!ws.isConnected) {
-      return;
-    }
-    subscribe();
-  }, [subscribe, ws.isConnected]);
+    marketSubKeyRef.current = "";
+    return sendCommand("unsubscribe.market", {});
+  }, [sendCommand]);
 
   const reloadHistory = useCallback(() => {
     if (!pool || !enabled) {
@@ -125,7 +151,8 @@ export function useMarketWs(options: UseMarketWsOptions = {}) {
   }, [reloadHistory]);
 
   return {
-    ...ws,
+    status,
+    isConnected,
     lastTick,
     history,
     historyLoading,
@@ -133,5 +160,8 @@ export function useMarketWs(options: UseMarketWsOptions = {}) {
     reloadHistory,
     subscribe,
     unsubscribe,
+    sendCommand,
+    disconnect: () => false,
+    reconnect: () => false,
   };
 }

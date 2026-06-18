@@ -6,6 +6,7 @@ import { getFullnodeUrl } from "@mysten/sui/client";
 import { Toaster } from "sonner";
 import { useState } from "react";
 import { OnboardingGuard } from "@/components/auth/OnboardingGuard";
+import { WebSocketProvider } from "@/providers/WebSocketProvider";
 import { SafeWalletAutoConnect } from "@/components/auth/SafeWalletAutoConnect";
 import { WalletAuthSync } from "@/components/auth/WalletAuthSync";
 import { ZkLoginResultToast } from "@/components/auth/ZkLoginResultToast";
@@ -50,7 +51,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
           <SafeWalletAutoConnect />
           <WalletAuthSync />
           <ZkLoginResultToast />
-          <OnboardingGuard>{children}</OnboardingGuard>
+          <OnboardingGuard>
+            <WebSocketProvider>{children}</WebSocketProvider>
+          </OnboardingGuard>
           <Toaster position="bottom-right" richColors theme="dark" />
         </WalletProvider>
       </SuiClientProvider>

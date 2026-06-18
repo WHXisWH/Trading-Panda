@@ -25,6 +25,8 @@ def test_health_payload_includes_ranking_fields() -> None:
                 freshness_sec=15.0,
                 spread_bps=8.0,
                 volume_24h=1000.0,
+                bid_depth=5000.0,
+                ask_depth=4800.0,
             )
         },
     )
@@ -36,3 +38,5 @@ def test_health_payload_includes_ranking_fields() -> None:
     assert payload["stale_threshold_sec"] == 120.0
     assert "SUI-USDC" in payload["pools"]
     assert payload["pools"]["SUI-USDC"]["health"] == "fresh"
+    assert payload["pools"]["SUI-USDC"]["bid_depth"] == 5000.0
+    assert payload["pools"]["SUI-USDC"]["ask_depth"] == 4800.0

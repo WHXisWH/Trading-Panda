@@ -5,6 +5,7 @@ import type { ComponentProps } from "react";
 import { CandlestickChart } from "@/components/trading/CandlestickChart";
 import { Select } from "@/components/ui/Select";
 import { MARKET_INTERVAL_OPTIONS } from "@/lib/market/chartIntervals";
+import type { PoolMarketStats } from "@/lib/market/poolStats";
 import { agentWalletSetupPath } from "@/lib/ui/routeJump";
 import type { MarketInterval } from "@/types/ws";
 
@@ -13,6 +14,10 @@ type ChartProps = ComponentProps<typeof CandlestickChart>;
 interface Props extends ChartProps {
   pandaId?: string;
   authorizedPools?: string[];
+  change24hPct?: number | null;
+  poolStats?: PoolMarketStats | null;
+  poolStatsLoading?: boolean;
+  toolbarLastPrice?: number;
 }
 
 /** Training Ledger chart panel — pool + interval selectors above K-line. */

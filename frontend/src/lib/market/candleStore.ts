@@ -1,4 +1,4 @@
-import type { CandleBar, CandlesResponse, MarketInterval } from "@/types/ws";
+import type { CandleBar, CandlesResponse, MarketInterval, MarketTickPayload } from "@/types/ws";
 
 export const CANDLES_PAGE_SIZE = 150;
 export const CANDLES_MEMORY_CAP = 4000;
@@ -72,4 +72,24 @@ export function newestBarTime(bars: CandleBar[]): number | null {
     return null;
   }
   return bars[bars.length - 1].t;
+}
+
+/** Merge a live market.tick candle into the in-memory bar series. */
+export function barFromMarketTick(tick: MarketTickPayload | null): CandleBar | null {
+  const candle = tick?.candle;
+  if (!candle || tick?.timestamp == null) {
+    return null;
+  }
+  const t =
+    tick.timestamp > 1e12
+      ? Math.floor(tick.timestamp / 1000)
+      : Math.floor(tick.timestamp);
+  return {
+    t,
+    o: candle.open,
+    h: candle.high,
+    l: candle.low,
+    c: candle.close,
+    v: candle.volume,
+  };
 }

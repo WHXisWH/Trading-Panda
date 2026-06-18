@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
-import { useWebSocket } from "@/hooks/useWebSocket";
+import { useHubWebSocket } from "@/providers/WebSocketProvider";
 import { fetchLatestTail, fetchMarketCandles } from "@/lib/market/candles";
+import { dedupeMarketPairs } from "@/lib/market/canonicalMarketPair";
 import {
   CANDLES_MEMORY_CAP,
   CANDLES_PAGE_SIZE,
+  barFromMarketTick,
   capCandleBars,
   mergeCandleBars,
   oldestBarTime,
@@ -17,7 +18,6 @@ import type {
   CandlesResponse,
   MarketInterval,
   MarketTickPayload,
-  SubscribeMarketPayload,
   WsServerEvent,
 } from "@/types/ws";
 
@@ -40,7 +40,7 @@ export function useMarketCandles(options: UseMarketCandlesOptions = {}) {
     memoryCap = CANDLES_MEMORY_CAP,
   } = options;
 
-  const { accessToken } = useAuth();
+  const { sendCommand, isConnected, status, subscribeEvents } = useHubWebSocket();
   const [bars, setBars] = useState<CandlesResponse["candles"]>([]);
   const [hasMore, setHasMore] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -49,10 +49,11 @@ export function useMarketCandles(options: UseMarketCandlesOptions = {}) {
   const [lastTick, setLastTick] = useState<MarketTickPayload | null>(null);
   const loadingMoreRef = useRef(false);
   const hasMoreRef = useRef(false);
+  const marketSubKeyRef = useRef("");
 
-  const wsEnabled =
-    enabled && interval === "1m" && !!accessToken && pairs.length > 0;
-
+  const normalizedPairs = useMemo(() => dedupeMarketPairs(pairs), [pairs]);
+  const pairKey = normalizedPairs.join(",");
+  const wsEnabled = enabled && interval === "1m" && normalizedPairs.length > 0;
   const candlesEnabled = enabled && !!pool;
 
   const handleWsEvent = useCallback((event: WsServerEvent) => {
@@ -62,36 +63,31 @@ export function useMarketCandles(options: UseMarketCandlesOptions = {}) {
     setLastTick(event.payload as MarketTickPayload);
   }, []);
 
-  const ws = useWebSocket({
-    token: accessToken,
-    enabled: wsEnabled,
-    onEvent: handleWsEvent,
-  });
-
-  const subscribeMarket = useCallback(
-    (override?: SubscribeMarketPayload) => {
-      const payload: SubscribeMarketPayload = {
-        pairs: override?.pairs ?? pairs,
-        interval: override?.interval ?? interval,
-      };
-      if ((payload.pairs?.length ?? 0) === 0) {
-        return false;
-      }
-      return ws.sendCommand("subscribe.market", {
-        assets: [],
-        pairs: payload.pairs ?? [],
-        interval: payload.interval ?? "1m",
-      });
-    },
-    [interval, pairs, ws],
-  );
+  useEffect(() => subscribeEvents(handleWsEvent), [handleWsEvent, subscribeEvents]);
 
   useEffect(() => {
-    if (!ws.isConnected || !wsEnabled) {
+    if (!isConnected) {
+      marketSubKeyRef.current = "";
       return;
     }
-    subscribeMarket({ pairs, interval: "1m" });
-  }, [pairs, subscribeMarket, ws.isConnected, wsEnabled]);
+    if (!wsEnabled) {
+      if (marketSubKeyRef.current) {
+        marketSubKeyRef.current = "";
+        sendCommand("unsubscribe.market", {});
+      }
+      return;
+    }
+    const key = `${pairKey}:1m`;
+    if (marketSubKeyRef.current === key) {
+      return;
+    }
+    marketSubKeyRef.current = key;
+    sendCommand("subscribe.market", {
+      assets: [],
+      pairs: normalizedPairs,
+      interval: "1m",
+    });
+  }, [isConnected, normalizedPairs, pairKey, sendCommand, wsEnabled]);
 
   const applyPage = useCallback(
     (page: CandlesResponse, mode: "replace" | "prepend" | "merge") => {
@@ -163,7 +159,7 @@ export function useMarketCandles(options: UseMarketCandlesOptions = {}) {
   }, [applyPage, bars, enabled, interval, pageSize, pool]);
 
   const refreshTail = useCallback(async () => {
-    if (!pool || !enabled || interval === "1m") {
+    if (!pool || !enabled) {
       return;
     }
     try {
@@ -179,20 +175,30 @@ export function useMarketCandles(options: UseMarketCandlesOptions = {}) {
   }, [loadInitial]);
 
   useEffect(() => {
-    if (!enabled || interval === "1m") {
+    if (!enabled || !pool) {
       return;
     }
+    const ms = interval === "1m" ? 60_000 : tailRefreshMs(interval);
     const timer = window.setInterval(() => {
       void refreshTail();
-    }, tailRefreshMs(interval));
+    }, ms);
     return () => window.clearInterval(timer);
-  }, [enabled, interval, refreshTail]);
+  }, [enabled, interval, pool, refreshTail]);
 
   useEffect(() => {
     if (interval !== "1m") {
       setLastTick(null);
+      return;
     }
-  }, [interval]);
+    if (!lastTick) {
+      return;
+    }
+    const bar = barFromMarketTick(lastTick);
+    if (!bar) {
+      return;
+    }
+    setBars((prev) => capCandleBars(mergeCandleBars(prev, [bar]), memoryCap));
+  }, [interval, lastTick, memoryCap]);
 
   const history = useMemo((): CandlesResponse | null => {
     if (!pool || bars.length === 0) {
@@ -213,10 +219,10 @@ export function useMarketCandles(options: UseMarketCandlesOptions = {}) {
     }
     const newest = bars[bars.length - 1]?.t;
     if (newest == null) {
-      return ws.status === "open";
+      return status === "open";
     }
     return Date.now() / 1000 - newest <= intervalToSecondsSafe(interval) * 2;
-  }, [bars, interval, lastTick, ws.status]);
+  }, [bars, interval, lastTick, status]);
 
   return {
     history,
@@ -227,7 +233,7 @@ export function useMarketCandles(options: UseMarketCandlesOptions = {}) {
     lastTick: interval === "1m" ? lastTick : null,
     loadMoreOlder,
     reloadHistory: loadInitial,
-    status: ws.status,
+    status,
     marketFresh,
   };
 }
