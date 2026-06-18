@@ -71,15 +71,15 @@ export function EmergencyControlsPage({ pandaId }: Props) {
   const controlsBusy = controls.isLoading;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <DisclosureL0
         eyebrow="Safety"
         title="Emergency controls"
-        description="Stop, revoke, or tighten your Panda's autonomous execution boundary immediately."
+        description="Check status, pick an action, review the impact, then sign with your wallet."
       />
 
       {controls.errorMessage ? (
-        <div className="rounded-xl border border-product-red/40 bg-product-red/10 px-4 py-2 text-[13px] text-product-red">
+        <div className="rounded-xl bg-product-red/10 px-4 py-2 text-[13px] text-product-red ring-1 ring-inset ring-product-red/30">
           {controls.errorMessage}
         </div>
       ) : null}
@@ -87,7 +87,7 @@ export function EmergencyControlsPage({ pandaId }: Props) {
       <RiskStatusHero status={status.risk_status} pandaId={noWallet ? undefined : pandaId} />
 
       {noWallet ? (
-        <div className="product-panel p-6 text-center">
+        <div className="safety-surface p-6 text-center">
           <p className="text-[13px] text-product-muted">
             Create Agent Wallet before using safety controls.
           </p>
@@ -97,9 +97,18 @@ export function EmergencyControlsPage({ pandaId }: Props) {
         </div>
       ) : (
         <>
-          <OwnerControlStrip status={status} />
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-start">
+            <SafetyActionDeck
+              isPaused={isPaused}
+              highlightedAction={highlightedAction}
+              canPause={status.can_pause}
+              canUnpause={status.can_unpause}
+              canRevoke={status.can_revoke}
+              canTighten={status.can_tighten}
+              disabled={controlsBusy}
+              onSelect={handleSelectAction}
+            />
 
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
             <SafetyConsequencePanel
               status={status}
               highlightedAction={highlightedAction}
@@ -115,18 +124,9 @@ export function EmergencyControlsPage({ pandaId }: Props) {
                 (highlightedAction === "revoke" && !status.can_revoke)
               }
             />
-
-            <SafetyActionDeck
-              isPaused={isPaused}
-              highlightedAction={highlightedAction}
-              canPause={status.can_pause}
-              canUnpause={status.can_unpause}
-              canRevoke={status.can_revoke}
-              canTighten={status.can_tighten}
-              disabled={controlsBusy}
-              onSelect={handleSelectAction}
-            />
           </div>
+
+          <OwnerControlStrip status={status} />
 
           <PendingJobsStrip
             jobs={status.pending_chain_proof_jobs}

@@ -24,18 +24,18 @@ const SUBTITLES: Record<RiskStatus, string> = {
   no_wallet: "Create Agent Wallet before using emergency controls.",
 };
 
-const HERO_STYLES: Record<RiskStatus, string> = {
+const HERO_ACCENTS: Record<RiskStatus, string> = {
   active:
-    "border-product-green/35 bg-[radial-gradient(circle_at_100%_0%,rgba(109,255,144,0.14),transparent_42%)] bg-black/30",
+    "bg-[radial-gradient(circle_at_100%_0%,rgba(109,255,144,0.16),transparent_46%)]",
   paused:
-    "border-product-red/45 bg-[radial-gradient(circle_at_100%_0%,rgba(255,95,86,0.2),transparent_42%)] bg-[rgba(23,8,7,0.55)] shadow-[0_0_34px_rgba(255,95,86,0.12)]",
+    "bg-[radial-gradient(circle_at_100%_0%,rgba(255,95,86,0.22),transparent_46%)] shadow-[0_0_34px_rgba(255,95,86,0.1)]",
   revoked:
-    "border-product-red/55 bg-[radial-gradient(circle_at_100%_0%,rgba(255,95,86,0.24),transparent_42%)] bg-[rgba(23,8,7,0.62)] shadow-[0_0_40px_rgba(255,95,86,0.16)]",
+    "bg-[radial-gradient(circle_at_100%_0%,rgba(255,95,86,0.26),transparent_46%)] shadow-[0_0_40px_rgba(255,95,86,0.14)]",
   tightened:
-    "border-product-amber/40 bg-[radial-gradient(circle_at_100%_0%,rgba(225,186,92,0.16),transparent_42%)] bg-black/30",
+    "bg-[radial-gradient(circle_at_100%_0%,rgba(225,186,92,0.16),transparent_46%)]",
   mirror_syncing:
-    "border-product-amber/35 bg-[radial-gradient(circle_at_100%_0%,rgba(225,186,92,0.12),transparent_42%)] bg-black/30",
-  no_wallet: "border-product-line bg-product-panel-soft",
+    "bg-[radial-gradient(circle_at_100%_0%,rgba(225,186,92,0.12),transparent_46%)]",
+  no_wallet: "",
 };
 
 const HEADLINE_COLORS: Record<RiskStatus, string> = {
@@ -58,8 +58,8 @@ export function RiskStatusHero({ status, pandaId }: Props) {
   return (
     <div
       className={clsx(
-        "rounded-[24px] border px-5 py-5 md:px-6 md:py-6",
-        HERO_STYLES[status],
+        "safety-hero px-5 py-5 md:px-6 md:py-6",
+        HERO_ACCENTS[status],
         showTrainingCta && "md:flex md:items-end md:justify-between md:gap-6",
       )}
     >
@@ -70,7 +70,7 @@ export function RiskStatusHero({ status, pandaId }: Props) {
             status === "active" ? "text-product-green/90" : "text-product-red/90",
           )}
         >
-          Risk status
+          Current status
         </p>
         <p
           className={clsx(

@@ -1,6 +1,7 @@
 "use client";
 
 import { clsx } from "clsx";
+import type { ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
 import type { SafetyActionKind } from "@/hooks/useSafetyControls";
 import type { PolicyDraft } from "@/types/agent-wallet";
@@ -107,19 +108,26 @@ export function SafetyConsequencePanel({
 
   if (!highlightedAction) {
     return (
-      <div className="product-panel space-y-4 p-5 md:p-6">
+      <section className="space-y-3" aria-label="Consequence preview">
         <div>
-          <p className="product-eyebrow">Consequence preview</p>
-          <h2 className="mt-2 font-sans text-lg font-bold text-product-text">
-            What safety actions affect
+          <p className="safety-step-label">Step 2</p>
+          <h2 className="mt-1.5 font-sans text-base font-bold text-product-text">
+            Review before signing
           </h2>
-          <p className="mt-2 text-[13px] text-product-muted">
-            Select an action on the right to review before signing. Loosening policy is never
-            available here.
+          <p className="mt-1 text-[12px] text-product-muted">
+            Select an action to see what changes. Loosening policy is never available here.
           </p>
         </div>
 
-        <ModeOverviewPanel
+        <div className="safety-surface space-y-4 p-5 md:p-6">
+          <div>
+            <p className="product-eyebrow">Overview</p>
+            <h3 className="mt-2 font-sans text-lg font-bold text-product-text">
+              What safety actions affect
+            </h3>
+          </div>
+
+          <ModeOverviewPanel
           mode1Rows={[
             ["Paper execution", "Stops on pause / revoke"],
             ["Open positions", "Safe close only when paused"],
@@ -132,20 +140,18 @@ export function SafetyConsequencePanel({
           ]}
           mode2Tone={pendingCount > 0 ? "warn" : "default"}
         />
-      </div>
+        </div>
+      </section>
     );
   }
 
   if (highlightedAction === "pause") {
     return (
-      <div className="product-panel space-y-4 p-5 md:p-6">
-        <div>
-          <p className="product-eyebrow">Before you sign</p>
-          <h2 className="mt-2 font-sans text-lg font-bold text-product-red">Pause policy</h2>
-          <p className="mt-2 text-[13px] text-product-muted">
-            Immediate stop for paper execution and queued Chain Proof jobs.
-          </p>
-        </div>
+      <ConsequenceShell
+        title="Pause policy"
+        tone="danger"
+        description="Immediate stop for paper execution and queued Chain Proof jobs."
+      >
         <div className="grid gap-3 sm:grid-cols-2">
           <ImpactPanel
             title="Before"
@@ -168,20 +174,17 @@ export function SafetyConsequencePanel({
         <Button variant="danger" className="w-full" disabled={signDisabled} onClick={onSign}>
           Sign pause
         </Button>
-      </div>
+      </ConsequenceShell>
     );
   }
 
   if (highlightedAction === "unpause") {
     return (
-      <div className="product-panel space-y-4 p-5 md:p-6">
-        <div>
-          <p className="product-eyebrow">Before you sign</p>
-          <h2 className="mt-2 font-sans text-lg font-bold text-product-green">Resume execution</h2>
-          <p className="mt-2 text-[13px] text-product-muted">
-            Training Ledger may resume when strategy, vault, and market data are healthy.
-          </p>
-        </div>
+      <ConsequenceShell
+        title="Resume execution"
+        tone="primary"
+        description="Training Ledger may resume when strategy, vault, and market data are healthy."
+      >
         <div className="grid gap-3 sm:grid-cols-2">
           <ImpactPanel
             title="Before"
@@ -205,21 +208,17 @@ export function SafetyConsequencePanel({
         <Button className="w-full" disabled={signDisabled} onClick={onSign}>
           Sign resume
         </Button>
-      </div>
+      </ConsequenceShell>
     );
   }
 
   if (highlightedAction === "revoke") {
     return (
-      <div className="product-panel space-y-4 p-5 md:p-6">
-        <div>
-          <p className="product-eyebrow">Before you sign</p>
-          <h2 className="mt-2 font-sans text-lg font-bold text-product-red">Revoke agent</h2>
-          <p className="mt-2 text-[13px] text-product-muted">
-            Disable testnet Agent Signer for Chain Proof. Also pauses policy. Cannot be undone
-            without new Agent Wallet setup.
-          </p>
-        </div>
+      <ConsequenceShell
+        title="Revoke agent"
+        tone="danger"
+        description="Disable testnet Agent Signer for Chain Proof. Also pauses policy. Cannot be undone without new Agent Wallet setup."
+      >
         <div className="grid gap-3 sm:grid-cols-2">
           <ImpactPanel
             title="Before"
@@ -242,19 +241,16 @@ export function SafetyConsequencePanel({
         <Button variant="danger" className="w-full" disabled={signDisabled} onClick={onSign}>
           Sign revoke
         </Button>
-      </div>
+      </ConsequenceShell>
     );
   }
 
   return (
-    <div className="product-panel space-y-4 p-5 md:p-6">
-      <div>
-        <p className="product-eyebrow">Before you sign</p>
-        <h2 className="mt-2 font-sans text-lg font-bold text-product-gold">Tighten limits</h2>
-        <p className="mt-2 text-[13px] text-product-muted">
-          Lower caps or pairs — policy version increments. Loosening requires Agent Wallet setup.
-        </p>
-      </div>
+    <ConsequenceShell
+      title="Tighten limits"
+      tone="gold"
+      description="Lower caps or pairs — policy version increments. Loosening requires Agent Wallet setup."
+    >
       <div className="grid gap-3 sm:grid-cols-2">
         <ImpactPanel
           title="Current"
@@ -279,6 +275,40 @@ export function SafetyConsequencePanel({
           Edit & sign tighter limits
         </Button>
       </div>
-    </div>
+    </ConsequenceShell>
+  );
+}
+
+function ConsequenceShell({
+  title,
+  tone,
+  description,
+  children,
+}: {
+  title: string;
+  tone: "danger" | "primary" | "gold";
+  description: string;
+  children: ReactNode;
+}) {
+  const titleColor =
+    tone === "danger"
+      ? "text-product-red"
+      : tone === "gold"
+        ? "text-product-gold"
+        : "text-product-green";
+
+  return (
+    <section className="space-y-3" aria-label="Review before signing">
+      <div>
+        <p className="safety-step-label">Step 2</p>
+        <h2 className={clsx("mt-1.5 font-sans text-base font-bold", titleColor)}>{title}</h2>
+        <p className="mt-1 text-[12px] text-product-muted">{description}</p>
+      </div>
+
+      <div className="safety-surface space-y-4 p-5 md:p-6">
+        <p className="product-eyebrow">Before you sign</p>
+        {children}
+      </div>
+    </section>
   );
 }
