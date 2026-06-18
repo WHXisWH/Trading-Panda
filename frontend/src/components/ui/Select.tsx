@@ -18,6 +18,7 @@ interface SelectProps {
   placeholder?: string;
   disabled?: boolean;
   size?: "sm" | "md";
+  surface?: "default" | "inset";
   /** Extra classes for the trigger. */
   className?: string;
   /** Accessible label when there is no visible <label>. */
@@ -36,6 +37,7 @@ export function Select({
   placeholder = "Select…",
   disabled,
   size = "md",
+  surface = "default",
   className,
   name,
   "aria-label": ariaLabel,
@@ -45,8 +47,10 @@ export function Select({
       <RadixSelect.Trigger
         aria-label={ariaLabel}
         className={clsx(
-          "inline-flex w-full items-center justify-between gap-2 rounded-[14px] border border-product-line/80 bg-white/[0.045] text-product-text transition-[border-color,box-shadow] duration-fast ease-smooth",
-          "hover:border-product-gold/35 focus:outline-none focus-visible:border-product-green/50 focus-visible:ring-2 focus-visible:ring-product-green/15",
+          "inline-flex w-full items-center justify-between gap-2 rounded-[14px] text-product-text transition-[border-color,box-shadow,background-color] duration-fast ease-smooth",
+          surface === "inset"
+            ? "strategy-feed-field"
+            : "border border-product-line/80 bg-white/[0.045] hover:border-product-gold/35 focus:outline-none focus-visible:border-product-green/50 focus-visible:ring-2 focus-visible:ring-product-green/15",
           "data-[placeholder]:text-product-muted/70 disabled:cursor-not-allowed disabled:opacity-50",
           size === "sm" ? "h-9 px-2.5 text-sm" : "h-11 px-3.5 text-sm",
           className,

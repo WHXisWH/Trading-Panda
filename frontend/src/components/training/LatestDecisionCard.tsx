@@ -13,31 +13,31 @@ interface Props {
 }
 
 const STATUS_CLASS: Record<LatestDecisionSummary["statusTone"], string> = {
-  default: "border-product-line bg-product-panel-soft text-product-muted",
-  pass: "border-product-green/30 bg-product-green/10 text-product-green",
-  warn: "border-product-amber/30 bg-product-amber/10 text-product-amber",
-  danger: "border-product-red/30 bg-product-red/10 text-product-red",
+  default: "bg-black/25 text-product-muted ring-1 ring-inset ring-[rgba(225,186,92,0.1)]",
+  pass: "bg-product-green/10 text-product-green ring-1 ring-inset ring-product-green/28",
+  warn: "bg-product-amber/10 text-product-amber ring-1 ring-inset ring-product-amber/28",
+  danger: "bg-product-red/10 text-product-red ring-1 ring-inset ring-product-red/28",
 };
 
 export function LatestDecisionCard({ pandaId, summary, onInspect }: Props) {
   if (!summary) {
     return (
-      <Card>
-        <p className="product-field-label">Latest decision</p>
+      <Card variant="ledger">
+        <p className="ledger-step-label">Latest decision</p>
         <p className="mt-2 text-[12px] text-product-muted">Waiting for the first OrderIntent.</p>
       </Card>
     );
   }
 
   return (
-    <Card className="space-y-3">
+    <Card variant="ledger" className="space-y-3">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="product-field-label">Latest decision</p>
+          <p className="ledger-step-label">Latest decision</p>
           <h3 className="mt-1 text-[15px] font-semibold text-product-text">{summary.title}</h3>
           <p className="mt-1 text-[12px] text-product-muted">{summary.subtitle}</p>
         </div>
-        <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${STATUS_CLASS[summary.statusTone]}`}>
+        <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${STATUS_CLASS[summary.statusTone]}`}>
           {summary.statusLabel}
         </span>
       </div>
@@ -62,7 +62,7 @@ export function LatestDecisionCard({ pandaId, summary, onInspect }: Props) {
         {summary.canOpenProof && summary.tradeFactId ? (
           <Link
             href={chainProofPath(pandaId, summary.tradeFactId)}
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.045] px-3 py-1.5 text-[11px] font-mono font-extrabold tracking-tight text-product-muted transition-all duration-fast ease-smooth hover:border-product-line hover:text-product-text"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-black/25 px-3 py-1.5 text-[11px] font-mono font-extrabold tracking-tight text-product-muted ring-1 ring-inset ring-[rgba(225,186,92,0.1)] transition-all duration-fast ease-smooth hover:text-product-text hover:ring-product-gold/25"
           >
             Prove this action
           </Link>
@@ -70,7 +70,7 @@ export function LatestDecisionCard({ pandaId, summary, onInspect }: Props) {
         {summary.canOpenReview && summary.tradeFactId ? (
           <Link
             href={reviewPath(pandaId, summary.tradeFactId)}
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.045] px-3 py-1.5 text-[11px] font-mono font-extrabold tracking-tight text-product-muted transition-all duration-fast ease-smooth hover:border-product-line hover:text-product-text"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-black/25 px-3 py-1.5 text-[11px] font-mono font-extrabold tracking-tight text-product-muted ring-1 ring-inset ring-[rgba(225,186,92,0.1)] transition-all duration-fast ease-smooth hover:text-product-text hover:ring-product-gold/25"
           >
             Review this trade
           </Link>
@@ -82,7 +82,7 @@ export function LatestDecisionCard({ pandaId, summary, onInspect }: Props) {
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-product-line/60 bg-black/20 px-3 py-2">
+    <div className="ledger-metric-cell">
       <div className="product-field-label">{label}</div>
       <div className="mt-1 font-mono text-[12px] font-bold text-product-text">{value}</div>
     </div>

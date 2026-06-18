@@ -24,8 +24,8 @@ export function PandaAgentStatus({ emotion, lastIntent, skillVersion = 0 }: Prop
   const intentStatus = lastIntent?.status ?? "—";
 
   return (
-    <div className="product-panel p-4">
-      <p className="product-eyebrow">Panda Agent</p>
+    <div className="ledger-surface p-4">
+      <p className="ledger-step-label">Panda Agent</p>
       <dl className="mt-4 space-y-0">
         <MetricRow label="Mood" value={mood} />
         <MetricRow label="Skill version" value={String(skillVersion)} />

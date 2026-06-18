@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Drawer } from "@/components/ui/Drawer";
@@ -27,6 +27,28 @@ interface FeedStrategyDrawerProps {
   pandaId: string;
   panda?: PandaDetailApi | null;
   onSaved?: () => void;
+}
+
+function FeedSection({
+  step,
+  title,
+  children,
+}: {
+  step: string;
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="strategy-feed-section space-y-3">
+      <div>
+        <p className="ledger-step-label">{step}</p>
+        <h2 className="mt-1 text-[13px] font-semibold tracking-[-0.02em] text-product-text">
+          {title}
+        </h2>
+      </div>
+      {children}
+    </section>
+  );
 }
 
 export function FeedStrategyDrawer({
@@ -104,64 +126,99 @@ export function FeedStrategyDrawer({
       open={open}
       onOpenChange={onOpenChange}
       variant="product"
-      className="md:w-[min(760px,95vw)]"
+      className="md:w-[min(820px,96vw)]"
+      eyebrow="Training cockpit"
       title="Feed strategy"
-      description="Teach the Panda what to practice inside the active TradingPolicy."
+      description="Teach the Panda what to practice inside the active TradingPolicy. Strategy guides intent — it cannot override risk gates."
+      footer={
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-[11px] leading-relaxed text-product-muted">
+            {canSave
+              ? "Policy check passed — save to activate on the ledger."
+              : "Run 试编译 after editing rules to unlock Build Strategy."}
+          </p>
+          <div className="flex shrink-0 gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="agent-wallet-btn-ghost"
+              onClick={() => onOpenChange(false)}
+            >
+              Close
+            </Button>
+            {strategy?.is_active ? (
+              <Button type="button" size="sm" variant="outline" onClick={() => onOpenChange(false)}>
+                Return to cockpit
+              </Button>
+            ) : null}
+          </div>
+        </div>
+      }
     >
-      <div className="space-y-4">
+      <div className="space-y-6">
         <StrategyVersionBar
+          theme="product"
           version={strategy?.version}
           isActive={Boolean(strategy?.is_active)}
           isDraft={!strategy}
           matchScore={strategy?.personality_match ?? matchScore}
         />
 
-        <PolicyCompatibilityPreview
-          validating={validateMutation.isPending}
-          policyVersion={validateData?.policy_version ?? strategy?.policy_version}
-          policySummary={validateData?.policy_summary ?? strategy?.policy_summary}
-          policyCompatible={validateData?.policy_compatible ?? strategy?.policy_compatible}
-          allowedPairs={validateData?.allowed_pairs ?? strategy?.allowed_pairs}
-          blockedPairs={validateData?.blocked_pairs ?? strategy?.blocked_pairs}
-          targetPairs={validateData?.target_pairs ?? strategy?.target_pairs ?? targetPairs}
-          conflicts={validateData?.policy_conflicts ?? strategy?.policy_conflicts}
-        />
+        <FeedSection step="01 · Policy gate" title="Compatibility with TradingPolicy">
+          <PolicyCompatibilityPreview
+            theme="product"
+            validating={validateMutation.isPending}
+            policyVersion={validateData?.policy_version ?? strategy?.policy_version}
+            policySummary={validateData?.policy_summary ?? strategy?.policy_summary}
+            policyCompatible={validateData?.policy_compatible ?? strategy?.policy_compatible}
+            allowedPairs={validateData?.allowed_pairs ?? strategy?.allowed_pairs}
+            blockedPairs={validateData?.blocked_pairs ?? strategy?.blocked_pairs}
+            targetPairs={validateData?.target_pairs ?? strategy?.target_pairs ?? targetPairs}
+            conflicts={validateData?.policy_conflicts ?? strategy?.policy_conflicts}
+          />
+        </FeedSection>
 
-        <StrategyBuilder
-          compact
-          initialParsed={strategy?.parsed ?? null}
-          matchScore={matchScore ?? strategy?.personality_match ?? null}
-          warnings={warnings}
-          invalidRuleIndexes={invalidRuleIndexes}
-          loading={feedMutation.isPending}
-          onValidate={(parsed) => validateMutation.mutate(parsed)}
-          onSubmit={(parsed) => {
-            if (!canSave) {
-              toast.error("Validate strategy and resolve policy conflicts first");
-              return;
-            }
-            feedMutation.mutate(parsed);
-          }}
-          onParseText={() => {
-            toast.message("Natural language parsing stays manual for this MVP build");
-          }}
-        />
+        <FeedSection step="02 · Strategy builder" title="Rules, sizing, and risk envelope">
+          <StrategyBuilder
+            theme="product"
+            compact
+            initialParsed={strategy?.parsed ?? null}
+            matchScore={matchScore ?? strategy?.personality_match ?? null}
+            warnings={warnings}
+            invalidRuleIndexes={invalidRuleIndexes}
+            loading={feedMutation.isPending}
+            onValidate={(parsed) => validateMutation.mutate(parsed)}
+            onSubmit={(parsed) => {
+              if (!canSave) {
+                toast.error("Validate strategy and resolve policy conflicts first");
+                return;
+              }
+              feedMutation.mutate(parsed);
+            }}
+            onParseText={() => {
+              toast.message("Natural language parsing stays manual for this MVP build");
+            }}
+          />
+        </FeedSection>
 
         {pandaReaction ? (
-          <p className="rounded-lg border border-product-green/25 bg-product-green/10 px-3 py-2 text-[12px] text-product-green">
-            {pandaReaction}
-          </p>
-        ) : null}
-
-        <GhostInfluenceHint ghost={strategy?.ghost_influence} />
-
-        {strategy?.is_active ? (
-          <div className="flex justify-end border-t border-product-line/40 pt-4">
-            <Button type="button" size="sm" variant="outline" onClick={() => onOpenChange(false)}>
-              Return to cockpit
-            </Button>
+          <div className="strategy-feed-reaction">
+            <p className="font-mono text-[10px] font-extrabold uppercase tracking-[0.12em] text-product-green/85">
+              Panda reaction
+            </p>
+            <p className="mt-2 text-[13px] leading-relaxed text-product-text">{pandaReaction}</p>
           </div>
         ) : null}
+
+        <FeedSection step="03 · Residual memory" title="Ghost influence from prior strategies">
+          <GhostInfluenceHint theme="product" ghost={strategy?.ghost_influence} />
+          {!strategy?.ghost_influence ? (
+            <p className="strategy-feed-ghost rounded-[18px] px-4 py-3 text-[12px] text-product-muted">
+              No ghost residue yet — first strategy feed starts with a clean slate.
+            </p>
+          ) : null}
+        </FeedSection>
       </div>
     </Drawer>
   );

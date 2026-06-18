@@ -8,7 +8,7 @@ type Props = ComponentProps<typeof CandlestickChart>;
 /** Training Ledger chart panel — cockpit chrome with product visual system. */
 export function MarketChartPanel(props: Props) {
   return (
-    <div className="product-panel overflow-hidden p-0">
+    <div className="ledger-surface overflow-hidden p-0">
       <CandlestickChart variant="product" {...props} />
     </div>
   );

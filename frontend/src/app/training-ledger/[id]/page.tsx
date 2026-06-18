@@ -15,7 +15,7 @@ import { PandaAgentStatus } from "@/components/training/PandaAgentStatus";
 import { PolicyGateBanner } from "@/components/training/PolicyGateBanner";
 import { TradeFactDrawer } from "@/components/training/TradeFactDrawer";
 import { TrainingControlBar } from "@/components/training/TrainingControlBar";
-import { TrainingStatusStrip } from "@/components/training/TrainingStatusStrip";
+import { TrainingPhaseHero } from "@/components/training/TrainingPhaseHero";
 import { FeedStrategyDrawer } from "@/components/training/FeedStrategyDrawer";
 import {
   buildTrainingPreflightItems,
@@ -203,14 +203,14 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
   );
 
   return (
-    <ProductPageShell density="high" className="space-y-4">
+    <ProductPageShell density="high" className="space-y-8">
       <DisclosureL0
         eyebrow="Training Ledger"
         title="Live training cockpit"
         description="Watch DeepBook mainnet ticks, policy gates, and paper ledger mutations. Evidence stays in drawers."
       />
 
-      <TrainingStatusStrip
+      <TrainingPhaseHero
         phase={session.phase}
         pair={pool}
         actorActive={session.actorActive}
@@ -257,7 +257,7 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
         }}
       />
 
-      <div className="grid gap-4 lg:grid-cols-[240px_1fr_280px]">
+      <div className="grid gap-6 lg:grid-cols-[240px_1fr_280px]">
         <PandaAgentStatus emotion={session.emotion} lastIntent={lastIntent} skillVersion={0} />
         <MarketChartPanel
           pool={pool}
@@ -278,7 +278,7 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
         <div className="space-y-3">
           <LedgerSummaryStrip ledger={ledger} equity={session.equity} initialCapital={session.initialCapital} />
           <PolicyGateBanner status={policyBanner.status} message={policyBanner.message} />
-          <div className="product-panel flex flex-wrap gap-3 px-4 py-3">
+          <div className="ledger-nav-rail">
             <Link href={chainProofPath(pandaId)} className="text-[12px] font-medium text-product-green underline-offset-2 hover:underline">
               Chain Proof
             </Link>
@@ -298,7 +298,10 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
 
       <section className="space-y-3">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="product-field-label">Decision timeline</h2>
+          <div>
+            <p className="ledger-step-label">Evidence trail</p>
+            <h2 className="mt-1 font-sans text-base font-bold text-product-text">Decision timeline</h2>
+          </div>
           {intents.length > 0 ? <span className="text-[11px] text-product-muted">{intents.length} events</span> : null}
         </div>
         <DecisionTimeline intents={intents} selectedId={selectedIntent?.id} onSelect={handleSelectIntent} />

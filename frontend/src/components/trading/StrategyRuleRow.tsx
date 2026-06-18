@@ -1,9 +1,17 @@
 "use client";
 
+import { clsx } from "clsx";
 import {
   CONDITION_OPTIONS,
   rulePreviewText,
 } from "@/lib/strategyBuilder";
+import {
+  strategyInsetClass,
+  strategyInvalidInsetClass,
+  strategyLabelClass,
+  strategyMutedClass,
+  type StrategySurfaceTheme,
+} from "@/lib/ui/strategySurfaceTheme";
 import { Select } from "@/components/ui/Select";
 import { Input } from "@/components/ui/Input";
 import type { SignalRuleRow } from "@/types/strategy";
@@ -24,11 +32,21 @@ interface Props {
   row: SignalRuleRow;
   invalid?: boolean;
   compact?: boolean;
+  theme?: StrategySurfaceTheme;
   onChange: (row: SignalRuleRow) => void;
   onRemove: () => void;
 }
 
-export function StrategyRuleRow({ row, invalid, compact = false, onChange, onRemove }: Props) {
+export function StrategyRuleRow({
+  row,
+  invalid,
+  compact = false,
+  theme = "light",
+  onChange,
+  onRemove,
+}: Props) {
+  const isProduct = theme === "product";
+  const fieldSurface = isProduct ? ("inset" as const) : ("default" as const);
   const condOptions = CONDITION_OPTIONS[row.indicator];
   const selectedCond = condOptions.find((c) => c.value === row.condition);
   const needsThreshold = selectedCond?.needsThreshold ?? false;
@@ -44,11 +62,7 @@ export function StrategyRuleRow({ row, invalid, compact = false, onChange, onRem
   };
 
   return (
-    <div
-      className={`rounded-lg border p-2 ${
-        invalid ? "border-red-600 bg-red-50/50" : "border-[var(--color-border)]"
-      }`}
-    >
+    <div className={invalid ? strategyInvalidInsetClass(theme) : strategyInsetClass(theme)}>
       <div
         className={
           compact
@@ -56,10 +70,11 @@ export function StrategyRuleRow({ row, invalid, compact = false, onChange, onRem
             : "grid grid-cols-2 gap-2 xl:grid-cols-4"
         }
       >
-        <label className="flex flex-col gap-1 text-[10px] text-neutral-500">
+        <label className={clsx("flex flex-col gap-1", strategyLabelClass(theme))}>
           指标
           <Select
             size="sm"
+            surface={fieldSurface}
             aria-label="指标"
             value={row.indicator}
             onValueChange={(v) => handleIndicator(v as SignalRuleRow["indicator"])}
@@ -67,10 +82,11 @@ export function StrategyRuleRow({ row, invalid, compact = false, onChange, onRem
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-[10px] text-neutral-500">
+        <label className={clsx("flex flex-col gap-1", strategyLabelClass(theme))}>
           条件
           <Select
             size="sm"
+            surface={fieldSurface}
             aria-label="条件"
             value={row.condition}
             onValueChange={(v) => {
@@ -86,11 +102,12 @@ export function StrategyRuleRow({ row, invalid, compact = false, onChange, onRem
         </label>
 
         {needsThreshold ? (
-          <label className="flex flex-col gap-1 text-[10px] text-neutral-500">
+          <label className={clsx("flex flex-col gap-1", strategyLabelClass(theme))}>
             阈值
             <Input
               type="number"
               inputSize="sm"
+              surface={fieldSurface}
               value={row.threshold ?? ""}
               onChange={(e) =>
                 onChange({ ...row, threshold: Number(e.target.value) })
@@ -101,10 +118,11 @@ export function StrategyRuleRow({ row, invalid, compact = false, onChange, onRem
           !compact && <div className="hidden xl:block" />
         )}
 
-        <label className="flex flex-col gap-1 text-[10px] text-neutral-500">
+        <label className={clsx("flex flex-col gap-1", strategyLabelClass(theme))}>
           动作
           <Select
             size="sm"
+            surface={fieldSurface}
             aria-label="动作"
             value={row.action}
             onValueChange={(v) =>
@@ -116,10 +134,15 @@ export function StrategyRuleRow({ row, invalid, compact = false, onChange, onRem
       </div>
 
       <div className="mt-2 flex min-w-0 items-start justify-between gap-2">
-        <p className="min-w-0 break-words text-[11px] text-neutral-500">{rulePreviewText(row)}</p>
+        <p className={clsx("min-w-0 break-words text-[11px]", strategyMutedClass(theme))}>
+          {rulePreviewText(row)}
+        </p>
         <button
           type="button"
-          className="text-[11px] text-red-600 hover:underline"
+          className={clsx(
+            "text-[11px] hover:underline",
+            isProduct ? "text-product-red" : "text-red-600",
+          )}
           onClick={onRemove}
         >
           删除

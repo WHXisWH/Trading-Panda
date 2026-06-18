@@ -130,8 +130,8 @@ function StatusChip({
       className={clsx(
         "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold",
         ok
-          ? "border border-product-green/30 bg-product-green/10 text-product-green"
-          : "border border-product-line bg-product-panel-soft text-product-muted",
+          ? "bg-product-green/10 text-product-green ring-1 ring-inset ring-product-green/28"
+          : "bg-black/25 text-product-muted ring-1 ring-inset ring-[rgba(225,186,92,0.1)]",
         className,
       )}
     >
@@ -217,19 +217,19 @@ export function TrainingControlBar({
 
   const phaseTone =
     phase === "running"
-      ? "border-product-green/40 bg-product-green/10 text-product-green"
+      ? "bg-product-green/10 text-product-green ring-1 ring-inset ring-product-green/35"
       : phase === "error"
-        ? "border-product-red/40 bg-product-red/10 text-product-red"
+        ? "bg-product-red/10 text-product-red ring-1 ring-inset ring-product-red/35"
         : phase === "starting" || phase === "stopping"
-          ? "border-product-amber/35 bg-product-amber/10 text-product-amber"
-          : "border-product-line bg-product-panel-soft text-product-muted";
+          ? "bg-product-amber/10 text-product-amber ring-1 ring-inset ring-product-amber/30"
+          : "bg-black/25 text-product-muted ring-1 ring-inset ring-[rgba(225,186,92,0.1)]";
 
   return (
-    <div className="product-panel flex min-w-0 max-w-full flex-wrap items-center justify-between gap-3 px-4 py-3">
+    <div className="ledger-control-bar flex min-w-0 max-w-full flex-wrap items-center justify-between gap-3 px-4 py-3">
       <div className="flex min-w-0 flex-wrap items-center gap-2">
         <span
           className={clsx(
-            "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide",
+            "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide",
             phaseTone,
           )}
         >
@@ -252,11 +252,11 @@ export function TrainingControlBar({
             <>
               <StatusChip label={`Actor ${actorActive ? "active" : "idle"}`} ok={actorActive} />
               {emotion && (
-                <span className="rounded-full border border-product-gold/30 bg-product-gold/10 px-2 py-0.5 text-[10px] font-semibold text-product-gold">
+                <span className="rounded-full bg-product-gold/10 px-2 py-0.5 text-[10px] font-semibold text-product-gold ring-1 ring-inset ring-product-gold/28">
                   {EMOTION_LABELS[emotion] ?? emotion}
                 </span>
               )}
-              <span className="rounded-full border border-product-line bg-product-panel-soft px-2 py-0.5 font-mono text-[10px] text-product-muted">
+              <span className="rounded-full bg-black/25 px-2 py-0.5 font-mono text-[10px] text-product-muted ring-1 ring-inset ring-[rgba(225,186,92,0.1)]">
                 {tradeCount} trades
               </span>
             </>
@@ -303,7 +303,7 @@ export function TrainingControlBar({
           )}
 
           {checklistOpen && !isRunning && (
-            <div className="absolute right-0 top-full z-20 mt-2 w-72 rounded-xl border border-product-line bg-product-panel p-3 shadow-[var(--shadow-product)]">
+            <div className="absolute right-0 top-full z-20 mt-2 w-72 rounded-xl bg-[rgba(10,12,10,0.96)] p-3 shadow-[var(--shadow-product)] ring-1 ring-inset ring-[rgba(225,186,92,0.12)] backdrop-blur-md">
               <p className="text-[12px] font-bold text-product-text">Pre-flight checklist</p>
               <ul className="mt-2 space-y-1.5">
                 {checklist.map((item) => (

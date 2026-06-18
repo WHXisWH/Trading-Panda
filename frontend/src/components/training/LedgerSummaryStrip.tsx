@@ -16,8 +16,8 @@ export function LedgerSummaryStrip({ ledger, equity, initialCapital = 10_000 }: 
   const positions = ledger?.positions ?? [];
 
   return (
-    <div className="product-panel p-4">
-      <p className="product-field-label">Paper ledger</p>
+    <div className="ledger-surface p-4">
+      <p className="ledger-step-label">Paper ledger</p>
       <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-2">
         <Metric label="Equity" value={`$${eq.toLocaleString(undefined, { maximumFractionDigits: 2 })}`} />
         <Metric label="Cash" value={`$${cash.toLocaleString(undefined, { maximumFractionDigits: 2 })}`} />
@@ -54,7 +54,7 @@ function Metric({
   tone?: "up" | "down";
 }) {
   return (
-    <div className="rounded-xl border border-product-line/60 bg-black/20 px-3 py-2">
+    <div className="ledger-metric-cell">
       <div className="product-field-label">{label}</div>
       <div
         className={
