@@ -109,6 +109,7 @@
   --z-navbar: 30;
   --z-overlay: 40;
   --z-modal: 50;
+  --z-drawer-stack: 55;
   --z-toast: 60;
 
   /* ========== Product cockpit (Epic 10 — docs/design/visual-system.md) ========== */

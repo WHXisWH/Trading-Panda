@@ -23,7 +23,7 @@ export function agentWalletSetupPath(pandaId: string, step: JourneyStep = "no-va
 }
 
 export function strategyPath(pandaId: string): string {
-  return `/strategy/${encodeURIComponent(pandaId)}`;
+  return trainingLedgerPath(pandaId, { feedStrategy: true });
 }
 
 export function trainingLedgerPath(

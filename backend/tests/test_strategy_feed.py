@@ -8,6 +8,8 @@ from app.engine.rule_engine import RuleEngine
 from app.schemas.errors import ApiError, ApiErrorCode
 from app.schemas.strategy import ParsedStrategyLayers, StrategyFeedRequest
 from app.services.strategy_feed import (
+    build_human_summary,
+    build_auto_title,
     build_preview_signal,
     strategy_hash_from_parsed,
     summarize_parsed,
@@ -33,6 +35,15 @@ def test_summarize_parsed_contains_rules():
     text = summarize_parsed(_parsed_layers())
     assert "RSI" in text
     assert "BUY" in text
+
+
+def test_build_auto_title_and_human_summary():
+    layers = _parsed_layers()
+    title = build_auto_title(layers)
+    summary = build_human_summary(layers)
+    assert "RSI" in title
+    assert "playbook" in summary
+    assert "buy" in summary.lower()
 
 
 def test_validate_valid_parsed():
@@ -103,21 +114,14 @@ def test_preview_signal_buy_sell_rules():
     assert preview.total_rules == 2
 
 
-def test_parse_only_route_returns_draft_without_persisting(monkeypatch):
-    from app.api import strategy as strategy_api
-    from types import SimpleNamespace
-
-    calls = {"parse": 0}
-
-    class DummyDb:
-        async def execute(self, stmt):
-            return SimpleNamespace(scalar_one_or_none=lambda: SimpleNamespace(id="panda-1"))
+@pytest.mark.asyncio
+async def test_parse_strategy_only_returns_draft_payload(monkeypatch):
+    from app.services import strategy_feed as feed_mod
 
     async def fake_parse_strategy_text(raw_text: str):
-        calls["parse"] += 1
         return {
             "philosophy": "trend_following",
-            "position_sizing": {"type": "fixed", "value": 0.1},
+            "position_sizing": {"type": "fixed", "value": 0.1, "scale_in": False},
             "signal_rules": [
                 {"indicator": "RSI", "condition": "< 30", "threshold": 30, "action": "BUY"}
             ],
@@ -128,12 +132,11 @@ def test_parse_only_route_returns_draft_without_persisting(monkeypatch):
             },
         }
 
-    monkeypatch.setattr(strategy_api, "parse_strategy_text", fake_parse_strategy_text)
-    monkeypatch.setattr(strategy_api, "get_db", lambda: None)
-    monkeypatch.setattr(strategy_api, "get_current_user", lambda: None)
-    monkeypatch.setattr(strategy_api, "success", lambda data: {"success": True, "data": data})
-    monkeypatch.setattr(strategy_api, "settings", SimpleNamespace(deepseek_api_key="key"))
+    monkeypatch.setattr(feed_mod, "parse_strategy_text", fake_parse_strategy_text)
+    monkeypatch.setattr(feed_mod.settings, "deepseek_api_key", "key")
 
-    # The route should parse and return a draft payload, not touch Strategy tables.
-    result = strategy_api  # keep module import alive for coverage
-    assert result is not None
+    body = StrategyFeedRequest(raw_text="Buy when RSI is oversold and stay cautious")
+    data = await feed_mod.parse_strategy_only(body, "user-1")
+    assert data["parsed"]["philosophy"] == "trend_following"
+    assert "title" in data
+    assert "human_summary" in data

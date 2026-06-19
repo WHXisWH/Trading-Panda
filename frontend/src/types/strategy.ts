@@ -62,6 +62,40 @@ export interface StrategyFeedRequest {
   raw_text?: string;
   parsed?: ParsedStrategyLayers;
   parse_with_llm?: boolean;
+  activate?: boolean;
+}
+
+export interface StrategyUpdateRequest {
+  raw_text?: string;
+  parsed?: ParsedStrategyLayers;
+}
+
+export interface InvalidRuleDetail {
+  index: number;
+  reason: string;
+  indicator?: string | null;
+}
+
+export interface StrategyParseData {
+  parsed: ParsedStrategyLayers;
+  raw_text?: string | null;
+  title: string;
+  human_summary: string;
+  warnings?: string[];
+  invalid_rules?: InvalidRuleDetail[];
+  draft_valid?: boolean;
+}
+
+export interface StrategyListItem {
+  strategy_id: string;
+  version: number;
+  raw_text: string;
+  parsed: ParsedStrategyLayers;
+  strategy_hash: string;
+  proficiency: number;
+  is_active: boolean;
+  personality_match: number;
+  created_at: string | null;
 }
 
 export interface StrategyShadowInfo {

@@ -3,6 +3,7 @@
 import { clsx } from "clsx";
 import type { StrategySurfaceTheme } from "@/lib/ui/strategySurfaceTheme";
 import type { PolicyConflictDetail } from "@/types/strategy";
+import { PolicyConflictList } from "@/components/strategy/PolicyConflictList";
 
 interface Props {
   policyVersion?: number | null;
@@ -110,13 +111,7 @@ export function PolicyCompatibilityPreview({
       ) : null}
 
       {conflicts.length > 0 ? (
-        <ul className="mt-2 space-y-1 text-[11px]">
-          {conflicts.map((c) => (
-            <li key={`${c.field}-${c.code}`}>
-              <span className="font-mono">{c.field}</span>: {c.message}
-            </li>
-          ))}
-        </ul>
+        <PolicyConflictList conflicts={conflicts} compact className="mt-2" />
       ) : null}
     </section>
   );

@@ -17,10 +17,12 @@ from app.engine.strategy_ghost import ghost_weight_for_trades
 from app.integrations.deepseek import parse_strategy_text
 from app.schemas.errors import ApiError, ApiErrorCode
 from app.schemas.strategy import (
+    RAW_TEXT_MIN,
     InvalidRuleDetail,
     ParsedStrategyLayers,
     PolicyConflictDetail,
     StrategyFeedRequest,
+    StrategyUpdateRequest,
     StrategyValidateData,
     StrategyValidatePreviewSignal,
 )
@@ -33,6 +35,7 @@ from app.services.policy_compatibility import (
     resolve_target_pairs,
 )
 from app.services.agent_wallet import resolve_training_budget
+from app.services.strategy_parse_normalize import build_heuristic_draft, normalize_llm_parsed
 from app.services.strategy_rate_limit import check_llm_rate_limit
 
 DEFAULT_MARKET_SNAPSHOT: dict[str, Any] = {
@@ -95,32 +98,125 @@ def summarize_parsed(parsed: ParsedStrategyLayers) -> str:
     return "; ".join(parts)
 
 
+PHILOSOPHY_LABELS: dict[str, str] = {
+    "trend_following": "Trend",
+    "contrarian": "Reversal",
+    "intuition_driven": "Intuition",
+    "grid": "Range",
+    "custom": "Custom",
+}
+
+
+def build_human_summary(parsed: ParsedStrategyLayers) -> str:
+    label = PHILOSOPHY_LABELS.get(parsed.philosophy, parsed.philosophy)
+    buy_bits: list[str] = []
+    sell_bits: list[str] = []
+    for rule in parsed.signal_rules:
+        bit = f"{rule.indicator} {rule.condition}"
+        if rule.threshold is not None:
+            bit = f"{rule.indicator} {rule.condition.replace(str(int(rule.threshold)), str(rule.threshold))}"
+        if rule.action == "BUY":
+            buy_bits.append(bit)
+        else:
+            sell_bits.append(bit)
+    buy_text = ", ".join(buy_bits[:2]) if buy_bits else "no buy rules yet"
+    sell_text = ", ".join(sell_bits[:2]) if sell_bits else "no sell rules yet"
+    return (
+        f"{label} playbook: lean buy when {buy_text}; lean sell when {sell_text}."
+    )
+
+
+def build_auto_title(parsed: ParsedStrategyLayers) -> str:
+    label = PHILOSOPHY_LABELS.get(parsed.philosophy, parsed.philosophy)
+    first_rule = parsed.signal_rules[0]
+    return f"{label} · {first_rule.indicator}"
+
+
+async def parse_strategy_only(
+    body: StrategyFeedRequest,
+    user_id: str,
+) -> dict[str, Any]:
+    if not body.raw_text or len(body.raw_text.strip()) < RAW_TEXT_MIN:
+        raise ApiError(
+            ApiErrorCode.STRATEGY_TEXT_TOO_SHORT,
+            f"Strategy text must be at least {RAW_TEXT_MIN} characters",
+        )
+    parse_body = StrategyFeedRequest(
+        raw_text=body.raw_text,
+        parse_with_llm=True,
+        activate=False,
+    )
+    parsed, user_raw, normalize_warnings = await resolve_parsed_layers(parse_body, user_id)
+    compiled_count, invalid_rules = parsed.validate_compilable_rules()
+    invalid_details = [
+        InvalidRuleDetail(
+            index=item["index"],
+            reason=item["reason"],
+            indicator=item.get("indicator"),
+        )
+        for item in invalid_rules
+    ]
+    warnings = [*normalize_warnings, *collect_warnings(parsed)]
+    if invalid_rules:
+        warnings.append(
+            "Some rules need tuning before save — edit the signal rules below."
+        )
+    return {
+        "parsed": parsed_to_dict(parsed),
+        "raw_text": user_raw,
+        "title": build_auto_title(parsed),
+        "human_summary": build_human_summary(parsed),
+        "warnings": warnings,
+        "invalid_rules": [item.model_dump() for item in invalid_details],
+        "draft_valid": compiled_count > 0,
+    }
+
+
 async def resolve_parsed_layers(
     body: StrategyFeedRequest,
     user_id: str,
-) -> tuple[ParsedStrategyLayers, str | None]:
+) -> tuple[ParsedStrategyLayers, str | None, list[str]]:
     if body.parsed is not None:
-        return body.parsed, body.raw_text
+        return body.parsed, body.raw_text, []
 
     if not body.raw_text:
         raise ApiError(ApiErrorCode.STRATEGY_BODY_EMPTY, "raw_text or parsed is required")
 
     if body.resolved_parse_with_llm():
         check_llm_rate_limit(user_id)
+        normalize_warnings: list[str] = []
         try:
             if settings.deepseek_api_key:
                 raw_parsed = await parse_strategy_text(body.raw_text)
             else:
                 raw_parsed = _MOCK_PARSED
-            layers = ParsedStrategyLayers.model_validate(raw_parsed)
+            normalized, normalize_warnings = normalize_llm_parsed(raw_parsed, body.raw_text or "")
+            try:
+                layers = ParsedStrategyLayers.model_validate(normalized)
+            except Exception:
+                layers = ParsedStrategyLayers.model_validate(
+                    build_heuristic_draft(body.raw_text or "")
+                )
+                normalize_warnings = [
+                    *normalize_warnings,
+                    "LLM output could not be validated — a starter draft was applied.",
+                ]
         except ApiError:
             raise
         except Exception as exc:
-            raise ApiError(
-                ApiErrorCode.STRATEGY_PARSE_FAILED,
-                f"Could not parse strategy: {exc}",
-            ) from exc
-        return layers, body.raw_text
+            try:
+                layers = ParsedStrategyLayers.model_validate(
+                    build_heuristic_draft(body.raw_text or "")
+                )
+                normalize_warnings = [
+                    f"LLM parse failed ({exc}) — a starter draft was applied.",
+                ]
+            except Exception as fallback_exc:
+                raise ApiError(
+                    ApiErrorCode.STRATEGY_PARSE_FAILED,
+                    f"Could not parse strategy: {exc}",
+                ) from fallback_exc
+        return layers, body.raw_text, normalize_warnings
 
     raise ApiError(
         ApiErrorCode.STRATEGY_BODY_EMPTY,
@@ -312,51 +408,73 @@ def _raise_policy_conflicts(conflicts: list[PolicyConflictDetail]) -> None:
     )
 
 
-async def feed_strategy(
-    panda: Panda,
-    body: StrategyFeedRequest,
-    db: AsyncSession,
-    user_id: str,
-) -> dict[str, Any]:
-    if panda.is_trading:
-        raise ApiError(
-            ApiErrorCode.PANDA_IS_TRADING,
-            "Panda is training on the Training Ledger; stop the session before changing strategy",
-        )
-
-    body.validate_for_feed()
-    parsed, user_raw = await resolve_parsed_layers(body, user_id)
-    body.validate_for_feed()
-
-    policy_mirror = await load_active_trading_policy(db, panda.id)
-    fallback_pairs = await load_panda_fallback_pairs(db, panda.id)
-    target_pairs = resolve_target_pairs(parsed, fallback_pairs=fallback_pairs)
-    policy_result = check_policy_compatibility(
-        parsed,
-        policy_mirror,
-        target_pairs=target_pairs,
+async def _strategy_version_for_row(panda_id: str, strategy: Strategy, db: AsyncSession) -> int:
+    version_result = await db.execute(
+        select(func.count())
+        .select_from(Strategy)
+        .where(Strategy.panda_id == panda_id, Strategy.created_at <= strategy.created_at)
     )
-    if policy_mirror is not None and not policy_result.compatible:
-        _raise_policy_conflicts(policy_result.conflicts)
+    return int(version_result.scalar() or 1)
 
-    strategy_hash = strategy_hash_from_parsed(parsed)
-    raw_text = (user_raw or "").strip() or summarize_parsed(parsed)
-    version = await next_strategy_version(panda.id, db)
 
+async def _strategy_list_item(
+    strategy: Strategy,
+    panda: Panda | None,
+    db: AsyncSession,
+) -> dict[str, Any]:
+    parsed = ParsedStrategyLayers.model_validate(strategy.parsed_json)
+    match = calc_personality_match(panda, parsed) if panda else 50
+    return {
+        "strategy_id": strategy.id,
+        "version": await _strategy_version_for_row(strategy.panda_id, strategy, db),
+        "raw_text": strategy.raw_text,
+        "parsed": strategy.parsed_json,
+        "strategy_hash": strategy.strategy_hash,
+        "proficiency": int(strategy.proficiency),
+        "is_active": bool(strategy.is_active),
+        "personality_match": match,
+        "created_at": strategy.created_at.isoformat() if strategy.created_at else None,
+    }
+
+
+async def list_strategy_records(panda_id: str, db: AsyncSession) -> list[dict[str, Any]]:
+    panda_result = await db.execute(select(Panda).where(Panda.id == panda_id))
+    panda = panda_result.scalar_one_or_none()
+    result = await db.execute(
+        select(Strategy)
+        .where(Strategy.panda_id == panda_id)
+        .order_by(Strategy.is_active.desc(), Strategy.created_at.desc())
+    )
+    rows = result.scalars().all()
+    return [await _strategy_list_item(row, panda, db) for row in rows]
+
+
+async def _load_owned_strategy(
+    panda_id: str,
+    strategy_id: str,
+    db: AsyncSession,
+) -> Strategy:
+    result = await db.execute(
+        select(Strategy).where(Strategy.panda_id == panda_id, Strategy.id == strategy_id)
+    )
+    strategy = result.scalar_one_or_none()
+    if strategy is None:
+        raise ApiError(ApiErrorCode.STRATEGY_NOT_FOUND, "Strategy not found")
+    return strategy
+
+
+async def _apply_activation(
+    panda: Panda,
+    strategy_id: str,
+    db: AsyncSession,
+) -> dict[str, Any] | None:
     old_result = await db.execute(
         select(Strategy).where(Strategy.panda_id == panda.id, Strategy.is_active == True)
     )
     old_strategy = old_result.scalar_one_or_none()
 
-    await db.execute(
-        update(Strategy)
-        .where(Strategy.panda_id == panda.id, Strategy.is_active == True)
-        .values(is_active=False)
-    )
-
-    proficiency = 0
     previous_shadow = None
-    if old_strategy is not None:
+    if old_strategy is not None and old_strategy.id != strategy_id:
         ghost = StrategyHistory(
             panda_id=panda.id,
             strategy_hash=old_strategy.strategy_hash,
@@ -370,6 +488,49 @@ async def feed_strategy(
             "expected_decay_trades": 50,
         }
 
+    await db.execute(
+        update(Strategy)
+        .where(Strategy.panda_id == panda.id, Strategy.is_active == True)
+        .values(is_active=False)
+    )
+    await db.execute(
+        update(Strategy)
+        .where(Strategy.id == strategy_id, Strategy.panda_id == panda.id)
+        .values(is_active=True)
+    )
+    return previous_shadow
+
+
+async def feed_strategy(
+    panda: Panda,
+    body: StrategyFeedRequest,
+    db: AsyncSession,
+    user_id: str,
+) -> dict[str, Any]:
+    if panda.is_trading:
+        raise ApiError(
+            ApiErrorCode.PANDA_IS_TRADING,
+            "Panda is training on the Training Ledger; stop the session before changing strategy",
+        )
+
+    body.validate_for_feed()
+    parsed, user_raw, _ = await resolve_parsed_layers(body, user_id)
+    body.validate_for_feed()
+
+    policy_mirror = await load_active_trading_policy(db, panda.id)
+    fallback_pairs = await load_panda_fallback_pairs(db, panda.id)
+    target_pairs = resolve_target_pairs(parsed, fallback_pairs=fallback_pairs)
+    policy_result = check_policy_compatibility(
+        parsed,
+        policy_mirror,
+        target_pairs=target_pairs,
+    )
+    if body.activate and policy_mirror is not None and not policy_result.compatible:
+        _raise_policy_conflicts(policy_result.conflicts)
+
+    strategy_hash = strategy_hash_from_parsed(parsed)
+    raw_text = (user_raw or "").strip() or build_auto_title(parsed)
+    version = await next_strategy_version(panda.id, db)
     personality_match = calc_personality_match(panda, parsed)
     parsed_dict = parsed_to_dict(parsed)
 
@@ -379,10 +540,16 @@ async def feed_strategy(
         parsed_json=parsed_dict,
         strategy_hash=strategy_hash,
         philosophy=parsed.philosophy,
-        proficiency=proficiency,
-        is_active=True,
+        proficiency=0,
+        is_active=False,
     )
     db.add(strategy)
+    await db.flush()
+
+    previous_shadow = None
+    if body.activate:
+        previous_shadow = await _apply_activation(panda, strategy.id, db)
+
     await db.commit()
     await db.refresh(strategy)
 
@@ -392,8 +559,111 @@ async def feed_strategy(
         "raw_text": raw_text,
         "parsed": parsed_dict,
         "strategy_hash": strategy_hash,
-        "proficiency": proficiency,
+        "proficiency": 0,
         "personality_match": personality_match,
+        "is_active": strategy.is_active,
+        "previous_strategy_shadow": previous_shadow,
+        "panda_reaction": panda_reaction_for_match(personality_match, parsed.philosophy),
+        "policy_version": policy_result.policy_version,
+        "policy_compatible": policy_result.compatible if policy_mirror else None,
+        "target_pairs": policy_result.target_pairs,
+    }
+
+
+async def update_strategy_record(
+    panda: Panda,
+    strategy_id: str,
+    body: StrategyUpdateRequest,
+    db: AsyncSession,
+) -> dict[str, Any]:
+    if panda.is_trading:
+        raise ApiError(
+            ApiErrorCode.PANDA_IS_TRADING,
+            "Panda is training on the Training Ledger; stop the session before changing strategy",
+        )
+
+    strategy = await _load_owned_strategy(panda.id, strategy_id, db)
+    parsed = (
+        body.parsed
+        if body.parsed is not None
+        else ParsedStrategyLayers.model_validate(strategy.parsed_json)
+    )
+    if body.parsed is not None:
+        compiled_count, invalid_rules = parsed.validate_compilable_rules()
+        if compiled_count == 0:
+            raise ApiError(
+                ApiErrorCode.STRATEGY_NO_VALID_RULES,
+                "No compilable signal rules",
+                invalid_rules=invalid_rules or None,
+            )
+        if invalid_rules:
+            raise ApiError(
+                ApiErrorCode.STRATEGY_RULE_INVALID,
+                "Some signal rules cannot be compiled",
+                invalid_rules=invalid_rules,
+            )
+
+    policy_mirror = await load_active_trading_policy(db, panda.id)
+    fallback_pairs = await load_panda_fallback_pairs(db, panda.id)
+    policy_result = check_policy_compatibility(
+        parsed,
+        policy_mirror,
+        target_pairs=resolve_target_pairs(parsed, fallback_pairs=fallback_pairs),
+    )
+    if strategy.is_active and policy_mirror is not None and not policy_result.compatible:
+        _raise_policy_conflicts(policy_result.conflicts)
+
+    if body.raw_text:
+        strategy.raw_text = body.raw_text.strip()
+    strategy.parsed_json = parsed_to_dict(parsed)
+    strategy.strategy_hash = strategy_hash_from_parsed(parsed)
+    strategy.philosophy = parsed.philosophy
+    await db.commit()
+    await db.refresh(strategy)
+
+    panda_result = await db.execute(select(Panda).where(Panda.id == panda.id))
+    panda_row = panda_result.scalar_one_or_none()
+    return await _strategy_list_item(strategy, panda_row, db)
+
+
+async def activate_strategy_record(
+    panda: Panda,
+    strategy_id: str,
+    db: AsyncSession,
+) -> dict[str, Any]:
+    if panda.is_trading:
+        raise ApiError(
+            ApiErrorCode.PANDA_IS_TRADING,
+            "Panda is training on the Training Ledger; stop the session before changing strategy",
+        )
+
+    strategy = await _load_owned_strategy(panda.id, strategy_id, db)
+    parsed = ParsedStrategyLayers.model_validate(strategy.parsed_json)
+    policy_mirror = await load_active_trading_policy(db, panda.id)
+    fallback_pairs = await load_panda_fallback_pairs(db, panda.id)
+    policy_result = check_policy_compatibility(
+        parsed,
+        policy_mirror,
+        target_pairs=resolve_target_pairs(parsed, fallback_pairs=fallback_pairs),
+    )
+    if policy_mirror is not None and not policy_result.compatible:
+        _raise_policy_conflicts(policy_result.conflicts)
+
+    previous_shadow = await _apply_activation(panda, strategy.id, db)
+    await db.commit()
+    await db.refresh(strategy)
+
+    personality_match = calc_personality_match(panda, parsed)
+    version = await _strategy_version_for_row(panda.id, strategy, db)
+    return {
+        "strategy_id": strategy.id,
+        "version": version,
+        "raw_text": strategy.raw_text,
+        "parsed": strategy.parsed_json,
+        "strategy_hash": strategy.strategy_hash,
+        "proficiency": int(strategy.proficiency),
+        "personality_match": personality_match,
+        "is_active": True,
         "previous_strategy_shadow": previous_shadow,
         "panda_reaction": panda_reaction_for_match(personality_match, parsed.philosophy),
         "policy_version": policy_result.policy_version,

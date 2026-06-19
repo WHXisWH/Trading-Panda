@@ -268,7 +268,8 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
         onOpenChange={setStrategyDrawerOpen}
         jwt={jwt}
         pandaId={pandaId}
-        panda={panda}
+        activePool={pool}
+        authorizedPools={authorizedPools}
         onSaved={() => {
           setStrategyDrawerOpen(false);
           void refetchPanda();

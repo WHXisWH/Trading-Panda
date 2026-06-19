@@ -12,11 +12,15 @@ from app.db.database import get_db
 from app.db.models import User
 from app.schemas.common import error, success
 from app.schemas.errors import ApiError, ApiErrorCode
-from app.schemas.strategy import StrategyFeedRequest, StrategyValidateData
+from app.schemas.strategy import StrategyFeedRequest, StrategyUpdateRequest, StrategyValidateData
 from app.services.strategy_feed import (
+    activate_strategy_record,
     feed_strategy,
     get_active_strategy_record,
+    list_strategy_records,
     load_owned_panda,
+    parse_strategy_only,
+    update_strategy_record,
     validate_strategy_for_panda,
 )
 
@@ -46,6 +50,37 @@ def _validation_error_response(exc: ValidationError) -> JSONResponse:
     )
 
 
+@router.get("/{panda_id}/strategies")
+async def get_strategies(
+    panda_id: str,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    try:
+        await load_owned_panda(panda_id, user, db)
+        data = await list_strategy_records(panda_id, db)
+        return JSONResponse(content=success(data))
+    except ApiError as exc:
+        return _api_error_response(exc)
+
+
+@router.post("/{panda_id}/strategy/parse")
+async def post_strategy_parse(
+    panda_id: str,
+    body: StrategyFeedRequest,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    try:
+        await load_owned_panda(panda_id, user, db)
+        data = await parse_strategy_only(body, user.id)
+        return JSONResponse(content=success(data))
+    except ApiError as exc:
+        return _api_error_response(exc)
+    except ValidationError as exc:
+        return _validation_error_response(exc)
+
+
 @router.post("/{panda_id}/strategy")
 async def post_strategy(
     panda_id: str,
@@ -61,6 +96,39 @@ async def post_strategy(
         return _api_error_response(exc)
     except ValidationError as exc:
         return _validation_error_response(exc)
+
+
+@router.patch("/{panda_id}/strategy/{strategy_id}")
+async def patch_strategy(
+    panda_id: str,
+    strategy_id: str,
+    body: StrategyUpdateRequest,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    try:
+        panda = await load_owned_panda(panda_id, user, db)
+        data = await update_strategy_record(panda, strategy_id, body, db)
+        return JSONResponse(content=success(data))
+    except ApiError as exc:
+        return _api_error_response(exc)
+    except ValidationError as exc:
+        return _validation_error_response(exc)
+
+
+@router.post("/{panda_id}/strategy/{strategy_id}/activate")
+async def post_strategy_activate(
+    panda_id: str,
+    strategy_id: str,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    try:
+        panda = await load_owned_panda(panda_id, user, db)
+        data = await activate_strategy_record(panda, strategy_id, db)
+        return JSONResponse(content=success(data))
+    except ApiError as exc:
+        return _api_error_response(exc)
 
 
 @router.post("/{panda_id}/strategy/validate")

@@ -35,8 +35,9 @@ class SignalRule(BaseModel):
 
 class PositionSizingLayers(BaseModel):
     type: Literal["fixed", "kelly", "grid"] | None = None
-    value: float | None = Field(default=None, ge=0.01, le=0.25)
-    max_position_pct: float | None = Field(default=None, ge=0.01, le=1.0)
+    # ge=0.0001 (~0.01% of ledger) so wallet-tight per-trade caps (e.g. $50 on $8.5k) validate
+    value: float | None = Field(default=None, ge=0.0001, le=1.0)
+    max_position_pct: float | None = Field(default=None, ge=0.0001, le=1.0)
     scale_in: bool | None = None
 
 
@@ -68,6 +69,7 @@ class StrategyFeedRequest(BaseModel):
     raw_text: str | None = Field(default=None, max_length=RAW_TEXT_MAX)
     parsed: ParsedStrategyLayers | None = None
     parse_with_llm: bool | None = None
+    activate: bool = True
 
     @field_validator("raw_text")
     @classmethod
@@ -120,6 +122,25 @@ class StrategyFeedRequest(BaseModel):
             )
 
 
+class StrategyUpdateRequest(BaseModel):
+    raw_text: str | None = Field(default=None, max_length=RAW_TEXT_MAX)
+    parsed: ParsedStrategyLayers | None = None
+
+    @model_validator(mode="after")
+    def require_update_fields(self) -> StrategyUpdateRequest:
+        if not self.raw_text and self.parsed is None:
+            raise ValueError("raw_text or parsed is required")
+        return self
+
+    @field_validator("raw_text")
+    @classmethod
+    def strip_raw_text(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        stripped = value.strip()
+        return stripped or None
+
+
 class InvalidRuleDetail(BaseModel):
     index: int
     reason: str
@@ -139,6 +160,28 @@ class PolicyConflictDetail(BaseModel):
     code: str
     message: str
     value: Any | None = None
+
+
+class StrategyParseData(BaseModel):
+    parsed: dict[str, Any]
+    raw_text: str | None = None
+    title: str
+    human_summary: str
+    warnings: list[str] = Field(default_factory=list)
+    invalid_rules: list[InvalidRuleDetail] = Field(default_factory=list)
+    draft_valid: bool = True
+
+
+class StrategyListItem(BaseModel):
+    strategy_id: str
+    version: int
+    raw_text: str
+    parsed: dict[str, Any]
+    strategy_hash: str
+    proficiency: int
+    is_active: bool
+    personality_match: int
+    created_at: str | None = None
 
 
 class StrategyValidateData(BaseModel):

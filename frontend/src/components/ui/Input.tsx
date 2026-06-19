@@ -18,7 +18,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         "transition-[border-color,box-shadow,background-color] duration-fast ease-smooth",
         "disabled:cursor-not-allowed disabled:opacity-50",
         surface === "inset"
-          ? "strategy-feed-field"
+          ? "strategy-feed-field focus:outline-none"
           : "border border-product-line/80 bg-white/[0.045] hover:border-product-gold/35 focus:outline-none focus-visible:border-product-green/50 focus-visible:ring-2 focus-visible:ring-product-green/15",
         type === "number" &&
           "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",

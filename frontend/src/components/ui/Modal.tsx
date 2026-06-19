@@ -16,6 +16,8 @@ interface ModalProps {
   children?: ReactNode;
   footer?: ReactNode;
   variant?: ModalVariant;
+  /** Raise above product drawer (Feed Strategy playbook editor). */
+  stackAboveDrawer?: boolean;
   /** Danger styling for owner pause/revoke confirmations. */
   danger?: boolean;
   confirmLabel?: string;
@@ -42,6 +44,7 @@ export function Modal({
   loading = false,
   hideClose = false,
   size = "md",
+  stackAboveDrawer = false,
 }: ModalProps) {
   const isProduct = variant === "product";
   const isLarge = size === "lg";
@@ -49,14 +52,26 @@ export function Modal({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-[var(--z-overlay)] bg-black/55 backdrop-blur-[2px]" />
+        <Dialog.Overlay
+          className={clsx(
+            "fixed inset-0 bg-black/55 backdrop-blur-[2px]",
+            stackAboveDrawer ? "strategy-feed-confirm-overlay" : "z-[var(--z-overlay)]",
+          )}
+        />
         <Dialog.Content
           className={clsx(
-            "fixed left-1/2 top-1/2 z-[var(--z-modal)] -translate-x-1/2 -translate-y-1/2 rounded-xl p-6 shadow-lg animate-modal-in",
-            isLarge ? "w-[min(560px,92vw)]" : "w-[min(440px,95vw)]",
-            isProduct
+            "fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-xl p-6 shadow-lg animate-modal-in focus:outline-none",
+            stackAboveDrawer
+              ? "strategy-feed-confirm-dialog w-[min(560px,92vw)]"
+              : clsx(
+                  "z-[var(--z-modal)]",
+                  isLarge ? "w-[min(560px,92vw)]" : "w-[min(440px,95vw)]",
+                ),
+            isProduct && !stackAboveDrawer
               ? "border border-product-line bg-product-panel text-product-text"
-              : "bg-white text-neutral-900",
+              : isProduct
+                ? "text-product-text"
+                : "bg-white text-neutral-900",
             danger && isProduct && "border-product-red/40",
           )}
         >

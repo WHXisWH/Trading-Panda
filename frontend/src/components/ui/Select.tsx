@@ -49,7 +49,7 @@ export function Select({
         className={clsx(
           "inline-flex w-full items-center justify-between gap-2 rounded-[14px] text-product-text transition-[border-color,box-shadow,background-color] duration-fast ease-smooth",
           surface === "inset"
-            ? "strategy-feed-field"
+            ? "strategy-feed-field focus:outline-none"
             : "border border-product-line/80 bg-white/[0.045] hover:border-product-gold/35 focus:outline-none focus-visible:border-product-green/50 focus-visible:ring-2 focus-visible:ring-product-green/15",
           "data-[placeholder]:text-product-muted/70 disabled:cursor-not-allowed disabled:opacity-50",
           size === "sm" ? "h-9 px-2.5 text-sm" : "h-11 px-3.5 text-sm",

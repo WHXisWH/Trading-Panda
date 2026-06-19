@@ -144,20 +144,6 @@ def check_policy_compatibility(
                 )
             )
 
-    drawdown_cap = float(initial_capital) * float(parsed.risk_management.max_drawdown_pct)
-    if drawdown_cap > policy.max_daily_loss:
-        conflicts.append(
-            PolicyConflictDetail(
-                field="risk_management.max_drawdown_pct",
-                code="POLICY_DAILY_LOSS_EXCEEDED",
-                message=(
-                    f"Strategy drawdown budget {drawdown_cap:.2f} exceeds policy daily loss "
-                    f"limit {policy.max_daily_loss:.2f}."
-                ),
-                value=round(drawdown_cap, 2),
-            )
-        )
-
     if policy.paused:
         conflicts.append(
             PolicyConflictDetail(

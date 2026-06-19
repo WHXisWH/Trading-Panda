@@ -16,7 +16,7 @@ describe("routeJump MVP journey", () => {
   });
 
   it("builds strategy and training paths", () => {
-    expect(strategyPath("abc")).toBe("/strategy/abc");
+    expect(strategyPath("abc")).toBe("/training-ledger/abc?feed=strategy");
     expect(trainingLedgerPath("abc")).toBe("/training-ledger/abc");
     expect(trainingLedgerPath("abc", { feedStrategy: true })).toBe(
       "/training-ledger/abc?feed=strategy",

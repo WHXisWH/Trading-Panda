@@ -29,6 +29,28 @@ def test_parsed_strategy_layers_valid():
     assert layers.compiled_rule_count() == 2
 
 
+def test_position_sizing_accepts_wallet_tight_per_trade_pct():
+    """$50 on $8.5k ledger ≈ 0.59% — must not 422 on validate/save."""
+    tight_pct = round(50 / 8500, 6)
+    layers = ParsedStrategyLayers.model_validate(
+        {
+            **_sample_parsed(),
+            "position_sizing": {"type": "fixed", "value": tight_pct},
+        }
+    )
+    assert layers.position_sizing.value == tight_pct
+
+
+def test_position_sizing_rejects_below_min_pct():
+    with pytest.raises(ValidationError):
+        ParsedStrategyLayers.model_validate(
+            {
+                **_sample_parsed(),
+                "position_sizing": {"type": "fixed", "value": 0.00001},
+            }
+        )
+
+
 def test_strategy_feed_request_parsed_only():
     req = StrategyFeedRequest(parsed=ParsedStrategyLayers.model_validate(_sample_parsed()))
     assert req.resolved_parse_with_llm() is False

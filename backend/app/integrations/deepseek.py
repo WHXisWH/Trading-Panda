@@ -9,34 +9,12 @@ Agent Coordinator: called when final_score is in ambiguous zone 0.40–0.65.
 import json
 from openai import AsyncOpenAI
 from app.config import settings
+from app.integrations.deepseek_prompt import PARSE_STRATEGY_PROMPT
 
 _client = AsyncOpenAI(
     api_key=settings.deepseek_api_key,
     base_url=settings.deepseek_base_url,
 )
-
-PARSE_STRATEGY_PROMPT = """
-You are a trading strategy parser for an AI panda trading system.
-Convert the user's natural language strategy into a structured JSON with these 4 layers:
-
-{
-  "philosophy": "trend_following|contrarian|intuition_driven|grid|custom",
-  "position_sizing": {
-    "type": "fixed|kelly|grid",
-    "value": <number>
-  },
-  "signal_rules": [
-    {"indicator": "RSI", "condition": "<30", "action": "BUY"},
-    {"indicator": "MACD", "condition": "death_cross", "action": "SELL"}
-  ],
-  "risk_management": {
-    "stop_loss_pct": <number>,
-    "max_drawdown_pct": <number>
-  }
-}
-
-Return ONLY valid JSON, no explanation.
-"""
 
 
 async def parse_strategy_text(raw_text: str) -> dict:

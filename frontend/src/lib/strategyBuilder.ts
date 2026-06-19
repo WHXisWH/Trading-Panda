@@ -19,6 +19,14 @@ export const PHILOSOPHY_OPTIONS: { value: Philosophy; label: string }[] = [
   { value: "custom", label: "自定义" },
 ];
 
+export const PHILOSOPHY_OPTIONS_EN: { value: Philosophy; label: string }[] = [
+  { value: "trend_following", label: "Trend following" },
+  { value: "contrarian", label: "Mean reversion" },
+  { value: "intuition_driven", label: "Intuition driven" },
+  { value: "grid", label: "Grid / range" },
+  { value: "custom", label: "Custom" },
+];
+
 export interface StrategyTemplateDefinition {
   id: string;
   name: string;

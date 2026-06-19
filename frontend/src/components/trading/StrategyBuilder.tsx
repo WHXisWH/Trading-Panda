@@ -10,6 +10,7 @@ import { StrategyTemplates } from "@/components/trading/StrategyTemplates";
 import { StrategyTextInput } from "@/components/trading/StrategyTextInput";
 import {
   PHILOSOPHY_OPTIONS,
+  PHILOSOPHY_OPTIONS_EN,
   buildParsedStrategy,
   clientValidateRows,
   newRuleRow,
@@ -34,6 +35,9 @@ interface Props {
   invalidRuleIndexes: number[];
   showTemplates?: boolean;
   showActions?: boolean;
+  showRiskControls?: boolean;
+  showLlmInput?: boolean;
+  englishLabels?: boolean;
   onPhilosophyChange?: (p: Philosophy) => void;
   onDraftChange?: (parsed: ParsedStrategyLayers) => void;
   onValidate: (parsed: ParsedStrategyLayers) => void;
@@ -52,6 +56,9 @@ export function StrategyBuilder({
   invalidRuleIndexes,
   showTemplates = true,
   showActions = true,
+  showRiskControls = true,
+  showLlmInput = true,
+  englishLabels = false,
   onValidate,
   onSubmit,
   onParseText,
@@ -116,11 +123,14 @@ export function StrategyBuilder({
   }, [draftSignature, onDraftChange, parsed]);
 
   const isProduct = theme === "product";
+  const philosophyOptions = englishLabels ? PHILOSOPHY_OPTIONS_EN : PHILOSOPHY_OPTIONS;
 
   return (
     <div className={clsx("flex min-w-0 max-w-full flex-col gap-4", strategyPanelClass(theme, compact))}>
       <div className="flex items-center justify-between gap-2">
-        <h3 className={strategyHeadingClass(theme)}>Strategy builder</h3>
+        <h3 className={strategyHeadingClass(theme)}>
+          {englishLabels ? "Signal rules" : "Strategy builder"}
+        </h3>
         {matchScore != null && (
           <span className={clsx("text-[12px] font-medium", strategyAccentClass(theme))}>
             匹配度 {matchScore}/100
@@ -129,14 +139,14 @@ export function StrategyBuilder({
       </div>
 
       <label className={clsx("flex flex-col gap-1.5", strategyLabelClass(theme))}>
-        交易哲学
+        {englishLabels ? "Style" : "交易哲学"}
         <Select
           size="sm"
           surface={isProduct ? "inset" : "default"}
-          aria-label="交易哲学"
+          aria-label={englishLabels ? "Strategy style" : "交易哲学"}
           value={philosophy}
           onValueChange={(v) => setPhilosophy(v as Philosophy)}
-          options={PHILOSOPHY_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+          options={philosophyOptions.map((o) => ({ value: o.value, label: o.label }))}
         />
       </label>
 
@@ -184,6 +194,7 @@ export function StrategyBuilder({
         )}
       </div>
 
+      {showRiskControls ? (
       <div
         className={clsx(
           isProduct ? "strategy-feed-risk-panel" : "",
@@ -255,6 +266,7 @@ export function StrategyBuilder({
           />
         </label>
       </div>
+      ) : null}
 
       {(warnings.length > 0 || clientErrors.length > 0) && (
         <div className={strategyWarningBoxClass(theme)}>
@@ -267,6 +279,7 @@ export function StrategyBuilder({
         </div>
       )}
 
+      {showLlmInput ? (
       <StrategyTextInput
         theme={theme}
         value={llmText}
@@ -274,6 +287,7 @@ export function StrategyBuilder({
         onParse={() => onParseText(llmText)}
         loading={parseLoading}
       />
+      ) : null}
 
       {showActions ? (
         <>

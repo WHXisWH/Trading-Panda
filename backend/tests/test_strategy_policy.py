@@ -63,6 +63,26 @@ def test_notional_conflict_returns_field_error():
     assert any(c.code == "POLICY_NOTIONAL_EXCEEDED" for c in result.conflicts)
 
 
+def test_drawdown_does_not_block_against_daily_loss_cap():
+    parsed = _parsed(
+        target_pairs=["DEEP/SUI"],
+        position_sizing={"type": "fixed", "value": 0.04},
+        risk_management={
+            "stop_loss_pct": 0.05,
+            "take_profit_pct": 0.15,
+            "max_drawdown_pct": 0.50,
+        },
+    )
+    result = check_policy_compatibility(
+        parsed,
+        _policy(max_daily_loss=8.0, max_notional_per_trade=500.0),
+        target_pairs=["DEEP/SUI"],
+        initial_capital=10_000.0,
+    )
+    assert result.compatible is True
+    assert not any(c.code == "POLICY_DAILY_LOSS_EXCEEDED" for c in result.conflicts)
+
+
 def test_validate_body_marks_invalid_when_policy_conflicts():
     body = StrategyFeedRequest(parsed=_parsed(target_pairs=["WAL/USDC"]))
     data = validate_strategy_body(

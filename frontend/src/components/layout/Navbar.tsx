@@ -18,7 +18,6 @@ const NAV_LINKS = [
 const JOURNEY_LINKS = [
   { href: "/mint", label: "Mint" },
   { href: "/agent-wallet", label: "Wallet" },
-  { href: "/strategy", label: "Strategy", needsPanda: true },
   { href: "/training-ledger", label: "Training", needsPanda: true },
 ];
 
@@ -28,15 +27,14 @@ function needsPandaListRoute(pathname: string): boolean {
     pathname === "/mint" ||
     pathname === "/profile" ||
     pathname.startsWith("/dashboard") ||
-    pathname.startsWith("/training-ledger") ||
-    pathname.startsWith("/strategy")
+    pathname.startsWith("/training-ledger")
   );
 }
 
 function journeyHref(base: string, pandaId: string | undefined): string {
   if (!pandaId) return base;
   if (base === "/agent-wallet") return `${base}?panda=${pandaId}`;
-  if (base.startsWith("/strategy") || base.startsWith("/training-ledger")) {
+  if (base.startsWith("/training-ledger")) {
     return `${base}/${pandaId}`;
   }
   return base;
@@ -58,7 +56,7 @@ export function Navbar() {
     },
   });
 
-  const dashMatch = pathname.match(/^\/(?:dashboard|training-ledger|strategy)\/([^/]+)/);
+  const dashMatch = pathname.match(/^\/(?:dashboard|training-ledger)\/([^/]+)/);
   const currentPandaId = dashMatch?.[1] ?? pandas?.[0]?.id;
 
   const navClass = (href: string) =>
