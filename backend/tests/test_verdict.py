@@ -50,6 +50,16 @@ class TestDetermineAction:
         assert zone_high == "OBSERVE"
         assert zone_low == "EXECUTE"
 
+    def test_zero_direction_defaults_to_buy_on_execute(self, pipe: DecisionPipeline):
+        action, zone = pipe._determine_action(0.80, 0.65, 0)
+        assert action == "BUY"
+        assert zone == "EXECUTE"
+
+    def test_negative_observe_holds(self, pipe: DecisionPipeline):
+        action, zone = pipe._determine_action(-0.50, 0.65, -1)
+        assert action == "HOLD"
+        assert zone == "OBSERVE"
+
 
 class TestSellViaPipeline:
     def test_macd_death_cross_can_sell(self):
@@ -66,3 +76,17 @@ class TestSellViaPipeline:
         if abs(result.final_score) > result.entry_threshold:
             assert result.action == "SELL"
             assert result.zone == "EXECUTE"
+
+    def test_weak_signal_stays_hold_not_sell(self):
+        from tests.conftest import MACD_SELL_STRATEGY, RANGING_MARKET, make_personality, make_pipeline
+
+        result = make_pipeline(0).run(
+            {**RANGING_MARKET, "macd_signal": "death_cross"},
+            make_personality(boldness=10, patience=90, experience_level=5),
+            MACD_SELL_STRATEGY,
+            {},
+            "cautious",
+        )
+        if abs(result.final_score) < 0.40:
+            assert result.zone == "IGNORE"
+            assert result.action == "HOLD"

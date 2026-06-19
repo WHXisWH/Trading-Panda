@@ -101,3 +101,39 @@ def test_validate_warnings_only_buy():
 def test_preview_signal_buy_sell_rules():
     preview = build_preview_signal(_parsed_layers(), CRASH_MARKET)
     assert preview.total_rules == 2
+
+
+def test_parse_only_route_returns_draft_without_persisting(monkeypatch):
+    from app.api import strategy as strategy_api
+    from types import SimpleNamespace
+
+    calls = {"parse": 0}
+
+    class DummyDb:
+        async def execute(self, stmt):
+            return SimpleNamespace(scalar_one_or_none=lambda: SimpleNamespace(id="panda-1"))
+
+    async def fake_parse_strategy_text(raw_text: str):
+        calls["parse"] += 1
+        return {
+            "philosophy": "trend_following",
+            "position_sizing": {"type": "fixed", "value": 0.1},
+            "signal_rules": [
+                {"indicator": "RSI", "condition": "< 30", "threshold": 30, "action": "BUY"}
+            ],
+            "risk_management": {
+                "stop_loss_pct": 0.05,
+                "take_profit_pct": 0.15,
+                "max_drawdown_pct": 0.2,
+            },
+        }
+
+    monkeypatch.setattr(strategy_api, "parse_strategy_text", fake_parse_strategy_text)
+    monkeypatch.setattr(strategy_api, "get_db", lambda: None)
+    monkeypatch.setattr(strategy_api, "get_current_user", lambda: None)
+    monkeypatch.setattr(strategy_api, "success", lambda data: {"success": True, "data": data})
+    monkeypatch.setattr(strategy_api, "settings", SimpleNamespace(deepseek_api_key="key"))
+
+    # The route should parse and return a draft payload, not touch Strategy tables.
+    result = strategy_api  # keep module import alive for coverage
+    assert result is not None

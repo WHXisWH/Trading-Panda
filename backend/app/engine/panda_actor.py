@@ -10,7 +10,7 @@ from typing import Any
 from sqlalchemy import select, update
 
 from app.config import settings
-from app.db.database import AsyncSessionLocal, ensure_engine, ensure_engine
+from app.db.database import AsyncSessionLocal, ensure_engine
 from app.db.models import EmotionLog, Panda, PandaVault, TradingPolicy
 from app.services.policy_compatibility import PolicyMirror, policy_mirror_from_row
 from app.services.trade_fact_writer import TradeFactWriter
@@ -19,7 +19,8 @@ from app.engine.emotion_state_machine import EmotionContext, EmotionStateMachine
 from app.engine.event_publisher import EventPublisher
 from app.engine.experience_engine import ExperienceEngine
 from app.engine.market_event import MarketEvent
-from app.engine.panda_loader import load_actor_context
+from app.engine.panda_loader import load_actor_context, load_skill_memories
+from app.engine.social_signal import derive_social_signal
 from app.engine.strategy_ghost import GhostManager
 from app.integrations.deepseek import agent_coordinator
 
@@ -76,6 +77,7 @@ class PandaActor:
         self._tick_queue: asyncio.Queue[MarketEvent] = asyncio.Queue(maxsize=64)
         self._pending_delay: dict[str, Any] | None = None
         self._peak_equity = 10_000.0
+        self._tick_count = 0
 
     async def hydrate(self) -> bool:
         ensure_engine()
@@ -165,8 +167,18 @@ class PandaActor:
             self._pending_delay["remaining_delay"] -= 1
             if self._pending_delay["remaining_delay"] > 0:
                 return
-            event = self._pending_delay.get("event", event)
+            delayed_event = self._pending_delay["event"]
+            delayed_result = self._pending_delay["result"]
             self._pending_delay = None
+            await self._apply_decision(delayed_event, delayed_result)
+            return
+
+        self._tick_count += 1
+        if (
+            self._tick_count % settings.skill_reload_tick_interval == 0
+            and self._tick_count > 0
+        ):
+            await self._reload_skill_memories()
 
         market = event.to_market_dict()
         self.subscribe_asset(event.asset)
@@ -181,6 +193,7 @@ class PandaActor:
             ghost_weight=ghost_weight,
             ghost_strategy=ghost_strategy,
             positions=self.state.positions,
+            social_signal=derive_social_signal(event),
             skill_memories=self.state.skill_memories,
         )
 
@@ -217,33 +230,41 @@ class PandaActor:
             )
 
     async def _apply_decision(self, event: MarketEvent, result: DecisionResult) -> None:
-        if result.zone == "OBSERVE" and self.state.speed != "instant":
-            if settings.deepseek_api_key:
-                try:
-                    agent = await agent_coordinator(
-                        {
-                            "final_score": result.final_score,
-                            "emotion": self.state.emotion,
-                            "market_summary": f"{event.asset} rsi={event.rsi:.1f}",
-                            "philosophy": self.state.active_strategy.get("philosophy"),
-                        },
-                        timeout=float(settings.agent_timeout_seconds),
+        if (
+            result.zone == "OBSERVE"
+            and self.state.speed != "instant"
+            and abs(result.final_score) >= 0.40
+            and settings.deepseek_api_key
+        ):
+            try:
+                agent = await agent_coordinator(
+                    {
+                        "final_score": result.final_score,
+                        "emotion": self.state.emotion,
+                        "market_summary": f"{event.asset} rsi={event.rsi:.1f}",
+                        "philosophy": self.state.active_strategy.get("philosophy"),
+                    },
+                    timeout=float(settings.agent_timeout_seconds),
+                )
+                if agent.get("decision") in ("BUY", "SELL"):
+                    result = DecisionResult(
+                        final_score=result.final_score,
+                        action=agent["decision"],
+                        steps=result.steps,
+                        zone="EXECUTE",
+                        entry_delay=result.entry_delay,
+                        entry_threshold=result.entry_threshold,
+                        position_factor=result.position_factor,
+                        emotion_position_mod=result.emotion_position_mod,
+                        emotion_stoploss_mod=result.emotion_stoploss_mod,
+                        signal_direction=1 if agent["decision"] == "BUY" else -1,
                     )
-                    if agent.get("decision") in ("BUY", "SELL"):
-                        result = DecisionResult(
-                            final_score=result.final_score,
-                            action=agent["decision"],
-                            steps=result.steps,
-                            zone="EXECUTE",
-                            entry_delay=result.entry_delay,
-                            entry_threshold=result.entry_threshold,
-                            position_factor=result.position_factor,
-                            emotion_position_mod=result.emotion_position_mod,
-                            emotion_stoploss_mod=result.emotion_stoploss_mod,
-                            signal_direction=1 if agent["decision"] == "BUY" else -1,
-                        )
-                except Exception:
-                    pass
+            except Exception as exc:
+                logger.warning(
+                    "Agent coordinator failed for panda %s: %s",
+                    self.state.panda_id,
+                    exc,
+                )
 
         self.state.last_decision = {
             "action": result.action,
@@ -487,6 +508,18 @@ class PandaActor:
                 )
         except (ProgrammingError, OperationalError):
             pass
+
+    async def _reload_skill_memories(self) -> None:
+        ensure_engine()
+        if AsyncSessionLocal is None:
+            return
+        try:
+            async with AsyncSessionLocal() as session:
+                memories = await load_skill_memories(session, self.state.panda_id)
+            if memories:
+                self.state.skill_memories = memories
+        except Exception as exc:
+            logger.debug("Skill memory reload skipped for %s: %s", self.state.panda_id, exc)
 
     def snapshot(self) -> dict:
         return {

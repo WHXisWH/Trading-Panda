@@ -1,16 +1,15 @@
-"""Strategy parsing — natural language → 4-layer JSON, stored in DB."""
+"""Strategy parsing — natural language → 4-layer JSON."""
 import hashlib
 import json
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update
-
+from sqlalchemy import select
 from app.db.database import get_db
-from app.db.models import Panda, Strategy, StrategyHistory, User
+from app.db.models import Panda, User
 from app.api.deps import get_current_user
 from app.integrations.deepseek import parse_strategy_text
+from app.schemas.common import success
 
 router = APIRouter()
 
@@ -30,7 +29,7 @@ class ParseRequest(BaseModel):
 @router.post("/parse")
 async def parse_strategy(
     body: ParseRequest,
-    db: AsyncSession = Depends(get_db),
+    db=Depends(get_db),
     user: User = Depends(get_current_user),
 ):
     result = await db.execute(
@@ -52,46 +51,12 @@ async def parse_strategy(
     strategy_hash = hashlib.sha256(
         json.dumps(parsed, sort_keys=True).encode()
     ).hexdigest()
-
-    old_result = await db.execute(
-        select(Strategy).where(
-            Strategy.panda_id == panda.id,
-            Strategy.is_active == True,
-        )
+    return success(
+        {
+            "panda_id": panda.id,
+            "parsed_json": parsed,
+            "strategy_hash": strategy_hash,
+            "philosophy": parsed.get("philosophy", "trend_following"),
+            "llm_reasoning": "Parsed draft only; save happens through /api/panda/:id/strategy",
+        }
     )
-    old_strategy = old_result.scalar_one_or_none()
-
-    await db.execute(
-        update(Strategy)
-        .where(Strategy.panda_id == panda.id, Strategy.is_active == True)
-        .values(is_active=False)
-    )
-
-    strategy = Strategy(
-        panda_id=panda.id,
-        raw_text=body.raw_text,
-        parsed_json=parsed,
-        strategy_hash=strategy_hash,
-        philosophy=parsed.get("philosophy", "trend_following"),
-        is_active=True,
-    )
-    db.add(strategy)
-    await db.flush()
-
-    if old_strategy is not None:
-        ghost = StrategyHistory(
-            panda_id=panda.id,
-            strategy_hash=old_strategy.strategy_hash,
-            proficiency_at_switch=int(old_strategy.proficiency),
-        )
-        db.add(ghost)
-    await db.commit()
-    await db.refresh(strategy)
-
-    return {
-        "strategy_id": strategy.id,
-        "panda_id": panda.id,
-        "parsed": parsed,
-        "philosophy": strategy.philosophy,
-        "hash": strategy_hash,
-    }

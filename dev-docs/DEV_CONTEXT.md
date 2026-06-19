@@ -40,7 +40,7 @@ TradingPanda 是 Sui 链上的 **AI 交易宠物养成系统**，目标是 Sui O
 | PostgreSQL Schema | ✅ v3.1 Schema 已落地 | 100% | Supabase `dpezgzzvbpemlgxdogue` 已从 `002` 升级至 Alembic head `006_trust_merkle_columns`；`verify_db.py` 覆盖 31 张表 + 8 个关键索引 + `006` Merkle 新列 |
 | 铸造流程（Mint） | 🟢 Epic 1 完成 | 100% | `/mint` 按 `page-mint.md`：PandaCarouselStage + WalletSignatureModal + toast + MintDetails drawer → `/agent-wallet`；链上 mint 仅身份；DB 注册幂等 + tx digest 重试同步 |
 | 策略解析 | ✅ Epic 2 完成 | 100% | `POST/GET /panda/:id/strategy` + `validate`；积木 `StrategyBuilder`；LLM 5/min；`strategy_history` ghost 0.40 |
-| 8步决策引擎 | 🟡 MVP 实现 | 75% | `decision_pipeline` 八步公式 + `RuleEngine` + `PandaActor` + Redis `market:tick:*` 订阅；Agent/Merkle 链上提交待完善 |
+| 8步决策引擎 | 🟡 MVP 实现 | 92% | L0 测试 83% 覆盖（pipeline/rule 100%）；entry_delay/social/review poller 已接线；Epic 11 E2E 待验 |
 | 情绪状态机 | 🟡 MVP 实现 | 80% | 7 状态转移 + Step 8 情绪扭曲；已接入 Actor |
 | Merkle Root Worker | 🟢 Epic 9 完成 | 95% | Trade Fact leaf + 异步 `merkle_batch_ready` job + `trust_proof::submit_merkle_root`（dry-run 可测）；`GET /panda/:id/trust/merkle`；Training Ledger 状态条展示 |
 | 经验引擎（5子系统） | 🟢 读写闭环 | 90% | load + Step5 修正 + `record_trade` 写回；Walrus 归档经 `walrus_archive_requested` 异步 job（review/skill） |
@@ -164,6 +164,10 @@ Blockchain  → Sui Testnet（**本项目首次正式 publish**，钱包 `0xa459
 | `GOOGLE_CLIENT_ID` | 可选；校验 zkLogin `id_token` 的 `aud` |
 | `PORT` | Render 自动注入，uvicorn 监听此端口 |
 | `MAX_ACTORS` | 最大并发 PandaActor 数（默认 100） |
+| `ASYNC_JOB_WORKER_ENABLED` | 是否启动后台 `async_jobs` 轮询（默认 `true`） |
+| `ASYNC_JOB_POLL_INTERVAL_SEC` | 轮询间隔秒（默认 5） |
+| `ASYNC_JOB_BATCH_SIZE` | 每轮最多处理 job 数（默认 10） |
+| `SKILL_RELOAD_TICK_INTERVAL` | PandaActor 每隔 N tick 刷新 Skill Memory（默认 50） |
 
 ### market-monitor/.env（不提交，参考 market-monitor/.env.example）
 
@@ -514,6 +518,7 @@ Package ID：**0x595087bb3e5f6c5011585797e4eb4db513b55d39ce84f984bb357e9375c1146
 | 2026-06-18 | **Landing Training Loop 方案甲落地** | 节点移至扇区中心 `(i+0.5)/7` 顺时针等分；弧线路径改为顺时针 sweep，充能方向与 Step1→7 一致；节点中心留双段弧隙不穿图标；去掉节点/说明卡 ring 描边改 shadow；累积满环后重置逻辑保留。 | `pnpm type-check` 通过；步骤空间顺序与动画方向对齐。 |
 | 2026-06-18 | **Landing Training Loop 连续闭环 A′** | 双段断裂弧改为单层连续圆环：暗色底轨 + dashoffset 进度轨（12 点顺时针累积）；节点压盖在环上（z-index 更高、实心底）不再在 SVG 挖隙；满环停留后归零重开。 | `pnpm type-check` 通过；环线视觉连续闭合。 |
 | 2026-06-18 | **Landing Training Loop 进度起点对齐 Step1 节点** | 进度环 `rotate` 从固定 −90°（12 点）改为 Step1 扇区中心角 `RING_START_ANGLE`，充能从节点一位置顺时针增长。 | 循环起始不再从弧段中间出发。 |
+| 2026-06-19 | **Strategy Page 按 `docs/design/page-strategy.md` 重构**：`/strategy/[id]` 改为左侧模板栏 + 右侧 RuleBlockEditor/Policy preview/Version+ghost 结构；模板页只保留 `trend-scout` / `mean-reversion` / `macd` 三个 beginner templates；新增 `frontend/src/lib/strategyPage.ts` 门控 helper 与 `src/lib/strategyPage.test.ts`；`StrategyBuilder` 支持外层页面接管草稿、隐藏内置模板/动作；`StrategyTemplateRack` 支持模板过滤。 | `pnpm test -- --run src/lib/strategyPage.test.ts src/lib/ui/routeJump.test.ts src/lib/profile/profileCta.test.ts` 通过；`pnpm type-check` 通过；J3 页面的默认信息层级与设计稿一致，Start Training 仅在激活/保存后开放。 |
 | 2026-06-18 | **Landing How It Works 凹陷槽 UI** | `HowItWorksInteractive`：去掉左侧竖向连接线；步骤合并为 Steps Tray，选中槽 `#070b08` + inset shadow 凹陷；Preview 内凹舞台；全面去除 white/* 描边与分隔线，mock 子组件改 inset 暗底卡。 | `pnpm type-check` 通过；与黑金视觉系统对齐。 |
 | 2026-06-18 | **Landing How It Works 连接线与凹陷加强** | 恢复左侧内凹通道 + 绿金渐变流动连接线动画；选中槽加深至 `#030504`、更强 inset shadow 与淡绿渐变顶；节点按钮同步凹陷样式，无白边。 | 选中态与步骤流动感更明显。 |
 | 2026-06-18 | **Landing How It Works 右侧透明预览框** | 右侧 Preview 改为半透明玻璃态（`bg-black/20` + `backdrop-blur` + 弱金边），与左侧实心 Steps Tray 区分；内容区 `bg-black/10` 去重 inset 凹陷。 | 左右栏视觉层级分离。 |
@@ -546,3 +551,8 @@ Package ID：**0x595087bb3e5f6c5011585797e4eb4db513b55d39ce84f984bb357e9375c1146
 | 2026-06-19 | **K 线 toolbar 质感 + 池指标匹配修复** | `chart-metric-rail` 无边框 inset 玻璃、flex 换行；池指标 ? icon + hover tooltip；数值分色（gold/blue/green/amber）；`MarketFeedStatus` 独立；`findMonitorPairRow` 修复 DEEP-SUI→DEEP-USDC。 | Feed 与池指标分离；`poolStats.test.ts` + `tsc` 通过。 |
 | 2026-06-19 | **Training Ledger 移除 Live phase 卡片** | 删除 `TrainingPhaseHero`（Standby / Pair / Market / Actor / Merkle / WS 状态条）及页面 merkle 轮询。 | 训练页顶部更简洁；控制栏仍保留 phase / pre-flight。 |
 | 2026-06-19 | **Training Ledger 标题行 Paper 指标 + Start toast** | 移除右栏 `PolicyGateBanner` 与 Paper ledger 块；`PaperLedgerHeaderMetrics` 与标题同行；Start 失败仅 toast（无策略时 toast + 开 Feed drawer）；去掉 preflight 弹层与进页自动开 strategy drawer。 | 持仓/盈亏抬头可见、少冗余提示；`tsc` 通过。 |
+| 2026-06-19 | **Codex + HyperFrames 录制方案整理（仅讨论记录）** | 梳理了用 Codex 产出 `SCRIPT.md` / `STORYBOARD.md` / compositions，再用 HyperFrames `preview` / `validate` / `render` 导出 demo 视频的流程；未改代码、部署事实、环境变量、数据库结构或 API 路径。 | 仅用于后续 demo 视频制作的工作流对齐。 |
+| 2026-06-19 | **README.md 重写（v3.1 Autonomous Agent Wallet）** | 对齐 PRD v3.1、首页 landing 与 `DEV_CONTEXT`：双轨模型、四服务本地拓扑、15 Move 模块、Testnet v4 合约 ID、用户旅程（Mint→Agent Wallet→Training Ledger→Chain Proof）；文档地图更新；**不含 live URL**（尚未部署）。 | 仓库入口文档与当前产品/架构一致；本地跑通见 `docs/local-manual-test-guide.md`。 |
+| 2026-06-19 | **决策引擎闭环 Sprint 1–3（backend）** | `entry_delay` 执行缓存决策；`derive_social_signal` 接 Step7；全平 SELL 写 `closed_at`/outcome → `position_closed` review job；`job_runner` 后台轮询 `async_jobs`；LLM Coordinator 保持启用（`|score|≥0.40` OBSERVE 区，失败打 log）；`backend/.env` 本地同步 DeepSeek（不提交）。新增 4 模块 + pytest 9 项。 | 平仓后应自动入队复盘（需四服务+DB）；Chain Proof 仍手动；Epic 11 E2E 待手测。 |
+| 2026-06-19 | **决策引擎 L0 测试补全（Step 4/6/边界 + 80% 覆盖）** | 扩展 `test_step4_fusion`/`test_step6_environment`/`test_verdict`/`test_rule_engine`/`test_strategy_ghost`；新增 `test_decision_pipeline_l0.py`、`test_experience_engine_units.py`。`decision_pipeline`/`rule_engine` 100%；决策核心五模块合计 **83%**（`pytest … --cov-fail-under=80` 152 passed）。 | PRD 决策引擎 ≥80% 覆盖率达标；async DB 写回路径仍靠集成测。 |
+| 2026-06-19 | **Training Ledger 加载态骨架屏** | 新增 `TrainingLedgerPageSkeleton`；`/training-ledger/[id]` 在 JWT 未就绪或 Panda 详情加载中显示 skeleton（对齐 Agent Wallet 页），避免空白页与 $0 占位指标。 | 进入训练页可见 loading 反馈；`tsc` 通过。 |

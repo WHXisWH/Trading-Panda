@@ -93,6 +93,22 @@ class TestGhostBlend:
         expected = pre_blend * 0.6 + old_signal * 0.4
         assert result == pytest.approx(expected)
 
+    def test_ghost_weight_capped_at_half(self, pipe: DecisionPipeline):
+        personality = make_personality(experience_level=30)
+        market = {"rsi": 25, "asset": "BTC"}
+        ghost = {"signal_rules": [{"indicator": "RSI", "condition": "<30", "action": "BUY"}]}
+        at_cap = pipe._step4_fusion(0.5, 0.5, personality, 0.9, ghost, market)
+        at_half = pipe._step4_fusion(0.5, 0.5, personality, 0.5, ghost, market)
+        assert at_cap == pytest.approx(at_half)
+
+    def test_zero_ghost_weight_ignores_old_strategy(self, pipe: DecisionPipeline):
+        personality = make_personality(experience_level=30)
+        market = {"rsi": 80, "asset": "BTC"}
+        ghost = {"signal_rules": [{"indicator": "RSI", "condition": ">70", "action": "SELL"}]}
+        base = pipe._step4_fusion(0.7, 0.2, personality, 0.0, None, market)
+        ignored = pipe._step4_fusion(0.7, 0.2, personality, 0.0, ghost, market)
+        assert ignored == pytest.approx(base)
+
 
 class TestStrategyExperienceTension:
     def test_negative_experience_lowers_fusion_score(self, pipe: DecisionPipeline):

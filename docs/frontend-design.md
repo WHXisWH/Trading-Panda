@@ -1619,16 +1619,17 @@ interface StrategyBuilderProps {
 interface StrategyTextInputProps {
   value: string;
   onChange: (value: string) => void;
-  onParse: () => void;                 // raw_text + parse_with_llm → 结果写入 Builder
+  onParse: () => void;                 // raw_text + parse_with_llm → 解析草稿
   loading: boolean;
   collapsed?: boolean;                 // 默认折叠
 }
 ```
 
 特性：
-- 可选折叠；解析成功后 **灌入 StrategyBuilder** 可编辑，再 `parsed` 提交
+- 可选折叠；解析成功后 **灌入 StrategyBuilder** 可编辑，再手动保存
 - 解析走 LLM，受 5 次/分钟限流
 - 保留 3 个示例策略卡片（一键填入文本框）
+- 解析结果不自动写库；保存仍走同一条策略提交链路
 
 #### 提交数据流
 

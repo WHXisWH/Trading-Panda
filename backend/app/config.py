@@ -56,6 +56,10 @@ class Settings(BaseSettings):
     merkle_batch_size: int = 50
     merkle_submit_enabled: bool = True
     skill_digest_enabled: bool = True
+    async_job_poll_interval_sec: int = 5
+    async_job_batch_size: int = 10
+    async_job_worker_enabled: bool = True
+    skill_reload_tick_interval: int = 50
     debug: bool = False
     cors_origins: List[str] = ["http://localhost:3000"]
 

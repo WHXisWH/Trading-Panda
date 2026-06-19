@@ -24,6 +24,7 @@ The user is feeding a training scroll to the Panda:
 - Rule blocks make strategy visible.
 - Validation checks whether the strategy fits the current policy.
 - Strategy versions preserve learning history.
+- The Agent Wallet already owns the risk collar, so strategy does not repeat max order size or daily loss cap.
 
 ---
 
@@ -34,9 +35,9 @@ The user is feeding a training scroll to the Panda:
 │ Header: Feed Strategy · Strategy cannot grant more risk      │
 ├───────────────────────┬──────────────────────────────────────┤
 │ StrategyTemplateRack  │ RuleBlockEditor                      │
-│ - trend scout         │ - signal rules                       │
-│ - mean reversion      │ - risk preferences                   │
-│ - cautious learner    │ - optional natural language note     │
+│ - MA20 trend          │ - signal rules                       │
+│ - RSI mean reversion  │ - advanced draft                     │
+│ - MACD momentum       │ - validation preview                 │
 ├───────────────────────┴──────────────────────────────────────┤
 │ PolicyCompatibilityPreview · StrategyVersionBar · Save CTA   │
 └──────────────────────────────────────────────────────────────┘
@@ -69,9 +70,9 @@ Keep the interface more like a rule studio than a trading screen.
 | Component | Responsibility |
 |---|---|
 | `StrategyPage` | Strategy edit state and save flow |
-| `StrategyTemplateRack` | Beginner-friendly templates |
+| `StrategyTemplateRack` | Beginner-friendly single-select templates |
 | `RuleBlockEditor` | Structured strategy rules |
-| `NaturalLanguageHintBox` | Optional user style note |
+| `StrategyTextInput` | Folded advanced natural-language parser draft |
 | `PolicyCompatibilityPreview` | Shows whether the strategy fits current policy |
 | `StrategyVersionBar` | Current version, draft status, ghost influence |
 | `GhostInfluenceHint` | Explains old strategy residue without exposing internals |
@@ -84,7 +85,7 @@ Keep the interface more like a rule studio than a trading screen.
 | State | Screen behavior |
 |---|---|
 | `Empty` | No active strategy; training blocked with clear next action |
-| `TemplateSelected` | Template fills starter rules |
+| `TemplateSelected` | One beginner template fills starter rules |
 | `Editing` | Rule blocks editable; compatibility preview live |
 | `Invalid` | Unsupported indicator, pair, or risk conflict highlighted |
 | `Validating` | Backend validation pending |
@@ -95,9 +96,9 @@ Keep the interface more like a rule studio than a trading screen.
 
 ## 7. User Interactions
 
-- Pick a template.
+- Pick one template, which replaces the current draft.
 - Add, remove, or edit rule blocks.
-- Add a short natural-language training note if needed.
+- Open advanced mode to draft a natural-language strategy and translate it back into the same structured builder.
 - Validate against current TradingPolicy.
 - Save strategy version.
 - View ghost influence when replacing an old strategy.
@@ -127,9 +128,9 @@ Do not show:
 
 | Layer | Strategy behavior |
 |---|---|
-| Default | Policy summary, template cards, simplified rule preview, `Validate strategy` |
+| Default | Policy summary, three beginner templates, simplified rule preview, `Validate strategy` |
 | Hidden until interaction | full rule blocks, parser schema, strategy hash, raw validation checks, ghost weight numeric detail |
-| Drawer | `Edit rules`, `View validation details`, ghost influence explanation |
+| Drawer | `Edit rules`, `Open advanced mode`, `View validation details`, ghost influence explanation |
 | Toast | Validation complete, strategy saved, validation failed |
 | Route jump | `Start Training` opens `training.html#step=waiting` |
 

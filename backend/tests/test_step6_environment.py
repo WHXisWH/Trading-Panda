@@ -49,6 +49,69 @@ class TestMarketMatchTable:
         )
         assert bear < neutral
 
+    def test_juvenile_sideways_regime_discount(self, pipe: DecisionPipeline):
+        personality = make_personality(experience_level=15)
+        bull = pipe._step6_environment(
+            1.0,
+            personality,
+            GRID_STRATEGY,
+            {**CRASH_MARKET, "market_regime": "bull"},
+            {},
+        )
+        sideways = pipe._step6_environment(
+            1.0,
+            personality,
+            GRID_STRATEGY,
+            {**CRASH_MARKET, "market_regime": "sideways"},
+            {},
+        )
+        assert sideways < bull
+
+    def test_adolescent_weak_trend_discount(self, pipe: DecisionPipeline):
+        personality = make_personality(experience_level=35)
+        strong = pipe._step6_environment(
+            1.0,
+            personality,
+            TREND_STRATEGY,
+            {**CRASH_MARKET, "market_regime": "bull", "trend_strength": 0.8},
+            {},
+        )
+        weak = pipe._step6_environment(
+            1.0,
+            personality,
+            TREND_STRATEGY,
+            {**CRASH_MARKET, "market_regime": "bull", "trend_strength": 0.1},
+            {},
+        )
+        assert weak < strong
+
+    def test_immature_mismatch_philosophy_extra_discount(self, pipe: DecisionPipeline):
+        personality = make_personality(experience_level=20)
+        matched = pipe._step6_environment(
+            1.0,
+            personality,
+            TREND_STRATEGY,
+            {**CRASH_MARKET, "market_regime": "bull"},
+            {},
+        )
+        mismatched = pipe._step6_environment(
+            1.0,
+            personality,
+            TREND_STRATEGY,
+            {**CRASH_MARKET, "market_regime": "ranging"},
+            {},
+        )
+        assert mismatched < matched
+
+    def test_mature_no_correlation_penalty_for_same_asset(self, pipe: DecisionPipeline):
+        personality = make_personality(experience_level=85)
+        market = {**CRASH_MARKET, "asset": "BTC"}
+        with_btc = pipe._step6_environment(
+            1.0, personality, TREND_STRATEGY, market, {"BTC": 1.0}
+        )
+        alone = pipe._step6_environment(1.0, personality, TREND_STRATEGY, market, {})
+        assert with_btc == pytest.approx(alone)
+
 
 class TestCorrelationPenalty:
     def test_held_position_halves_signal(self, pipe: DecisionPipeline):

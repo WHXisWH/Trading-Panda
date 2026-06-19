@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { clsx } from "clsx";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
@@ -32,7 +32,10 @@ interface Props {
   matchScore: number | null;
   warnings: string[];
   invalidRuleIndexes: number[];
+  showTemplates?: boolean;
+  showActions?: boolean;
   onPhilosophyChange?: (p: Philosophy) => void;
+  onDraftChange?: (parsed: ParsedStrategyLayers) => void;
   onValidate: (parsed: ParsedStrategyLayers) => void;
   onSubmit: (parsed: ParsedStrategyLayers) => void;
   onParseText: (text: string) => void;
@@ -47,9 +50,12 @@ export function StrategyBuilder({
   matchScore,
   warnings,
   invalidRuleIndexes,
+  showTemplates = true,
+  showActions = true,
   onValidate,
   onSubmit,
   onParseText,
+  onDraftChange,
   parseLoading,
   initialParsed,
   theme = "light",
@@ -88,6 +94,9 @@ export function StrategyBuilder({
     [philosophy, rules, positionPct, stopLossPct, takeProfitPct, maxDrawdownPct],
   );
 
+  const draftSignature = useMemo(() => JSON.stringify(parsed), [parsed]);
+  const lastDraftSignature = useRef<string | null>(null);
+
   const handleValidate = useCallback(() => {
     const errs = clientValidateRows(rules);
     setClientErrors(errs);
@@ -99,6 +108,12 @@ export function StrategyBuilder({
     setClientErrors(errs);
     if (errs.length === 0) onSubmit(parsed);
   }, [rules, parsed, onSubmit]);
+
+  useEffect(() => {
+    if (lastDraftSignature.current === draftSignature) return;
+    lastDraftSignature.current = draftSignature;
+    onDraftChange?.(parsed);
+  }, [draftSignature, onDraftChange, parsed]);
 
   const isProduct = theme === "product";
 
@@ -125,17 +140,19 @@ export function StrategyBuilder({
         />
       </label>
 
-      <StrategyTemplates
-        theme={theme}
-        hasExistingRules={rules.length > 0}
-        onApply={(rows, p, extras) => {
-          if (rules.length <= 2) setRules(rows);
-          else setRules((prev) => [...prev, ...rows].slice(0, 8));
-          setPhilosophy(p);
-          if (extras?.positionPct != null) setPositionPct(extras.positionPct);
-          if (extras?.stopLossPct != null) setStopLossPct(extras.stopLossPct);
-        }}
-      />
+      {showTemplates ? (
+        <StrategyTemplates
+          theme={theme}
+          hasExistingRules={rules.length > 0}
+          onApply={(rows, p, extras) => {
+            if (rules.length <= 2) setRules(rows);
+            else setRules((prev) => [...prev, ...rows].slice(0, 8));
+            setPhilosophy(p);
+            if (extras?.positionPct != null) setPositionPct(extras.positionPct);
+            if (extras?.stopLossPct != null) setStopLossPct(extras.stopLossPct);
+          }}
+        />
+      ) : null}
 
       <div className="space-y-2.5">
         {rules.map((row, index) => (
@@ -258,31 +275,35 @@ export function StrategyBuilder({
         loading={parseLoading}
       />
 
-      <div className="flex gap-2 pt-1">
-        <Button
-          size="sm"
-          variant="outline"
-          className="flex-1"
-          disabled={loading}
-          onClick={handleValidate}
-        >
-          试编译
-        </Button>
-        <Button
-          size="sm"
-          variant={isProduct ? "gold" : "primary"}
-          className="flex-1"
-          loading={loading}
-          onClick={handleSubmit}
-        >
-          🐼 Build Strategy
-        </Button>
-      </div>
+      {showActions ? (
+        <>
+          <div className="flex gap-2 pt-1">
+            <Button
+              size="sm"
+              variant="outline"
+              className="flex-1"
+              disabled={loading}
+              onClick={handleValidate}
+            >
+              试编译
+            </Button>
+            <Button
+              size="sm"
+              variant={isProduct ? "gold" : "primary"}
+              className="flex-1"
+              loading={loading}
+              onClick={handleSubmit}
+            >
+              🐼 Build Strategy
+            </Button>
+          </div>
 
-      {isProduct ? (
-        <p className={clsx("text-center text-[10px]", strategyMutedClass(theme))}>
-          Validate against TradingPolicy before saving to the ledger.
-        </p>
+          {isProduct ? (
+            <p className={clsx("text-center text-[10px]", strategyMutedClass(theme))}>
+              Validate against TradingPolicy before saving to the ledger.
+            </p>
+          ) : null}
+        </>
       ) : null}
     </div>
   );

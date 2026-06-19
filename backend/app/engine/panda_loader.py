@@ -125,3 +125,27 @@ async def load_actor_context(session: AsyncSession, panda_id: str) -> dict | Non
         "strategy_id": strategy_row.id if strategy_row else None,
         "ghosts": ghosts,
     }
+
+
+async def load_skill_memories(session: AsyncSession, panda_id: str) -> list[dict[str, Any]]:
+    """Load supported/verified skill rows for DecisionPipeline Step 3."""
+    mem_result = await session.execute(
+        select(SkillMemory)
+        .where(
+            SkillMemory.panda_id == panda_id,
+            SkillMemory.status.in_(("supported", "verified")),
+        )
+        .order_by(SkillMemory.version.desc())
+        .limit(5)
+    )
+    return [
+        {
+            "scope": mem.scope,
+            "pair": mem.pair,
+            "market_regime": mem.market_regime,
+            "rule_text": mem.rule_text,
+            "confidence": float(mem.confidence or 0),
+            "version": int(mem.version),
+        }
+        for mem in mem_result.scalars().all()
+    ]

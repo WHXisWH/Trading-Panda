@@ -19,6 +19,16 @@ export const PHILOSOPHY_OPTIONS: { value: Philosophy; label: string }[] = [
   { value: "custom", label: "自定义" },
 ];
 
+export interface StrategyTemplateDefinition {
+  id: string;
+  name: string;
+  description: string;
+  philosophy: Philosophy;
+  rules: Omit<SignalRule, "weight">[];
+  positionPct?: number;
+  stopLossPct?: number;
+}
+
 export const CONDITION_OPTIONS: Record<
   SupportedIndicator,
   { value: string; label: string; needsThreshold: boolean }[]
@@ -43,15 +53,7 @@ export const CONDITION_OPTIONS: Record<
   ],
 };
 
-export const STRATEGY_TEMPLATES: {
-  id: string;
-  name: string;
-  description: string;
-  philosophy: Philosophy;
-  rules: Omit<SignalRule, "weight">[];
-  positionPct?: number;
-  stopLossPct?: number;
-}[] = [
+export const STRATEGY_TEMPLATES: StrategyTemplateDefinition[] = [
   {
     id: "trend-scout",
     name: "Trend Scout",

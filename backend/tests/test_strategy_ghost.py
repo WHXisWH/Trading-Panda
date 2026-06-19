@@ -24,3 +24,19 @@ def test_ghost_expired_removed_from_blend():
     ]
     assert mgr.total_weight() == 0.0
     assert mgr.blended_old_signal_strength({}) == (0.0, None)
+
+
+def test_blended_returns_recent_ghost_strategy():
+    mgr = GhostManager()
+    mgr.add_ghost({"signal_rules": [{"indicator": "RSI", "condition": "<30", "action": "BUY"}]})
+    weight, strategy = mgr.blended_old_signal_strength({"rsi": 25})
+    assert weight == 0.40
+    assert strategy is not None
+    assert strategy["signal_rules"][0]["action"] == "BUY"
+
+
+def test_on_trade_increments_all_ghosts():
+    mgr = GhostManager()
+    mgr.add_ghost({"signal_rules": []})
+    mgr.on_trade()
+    assert mgr.ghosts[0].trades_since_switch == 1

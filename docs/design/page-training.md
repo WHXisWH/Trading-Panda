@@ -123,6 +123,7 @@ Mobile should prioritize chart, Panda state, and latest decision. Details move i
 
 - Start or stop training session.
 - Select one of the authorized and subscribed pairs.
+- Open the feed strategy drawer to choose a beginner template or advanced natural-language draft.
 - Click a decision row to inspect why it bought, sold, held, or got rejected.
 - Open the Trade Fact drawer.
 - Jump from an eligible Trade Fact to Chain Proof.
@@ -150,6 +151,17 @@ Soft warnings:
 - Latest ledger or Trade Fact sync is delayed.
 
 Hard blockers prevent training from starting. Soft warnings allow the user to start or wait while the page clearly states that the Panda is waiting for fresh DeepBook input or delayed evidence.
+
+### 7.2 Feed Strategy Boundary
+
+Training Ledger may open the feed drawer, but it must not duplicate the Agent Wallet risk collar.
+
+- Beginner mode shows three single-select templates only.
+- Those templates explain strategy style in human language first, then expose indicators on demand.
+- Advanced mode stays inside the same drawer and is folded by default.
+- Advanced mode may parse natural language into a structured draft, but it must not auto-save.
+- Final activation still requires an explicit save action.
+- `Max order size` and `Daily loss cap` remain Agent Wallet controls, not training-page controls.
 
 ---
 

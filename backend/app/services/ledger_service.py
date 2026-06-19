@@ -34,6 +34,7 @@ class LedgerMutationResult:
     entry_ids: list[str]
     realized_pnl_delta: float
     quantity: float
+    avg_entry_price_before_sell: float | None = None
 
 
 class LedgerService:
@@ -139,6 +140,7 @@ class LedgerService:
         quantity = notional / price
         entry_ids: list[str] = []
         realized_delta = 0.0
+        avg_entry_before_sell: float | None = None
 
         pos_result = await session.execute(
             select(PandaPosition).where(
@@ -195,6 +197,7 @@ class LedgerService:
         elif side == "SELL":
             if position is None or float(position.quantity) <= 0:
                 raise ValueError("LEDGER_POSITION_NOT_FOUND")
+            avg_entry_before_sell = float(position.avg_entry_price)
             sell_qty = min(quantity, float(position.quantity))
             proceeds = sell_qty * price
             cost_basis = sell_qty * float(position.avg_entry_price)
@@ -237,6 +240,7 @@ class LedgerService:
             entry_ids=entry_ids,
             realized_pnl_delta=realized_delta,
             quantity=quantity,
+            avg_entry_price_before_sell=avg_entry_before_sell,
         )
 
     async def _refresh_equity(self, session: AsyncSession, account: PandaAccount) -> None:

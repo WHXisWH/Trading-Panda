@@ -883,7 +883,7 @@ interface PandaPersonalityResponse {
 
 #### `POST /api/panda/:id/strategy`
 
-喂策略（猎手）：支持 **结构化 JSON 直传**（积木编辑器，默认）或 **自然语言 + LLM 解析**（进阶）。  
+喂策略（猎手）：支持 **结构化 JSON 直传**（积木编辑器，默认）或 **自然语言 + LLM 解析后保存**（进阶）。  
 `parsed` 与 `raw_text` 至少提供其一；**同时提供时以 `parsed` 为准**，跳过 LLM。
 
 **请求参数（Path + Body）**：
@@ -926,6 +926,13 @@ interface StrategyFeedRequest {
   parse_with_llm?: boolean;
 }
 ```
+
+**补充说明**
+
+- 基础模式只展示单选模板，模板会替换当前草稿。
+- 高级模式只负责把自然语言解析成结构化草稿，再回填到同一套规则编辑器。
+- 高级模式不自动保存；用户需要显式点击保存。
+- 策略页不重复展示 Agent Wallet 的 `max_notional_per_trade` 和 `max_daily_loss`，它们属于账户级风险 collar。
 
 **成功响应**：
 
@@ -3749,7 +3756,8 @@ API Gateway（Next.js / Vercel）与 Decision Engine（Python / Render）之间�
 
 #### `POST /internal/strategy/parse`
 
-将用户自然语言策略文本送 DeepSeek V3 解析为结构化策略（**仅 Path B**；Path A 由 BFF 直接校验 `parsed`，可不调用本接口）。
+将用户自然语言策略文本送 DeepSeek V3 解析为结构化策略草稿（**仅 Path B**；Path A 由 BFF 直接校验 `parsed`，可不调用本接口）。  
+该接口只做解析，不写入策略表。
 
 **请求参数（Body）**：
 

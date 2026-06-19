@@ -9,6 +9,7 @@ import { DecisionTimeline } from "@/components/training/DecisionTimeline";
 import { MarketChartPanel } from "@/components/training/MarketChartPanel";
 import { TradeFactDrawer } from "@/components/training/TradeFactDrawer";
 import { TrainingLedgerPageHeader } from "@/components/training/TrainingLedgerPageHeader";
+import { TrainingLedgerPageSkeleton } from "@/components/training/TrainingLedgerPageSkeleton";
 import { TrainingLedgerRail } from "@/components/training/TrainingLedgerRail";
 import { FeedStrategyDrawer } from "@/components/training/FeedStrategyDrawer";
 import { summarizeLatestDecision } from "@/components/training/trainingLedgerView";
@@ -39,7 +40,7 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
   const [strategyDrawerOpen, setStrategyDrawerOpen] = useState(false);
   const [didAutoPromptStrategy, setDidAutoPromptStrategy] = useState(false);
 
-  const { data: panda, refetch: refetchPanda } = useQuery({
+  const { data: panda, isLoading: pandaLoading, refetch: refetchPanda } = useQuery({
     queryKey: ["panda-detail", pandaId, jwt],
     enabled: !!jwt,
     queryFn: () => fetchPandaDetail(jwt!, pandaId),
@@ -174,6 +175,16 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
     }
   }, [didAutoPromptStrategy, panda, searchParams]);
 
+  if (!jwt || pandaLoading || !panda) {
+    return (
+      <ProductPageShell density="high">
+        <TrainingLedgerPageSkeleton
+          message={!jwt ? "Connecting session…" : "Loading training cockpit…"}
+        />
+      </ProductPageShell>
+    );
+  }
+
   return (
     <ProductPageShell density="high" className="space-y-8">
       <TrainingLedgerPageHeader
@@ -182,59 +193,57 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
         initialCapital={session.initialCapital}
       />
 
-      {panda ? (
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,320px)]">
-          <MarketChartPanel
-            pandaId={pandaId}
-            pool={pool}
-            interval={interval}
-            onIntervalChange={setInterval}
-            authorizedPools={authorizedPools}
-            onPoolChange={setPool}
-            history={market.history}
-            lastTick={market.lastTick}
-            marketStatus={market.status}
-            historyLoading={market.historyLoading}
-            historyError={market.historyError}
-            hasMore={market.hasMore}
-            loadingMore={market.loadingMore}
-            change24hPct={change24hPct}
-            poolStats={poolStats ?? null}
-            poolStatsLoading={poolStatsLoading}
-            toolbarLastPrice={livePrice}
-            onLoadMore={() => {
-              void market.loadMoreOlder();
-            }}
-            onRefresh={() => {
-              void market.reloadHistory();
-            }}
-            trades={session.trades}
-          />
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,320px)]">
+        <MarketChartPanel
+          pandaId={pandaId}
+          pool={pool}
+          interval={interval}
+          onIntervalChange={setInterval}
+          authorizedPools={authorizedPools}
+          onPoolChange={setPool}
+          history={market.history}
+          lastTick={market.lastTick}
+          marketStatus={market.status}
+          historyLoading={market.historyLoading}
+          historyError={market.historyError}
+          hasMore={market.hasMore}
+          loadingMore={market.loadingMore}
+          change24hPct={change24hPct}
+          poolStats={poolStats ?? null}
+          poolStatsLoading={poolStatsLoading}
+          toolbarLastPrice={livePrice}
+          onLoadMore={() => {
+            void market.loadMoreOlder();
+          }}
+          onRefresh={() => {
+            void market.reloadHistory();
+          }}
+          trades={session.trades}
+        />
 
-          <TrainingLedgerRail
-            panda={panda}
-            pandaId={pandaId}
-            phase={session.phase}
-            actorActive={session.actorActive}
-            speed={session.speed}
-            tradeCount={session.tradeCount}
-            latestSummary={latestSummary}
-            onSpeedChange={session.setSpeed}
-            onToggleTraining={handleToggleTraining}
-            onFeedStrategy={() => setStrategyDrawerOpen(true)}
-            onInspectAction={(summary) => {
-              if (summary.intent) {
-                setSelectedIntent(summary.intent);
-                setSelectedTradeFactId(summary.tradeFactId);
-              } else if (summary.tradeFact) {
-                setSelectedIntent(summary.intent);
-                setSelectedTradeFactId(summary.tradeFact.id);
-              }
-              setDrawerOpen(true);
-            }}
-          />
-        </div>
-      ) : null}
+        <TrainingLedgerRail
+          panda={panda}
+          pandaId={pandaId}
+          phase={session.phase}
+          actorActive={session.actorActive}
+          speed={session.speed}
+          tradeCount={session.tradeCount}
+          latestSummary={latestSummary}
+          onSpeedChange={session.setSpeed}
+          onToggleTraining={handleToggleTraining}
+          onFeedStrategy={() => setStrategyDrawerOpen(true)}
+          onInspectAction={(summary) => {
+            if (summary.intent) {
+              setSelectedIntent(summary.intent);
+              setSelectedTradeFactId(summary.tradeFactId);
+            } else if (summary.tradeFact) {
+              setSelectedIntent(summary.intent);
+              setSelectedTradeFactId(summary.tradeFact.id);
+            }
+            setDrawerOpen(true);
+          }}
+        />
+      </div>
 
       <section className="space-y-3">
         <div className="flex items-center justify-between gap-3">

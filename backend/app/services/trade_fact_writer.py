@@ -19,6 +19,8 @@ from app.engine.market_event import MarketEvent
 from app.services.ledger_service import LedgerService
 from app.services.policy_compatibility import PolicyMirror
 from app.services.policy_gate import PolicyGate, PolicyGateResult
+from app.services.post_commit_hooks import after_trade_fact_committed
+from app.services.trade_fact_close import apply_close_fields, enrich_sell_outcome
 
 
 def _hash_payload(parts: dict[str, Any]) -> str:
@@ -215,6 +217,13 @@ class TradeFactWriter:
                         "side": side,
                     }
                 )
+                outcome = enrich_sell_outcome(
+                    side=side,
+                    realized_delta=mutation.realized_pnl_delta,
+                    entry_price=mutation.avg_entry_price_before_sell,
+                    exit_price=reference_price,
+                    initial_capital=initial_capital,
+                )
                 trade_fact = TradeFact(
                     id=str(uuid.uuid4()),
                     panda_id=panda_id,
@@ -234,11 +243,19 @@ class TradeFactWriter:
                         "position_pct": position_pct,
                         "stop_loss": stop_loss,
                     },
-                    outcome={"realized_pnl_delta": mutation.realized_pnl_delta},
+                    outcome=outcome,
                     realized_pnl=Decimal(str(round(mutation.realized_pnl_delta, 8))),
                     skill_version_before=skill_version,
                     fact_hash=fact_hash,
-                    proof_status="eligible" if proof_eligible else "not_requested",
+                    proof_status="not_requested",
+                )
+                apply_close_fields(
+                    trade_fact,
+                    pair=pair,
+                    ledger_after=mutation.ledger_after,
+                    outcome=outcome,
+                    realized_delta=mutation.realized_pnl_delta,
+                    initial_capital=initial_capital,
                 )
                 session.add(trade_fact)
                 await session.flush()
@@ -277,6 +294,13 @@ class TradeFactWriter:
         outbox_events = self._build_outbox(panda_id, intent_payload, trade_fact)
         for evt in outbox_events:
             session.add(evt)
+
+        if trade_fact is not None and executed:
+            await after_trade_fact_committed(
+                session,
+                panda_id=panda_id,
+                trade_fact=trade_fact,
+            )
 
         await session.commit()
 
@@ -338,6 +362,9 @@ class TradeFactWriter:
             "fact_hash": fact.fact_hash,
             "proof_status": fact.proof_status,
             "realized_pnl": float(fact.realized_pnl) if fact.realized_pnl is not None else None,
+            "closed_at": fact.closed_at.isoformat() if fact.closed_at else None,
+            "review_status": fact.review_status,
+            "outcome": fact.outcome,
             "ledger_snapshot_after": fact.ledger_snapshot_after,
             "created_at": fact.created_at.isoformat() if fact.created_at else None,
         }
