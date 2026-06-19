@@ -307,11 +307,11 @@ function PandaNftPreview() {
             transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
           />
           {/* Panda Canvas Renderer */}
-          <div className="h-full w-full rounded-full overflow-hidden flex items-center justify-center bg-black/20">
+          <div className="h-full w-full overflow-hidden rounded-full bg-black/20">
             <PandaCanvasRenderer
               stats={stats}
               showBackground={false}
-              className="h-[140%] w-[140%] -translate-y-2"
+              className="h-full w-full max-w-none origin-center scale-[1.12] -translate-y-1"
             />
           </div>
         </div>

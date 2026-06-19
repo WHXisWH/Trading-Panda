@@ -432,7 +432,7 @@ export function PandaCanvasRenderer({
         ref={canvasRef}
         width={CANVAS_SIZE}
         height={CANVAS_SIZE}
-        className="h-full w-full"
+        className="h-full w-full object-contain"
         role="img"
         aria-label="Trading Panda canvas avatar"
       />

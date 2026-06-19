@@ -580,3 +580,4 @@ Package ID：**0x595087bb3e5f6c5011585797e4eb4db513b55d39ce84f984bb357e9375c1146
 | 2026-06-19 | **指标选择器改为 tag 输入框** | `IndicatorPicker` 改为 combobox：已选指标以 tag 回填输入框内；下拉项点击切换（无 checkbox）；选中/未选中背景区分。 | K 线工具栏不再显示 Indicators 按钮+外置 chip。 |
 | 2026-06-19 | **指标可全部清空** | 移除「至少保留一个指标」限制；`sanitizeIndicatorSelection` 允许 `[]` 并持久化到 localStorage。 | 用户可取消全部 MA/RSI 等，仅看裸 K 线。 |
 | 2026-06-19 | **指标选择器质感 + 下拉不被裁切** | `chart-indicator-*` 黑金 inset 样式；下拉改 portal 固定定位；选中项左侧光条替代白框。 | 下拉完整浮于 K 线面板之上；与 ledger 控件视觉一致。 |
+| 2026-06-19 | **Fix 首页 How it works 熊猫形象拉伸** | `PandaNftPreview` 移除 `h-[140%] w-[140%]`（与 `w-full` 冲突导致非等比）；改用 `scale-[1.12]` 放大；`PandaCanvasRenderer` canvas 增加 `object-contain`。 | Step 1 预览圆圈内熊猫比例正常；`tsc` 通过。 |
