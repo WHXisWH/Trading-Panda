@@ -16,3 +16,7 @@ MAX_CONNECTIONS_PER_USER = "3"
 MAX_CLIENT_MESSAGES_PER_SEC = "10"
 MAX_OUTBOUND_QUEUE = "100"
 HEARTBEAT_ALARM_SEC = "30"
+
+# Local wrangler dev: `wrangler dev --env dev`
+[env.dev]
+vars = { MAX_CONNECTIONS_PER_USER = "8" }

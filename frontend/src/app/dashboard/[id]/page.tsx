@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useMarketWs } from "@/hooks/useMarketWs";
+import { useToolbarMarketMetrics } from "@/hooks/useToolbarMarketMetrics";
 import { useSimulationSession } from "@/hooks/useSimulationSession";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { CandlestickChart } from "@/components/trading/CandlestickChart";
@@ -94,6 +95,8 @@ export default function DashboardPage({ params }: { params: { id: string } }) {
     enabled: !!jwt,
     interval: marketInterval,
   });
+
+  const { lastPrice } = useToolbarMarketMetrics(pool, market.lastTick, !!pool && !!jwt);
 
   // ── Strategy Mutations ──
   const feedMutation = useMutation({
@@ -211,12 +214,6 @@ export default function DashboardPage({ params }: { params: { id: string } }) {
     onSubmit: (parsed: ParsedStrategyLayers) => feedMutation.mutate(parsed),
     onParseText: (text: string) => parseMutation.mutate(text),
   };
-
-  const lastPrice =
-    market.lastTick?.price ??
-    (market.history?.candles?.length
-      ? market.history.candles[market.history.candles.length - 1].c
-      : undefined);
 
   const lastTickAgeSec =
     market.lastTick?.timestamp != null

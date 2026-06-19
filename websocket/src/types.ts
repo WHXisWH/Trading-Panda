@@ -24,7 +24,7 @@ export interface WsServerEvent<T = unknown> {
 
 export interface MarketSubscription {
   assets: string[];
-  /** DeepBook pool/pair channel suffix, e.g. DEEP/SUI (from market-monitor) */
+  /** DeepBook pool/pair channel suffix, e.g. DEEP-SUI (canonical dashed form) */
   pairs: string[];
   interval: string;
 }

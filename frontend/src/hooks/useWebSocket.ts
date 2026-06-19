@@ -9,6 +9,8 @@ const WS_CLOSE_RATE_LIMITED = 4008;
 const WS_CLOSE_TOO_MANY_CONNECTIONS = 4009;
 
 const MAX_RECONNECT_DELAY_MS = 60_000;
+const CONNECT_DEBOUNCE_MS = 300;
+const CAPACITY_LIMIT_RECONNECT_MS = 5_000;
 
 export type UseWebSocketOptions = {
   /** JWT for Hub `?token=`; when null/undefined the socket stays idle */
@@ -28,7 +30,7 @@ function reconnectDelayMsForAttempt(
 ): number {
   const capacityLimited =
     closeCode === WS_CLOSE_TOO_MANY_CONNECTIONS || closeCode === WS_CLOSE_RATE_LIMITED;
-  const base = capacityLimited ? Math.max(baseMs, 10_000) : baseMs;
+  const base = capacityLimited ? Math.max(baseMs, CAPACITY_LIMIT_RECONNECT_MS) : baseMs;
   return Math.min(base * 1.5 ** attempt, MAX_RECONNECT_DELAY_MS);
 }
 
@@ -46,6 +48,7 @@ export function useWebSocket(options: UseWebSocketOptions) {
   const [status, setStatus] = useState<WsConnectionStatus>("idle");
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const connectDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectAttemptRef = useRef(0);
   const shouldReconnectRef = useRef(true);
   const handlersRef = useRef({ onEvent, onOpen, onClose });
@@ -59,7 +62,15 @@ export function useWebSocket(options: UseWebSocketOptions) {
     }
   }, []);
 
+  const clearConnectDebounce = useCallback(() => {
+    if (connectDebounceRef.current) {
+      clearTimeout(connectDebounceRef.current);
+      connectDebounceRef.current = null;
+    }
+  }, []);
+
   const disconnect = useCallback(() => {
+    clearConnectDebounce();
     clearReconnectTimer();
     reconnectAttemptRef.current = 0;
     shouldReconnectRef.current = false;
@@ -69,7 +80,7 @@ export function useWebSocket(options: UseWebSocketOptions) {
       ws.close(1000, "client disconnect");
     }
     setStatus("closed");
-  }, [clearReconnectTimer]);
+  }, [clearConnectDebounce, clearReconnectTimer]);
 
   const sendCommand = useCallback(
     (command: string, payload: Record<string, unknown>, requestId?: string) => {
@@ -171,15 +182,21 @@ export function useWebSocket(options: UseWebSocketOptions) {
 
   useEffect(() => {
     if (!enabled || !token) {
+      clearConnectDebounce();
       disconnect();
       setStatus("idle");
       return;
     }
-    connect();
+    clearConnectDebounce();
+    connectDebounceRef.current = setTimeout(() => {
+      connectDebounceRef.current = null;
+      connect();
+    }, CONNECT_DEBOUNCE_MS);
     return () => {
+      clearConnectDebounce();
       disconnect();
     };
-  }, [connect, disconnect, enabled, token]);
+  }, [clearConnectDebounce, connect, disconnect, enabled, token]);
 
   return {
     status,

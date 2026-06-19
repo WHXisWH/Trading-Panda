@@ -1,6 +1,12 @@
 import json
 
-from broadcast.schemas import MarketEvent, PairMetaPayload, normalize_pool_name, pool_to_pair
+from broadcast.schemas import (
+    MarketEvent,
+    PairMetaPayload,
+    canonical_market_pair,
+    normalize_pool_name,
+    pool_to_pair,
+)
 
 
 def test_market_event_extended_fields() -> None:
@@ -41,8 +47,14 @@ def test_market_event_extended_fields() -> None:
     assert "reference_price" in payload
 
 
-def test_pool_to_pair_slash_preserved() -> None:
-    assert pool_to_pair("DEEP/SUI") == "DEEP/SUI"
+def test_canonical_market_pair() -> None:
+    assert canonical_market_pair("DEEP/SUI") == "DEEP-SUI"
+    assert canonical_market_pair("SUI_USDC") == "SUI-USDC"
+    assert canonical_market_pair("SUI-USDC") == "SUI-USDC"
+
+
+def test_pool_to_pair_uses_canonical_form() -> None:
+    assert pool_to_pair("DEEP/SUI") == "DEEP-SUI"
     assert pool_to_pair("SUI_USDC") == "SUI-USDC"
 
 
@@ -56,7 +68,7 @@ def test_normalize_pool_name() -> None:
 def test_market_event_json_roundtrip() -> None:
     event = MarketEvent(
         asset="DEEP",
-        pair="DEEP/SUI",
+        pair="DEEP-SUI",
         timestamp=1.0,
         price=30.0,
         prev_price=29.0,

@@ -52,16 +52,17 @@ describe("channels", () => {
     expect(channels).toEqual(["market:tick:ETH-USDC"]);
   });
 
-  it("subscribes explicit DeepBook pairs", () => {
-    const channels = channelsForMarketSubscribe([], ["DEEP/SUI"], "1m");
-    expect(channels).toContain("market:tick:DEEP/SUI");
-    expect(channels).toContain("market:candles:1m:DEEP/SUI");
+  it("subscribes explicit DeepBook pairs (canonical dashed suffix)", () => {
+    const channels = channelsForMarketSubscribe([], ["DEEP-SUI"], "1m");
+    expect(channels).toContain("market:tick:DEEP-SUI");
+    expect(channels).toContain("market:candles:1m:DEEP-SUI");
   });
 
   it("forwards only subscribed market channels", () => {
     const subs = emptySubscriptions();
-    subs.market = { assets: [], pairs: ["DEEP/SUI"], interval: "1m" };
-    expect(shouldForwardChannel("market:tick:DEEP/SUI", subs)).toBe(true);
+    subs.market = { assets: [], pairs: ["DEEP-SUI"], interval: "1m" };
+    expect(shouldForwardChannel("market:tick:DEEP-SUI", subs)).toBe(true);
+    expect(shouldForwardChannel("market:tick:DEEP/SUI", subs)).toBe(false);
     expect(shouldForwardChannel("market:tick:SUI-USDC", subs)).toBe(false);
   });
 });

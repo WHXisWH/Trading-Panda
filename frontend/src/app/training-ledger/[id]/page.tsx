@@ -21,8 +21,7 @@ import {
 } from "@/components/training/trainingLedgerView";
 import { useAuth } from "@/hooks/useAuth";
 import { useMarketCandles } from "@/hooks/useMarketCandles";
-import { useLiveMarketPrice } from "@/hooks/useLiveMarketPrice";
-import { useLiveMarket24hChange, usePoolMarketStats } from "@/hooks/usePoolMarketStats";
+import { useToolbarMarketMetrics } from "@/hooks/useToolbarMarketMetrics";
 import { useSimulationSession } from "@/hooks/useSimulationSession";
 import { resolveAuthorizedPools, sameMarketPair } from "@/lib/market/canonicalMarketPair";
 import { fetchAgentWalletStatus } from "@/services/agentWallet.service";
@@ -90,15 +89,8 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
     enabled: !!panda && !!pool,
   });
 
-  const livePrice = useLiveMarketPrice(market.lastTick, market.history);
-
-  const { data: poolStats, isPending: poolStatsPending } = usePoolMarketStats(
-    pool,
-    livePrice,
-    !!pool,
-  );
-  const change24hPct = useLiveMarket24hChange(pool, livePrice, !!pool);
-  const poolStatsLoading = poolStatsPending && poolStats == null;
+  const toolbarMetrics = useToolbarMarketMetrics(pool, market.lastTick, !!pool);
+  const { lastPrice: livePrice, change24hPct, poolStats, poolStatsLoading } = toolbarMetrics;
 
   const { data: ledger, refetch: refetchLedger } = useQuery({
     queryKey: ["training-ledger", pandaId, jwt],

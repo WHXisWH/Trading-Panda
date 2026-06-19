@@ -3,7 +3,7 @@ import logging
 
 import redis.asyncio as redis
 
-from broadcast.schemas import MarketEvent
+from broadcast.schemas import MarketEvent, canonical_market_pair
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,8 @@ class RedisPublisher:
     async def publish_tick(self, pair: str, event: MarketEvent) -> int:
         if self._client is None:
             return 0
-        channel = f"market:tick:{pair}"
+        channel_pair = canonical_market_pair(pair)
+        channel = f"market:tick:{channel_pair}"
         payload = json.dumps(event.to_publish_dict(), ensure_ascii=False)
         return await self._client.publish(channel, payload)
 

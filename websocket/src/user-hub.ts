@@ -53,12 +53,7 @@ export class UserHub implements DurableObject {
 
     await this.loadState(userId);
     const maxConn = intEnv(this.env.MAX_CONNECTIONS_PER_USER, 3);
-    if (this.ctx.getWebSockets().length >= maxConn) {
-      return new Response("Too many connections", {
-        status: 429,
-        headers: { "X-Close-Code": String(WS_CLOSE.TOO_MANY_CONNECTIONS) },
-      });
-    }
+    this.evictConnectionsIfNeeded(maxConn);
 
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
@@ -122,11 +117,42 @@ export class UserHub implements DurableObject {
   async alarm(): Promise<void> {
     const heartbeatSec = intEnv(this.env.HEARTBEAT_ALARM_SEC, 30);
     for (const ws of this.ctx.getWebSockets()) {
-      if (ws.readyState === WebSocket.OPEN) {
-        this.sendJson(ws, serverEvent("ping", { server_time: nowIso() }));
+      if (ws.readyState !== WebSocket.OPEN) {
+        try {
+          ws.close(1000, "stale socket");
+        } catch {
+          /* ignore */
+        }
+        continue;
       }
+      this.sendJson(ws, serverEvent("ping", { server_time: nowIso() }));
     }
     await this.ctx.storage.setAlarm(Date.now() + heartbeatSec * 1000);
+  }
+
+  /** Close oldest sockets when at capacity so dev HMR / multi-tab does not 429. */
+  private evictConnectionsIfNeeded(maxConn: number): void {
+    const sockets = this.ctx.getWebSockets();
+    if (sockets.length < maxConn) {
+      return;
+    }
+    const ranked = [...sockets].sort((a, b) => {
+      const attA = a.deserializeAttachment() as ConnAttachment | null;
+      const attB = b.deserializeAttachment() as ConnAttachment | null;
+      return (attA?.connectedAt ?? "").localeCompare(attB?.connectedAt ?? "");
+    });
+    const evictCount = sockets.length - maxConn + 1;
+    for (let i = 0; i < evictCount; i += 1) {
+      const ws = ranked[i];
+      if (!ws) {
+        break;
+      }
+      try {
+        ws.close(WS_CLOSE.TOO_MANY_CONNECTIONS, "evicted for new connection");
+      } catch {
+        /* ignore */
+      }
+    }
   }
 
   private async loadState(userId: string): Promise<void> {

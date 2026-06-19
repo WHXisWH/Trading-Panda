@@ -57,9 +57,17 @@ class MarketEvent(BaseModel):
         return self.model_dump(exclude_none=True)
 
 
+def canonical_market_pair(value: str) -> str:
+    """Single Redis/UI form: BASE-QUOTE (slashes and underscores → dash)."""
+    raw = value.strip()
+    if not raw:
+        return ""
+    return raw.replace("_", "-").replace("/", "-")
+
+
 def pool_to_pair(pool: str) -> str:
-    """SUI_USDC → SUI-USDC; DEEP/SUI stays DEEP/SUI."""
-    return pool.replace("_", "-")
+    """Map DeepBook pool id to Redis channel pair suffix (always dashed)."""
+    return canonical_market_pair(pool)
 
 
 def normalize_pool_name(pool: str) -> str:
@@ -68,8 +76,7 @@ def normalize_pool_name(pool: str) -> str:
 
 
 def pair_to_asset(pair: str) -> str:
-    """SUI-USDC → SUI; DEEP/SUI → DEEP."""
-    token = pair.split("-")[0].split("_")[0]
-    if "/" in token:
-        return token.split("/")[0]
-    return token
+    """SUI-USDC → SUI; DEEP-SUI → DEEP."""
+    normalized = canonical_market_pair(pair)
+    token = normalized.split("-")[0]
+    return token or pair
