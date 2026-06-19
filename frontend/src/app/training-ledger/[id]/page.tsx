@@ -1,24 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { ProductPageShell } from "@/components/layout/ProductPageShell";
-import { DisclosureL0 } from "@/lib/ui/disclosure";
-import { chainProofPath, reviewPath, safetyPath } from "@/lib/ui/routeJump";
 import { DecisionTimeline } from "@/components/training/DecisionTimeline";
-import { LedgerSummaryStrip } from "@/components/training/LedgerSummaryStrip";
-import { LatestDecisionCard } from "@/components/training/LatestDecisionCard";
 import { MarketChartPanel } from "@/components/training/MarketChartPanel";
-import { PolicyGateBanner } from "@/components/training/PolicyGateBanner";
 import { TradeFactDrawer } from "@/components/training/TradeFactDrawer";
-import { TrainingControlBar } from "@/components/training/TrainingControlBar";
+import { TrainingLedgerPageHeader } from "@/components/training/TrainingLedgerPageHeader";
+import { TrainingLedgerRail } from "@/components/training/TrainingLedgerRail";
 import { FeedStrategyDrawer } from "@/components/training/FeedStrategyDrawer";
-import {
-  buildTrainingPreflightItems,
-  summarizeLatestDecision,
-} from "@/components/training/trainingLedgerView";
+import { summarizeLatestDecision } from "@/components/training/trainingLedgerView";
 import { useAuth } from "@/hooks/useAuth";
 import { useMarketCandles } from "@/hooks/useMarketCandles";
 import { useToolbarMarketMetrics } from "@/hooks/useToolbarMarketMetrics";
@@ -67,7 +60,6 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
     () => authorizedPools.some((item) => sameMarketPair(item, pool)),
     [pool, authorizedPools],
   );
-  const currentPairSubscribed = currentPairAllowed;
   const walletReady = Boolean(walletStatus?.can_start_training);
   const policyPaused = Boolean(walletStatus?.policy?.paused);
 
@@ -113,21 +105,6 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
     refetchInterval: session.isRunning ? 8000 : false,
   });
 
-  const lastTickAgeSec = market.lastTick?.timestamp
-    ? Math.max(
-        0,
-        Math.floor(
-          Date.now() / 1000 -
-            (market.lastTick.timestamp > 1e12
-              ? market.lastTick.timestamp / 1000
-              : market.lastTick.timestamp),
-        ),
-      )
-    : market.history?.newest_t
-      ? Math.max(0, Math.floor(Date.now() / 1000 - market.history.newest_t))
-      : null;
-  const marketFresh = market.marketFresh;
-
   const latestSummary = useMemo(
     () =>
       summarizeLatestDecision({
@@ -136,29 +113,6 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
       }),
     [intents, ledger?.last_order_intent, ledger?.last_trade_fact, tradeFacts],
   );
-
-  const policyBanner = useMemo(() => {
-    if (!walletReady) {
-      return { status: "paused" as const, message: "Agent Wallet setup is required before training." };
-    }
-    if (!hasStrategy) {
-      return { status: "paused" as const, message: "Feed strategy first." };
-    }
-    if (!currentPairAllowed) {
-      return { status: "reject" as const, message: `${pool} is not authorized or subscribed.` };
-    }
-    if (!marketFresh) {
-      return { status: "stale" as const, message: "DeepBook tick is stale — Panda holds." };
-    }
-    const latest = intents[0];
-    if (latest?.status === "REJECTED") {
-      return { status: "reject" as const, message: latest.rejection_reason };
-    }
-    if (latest?.status === "EXECUTED") {
-      return { status: "pass" as const, message: null };
-    }
-    return { status: "neutral" as const, message: null };
-  }, [currentPairAllowed, hasStrategy, intents, marketFresh, pool, walletReady]);
 
   const selectedTradeFact: TradeFactApi | null = useMemo(() => {
     if (!selectedTradeFactId) {
@@ -173,132 +127,114 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
   }, []);
 
   const handleToggleTraining = useCallback(async () => {
+    if (!session.isRunning) {
+      if (!hasStrategy) {
+        toast.error("Feed strategy first");
+        setStrategyDrawerOpen(true);
+        return;
+      }
+      if (!walletReady) {
+        toast.error("Complete Agent Wallet setup before training.");
+        return;
+      }
+      if (policyPaused) {
+        toast.error("Policy is paused. Resume in Emergency controls.");
+        return;
+      }
+      if (authorizedPools.length === 0) {
+        toast.error("Configure allowed pairs in Agent Wallet.");
+        return;
+      }
+      if (!currentPairAllowed) {
+        toast.error(`${pool || "Pool"} is not authorized.`);
+        return;
+      }
+    }
+
     await session.toggleTraining(authorizedPools);
     void refetchLedger();
     void refetchIntents();
-  }, [session, authorizedPools, refetchLedger, refetchIntents]);
-
-  const lastIntent = ledger?.last_order_intent ?? intents[0] ?? null;
+  }, [
+    authorizedPools,
+    currentPairAllowed,
+    hasStrategy,
+    policyPaused,
+    pool,
+    refetchIntents,
+    refetchLedger,
+    session,
+    walletReady,
+  ]);
 
   useEffect(() => {
     if (!panda || didAutoPromptStrategy) return;
-    const shouldOpenFromRoute = searchParams.get("feed") === "strategy";
-    if (shouldOpenFromRoute || !hasStrategy) {
+    if (searchParams.get("feed") === "strategy") {
       setStrategyDrawerOpen(true);
       setDidAutoPromptStrategy(true);
     }
-  }, [didAutoPromptStrategy, hasStrategy, panda, searchParams]);
-
-  const preflightItems = useMemo(
-    () =>
-      buildTrainingPreflightItems({
-        walletReady,
-        hasStrategy,
-        policyPaused,
-        currentPair: pool,
-        currentPairAllowed,
-        currentPairSubscribed,
-        wsStatus: market.status,
-        lastTickAgeSec,
-      }),
-    [currentPairAllowed, currentPairSubscribed, hasStrategy, lastTickAgeSec, market.status, pool, policyPaused, walletReady],
-  );
+  }, [didAutoPromptStrategy, panda, searchParams]);
 
   return (
     <ProductPageShell density="high" className="space-y-8">
-      <DisclosureL0
-        eyebrow="Training Ledger"
-        title="Live training cockpit"
-        description="Watch DeepBook mainnet ticks, policy gates, and paper ledger mutations. Evidence stays in drawers."
+      <TrainingLedgerPageHeader
+        ledger={ledger}
+        equity={session.equity}
+        initialCapital={session.initialCapital}
       />
 
-      <TrainingControlBar
-        pandaId={pandaId}
-        phase={session.phase}
-        speed={session.speed}
-        subscribedPools={authorizedPools}
-        hasStrategy={hasStrategy}
-        walletReady={walletReady}
-        policyPaused={policyPaused}
-        currentPairAllowed={currentPairAllowed}
-        actorActive={session.actorActive}
-        tradeCount={session.tradeCount}
-        wsStatus={market.status}
-        lastTickAgeSec={lastTickAgeSec}
-        onSpeedChange={session.setSpeed}
-        onToggleTraining={handleToggleTraining}
-        onFeedStrategy={() => setStrategyDrawerOpen(true)}
-        preflightItems={preflightItems}
-      />
-
-      <LatestDecisionCard
-        pandaId={pandaId}
-        summary={latestSummary}
-        onInspect={(summary) => {
-          if (summary.intent) {
-            setSelectedIntent(summary.intent);
-            setSelectedTradeFactId(summary.tradeFactId);
-          } else if (summary.tradeFact) {
-            setSelectedIntent(summary.intent);
-            setSelectedTradeFactId(summary.tradeFact.id);
-          }
-          setDrawerOpen(true);
-        }}
-      />
-
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
-        <MarketChartPanel
-          pandaId={pandaId}
-          pool={pool}
-          interval={interval}
-          onIntervalChange={setInterval}
-          authorizedPools={authorizedPools}
-          onPoolChange={setPool}
-          history={market.history}
-          lastTick={market.lastTick}
-          marketStatus={market.status}
-          historyLoading={market.historyLoading}
-          historyError={market.historyError}
-          hasMore={market.hasMore}
-          loadingMore={market.loadingMore}
-          change24hPct={change24hPct}
-          poolStats={poolStats ?? null}
-          poolStatsLoading={poolStatsLoading}
-          toolbarLastPrice={livePrice}
-          onLoadMore={() => {
-            void market.loadMoreOlder();
-          }}
-          onRefresh={() => {
-            void market.reloadHistory();
-          }}
-          trades={session.trades}
-        />
-        <div className="space-y-3">
-          <LedgerSummaryStrip
-            ledger={ledger}
-            equity={session.equity}
-            initialCapital={session.initialCapital}
-            lastIntent={lastIntent}
-            skillVersion={0}
+      {panda ? (
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,320px)]">
+          <MarketChartPanel
+            pandaId={pandaId}
+            pool={pool}
+            interval={interval}
+            onIntervalChange={setInterval}
+            authorizedPools={authorizedPools}
+            onPoolChange={setPool}
+            history={market.history}
+            lastTick={market.lastTick}
+            marketStatus={market.status}
+            historyLoading={market.historyLoading}
+            historyError={market.historyError}
+            hasMore={market.hasMore}
+            loadingMore={market.loadingMore}
+            change24hPct={change24hPct}
+            poolStats={poolStats ?? null}
+            poolStatsLoading={poolStatsLoading}
+            toolbarLastPrice={livePrice}
+            onLoadMore={() => {
+              void market.loadMoreOlder();
+            }}
+            onRefresh={() => {
+              void market.reloadHistory();
+            }}
+            trades={session.trades}
           />
-          <PolicyGateBanner status={policyBanner.status} message={policyBanner.message} />
-          <div className="ledger-nav-rail">
-            <Link href={chainProofPath(pandaId)} className="text-[12px] font-medium text-product-green underline-offset-2 hover:underline">
-              Chain Proof
-            </Link>
-            <Link href={reviewPath(pandaId)}>
-              <span className="text-[12px] font-medium text-product-gold underline-offset-2 hover:underline">
-                Review Journal
-              </span>
-            </Link>
-            <Link href={safetyPath(pandaId)}>
-              <span className="text-[12px] font-medium text-product-red underline-offset-2 hover:underline">
-                Emergency controls
-              </span>
-            </Link>
-          </div>
+
+          <TrainingLedgerRail
+            panda={panda}
+            pandaId={pandaId}
+            phase={session.phase}
+            actorActive={session.actorActive}
+            speed={session.speed}
+            tradeCount={session.tradeCount}
+            latestSummary={latestSummary}
+            onSpeedChange={session.setSpeed}
+            onToggleTraining={handleToggleTraining}
+            onFeedStrategy={() => setStrategyDrawerOpen(true)}
+            onInspectAction={(summary) => {
+              if (summary.intent) {
+                setSelectedIntent(summary.intent);
+                setSelectedTradeFactId(summary.tradeFactId);
+              } else if (summary.tradeFact) {
+                setSelectedIntent(summary.intent);
+                setSelectedTradeFactId(summary.tradeFact.id);
+              }
+              setDrawerOpen(true);
+            }}
+          />
         </div>
-      </div>
+      ) : null}
 
       <section className="space-y-3">
         <div className="flex items-center justify-between gap-3">
