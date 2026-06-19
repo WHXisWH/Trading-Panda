@@ -9,7 +9,7 @@ class_name = "UserHub"
 
 [[migrations]]
 tag = "v1"
-new_classes = ["UserHub"]
+new_sqlite_classes = ["UserHub"]
 
 [vars]
 MAX_CONNECTIONS_PER_USER = "3"

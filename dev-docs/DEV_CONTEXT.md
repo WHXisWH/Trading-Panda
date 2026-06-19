@@ -2,7 +2,7 @@
 
 > 本文档以「忒修斯之船」方式持续维护：只换木板、不换整船。部署事实变更时同步更新对应段落；任何改动必须在本文末尾「§9 变更日志」追加一行。
 >
-> **最后同步**：2026-06-19（Profile 页卡片质感升级）
+> **最后同步**：2026-06-20（WebSocket Hub 部署 Cloudflare）
 
 ---
 
@@ -81,9 +81,11 @@ market-monitor/ → **Render / 任意主机**（无需 VPS DeepBook 栈）
             `PUBLISH market:tick:*`；`GET /health`；`GET /candles/{pool}`
             设计见 docs/market-monitor-design.md
 
-websocket/  → Cloudflare Workers + Durable Objects
+websocket/  → Cloudflare Workers + Durable Objects（**已部署**）
+            生产 URL：`https://trading-panda-ws.502488946.workers.dev`
+            WSS：`wss://trading-panda-ws.502488946.workers.dev/ws?token={JWT}`
             订阅 Upstash：`market:tick:*` + `panda:*`（方案甲）
-            `NEXT_PUBLIC_WS_URL`；本地 `npm run dev` :8787
+            本地 `npm run dev` :8787
 
 backend/    → Render (Web Service)
             Python 3.11 + FastAPI + uvicorn
@@ -127,7 +129,7 @@ Blockchain  → Sui Testnet（**本项目首次正式 publish**，钱包 `0xa459
 | 变量名 | 说明 |
 |--------|------|
 | `NEXT_PUBLIC_BACKEND_URL` | Python 决策引擎 URL（如 https://xxx.onrender.com） |
-| `NEXT_PUBLIC_WS_URL` | **唯一** WSS 基址（Hub：`market.tick` + 熊猫事件）；本地 `ws://127.0.0.1:8787/ws` |
+| `NEXT_PUBLIC_WS_URL` | **唯一** WSS 基址（Hub：`market.tick` + 熊猫事件）；生产 `wss://trading-panda-ws.502488946.workers.dev/ws`；本地 `ws://127.0.0.1:8787/ws` |
 | `MARKET_MONITOR_URL` | BFF 代理历史 K 线（默认 `http://localhost:8001`） |
 | `NEXT_PUBLIC_SUI_NETWORK` | testnet / mainnet |
 | `NEXT_PUBLIC_PACKAGE_ID` | Move 合约 original-id（v1；事件 lineage） |
@@ -194,8 +196,11 @@ Blockchain  → Sui Testnet（**本项目首次正式 publish**，钱包 `0xa459
 
 | 变量名 | 说明 |
 |--------|------|
+| `JWT_SECRET` | 与 frontend/backend **相同** HS256 密钥（Workers Secret） |
 | `UPSTASH_REDIS_REST_URL` | Upstash REST API 基址（与 `REDIS_URL` 指向同一数据库） |
 | `UPSTASH_REDIS_REST_TOKEN` | Upstash REST Token（Hub 使用 `@upstash/redis` 等 SDK） |
+
+生产 Worker：`trading-panda-ws` @ `502488946.workers.dev`（Account `6617b583298977bf4521bf5dfedef10b`）
 
 ---
 
@@ -582,3 +587,4 @@ Package ID：**0x595087bb3e5f6c5011585797e4eb4db513b55d39ce84f984bb357e9375c1146
 | 2026-06-19 | **指标选择器质感 + 下拉不被裁切** | `chart-indicator-*` 黑金 inset 样式；下拉改 portal 固定定位；选中项左侧光条替代白框。 | 下拉完整浮于 K 线面板之上；与 ledger 控件视觉一致。 |
 | 2026-06-19 | **Fix 首页 How it works 熊猫形象拉伸** | `PandaNftPreview` 移除 `h-[140%] w-[140%]`（与 `w-full` 冲突导致非等比）；改用 `scale-[1.12]` 放大；`PandaCanvasRenderer` canvas 增加 `object-contain`。 | Step 1 预览圆圈内熊猫比例正常；`tsc` 通过。 |
 | 2026-06-19 | **Fix Start training 误报 Feed strategy first** | `GET /panda/:id` 的 `panda_detail_dict` 补 `active_strategy_id`；前端新增 `hasActiveStrategy()`（`active_strategy_id` 或 `current_strategy`）用于 Training Ledger / Profile 门控。 | 已 Feed 且库内 Live 的策略可正常 Start training；`pytest test_panda_serializer` + `vitest hasActiveStrategy/profileCta` + `tsc` 通过。 |
+| 2026-06-20 | **WebSocket Hub 部署 Cloudflare**：`wrangler.toml` DO 迁移改为 `new_sqlite_classes`（Free plan 兼容）；上传 Workers Secrets（`JWT_SECRET` + Upstash REST）；`wrangler deploy` → `trading-panda-ws.502488946.workers.dev`；新增 `websocket/scripts/deploy.sh`。 | 生产 WSS：`wss://trading-panda-ws.502488946.workers.dev/ws?token={JWT}`；Vercel 须设 `NEXT_PUBLIC_WS_URL`；本地联调仍用 `:8787` |

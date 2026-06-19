@@ -38,13 +38,33 @@ wss://127.0.0.1:8787/ws?token={JWT}
 ## 部署
 
 ```bash
-npx wrangler secret put JWT_SECRET
-npx wrangler secret put UPSTASH_REDIS_REST_URL
-npx wrangler secret put UPSTASH_REDIS_REST_TOKEN
-npm run deploy
+# 1. 登录 Cloudflare（浏览器 OAuth）
+npx wrangler login
+
+# 2. 配置本地 secrets（与 backend 同一 Upstash + JWT_SECRET）
+cp .dev.vars.example .dev.vars
+
+# 3. 一键部署（上传 Secrets + deploy）
+bash scripts/deploy.sh
 ```
 
-将 Workers URL 填入前端 `NEXT_PUBLIC_WS_URL`（完整 `wss://` 基址，path 为 `/ws`）。
+或手动：
+
+```bash
+npx wrangler secret put JWT_SECRET --env=""
+npx wrangler secret put UPSTASH_REDIS_REST_URL --env=""
+npx wrangler secret put UPSTASH_REDIS_REST_TOKEN --env=""
+npx wrangler deploy --env=""
+```
+
+**Free plan 注意**：`wrangler.toml` 须使用 `new_sqlite_classes`（非 `new_classes`）创建 Durable Object。
+
+生产 URL（2026-06-20）：
+
+- HTTP：`https://trading-panda-ws.502488946.workers.dev`
+- WSS：`wss://trading-panda-ws.502488946.workers.dev/ws?token={JWT}`
+
+将 WSS 基址填入 Vercel `NEXT_PUBLIC_WS_URL`（path 含 `/ws`）。
 
 ## 客户端命令
 
