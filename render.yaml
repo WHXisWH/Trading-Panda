@@ -11,13 +11,21 @@ services:
       - key: REDIS_URL
         sync: false
       - key: DEEPBOOK_DATABASE_URL
-        sync: false
+        value: ""
       - key: DEEPBOOK_SERVER_URL
         value: https://deepbook-indexer.mainnet.mystenlabs.com
       - key: DEEPBOOK_NETWORK
         value: mainnet
       - key: DEEPBOOK_POOLS
-        sync: false
+        value: ""
+      - key: LAUNCH_PAIRS
+        value: SUI_USDC,DEEP_USDC,WAL_USDC,NS_USDC
+      - key: USE_PAIR_RANKING
+        value: "true"
+      - key: MAX_PUBLISH_PAIRS
+        value: "4"
+      - key: STALE_THRESHOLD_SEC
+        value: "120"
       - key: SUI_RPC_URL
         value: https://fullnode.mainnet.sui.io:443
       - key: DEEPBOOK_PACKAGE_ID
@@ -62,6 +70,8 @@ services:
         sync: false
       - key: REDIS_URL
         sync: false
+      - key: MARKET_MONITOR_URL
+        sync: false
       - key: DEEPSEEK_API_KEY
         sync: false
       - key: DEEPSEEK_BASE_URL
@@ -77,6 +87,8 @@ services:
       - key: SUI_WALLET_ADDRESS
         sync: false
       - key: PACKAGE_ID
+        sync: false
+      - key: PACKAGE_PUBLISHED_AT
         sync: false
       - key: REGISTRY_ID
         sync: false
@@ -98,5 +110,23 @@ services:
         value: "100"
       - key: MERKLE_BATCH_SIZE
         value: "50"
+      - key: MERKLE_SUBMIT_ENABLED
+        value: "true"
+      - key: SKILL_DIGEST_ENABLED
+        value: "true"
+      - key: ASYNC_JOB_WORKER_ENABLED
+        value: "true"
+      - key: ASYNC_JOB_POLL_INTERVAL_SEC
+        value: "5"
+      - key: ASYNC_JOB_BATCH_SIZE
+        value: "10"
+      - key: SKILL_RELOAD_TICK_INTERVAL
+        value: "50"
+      - key: AGENT_SIGNER_ADDRESS
+        sync: false
+      - key: AGENT_SIGNER_PRIVATE_KEY
+        sync: false
+      - key: CHAIN_PROOF_ENABLED
+        value: "false"
       - key: DEBUG
         value: "false"
