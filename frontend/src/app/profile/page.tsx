@@ -25,6 +25,7 @@ import { usePandaStore } from "@/stores/pandaStore";
 import { fetchAgentWalletStatus } from "@/services/agentWallet.service";
 import { fetchMyPandas, fetchPandaDetail } from "@/services/panda.service";
 import { formatShortAddress } from "@/lib/formatAddress";
+import { hasActiveStrategy } from "@/lib/panda/hasActiveStrategy";
 import { resolveProfilePrimaryAction } from "@/lib/profile/profileCta";
 import { safetyPath, trainingLedgerPath } from "@/lib/ui/routeJump";
 import type { AgentWalletStatusApi } from "@/types/agent-wallet";
@@ -589,7 +590,7 @@ function primaryStatusLabel(
 ): string {
   if (panda.is_trading) return "Training";
   if (!agentWallet || agentWallet.setup_state !== "ready") return "Needs wallet setup";
-  if (!detail?.active_strategy_id) return "Needs strategy";
+  if (!hasActiveStrategy(detail)) return "Needs strategy";
   return "Ready";
 }
 

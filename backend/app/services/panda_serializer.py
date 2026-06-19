@@ -72,6 +72,7 @@ async def panda_detail_dict(
         "emotion_stability": int(panda.emotion_stability),
         "is_trading": bool(panda.is_trading),
         "current_strategy": current_strategy,
+        "active_strategy_id": strategy.id if strategy is not None else None,
         "total_trades": total_trades,
         "win_rate": win_rate,
         "walrus_sync_status": panda.walrus_sync_status,

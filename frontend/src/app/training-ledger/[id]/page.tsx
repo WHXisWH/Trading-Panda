@@ -18,6 +18,7 @@ import { useMarketCandles } from "@/hooks/useMarketCandles";
 import { useToolbarMarketMetrics } from "@/hooks/useToolbarMarketMetrics";
 import { useSimulationSession } from "@/hooks/useSimulationSession";
 import { resolveAuthorizedPools, sameMarketPair } from "@/lib/market/canonicalMarketPair";
+import { hasActiveStrategy } from "@/lib/panda/hasActiveStrategy";
 import { fetchAgentWalletStatus } from "@/services/agentWallet.service";
 import { fetchPandaDetail } from "@/services/panda.service";
 import {
@@ -52,7 +53,7 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
     queryFn: () => fetchAgentWalletStatus(jwt!, pandaId),
   });
 
-  const hasStrategy = Boolean(panda?.active_strategy_id);
+  const hasStrategy = hasActiveStrategy(panda);
   const authorizedPools = useMemo(
     () => resolveAuthorizedPools(walletStatus?.policy?.allowed_pairs),
     [walletStatus?.policy?.allowed_pairs],

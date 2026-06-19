@@ -1,3 +1,4 @@
+import { hasActiveStrategy } from "@/lib/panda/hasActiveStrategy";
 import { agentWalletSetupPath, trainingLedgerPath } from "@/lib/ui/routeJump";
 import type { AgentWalletStatusApi } from "@/types/agent-wallet";
 import type { PandaDetailApi, PandaSummaryApi } from "@/types/panda";
@@ -44,7 +45,7 @@ export function resolveProfilePrimaryAction({
     };
   }
 
-  if (!pandaDetail?.active_strategy_id) {
+  if (!hasActiveStrategy(pandaDetail)) {
     return {
       kind: "feed_strategy",
       label: "Feed Strategy",

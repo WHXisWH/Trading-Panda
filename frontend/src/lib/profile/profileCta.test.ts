@@ -80,10 +80,25 @@ describe("resolveProfilePrimaryAction", () => {
     expect(action.href).toBe("/training-ledger/panda-1?feed=strategy");
   });
 
-  it("routes ready pandas with strategy to Training Ledger", () => {
+  it("routes ready pandas with active_strategy_id to Training Ledger", () => {
     const action = resolveProfilePrimaryAction({
       primaryPanda: pandaSummary,
       pandaDetail: { ...pandaDetail, active_strategy_id: "strategy-1" },
+      agentWallet: readyWallet,
+    });
+
+    expect(action.kind).toBe("continue_training");
+    expect(action.href).toBe("/training-ledger/panda-1");
+  });
+
+  it("routes ready pandas with current_strategy to Training Ledger", () => {
+    const action = resolveProfilePrimaryAction({
+      primaryPanda: pandaSummary,
+      pandaDetail: {
+        ...pandaDetail,
+        active_strategy_id: null,
+        current_strategy: { philosophy: "trend_following", proficiency: 10 },
+      },
       agentWallet: readyWallet,
     });
 
