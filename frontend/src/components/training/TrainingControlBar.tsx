@@ -24,7 +24,6 @@ interface Props {
   actorActive: boolean;
   tradeCount: number;
   wsStatus: WsConnectionStatus;
-  emotion: string | null;
   lastTickAgeSec?: number | null;
   onSpeedChange: (speed: string) => void;
   onToggleTraining: () => void;
@@ -38,15 +37,6 @@ const PHASE_LABEL: Record<SessionPhase, string> = {
   running: "Training",
   stopping: "Stopping",
   error: "Error",
-};
-
-const EMOTION_LABELS: Record<string, string> = {
-  focused: "Focused",
-  excited: "Excited",
-  greedy: "Greedy",
-  cautious: "Cautious",
-  panicking: "Panicking",
-  numb: "Numb",
 };
 
 const WS_LABELS: Record<WsConnectionStatus, { label: string; ok: boolean }> = {
@@ -155,7 +145,6 @@ export function TrainingControlBar({
   actorActive,
   tradeCount,
   wsStatus,
-  emotion,
   lastTickAgeSec,
   onSpeedChange,
   onToggleTraining,
@@ -247,11 +236,6 @@ export function TrainingControlBar({
           {isRunning && (
             <>
               <StatusChip label={`Actor ${actorActive ? "active" : "idle"}`} ok={actorActive} />
-              {emotion && (
-                <span className="rounded-full bg-product-gold/10 px-2 py-0.5 text-[10px] font-semibold text-product-gold ring-1 ring-inset ring-product-gold/28">
-                  {EMOTION_LABELS[emotion] ?? emotion}
-                </span>
-              )}
               <span className="rounded-full bg-black/25 px-2 py-0.5 font-mono text-[10px] text-product-muted ring-1 ring-inset ring-[rgba(225,186,92,0.1)]">
                 {tradeCount} trades
               </span>

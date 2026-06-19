@@ -11,11 +11,9 @@ import { DecisionTimeline } from "@/components/training/DecisionTimeline";
 import { LedgerSummaryStrip } from "@/components/training/LedgerSummaryStrip";
 import { LatestDecisionCard } from "@/components/training/LatestDecisionCard";
 import { MarketChartPanel } from "@/components/training/MarketChartPanel";
-import { PandaAgentStatus } from "@/components/training/PandaAgentStatus";
 import { PolicyGateBanner } from "@/components/training/PolicyGateBanner";
 import { TradeFactDrawer } from "@/components/training/TradeFactDrawer";
 import { TrainingControlBar } from "@/components/training/TrainingControlBar";
-import { TrainingPhaseHero } from "@/components/training/TrainingPhaseHero";
 import { FeedStrategyDrawer } from "@/components/training/FeedStrategyDrawer";
 import {
   buildTrainingPreflightItems,
@@ -34,7 +32,6 @@ import {
   fetchTradeFacts,
   fetchTrainingLedger,
 } from "@/services/training.service";
-import { fetchLatestMerkleStatus } from "@/services/trust.service";
 import type { OrderIntentApi, TradeFactApi } from "@/types/autonomous-wallet";
 import type { MarketInterval } from "@/types/ws";
 
@@ -122,13 +119,6 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
     enabled: !!jwt,
     queryFn: () => fetchTradeFacts(jwt!, pandaId),
     refetchInterval: session.isRunning ? 8000 : false,
-  });
-
-  const { data: merkleStatus } = useQuery({
-    queryKey: ["merkle-status", pandaId, jwt],
-    enabled: !!jwt,
-    queryFn: () => fetchLatestMerkleStatus(jwt!, pandaId),
-    refetchInterval: session.isRunning ? 15000 : 60000,
   });
 
   const lastTickAgeSec = market.lastTick?.timestamp
@@ -230,17 +220,6 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
         description="Watch DeepBook mainnet ticks, policy gates, and paper ledger mutations. Evidence stays in drawers."
       />
 
-      <TrainingPhaseHero
-        phase={session.phase}
-        pair={pool}
-        actorActive={session.actorActive}
-        policyVersion={ledger?.policy_version ?? session.simStatus?.policy_version}
-        marketFresh={marketFresh}
-        wsStatus={market.status}
-        policyPaused={policyPaused}
-        merkleStatus={merkleStatus}
-      />
-
       <TrainingControlBar
         pandaId={pandaId}
         phase={session.phase}
@@ -253,7 +232,6 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
         actorActive={session.actorActive}
         tradeCount={session.tradeCount}
         wsStatus={market.status}
-        emotion={session.emotion}
         lastTickAgeSec={lastTickAgeSec}
         onSpeedChange={session.setSpeed}
         onToggleTraining={handleToggleTraining}
@@ -276,8 +254,7 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
         }}
       />
 
-      <div className="grid gap-6 lg:grid-cols-[240px_1fr_280px]">
-        <PandaAgentStatus emotion={session.emotion} lastIntent={lastIntent} skillVersion={0} />
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
         <MarketChartPanel
           pandaId={pandaId}
           pool={pool}
@@ -305,7 +282,13 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
           trades={session.trades}
         />
         <div className="space-y-3">
-          <LedgerSummaryStrip ledger={ledger} equity={session.equity} initialCapital={session.initialCapital} />
+          <LedgerSummaryStrip
+            ledger={ledger}
+            equity={session.equity}
+            initialCapital={session.initialCapital}
+            lastIntent={lastIntent}
+            skillVersion={0}
+          />
           <PolicyGateBanner status={policyBanner.status} message={policyBanner.message} />
           <div className="ledger-nav-rail">
             <Link href={chainProofPath(pandaId)} className="text-[12px] font-medium text-product-green underline-offset-2 hover:underline">
