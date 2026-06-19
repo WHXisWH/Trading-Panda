@@ -8,7 +8,6 @@ import {
   type ISeriesApi,
   type CandlestickData,
   type HistogramData,
-  type LineData,
   type MouseEventParams,
   type UTCTimestamp,
   ColorType,
@@ -21,8 +20,33 @@ import { MARKET_INTERVAL_OPTIONS } from "@/lib/market/chartIntervals";
 import { tradesToChartMarkers } from "@/lib/chart/tradeMarkers";
 import { formatMarketDateTime } from "@/lib/market/formatMarketTime";
 import { useUserTimeZone } from "@/hooks/useUserTimeZone";
+import { IndicatorPicker } from "@/components/trading/IndicatorPicker";
 import { MarketChartToolbar } from "@/components/trading/MarketChartToolbar";
 import { MarketFeedStatus } from "@/components/trading/MarketFeedStatus";
+import {
+  candlesFromHistory,
+  mergeLiveBarIntoOhlc,
+  ohlcBarsFromHistory,
+  toChartTime,
+} from "@/lib/chart/candleData";
+import {
+  clearIndicatorSeries,
+  syncIndicatorSeriesOnChart,
+  type IndicatorSeriesHandle,
+} from "@/lib/chart/indicators/chartBinding";
+import { buildIndicatorLegend } from "@/lib/chart/indicators/legend";
+import {
+  DEFAULT_INDICATOR_IDS,
+  MAX_SUB_INDICATORS,
+  MAX_SUB_INDICATORS_NARROW,
+  sanitizeIndicatorSelection,
+} from "@/lib/chart/indicators/registry";
+import {
+  loadSelectedIndicators,
+  saveSelectedIndicators,
+} from "@/lib/chart/indicators/storage";
+import type { IndicatorId } from "@/lib/chart/indicators/types";
+import { useIsNarrowViewport } from "@/hooks/useIsNarrowViewport";
 import type { PoolMarketStats } from "@/lib/market/poolStats";
 import type { TradeRecordApi } from "@/types/trading";
 import type { CandlesResponse, MarketInterval, MarketTickPayload, WsConnectionStatus } from "@/types/ws";
@@ -110,34 +134,6 @@ type HoverCandle = {
   volume?: number;
 };
 
-function toChartTime(raw: number | undefined): UTCTimestamp | null {
-  if (!raw || !Number.isFinite(raw)) {
-    return null;
-  }
-  return Math.floor(raw > 1e12 ? raw / 1000 : raw) as UTCTimestamp;
-}
-
-function candlesFromHistory(history: CandlesResponse | null | undefined): CandlestickData[] {
-  if (!history?.candles?.length) {
-    return [];
-  }
-  const candles: CandlestickData[] = [];
-  for (const c of history.candles) {
-    const time = toChartTime(c.t);
-    if (time == null) {
-      continue;
-    }
-    candles.push({
-      time,
-      open: c.o,
-      high: c.h,
-      low: c.l,
-      close: c.c,
-    });
-  }
-  return candles;
-}
-
 function volumeFromHistory(history: CandlesResponse | null | undefined): HistogramData[] {
   if (!history?.candles?.length) {
     return [];
@@ -155,29 +151,6 @@ function volumeFromHistory(history: CandlesResponse | null | undefined): Histogr
     });
   }
   return volumes;
-}
-
-const MA_FAST_PERIOD = 7;
-const MA_SLOW_PERIOD = 25;
-const MA_FAST_COLOR = "#d4a017";
-const MA_SLOW_COLOR = "#4a6d8c";
-
-function maFromCandles(candles: CandlestickData[], period: number): LineData[] {
-  if (candles.length < period) {
-    return [];
-  }
-  const points: LineData[] = [];
-  let windowSum = 0;
-  for (let i = 0; i < candles.length; i += 1) {
-    windowSum += candles[i].close;
-    if (i >= period) {
-      windowSum -= candles[i - period].close;
-    }
-    if (i >= period - 1) {
-      points.push({ time: candles[i].time, value: windowSum / period });
-    }
-  }
-  return points;
 }
 
 function formatPrice(value: number | undefined): string {
@@ -279,10 +252,13 @@ export function CandlestickChart({
   const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const volumeRef = useRef<ISeriesApi<"Histogram"> | null>(null);
   const latestPriceLineRef = useRef<IPriceLine | null>(null);
-  const maFastRef = useRef<ISeriesApi<"Line"> | null>(null);
-  const maSlowRef = useRef<ISeriesApi<"Line"> | null>(null);
+  const indicatorSeriesRef = useRef<Map<string, IndicatorSeriesHandle>>(new Map());
+  const isNarrow = useIsNarrowViewport();
+  const maxSubIndicators = isNarrow ? MAX_SUB_INDICATORS_NARROW : MAX_SUB_INDICATORS;
+  const [selectedIndicators, setSelectedIndicators] = React.useState<IndicatorId[]>(
+    DEFAULT_INDICATOR_IDS,
+  );
   const [hoverCandle, setHoverCandle] = React.useState<HoverCandle | null>(null);
-  const [showMa, setShowMa] = React.useState(true);
   const rangeRef = useRef<{ oldest: number | null; newest: number | null }>({
     oldest: null,
     newest: null,
@@ -293,6 +269,24 @@ export function CandlestickChart({
   onLoadMoreRef.current = onLoadMore;
   hasMoreRef.current = hasMore;
   loadingMoreRef.current = loadingMore;
+
+  React.useEffect(() => {
+    setSelectedIndicators(loadSelectedIndicators(maxSubIndicators));
+  }, [maxSubIndicators]);
+
+  const handleIndicatorsChange = React.useCallback(
+    (next: IndicatorId[]) => {
+      const sanitized = sanitizeIndicatorSelection(next, maxSubIndicators);
+      setSelectedIndicators(sanitized);
+      saveSelectedIndicators(sanitized);
+    },
+    [maxSubIndicators],
+  );
+
+  const ohlcBars = React.useMemo(
+    () => mergeLiveBarIntoOhlc(ohlcBarsFromHistory(history), interval, lastTick),
+    [history, interval, lastTick],
+  );
 
   const displayPrice =
     toolbarLastPrice ??
@@ -391,26 +385,9 @@ export function CandlestickChart({
       scaleMargins: { top: 0.75, bottom: 0 },
     });
 
-    const maFastSeries = chart.addLineSeries({
-      color: MA_FAST_COLOR,
-      lineWidth: 1,
-      priceLineVisible: false,
-      lastValueVisible: false,
-      crosshairMarkerVisible: false,
-    });
-    const maSlowSeries = chart.addLineSeries({
-      color: MA_SLOW_COLOR,
-      lineWidth: 1,
-      priceLineVisible: false,
-      lastValueVisible: false,
-      crosshairMarkerVisible: false,
-    });
-
     const initialCandles = candlesFromHistory(history);
     candleSeries.setData(initialCandles);
     volumeSeries.setData(volumeFromHistory(history));
-    maFastSeries.setData(maFromCandles(initialCandles, MA_FAST_PERIOD));
-    maSlowSeries.setData(maFromCandles(initialCandles, MA_SLOW_PERIOD));
     chart.timeScale().fitContent();
 
     const handleCrosshair = (param: MouseEventParams) => {
@@ -452,9 +429,6 @@ export function CandlestickChart({
     chartRef.current = chart;
     seriesRef.current = candleSeries;
     volumeRef.current = volumeSeries;
-    maFastRef.current = maFastSeries;
-    maSlowRef.current = maSlowSeries;
-
     const ro = new ResizeObserver(() => {
       if (containerRef.current) {
         chart.applyOptions({
@@ -467,12 +441,11 @@ export function CandlestickChart({
     return () => {
       chart.unsubscribeCrosshairMove(handleCrosshair);
       ro.disconnect();
+      clearIndicatorSeries(chart, indicatorSeriesRef.current);
       chart.remove();
       chartRef.current = null;
       seriesRef.current = null;
       volumeRef.current = null;
-      maFastRef.current = null;
-      maSlowRef.current = null;
     };
   }, [theme]);
 
@@ -493,8 +466,6 @@ export function CandlestickChart({
     const volumes = volumeFromHistory(history);
     seriesRef.current.setData(candles);
     volumeRef.current.setData(volumes);
-    maFastRef.current?.setData(showMa ? maFromCandles(candles, MA_FAST_PERIOD) : []);
-    maSlowRef.current?.setData(showMa ? maFromCandles(candles, MA_SLOW_PERIOD) : []);
     const oldestTime = candles[0]?.time;
     const newestTime = candles[candles.length - 1]?.time;
     const oldest = typeof oldestTime === "number" ? oldestTime : null;
@@ -509,7 +480,24 @@ export function CandlestickChart({
       chartRef.current?.timeScale().fitContent();
     }
     rangeRef.current = { oldest, newest };
-  }, [history, showMa]);
+  }, [history]);
+
+  useEffect(() => {
+    const chart = chartRef.current;
+    const candleSeries = seriesRef.current;
+    const volumeSeries = volumeRef.current;
+    if (!chart || !candleSeries || !volumeSeries || ohlcBars.length === 0) {
+      return;
+    }
+    syncIndicatorSeriesOnChart(
+      chart,
+      indicatorSeriesRef.current,
+      ohlcBars,
+      selectedIndicators,
+      candleSeries,
+      volumeSeries,
+    );
+  }, [ohlcBars, selectedIndicators]);
 
   useEffect(() => {
     const candle = lastTick?.candle;
@@ -565,18 +553,10 @@ export function CandlestickChart({
     });
   }, [displayPrice]);
 
-  const maLegend = React.useMemo(() => {
-    const candles = candlesFromHistory(history);
-    const fast = maFromCandles(candles, MA_FAST_PERIOD);
-    const slow = maFromCandles(candles, MA_SLOW_PERIOD);
-    if (fast.length === 0) {
-      return null;
-    }
-    return {
-      fast: fast[fast.length - 1].value,
-      slow: slow.length > 0 ? slow[slow.length - 1].value : undefined,
-    };
-  }, [history]);
+  const indicatorLegend = React.useMemo(
+    () => buildIndicatorLegend(ohlcBars, selectedIndicators),
+    [ohlcBars, selectedIndicators],
+  );
 
   const isUp = windowChangePct >= 0;
   const hasCandles = candleCount > 0;
@@ -594,9 +574,12 @@ export function CandlestickChart({
           options={MARKET_INTERVAL_OPTIONS}
         />
       ) : null}
-      <ChartToolButton isProduct={isProduct} active={showMa} onClick={() => setShowMa((v) => !v)}>
-        MA
-      </ChartToolButton>
+      <IndicatorPicker
+        selected={selectedIndicators}
+        onChange={handleIndicatorsChange}
+        isProduct={isProduct}
+        isNarrow={isNarrow}
+      />
       <ChartToolButton isProduct={isProduct} onClick={onRefresh} disabled={historyLoading}>
         Refresh
       </ChartToolButton>
@@ -626,7 +609,7 @@ export function CandlestickChart({
             poolStats={poolStats}
             poolStatsLoading={poolStatsLoading}
           />
-          <div className="flex items-center justify-end gap-2 border-b border-product-line/60 px-3 py-1.5">
+          <div className="relative z-20 flex items-center justify-end gap-2 overflow-visible border-b border-product-line/60 px-3 py-1.5">
             {chartControls}
           </div>
         </>
@@ -705,16 +688,16 @@ export function CandlestickChart({
             {formatVolume(visibleCandle?.volume)}
           </b>
         </span>
-        {showMa && maLegend && (
-          <>
-            <span style={{ color: MA_FAST_COLOR }}>
-              MA{MA_FAST_PERIOD} <b className="font-mono">{formatPrice(maLegend.fast)}</b>
-            </span>
-            <span style={{ color: MA_SLOW_COLOR }}>
-              MA{MA_SLOW_PERIOD} <b className="font-mono">{formatPrice(maLegend.slow)}</b>
-            </span>
-          </>
-        )}
+        {indicatorLegend.map((entry) => (
+          <span key={`${entry.id}-${entry.label}`} style={{ color: entry.color }}>
+            {entry.label}{" "}
+            <b className="font-mono">
+              {entry.id === "rsi:14"
+                ? entry.value?.toFixed(1) ?? "--"
+                : formatPrice(entry.value)}
+            </b>
+          </span>
+        ))}
         <span className="ml-auto">
           DeepBook · {interval} · {candleCount} bars
           {loadingMore ? " · loading…" : hasMore ? " · scroll for more" : " · 1y max"}

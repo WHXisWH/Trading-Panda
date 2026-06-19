@@ -575,3 +575,8 @@ Package ID：**0x595087bb3e5f6c5011585797e4eb4db513b55d39ce84f984bb357e9375c1146
 | 2026-06-19 | **Fix validate/save 422 on tight order size** | `PositionSizingLayers.value` 下限从 `ge=0.01`（1%）改为 `ge=0.0001`，上限 `le=1.0`；支持 Wallet $50 / $8.5k ledger（≈0.59%）的 PATCH/validate。 | Save changes + validate 不再 FastAPI 422；`pytest test_position_sizing_accepts_wallet_tight` 通过。 |
 | 2026-06-19 | **Playbook 保存后只关详情弹窗** | `FeedStrategyPlaybookDialog` Save 成功不再调用父级 `onSaved`（避免 Training Ledger 关掉整个 Feed Strategy 抽屉）；仅 `onOpenChange(false)` 关详情 Modal。 | Save changes 后 Signal playbook 抽屉保持打开；`tsc` 通过。 |
 | 2026-06-19 | **Feed 确认弹窗 Order size 只读** | `FeedStrategyRiskBudgetFields` 新增 `readOnly`；`FeedStrategyConfirmDialog` 仅展示单笔规模，编辑留在 Playbook 详情。 | Feed Panda 确认框不再可改 Order size；超限提示引导回详情编辑；`tsc` 通过。 |
+| 2026-06-19 | **K 线多指标搜索与多选** | 新增 `IndicatorPicker` + `lib/chart/indicators` 注册表（MA7/20/25、EMA12、RSI14、MACD、BOLL）；替换原 MA 开关；overlay/sub-pane 动态布局；`localStorage` 持久化；默认仍 MA7+MA25。 | Training Ledger / Market 页 K 线可搜索多选指标；参数对齐策略/market-monitor；`vitest indicators` + `tsc` 通过。 |
+| 2026-06-19 | **Fix 子图 price scale 报错** | 子图 scale ID 改为无冒号（`sub-rsi-14`）；先 `addSeries` 再 `series.priceScale().applyOptions`，避免 `incorrect ID: sub-rsi:14`。 | 选择 RSI/MACD 子图不再抛 lightweight-charts price scale 错误。 |
+| 2026-06-19 | **指标选择器改为 tag 输入框** | `IndicatorPicker` 改为 combobox：已选指标以 tag 回填输入框内；下拉项点击切换（无 checkbox）；选中/未选中背景区分。 | K 线工具栏不再显示 Indicators 按钮+外置 chip。 |
+| 2026-06-19 | **指标可全部清空** | 移除「至少保留一个指标」限制；`sanitizeIndicatorSelection` 允许 `[]` 并持久化到 localStorage。 | 用户可取消全部 MA/RSI 等，仅看裸 K 线。 |
+| 2026-06-19 | **指标选择器质感 + 下拉不被裁切** | `chart-indicator-*` 黑金 inset 样式；下拉改 portal 固定定位；选中项左侧光条替代白框。 | 下拉完整浮于 K 线面板之上；与 ledger 控件视觉一致。 |
