@@ -9,17 +9,21 @@ interface Props {
   onSelect?: (intent: OrderIntentApi) => void;
 }
 
-function statusTone(status: OrderIntentApi["status"]): string {
-  if (status === "EXECUTED") return "text-product-green";
-  if (status === "REJECTED") return "text-product-red";
-  if (status === "SKIPPED") return "text-product-amber";
+function isHoldIntent(intent: OrderIntentApi): boolean {
+  return String(intent.side).trim().toUpperCase() === "HOLD";
+}
+
+function statusTone(intent: OrderIntentApi): string {
+  if (intent.status === "EXECUTED") return "text-product-green";
+  if (intent.status === "REJECTED") return "text-product-red";
+  if (isHoldIntent(intent) || intent.status === "SKIPPED") return "text-product-amber";
   return "text-product-muted";
 }
 
-function statusLabel(status: OrderIntentApi["status"]): string {
-  if (status === "EXECUTED") return "PAPER_EXECUTED";
-  if (status === "REJECTED") return "REJECTED_BY_POLICY";
-  if (status === "SKIPPED") return "SKIPPED";
+function statusLabel(intent: OrderIntentApi): string {
+  if (intent.status === "EXECUTED") return "PAPER_EXECUTED";
+  if (intent.status === "REJECTED") return "REJECTED_BY_POLICY";
+  if (isHoldIntent(intent) || intent.status === "SKIPPED") return "HOLD_OBSERVED";
   return "ORDER_INTENT";
 }
 
@@ -63,8 +67,8 @@ export function DecisionTimeline({ intents, selectedId, onSelect }: Props) {
                   : "—"}
               </span>
             </span>
-            <span className={clsx("font-medium", statusTone(intent.status))}>
-              {statusLabel(intent.status)}
+            <span className={clsx("font-medium", statusTone(intent))}>
+              {statusLabel(intent)}
             </span>
             <span className="font-mono text-[11px] text-product-muted">
               {intent.final_score != null ? intent.final_score.toFixed(2) : "—"}

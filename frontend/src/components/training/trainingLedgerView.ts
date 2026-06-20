@@ -181,7 +181,7 @@ function statusToneForIntent(intent: OrderIntentApi | null): LatestDecisionSumma
   if (!intent) return "default";
   if (intent.status === "EXECUTED") return "pass";
   if (intent.status === "REJECTED") return "danger";
-  if (intent.status === "SKIPPED") return "warn";
+  if (String(intent.side).trim().toUpperCase() === "HOLD" || intent.status === "SKIPPED") return "warn";
   return "default";
 }
 
@@ -189,7 +189,7 @@ function statusLabelForIntent(intent: OrderIntentApi | null): string {
   if (!intent) return "No decision";
   if (intent.status === "EXECUTED") return "Paper executed";
   if (intent.status === "REJECTED") return "Rejected";
-  if (intent.status === "SKIPPED") return "Skipped";
+  if (String(intent.side).trim().toUpperCase() === "HOLD" || intent.status === "SKIPPED") return "Holding";
   return "Decided";
 }
 

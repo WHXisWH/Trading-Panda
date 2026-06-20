@@ -82,4 +82,39 @@ describe("trainingLedgerView", () => {
     expect(summary?.tradeFactId).toBe("fact-1");
     expect(summary?.canOpenProof).toBe(true);
   });
+
+  it("summarizes a hold intent as an observable training decision", () => {
+    const summary = summarizeLatestDecision({
+      intent: {
+        id: "intent-hold",
+        panda_id: "panda-1",
+        vault_id: null,
+        policy_id: null,
+        policy_version: 4,
+        mode: "training_ledger",
+        pair: "DEEP-SUI",
+        side: "HOLD",
+        notional: 0,
+        reference_price: 2,
+        max_slippage_bps: null,
+        final_score: 0.56,
+        reason: "Below entry threshold",
+        decision_hash: "hash-hold-1234567890",
+        proof_eligible: false,
+        proof_requested: false,
+        proof_request_source: null,
+        proof_key: null,
+        status: "DECIDED",
+        rejection_reason: null,
+      },
+      tradeFact: null,
+    });
+
+    expect(summary?.title).toBe("HOLD · DEEP-SUI");
+    expect(summary?.statusLabel).toBe("Holding");
+    expect(summary?.statusTone).toBe("warn");
+    expect(summary?.scoreLabel).toBe("0.56");
+    expect(summary?.reason).toBe("Below entry threshold");
+    expect(summary?.canOpenProof).toBe(false);
+  });
 });

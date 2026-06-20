@@ -116,6 +116,17 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
     [intents, ledger?.last_order_intent, ledger?.last_trade_fact, tradeFacts],
   );
 
+  const timelineIntents = useMemo(() => {
+    const latestIntent = ledger?.last_order_intent;
+    if (!latestIntent) {
+      return intents;
+    }
+    if (intents.some((intent) => intent.id === latestIntent.id)) {
+      return intents;
+    }
+    return [latestIntent, ...intents];
+  }, [intents, ledger?.last_order_intent]);
+
   const selectedTradeFact: TradeFactApi | null = useMemo(() => {
     if (!selectedTradeFactId) {
       return null;
@@ -252,9 +263,15 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
             <p className="ledger-step-label">Evidence trail</p>
             <h2 className="mt-1 font-sans text-base font-bold text-product-text">Decision timeline</h2>
           </div>
-          {intents.length > 0 ? <span className="text-[11px] text-product-muted">{intents.length} events</span> : null}
+          {timelineIntents.length > 0 ? (
+            <span className="text-[11px] text-product-muted">{timelineIntents.length} events</span>
+          ) : null}
         </div>
-        <DecisionTimeline intents={intents} selectedId={selectedIntent?.id} onSelect={handleSelectIntent} />
+        <DecisionTimeline
+          intents={timelineIntents}
+          selectedId={selectedIntent?.id}
+          onSelect={handleSelectIntent}
+        />
       </section>
 
       <TradeFactDrawer
