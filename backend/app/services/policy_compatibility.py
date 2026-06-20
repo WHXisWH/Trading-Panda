@@ -43,8 +43,15 @@ def _normalize_pair(pair: str) -> str:
     return canonical_market_pair(pair).upper()
 
 
+def _normalize_target_pair(pair: str) -> str:
+    value = pair.strip().upper()
+    if "_" in value:
+        return canonical_market_pair(value).upper()
+    return value
+
+
 def _launch_pair_defaults() -> list[str]:
-    return [_normalize_pair(p) for p in configured_launch_pairs()]
+    return [_normalize_target_pair(p) for p in configured_launch_pairs()]
 
 
 def resolve_target_pairs(
@@ -53,9 +60,9 @@ def resolve_target_pairs(
     fallback_pairs: list[str] | None = None,
 ) -> list[str]:
     if parsed.target_pairs:
-        return [_normalize_pair(p) for p in parsed.target_pairs]
+        return [_normalize_target_pair(p) for p in parsed.target_pairs]
     if fallback_pairs:
-        return [_normalize_pair(p) for p in fallback_pairs]
+        return [_normalize_target_pair(p) for p in fallback_pairs]
     return _launch_pair_defaults()
 
 
@@ -92,8 +99,8 @@ async def load_panda_fallback_pairs(db: AsyncSession, panda_id: str) -> list[str
     result = await db.execute(select(Panda.subscribed_pools).where(Panda.id == panda_id))
     pools = result.scalar_one_or_none()
     if isinstance(pools, list) and pools:
-        return [_normalize_pair(str(p)) for p in pools]
-    return [_normalize_pair(pair) for pair in await resolve_launch_pairs()]
+        return [_normalize_target_pair(str(p)) for p in pools]
+    return [_normalize_target_pair(pair) for pair in await resolve_launch_pairs()]
 
 
 def check_policy_compatibility(
@@ -114,8 +121,8 @@ def check_policy_compatibility(
             summary="No active TradingPolicy mirror — strategy guides decisions only after Agent Wallet setup.",
         )
 
-    allowed_set = set(policy.allowed_pairs)
-    blocked = [p for p in target_pairs if p not in allowed_set]
+    allowed_set = {_normalize_pair(p) for p in policy.allowed_pairs}
+    blocked = [p for p in target_pairs if _normalize_pair(p) not in allowed_set]
     conflicts: list[PolicyConflictDetail] = []
 
     for pair in blocked:

@@ -1,4 +1,6 @@
 """TradingPanda Decision Engine — FastAPI entry point"""
+import asyncio
+import logging
 import os
 from contextlib import asynccontextmanager
 import uvicorn
@@ -7,6 +9,28 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.router import api_router
 from app.config import settings
+
+logger = logging.getLogger(__name__)
+
+
+async def _start_runtime_services() -> None:
+    from app.engine.actor_manager import actor_manager
+    from app.workers.job_runner import job_runner
+
+    try:
+        await actor_manager.startup()
+    except Exception as exc:
+        logger.exception("Actor runtime startup failed; /health remains available: %s", exc)
+
+    try:
+        await actor_manager.recover_running_simulations()
+    except Exception as exc:
+        logger.exception("Running simulation recovery failed: %s", exc)
+
+    try:
+        await job_runner.start()
+    except Exception as exc:
+        logger.exception("Async job runner startup failed: %s", exc)
 
 
 @asynccontextmanager
@@ -17,11 +41,19 @@ async def lifespan(app: FastAPI):
     from app.workers.job_runner import job_runner
 
     db_engine = get_engine()
-    await actor_manager.startup()
-    await job_runner.start()
+    runtime_task = asyncio.create_task(
+        _start_runtime_services(),
+        name="runtime-services-startup",
+    )
 
     yield
 
+    if not runtime_task.done():
+        runtime_task.cancel()
+        try:
+            await runtime_task
+        except asyncio.CancelledError:
+            pass
     await job_runner.stop()
     await actor_manager.shutdown()
     if db_engine is not None:
@@ -59,8 +91,11 @@ async def health():
         db_status = "not configured"
     else:
         try:
-            async with engine.connect() as conn:
-                await conn.execute(text("SELECT 1"))
+            async def _ping_db() -> None:
+                async with engine.connect() as conn:
+                    await conn.execute(text("SELECT 1"))
+
+            await asyncio.wait_for(_ping_db(), timeout=1.5)
             db_status = "connected"
         except Exception:
             db_status = "error"

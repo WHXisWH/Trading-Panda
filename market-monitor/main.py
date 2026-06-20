@@ -1,5 +1,6 @@
 """Market Monitor — DeepBook mainnet indexer (HTTP ± optional PG) → Redis market:tick:*"""
 
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 from typing import Any, AsyncIterator
@@ -19,13 +20,9 @@ logger = logging.getLogger(__name__)
 monitor: MarketMonitorService | None = None
 
 
-@asynccontextmanager
-async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
-    global monitor
-    settings = get_settings()
-    monitor = MarketMonitorService(settings)
+async def _start_monitor(service: MarketMonitorService, settings) -> None:
     try:
-        await monitor.start()
+        await service.start()
         logger.info(
             "Market monitor started pg=%s deepbook=%s poll=%ss",
             bool(settings.deepbook_database_url),
@@ -34,7 +31,24 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         )
     except Exception:
         logger.exception("Market monitor failed to start — /health still available")
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    global monitor
+    settings = get_settings()
+    monitor = MarketMonitorService(settings)
+    startup_task = asyncio.create_task(
+        _start_monitor(monitor, settings),
+        name="market-monitor-startup",
+    )
     yield
+    if not startup_task.done():
+        startup_task.cancel()
+        try:
+            await startup_task
+        except asyncio.CancelledError:
+            pass
     if monitor is not None:
         await monitor.stop()
     monitor = None

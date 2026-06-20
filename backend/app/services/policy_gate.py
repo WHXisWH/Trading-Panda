@@ -77,7 +77,8 @@ class PolicyGate:
             )
 
         normalized_pair = _normalize_pair(pair)
-        if normalized_pair not in set(policy.allowed_pairs):
+        allowed_pairs = {_normalize_pair(allowed_pair) for allowed_pair in policy.allowed_pairs}
+        if normalized_pair not in allowed_pairs:
             return PolicyGateResult(
                 passed=False,
                 rejection_code="POLICY_PAIR_NOT_ALLOWED",

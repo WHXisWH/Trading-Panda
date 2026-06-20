@@ -6,7 +6,8 @@ import asyncio
 import logging
 
 from app.config import settings
-from app.db.database import AsyncSessionLocal, ensure_engine
+import app.db.database as database
+from app.db.database import ensure_engine
 from app.workers.queue_dispatcher import process_pending_jobs
 
 logger = logging.getLogger(__name__)
@@ -21,7 +22,7 @@ class AsyncJobRunner:
         if not settings.async_job_worker_enabled:
             return
         ensure_engine()
-        if AsyncSessionLocal is None:
+        if database.AsyncSessionLocal is None:
             logger.warning("Async job runner skipped — DATABASE_URL not configured")
             return
         self._stop.clear()
@@ -45,7 +46,7 @@ class AsyncJobRunner:
         interval = max(1, int(settings.async_job_poll_interval_sec))
         while not self._stop.is_set():
             try:
-                async with AsyncSessionLocal() as session:  # type: ignore[misc]
+                async with database.AsyncSessionLocal() as session:
                     outcomes = await process_pending_jobs(
                         session,
                         limit=settings.async_job_batch_size,

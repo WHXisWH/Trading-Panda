@@ -39,6 +39,16 @@ def _execute_result() -> DecisionResult:
     )
 
 
+def test_accepts_asset_matches_canonical_pair_not_every_base_asset():
+    actor = PandaActor("panda-1", "sim-1", "normal", publisher=None, seed=1)
+    actor.state.subscribed_assets = ["DEEP-SUI"]
+
+    assert actor.accepts_asset("DEEP/SUI") is True
+    assert actor.accepts_asset("DEEP-SUI") is True
+    assert actor.accepts_asset("DEEP") is False
+    assert actor.accepts_asset("SUI-USDC") is False
+
+
 @pytest.mark.asyncio
 async def test_entry_delay_executes_cached_result_without_rerunning_pipeline():
     actor = PandaActor("panda-1", "sim-1", "normal", publisher=None, seed=1)

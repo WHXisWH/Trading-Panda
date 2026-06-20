@@ -10,7 +10,8 @@ from typing import Any
 from sqlalchemy import select, update
 
 from app.config import settings
-from app.db.database import AsyncSessionLocal, ensure_engine
+import app.db.database as database
+from app.db.database import ensure_engine
 from app.db.models import EmotionLog, Panda, PandaVault, TradingPolicy
 from app.services.policy_compatibility import PolicyMirror, policy_mirror_from_row
 from app.services.trade_fact_writer import TradeFactWriter
@@ -23,6 +24,7 @@ from app.engine.panda_loader import load_actor_context, load_skill_memories
 from app.engine.social_signal import derive_social_signal
 from app.engine.strategy_ghost import GhostManager
 from app.integrations.deepseek import agent_coordinator
+from app.services.market_pairs import canonical_market_pair
 
 logger = logging.getLogger(__name__)
 
@@ -81,9 +83,9 @@ class PandaActor:
 
     async def hydrate(self) -> bool:
         ensure_engine()
-        if AsyncSessionLocal is None:
+        if database.AsyncSessionLocal is None:
             return False
-        async with AsyncSessionLocal() as session:
+        async with database.AsyncSessionLocal() as session:
             ctx = await load_actor_context(session, self.state.panda_id)
             panda_row = await session.get(Panda, self.state.panda_id)
             if panda_row and panda_row.active_policy_id:
@@ -104,6 +106,9 @@ class PandaActor:
                     )
         if ctx is None:
             return False
+        if ctx.get("strategy_id") is None:
+            logger.warning("Actor hydrate failed for %s — no active strategy", self.state.panda_id)
+            return False
         self.state.personality = ctx["personality"]
         self.state.active_strategy = ctx["strategy"]
         self.state.experience = ctx["experience"]
@@ -121,7 +126,13 @@ class PandaActor:
     def accepts_asset(self, asset: str) -> bool:
         if not self.state.subscribed_assets:
             return True
-        return asset in self.state.subscribed_assets
+        normalized = canonical_market_pair(asset).upper()
+        subscribed = {canonical_market_pair(item).upper() for item in self.state.subscribed_assets}
+        if normalized in subscribed:
+            return True
+        if "-" not in normalized:
+            return normalized in {item for item in subscribed if "-" not in item}
+        return False
 
     def subscribe_asset(self, asset: str) -> None:
         max_assets = 1 + int(self.state.personality.get("focus", 50)) // 25
@@ -143,7 +154,9 @@ class PandaActor:
 
     async def run(self) -> None:
         self._running = True
-        await self.hydrate()
+        if not self.state.active_strategy and not await self.hydrate():
+            self._running = False
+            return
         while self._running:
             try:
                 event = await asyncio.wait_for(self._tick_queue.get(), timeout=60.0)
@@ -308,7 +321,7 @@ class PandaActor:
 
     async def _persist_hold_intent(self, event: MarketEvent, result: DecisionResult) -> None:
         ensure_engine()
-        if AsyncSessionLocal is None:
+        if database.AsyncSessionLocal is None:
             return
         hold_result = DecisionResult(
             final_score=result.final_score,
@@ -322,7 +335,7 @@ class PandaActor:
             emotion_stoploss_mod=result.emotion_stoploss_mod,
             signal_direction=0,
         )
-        async with AsyncSessionLocal() as session:
+        async with database.AsyncSessionLocal() as session:
             commit = await self._trade_writer.commit_tick(
                 session,
                 panda_id=self.state.panda_id,
@@ -347,10 +360,10 @@ class PandaActor:
         position_pct, stop_loss = self._position_sizing(result)
 
         ensure_engine()
-        if AsyncSessionLocal is None:
+        if database.AsyncSessionLocal is None:
             return
 
-        async with AsyncSessionLocal() as session:
+        async with database.AsyncSessionLocal() as session:
             commit = await self._trade_writer.commit_tick(
                 session,
                 panda_id=self.state.panda_id,
@@ -422,8 +435,8 @@ class PandaActor:
 
         if commit.executed and commit.trade_fact_payload:
             ensure_engine()
-            if AsyncSessionLocal is not None:
-                async with AsyncSessionLocal() as session:
+            if database.AsyncSessionLocal is not None:
+                async with database.AsyncSessionLocal() as session:
                     await self._experience_engine.record_trade(
                         session,
                         {
@@ -463,9 +476,9 @@ class PandaActor:
             )
 
         ensure_engine()
-        if AsyncSessionLocal is None:
+        if database.AsyncSessionLocal is None:
             return
-        async with AsyncSessionLocal() as session:
+        async with database.AsyncSessionLocal() as session:
             await session.execute(
                 update(Panda)
                 .where(Panda.id == self.state.panda_id)
@@ -488,11 +501,11 @@ class PandaActor:
         from app.workers.merkle_worker import enqueue_merkle_batch_job
 
         ensure_engine()
-        if AsyncSessionLocal is None:
+        if database.AsyncSessionLocal is None:
             return
         batch_index = self.state.trade_count // settings.merkle_batch_size
         try:
-            async with AsyncSessionLocal() as session:
+            async with database.AsyncSessionLocal() as session:
                 await enqueue_merkle_batch_job(
                     session,
                     panda_id=self.state.panda_id,
@@ -511,10 +524,10 @@ class PandaActor:
 
     async def _reload_skill_memories(self) -> None:
         ensure_engine()
-        if AsyncSessionLocal is None:
+        if database.AsyncSessionLocal is None:
             return
         try:
-            async with AsyncSessionLocal() as session:
+            async with database.AsyncSessionLocal() as session:
                 memories = await load_skill_memories(session, self.state.panda_id)
             if memories:
                 self.state.skill_memories = memories

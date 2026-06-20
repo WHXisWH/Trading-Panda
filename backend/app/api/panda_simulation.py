@@ -24,7 +24,7 @@ from app.engine.actor_manager import actor_manager
 from app.schemas.common import error, success
 from app.schemas.errors import ApiError, ApiErrorCode
 from app.services.agent_wallet import require_active_wallet, resolve_training_budget
-from app.services.pool_catalog import MVP_POOLS, normalize_subscribed_pools
+from app.services.pool_catalog import normalize_subscribed_pools
 
 router = APIRouter()
 
@@ -107,7 +107,7 @@ async def start_simulation(
             content=error(ApiErrorCode.SIM_ALREADY_RUNNING.value, "Simulation already running"),
         )
 
-    pools = [p for p in body.subscribed_pools if p in MVP_POOLS]
+    pools = normalize_subscribed_pools(body.subscribed_pools)
     if not pools:
         pools = normalize_subscribed_pools(panda.subscribed_pools)
     panda.subscribed_pools = pools
@@ -214,6 +214,14 @@ async def simulation_status(
     )
     sim = result.scalar_one_or_none()
     actor_state = await actor_manager.get_state(panda.id)
+    if sim is not None and actor_state is None:
+        recovered = await actor_manager.reconcile_running_simulation(panda, sim)
+        if recovered:
+            await db.commit()
+            actor_state = await actor_manager.get_state(panda.id)
+        else:
+            await db.commit()
+            sim = None
     vault_budget = await resolve_training_budget(panda.id, db)
     initial_capital = float(sim.initial_capital) if sim else vault_budget
 

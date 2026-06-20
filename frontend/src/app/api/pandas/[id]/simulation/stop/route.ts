@@ -7,8 +7,7 @@ export async function POST(
 ) {
   return proxyBackend(req, {
     method: "POST",
-    backendPath: `engine/actors/${params.id}/stop`,
-    body: { panda_id: params.id },
-    useInternalKey: true,
+    backendPath: `panda/${params.id}/simulation/stop`,
+    body: {},
   });
 }

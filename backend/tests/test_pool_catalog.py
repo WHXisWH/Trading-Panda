@@ -2,14 +2,14 @@ from app.services.pool_catalog import max_pools_for_focus, normalize_subscribed_
 
 
 def test_normalize_subscribed_pools_default() -> None:
-    assert normalize_subscribed_pools(None) == ["DEEP/SUI"]
-    assert normalize_subscribed_pools([]) == ["DEEP/SUI"]
+    assert normalize_subscribed_pools(None) == ["DEEP-SUI"]
+    assert normalize_subscribed_pools([]) == ["DEEP-SUI"]
 
 
 def test_normalize_subscribed_pools_filters_invalid() -> None:
-    assert normalize_subscribed_pools(["DEEP/SUI", "INVALID", "SUI/DBUSDC"]) == [
-        "DEEP/SUI",
-        "SUI/DBUSDC",
+    assert normalize_subscribed_pools(["DEEP/SUI", "INVALID", "SUI/USDC"]) == [
+        "DEEP-SUI",
+        "SUI-USDC",
     ]
 
 
