@@ -74,10 +74,10 @@ TradingPanda 是 Sui 链上的 **AI 交易宠物养成系统**，目标是 Sui O
 frontend/   → Vercel
             Next.js 14 App Router + TypeScript
             HTTP API Gateway（Next.js API Routes）；**不承载 WebSocket**
-            项目：mooses-projects-b6ad2548/frontend
-            Production Ready：https://frontend-pjvovgnsg-mooses-projects-b6ad2548.vercel.app
-            Alias：https://frontend-mooses-projects-b6ad2548.vercel.app
-            当前 Vercel Deployment Protection/SSO 返回 HTTP 401；需在 Vercel 关闭保护后公网可访问
+            项目：mooses-projects-b6ad2548/trading-panda
+            Production Ready：https://trading-panda-864ded86e-mooses-projects-b6ad2548.vercel.app
+            Alias：https://trading-panda.vercel.app
+            Alias 公网访问 HTTP 200；immutable deployment URL 可能仍受 Vercel SSO/Protection 保护
 
 market-monitor/ → **Render / 任意主机**（无需 VPS DeepBook 栈）
             默认 Mysten 公开 Indexer HTTP（OHLCV + 盘口 + 成交量）；可选 `DEEPBOOK_DATABASE_URL` PG
@@ -143,6 +143,7 @@ Blockchain  → Sui Testnet（**本项目首次正式 publish**，钱包 `0xa459
 | `BACKEND_URL` | BFF 代理用 Python 基址（本地 `http://localhost:8000`；可与 `NEXT_PUBLIC_BACKEND_URL` 相同） |
 | `JWT_SECRET` | JWT 签发密钥（与 backend / websocket **相同** HS256，≥32 字符） |
 | `INTERNAL_SECRET` | BFF→DE 内部路由鉴权（`X-Internal-Key`，与 backend 一致） |
+| `NPM_CONFIG_REGISTRY` | Vercel production 构建固定为 `https://registry.npmjs.org/`，避免使用本地中国镜像源导致包构建差异 |
 
 ### backend/.env（不提交，参考 backend/.env.example）
 
@@ -632,3 +633,4 @@ Package ID：**0x595087bb3e5f6c5011585797e4eb4db513b55d39ce84f984bb357e9375c1146
 | 2026-06-20 | **本地环境变量同步**：按用户提供的 backend 配置更新未提交的 `backend/.env`，同步本地 `frontend/.env.local` 的 Google Client ID 与 `INTERNAL_SECRET`；`backend/.env` 继续保留本地需要的 `ADMIN_CAP_ID` 与 `DEEPBOOK_LAUNCH_PAIRS`。 | 仅本地 secret/env 文件变更，未提交；需重启 backend/frontend 后生效。注意：用户已在聊天中暴露数据库、Redis、LLM、JWT、Agent Signer 等 secret，后续生产使用前建议轮换。 |
 | 2026-06-20 | **本地 backend/frontend 重启应用新 env**：重启 `backend:8000` 与 `frontend:3001`；backend 切到用户提供的远端 DB 后自动恢复了 1 个 running simulation，已通过 authenticated stop API 停止。 | `/health` 最终返回 `db=connected`、`redis=configured`、`market_consumer.subscribed=true`、`active_actors=0`；frontend BFF `/api/leaderboard` 200。 |
 | 2026-06-20 | **新钱包 U-01~U-10 本地 E2E 续验与后端修复**：用户完成 Mint + Agent Wallet 后，针对 Panda `30ae...7488` 验证 Vault/Policy mirror；修复 `PandaActor` hydrate 不恢复 `panda_positions` 导致重启后无法 SELL；修复 Chain Proof attach 重试只按 `proof_key` 查找导致撞幂等唯一约束。 | HTTP actor 跑通 BUY→SELL 全平，Review 写入 `win/weakened`；Safety paused start 返回 `POLICY_PAUSED`；真实 Chain Proof signer 直提交 testnet 成功并记录 tx `HcXUt4fZw1vPxkvNdNZzjUSamgphny9LUb4i9E6gQY6Y`；`pytest tests/test_chain_proof_service.py tests/test_chain_execution_worker.py tests/test_agent_signer.py tests/test_panda_loader.py` 与 actor/close 定向测试通过。 |
+| 2026-06-20 | **Vercel trading-panda 环境变量修复**：确认 CLI 原先绑定到 `frontend` 项目，截图中的 `trading-panda` 项目确实为空；重新 link 到 `mooses-projects-b6ad2548/trading-panda`，补齐 production 14 个变量（含 Render backend、market-monitor、Cloudflare WSS、Sui Testnet 合约、JWT/INTERNAL sensitive），并将 `NPM_CONFIG_REGISTRY` 固定到官方 npm registry。 | `vercel env ls production` 显示变量已存在；public/BFF 变量经 `vercel env pull` 校验匹配；重新部署 `dpl_A2JKSbDiqKqFxYrrL3UUG6CmFG6E` Ready；`https://trading-panda.vercel.app` 返回 HTTP 200。 |
