@@ -51,6 +51,36 @@ const AUTONOMY_LABELS: Record<number, string> = {
   5: "让它自由发挥",
 };
 
+const MAX_LOSS_HINTS: Record<number, { title: string; description: string }> = {
+  5: {
+    title: "保守训练",
+    description: "熊猫会优先保护本金，减少冲动入场。",
+  },
+  10: {
+    title: "平衡风险",
+    description: "适合作为默认训练强度，给策略留出试错空间。",
+  },
+  20: {
+    title: "进取训练",
+    description: "允许更大的波动，熊猫会更愿意执行高分信号。",
+  },
+  30: {
+    title: "高风险探索",
+    description: "更像压力测试，适合熟悉策略边界后再使用。",
+  },
+};
+
+function surveyOptionClass(isSelected: boolean, className?: string): string {
+  return clsx(
+    "rounded-lg border text-product-text transition duration-150",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-product-green/35 focus-visible:ring-offset-0",
+    isSelected
+      ? "border-product-green/70 bg-product-green/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_0_24px_rgba(109,255,144,0.16)]"
+      : "border-product-line bg-white/[0.025] hover:border-product-green/45 hover:bg-product-green/[0.06]",
+    className,
+  );
+}
+
 type Answers = {
   trading_exp: OnboardingSurveySubmit["trading_exp"] | null;
   style: OnboardingSurveySubmit["style"];
@@ -176,10 +206,8 @@ export default function OnboardingPage() {
                       }))
                     }
                     className={clsx(
-                      "rounded-lg border px-4 py-3 text-left text-[14px] transition",
-                      answers.trading_exp === opt.value
-                        ? "border-primary-600 bg-primary-50 scale-[1.02]"
-                        : "border-neutral-200 hover:border-primary-500",
+                      surveyOptionClass(answers.trading_exp === opt.value),
+                      "px-4 py-3 text-left text-[14px]",
                     )}
                   >
                     {opt.label}
@@ -209,10 +237,8 @@ export default function OnboardingPage() {
                         }))
                       }
                       className={clsx(
-                        "rounded-lg border px-3 py-2 text-[13px] transition",
-                        on
-                          ? "border-primary-600 bg-primary-50"
-                          : "border-neutral-200",
+                        surveyOptionClass(on),
+                        "px-3 py-2 text-[13px]",
                       )}
                     >
                       {opt.label}
@@ -235,19 +261,22 @@ export default function OnboardingPage() {
                     type="button"
                     onClick={() => setAnswers((a) => ({ ...a, max_loss: pct }))}
                     className={clsx(
-                      "min-w-[64px] rounded-lg border px-4 py-2 text-[14px]",
-                      answers.max_loss === pct
-                        ? "border-primary-600 bg-primary-600 text-white"
-                        : "border-neutral-200",
+                      surveyOptionClass(answers.max_loss === pct),
+                      "min-w-[64px] px-4 py-2 text-[14px]",
                     )}
                   >
                     {pct}%
                   </button>
                 ))}
               </div>
-              <p className="text-center text-2xl" aria-hidden>
-                {answers.max_loss <= 10 ? "👍" : answers.max_loss >= 20 ? "😰" : "🐼"}
-              </p>
+              <div className="rounded-xl border border-product-line bg-white/[0.035] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+                <p className="text-[13px] font-semibold text-product-text">
+                  {MAX_LOSS_HINTS[answers.max_loss].title}
+                </p>
+                <p className="mt-1 text-[12px] leading-relaxed text-product-muted">
+                  {MAX_LOSS_HINTS[answers.max_loss].description}
+                </p>
+              </div>
             </section>
           )}
 
@@ -271,8 +300,8 @@ export default function OnboardingPage() {
                         }))
                       }
                       className={clsx(
-                        "rounded-lg border px-3 py-2 text-[13px]",
-                        on ? "border-primary-600 bg-primary-50" : "border-neutral-200",
+                        surveyOptionClass(on),
+                        "px-3 py-2 text-[13px]",
                       )}
                     >
                       {opt.label}

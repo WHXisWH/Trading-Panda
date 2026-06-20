@@ -57,12 +57,6 @@ class EventPublisher:
             {"event": "execution", "payload": payload},
         )
 
-    async def publish_review(self, panda_id: str, payload: dict[str, Any]) -> None:
-        await self.publish(
-            f"panda:{panda_id}:review",
-            {"event": "review", "payload": payload},
-        )
-
     async def publish_policy_rejected(self, panda_id: str, payload: dict[str, Any]) -> None:
         await self.publish(
             f"panda:{panda_id}:policy",

@@ -39,6 +39,7 @@ export default function MintPage() {
     pendingRegistration,
     reset,
     revealedStats,
+    networkMismatch,
     isSuccess,
     isPendingChain,
   } = useMintPanda(jwt);
@@ -133,6 +134,11 @@ export default function MintPage() {
 
           {(effectiveStatus === "idle" || effectiveStatus === "error") && jwt && (
             <>
+              {networkMismatch && (
+                <p className="max-w-sm text-center text-[12px] leading-snug text-amber-300">
+                  Switch your wallet to Sui Testnet before minting.
+                </p>
+              )}
               {pendingRegistration && effectiveStatus === "error" ? (
                 <Button
                   size="lg"

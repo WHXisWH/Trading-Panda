@@ -24,6 +24,7 @@ import { mintResultFromApi, type MintResult } from "@/types/panda";
 import { statsFromPanda } from "@/utils/pandaHelper";
 import type { PandaStats } from "@/utils/pandaHelper";
 import { useZkLoginWallet } from "@/hooks/useZkLoginWallet";
+import { isAccountOnAppNetwork, networkMismatchHint } from "@/lib/sui/network";
 
 export type MintStatus =
   | "idle"
@@ -43,6 +44,7 @@ export function useMintPanda(jwt: string | null) {
   };
 
   const hasChainSigner = !!account || zkLoginWallet.isReady;
+  const networkMismatch = !!account && !isAccountOnAppNetwork(account);
 
   const [status, setStatus] = useState<MintStatus>("idle");
   const [signModalOpen, setSignModalOpen] = useState(false);
@@ -95,6 +97,12 @@ export function useMintPanda(jwt: string | null) {
         setStatus("error");
         return;
       }
+      if (networkMismatch) {
+        setErrorMessage(networkMismatchHint());
+        setErrorKind("network_mismatch");
+        setStatus("error");
+        return;
+      }
 
       setErrorMessage(null);
       setErrorKind(null);
@@ -143,6 +151,7 @@ export function useMintPanda(jwt: string | null) {
       account,
       hasChainSigner,
       jwt,
+      networkMismatch,
       registerOnBackend,
       signAndExecute,
       suiClient,
@@ -213,6 +222,7 @@ export function useMintPanda(jwt: string | null) {
     retryRegistration,
     reset,
     revealedStats,
+    networkMismatch,
     isSuccess: status === "success",
     isPendingChain:
       status === "signing" || status === "minting" || status === "registering",

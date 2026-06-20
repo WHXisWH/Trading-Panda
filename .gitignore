@@ -3,6 +3,9 @@
 .env.local
 .env.*.local
 backend/.env
+market-monitor/.env
+frontend/.env.local
+websocket/.dev.vars
 # keep examples
 !.env.example
 !backend/.env.example
@@ -25,6 +28,7 @@ __pycache__/
 backend/__pycache__/
 backend/**/__pycache__/
 .venv/
+.venv-local/
 backend/.venv/
 venv/
 *.egg-info/

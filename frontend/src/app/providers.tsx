@@ -17,6 +17,7 @@ import {
 
 const SUI_NETWORK =
   (process.env.NEXT_PUBLIC_SUI_NETWORK as "testnet" | "mainnet") ?? "testnet";
+const ENABLE_STASHED_WALLET = process.env.NEXT_PUBLIC_ENABLE_STASHED_WALLET === "true";
 
 /** Prefer official Sui Wallet / Slush over Suiet for personal-message login. */
 const PREFERRED_WALLETS = ["Sui Wallet", "Slush"];
@@ -46,7 +47,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
           autoConnect={false}
           preferredWallets={PREFERRED_WALLETS}
           walletFilter={isLoginCompatibleWallet}
-          stashedWallet={{ name: "TradingPanda", network: SUI_NETWORK }}
+          stashedWallet={
+            ENABLE_STASHED_WALLET ? { name: "TradingPanda", network: SUI_NETWORK } : undefined
+          }
         >
           <SafeWalletAutoConnect />
           <WalletAuthSync />

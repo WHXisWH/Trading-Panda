@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import TradeReview
-from app.services.review_service import trade_fact_to_dict
+from app.services.review_service import load_trade_fact, trade_fact_to_dict
 from app.services.skill_memory_service import apply_skill_update_from_review
 
 logger = logging.getLogger(__name__)
@@ -25,10 +25,8 @@ async def process_skill_memory_job(
     if review is None:
         return {"updated": False, "reason": "review_not_found"}
 
-    from app.services.review_service import load_trade_fact
-
     fact = await load_trade_fact(session, review.panda_id, review.trade_fact_id)
-    outcome = apply_skill_update_from_review(
+    outcome = await apply_skill_update_from_review(
         session,
         review,
         trade_fact_to_dict(fact),

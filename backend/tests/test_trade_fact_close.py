@@ -32,6 +32,19 @@ def test_enrich_sell_outcome_includes_entry_and_exit_prices():
     assert outcome["realized_pnl_delta"] == 42.0
 
 
+def test_enrich_breakeven_sell_outcome_keeps_review_evidence():
+    outcome = enrich_sell_outcome(
+        side="SELL",
+        realized_delta=0.0,
+        entry_price=1.2,
+        exit_price=1.2,
+        initial_capital=10_000.0,
+    )
+    assert outcome["entry_price"] == 1.2
+    assert outcome["exit_price"] == 1.2
+    assert outcome["realized_pnl_delta"] == 0.0
+
+
 def test_apply_close_fields_sets_closed_at_and_review_status():
     fact = SimpleNamespace(
         closed_at=None,

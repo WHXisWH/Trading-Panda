@@ -45,7 +45,7 @@ export function WalletButton() {
   const clearAuth = useAuthStore((s) => s.clearAuth);
   const allowWalletAutoLogin = useAuthStore((s) => s.allowWalletAutoLogin);
   const walletAutoLoginSuppressed = useAuthStore((s) => s.walletAutoLoginSuppressed);
-  const { isLoading: walletLoginLoading, networkMismatch } = useWalletLogin();
+  const { loginWithWallet, isLoading: walletLoginLoading, networkMismatch } = useWalletLogin();
   const walletAuthPending = useWalletAuthPending();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [connectOpen, setConnectOpen] = useState(false);
@@ -210,6 +210,10 @@ export function WalletButton() {
           onClick={() => {
             resetWalletLoginState();
             allowWalletAutoLogin();
+            if (needsWalletSignIn) {
+              void loginWithWallet();
+              return;
+            }
             setConnectOpen(true);
           }}
         >

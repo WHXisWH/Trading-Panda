@@ -23,7 +23,7 @@ def enrich_sell_outcome(
     initial_capital: float,
 ) -> dict[str, Any]:
     outcome: dict[str, Any] = {"realized_pnl_delta": realized_delta}
-    if side != "SELL" or realized_delta == 0:
+    if side != "SELL":
         return outcome
     if entry_price is not None:
         outcome["entry_reference_price"] = entry_price

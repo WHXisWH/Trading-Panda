@@ -67,6 +67,18 @@ def test_verified_hypothesis_when_strong_evidence():
     assert should_update_skill(hypotheses) is True
 
 
+def test_profitable_sell_close_of_long_supports_skill_memory():
+    fact = _closed_fact(
+        side="SELL",
+        decision_snapshot={"reason": "Take profit after trend continuation", "final_score": 0.81},
+        outcome={"entry_price": 1.0, "exit_price": 1.08},
+        realized_pnl=25.0,
+    )
+    hypotheses = analyze_hypotheses(fact)
+    assert hypotheses[0]["status"] == "verified"
+    assert should_update_skill(hypotheses) is True
+
+
 def test_contradictory_evidence_weakens_hypothesis():
     fact = _closed_fact(
         side="BUY",

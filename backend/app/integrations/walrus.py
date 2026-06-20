@@ -7,13 +7,24 @@ Used for:
 Doc ref: docs/database-schema.md §6
 """
 import json
+from datetime import date, datetime
+from decimal import Decimal
+
 import httpx
 from app.config import settings
 
 
+def _json_default(value):
+    if isinstance(value, (date, datetime)):
+        return value.isoformat()
+    if isinstance(value, Decimal):
+        return float(value)
+    raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")
+
+
 async def upload_blob(data: dict) -> str:
     """Upload JSON data to Walrus, return blob_id."""
-    payload = json.dumps(data).encode()
+    payload = json.dumps(data, default=_json_default).encode()
     async with httpx.AsyncClient() as client:
         resp = await client.put(
             f"{settings.walrus_publisher_url}/v1/store",

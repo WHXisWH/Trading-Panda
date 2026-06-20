@@ -54,7 +54,8 @@ def _direction_aligned(side: str, entry: float, exit_price: float) -> bool:
     if side.upper() == "BUY":
         return exit_price > entry
     if side.upper() == "SELL":
-        return exit_price < entry
+        # MVP has no short selling; SELL closes/reduces a long position.
+        return exit_price > entry
     return False
 
 
