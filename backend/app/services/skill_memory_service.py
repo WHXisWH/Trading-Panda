@@ -7,7 +7,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import Panda, SkillMemory, SkillVersion, TradeReview
+from app.db.models import AsyncJob, Panda, SkillMemory, SkillVersion, TradeReview
 from app.services.review_logic import (
     compute_skill_hash,
     should_update_skill,
@@ -41,6 +41,46 @@ def skill_version_to_dict(row: SkillVersion) -> dict[str, Any]:
         "walrus_blob_id": row.walrus_blob_id,
         "submitted_tx_digest": row.submitted_tx_digest,
         "created_at": row.created_at.isoformat() if row.created_at else None,
+    }
+
+
+def walrus_archive_status_from_job(
+    row: SkillVersion,
+    job: AsyncJob | None,
+) -> dict[str, Any]:
+    if row.walrus_blob_id:
+        return {
+            "status": "archived",
+            "walrus_blob_id": row.walrus_blob_id,
+            "reason": None,
+            "error_message": None,
+        }
+    if job is None:
+        return {
+            "status": "not_requested",
+            "walrus_blob_id": None,
+            "reason": "archive_job_not_found",
+            "error_message": None,
+        }
+    if job.status in {"pending", "running"}:
+        return {
+            "status": "pending",
+            "walrus_blob_id": None,
+            "reason": None,
+            "error_message": None,
+        }
+    if job.status == "completed":
+        return {
+            "status": "unavailable",
+            "walrus_blob_id": None,
+            "reason": "walrus_not_configured_or_unavailable",
+            "error_message": None,
+        }
+    return {
+        "status": "failed",
+        "walrus_blob_id": None,
+        "reason": "walrus_archive_failed",
+        "error_message": job.last_error,
     }
 
 
@@ -148,7 +188,20 @@ async def get_latest_skill_version(
         .limit(1)
     )
     row = result.scalar_one_or_none()
-    return skill_version_to_dict(row) if row else None
+    if row is None:
+        return None
+    data = skill_version_to_dict(row)
+    job_result = await session.execute(
+        select(AsyncJob).where(
+            AsyncJob.idempotency_key
+            == f"walrus:skill_snapshot/{panda_id}/{row.id}"
+        )
+    )
+    data["walrus_archive"] = walrus_archive_status_from_job(
+        row,
+        job_result.scalar_one_or_none(),
+    )
+    return data
 
 
 async def list_skill_memories(

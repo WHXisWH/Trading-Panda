@@ -248,6 +248,12 @@ export interface SkillVersionApi {
   version: number;
   skill_hash: string;
   walrus_blob_id: string | null;
+  walrus_archive?: {
+    status: "archived" | "pending" | "unavailable" | "failed" | "not_requested" | string;
+    walrus_blob_id: string | null;
+    reason: string | null;
+    error_message: string | null;
+  };
   submitted_tx_digest: string | null;
   created_at: string | null;
 }

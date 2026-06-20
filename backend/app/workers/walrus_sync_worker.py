@@ -59,11 +59,26 @@ async def process_walrus_archive_job(
     panda_id = payload["panda_id"]
 
     if not _walrus_configured():
-        return {"status": "skipped", "reason": "walrus_not_configured"}
+        await _mark_panda_walrus_status(session, panda_id, "failed")
+        return {
+            "status": "skipped",
+            "reason": "walrus_not_configured",
+            "archive_type": archive_type,
+        }
 
-    if archive_type == "review_batch":
-        return await _archive_review(session, payload, upload_fn=upload_fn)
-    return await _archive_skill_snapshot(session, payload, upload_fn=upload_fn)
+    try:
+        if archive_type == "review_batch":
+            return await _archive_review(session, payload, upload_fn=upload_fn)
+        return await _archive_skill_snapshot(session, payload, upload_fn=upload_fn)
+    except Exception as exc:
+        logger.warning("Walrus archive failed for panda=%s type=%s: %s", panda_id, archive_type, exc)
+        await _mark_panda_walrus_status(session, panda_id, "failed")
+        return {
+            "status": "failed",
+            "reason": "walrus_upload_failed",
+            "archive_type": archive_type,
+            "error": str(exc),
+        }
 
 
 def _walrus_configured() -> bool:
@@ -71,6 +86,23 @@ def _walrus_configured() -> bool:
         (settings.walrus_publisher_url or "").strip()
         and (settings.walrus_aggregator_url or "").strip()
     )
+
+
+async def _mark_panda_walrus_status(
+    session: AsyncSession,
+    panda_id: str,
+    status: str,
+    *,
+    blob_id: str | None = None,
+) -> None:
+    panda = await session.get(Panda, panda_id)
+    if panda is None:
+        return
+    panda.walrus_sync_status = status
+    if blob_id:
+        panda.walrus_blob_id = blob_id
+        panda.walrus_last_synced_at = datetime.now(timezone.utc)
+    await session.flush()
 
 
 async def _archive_review(
@@ -99,11 +131,7 @@ async def _archive_review(
     }
     blob_id = await _upload(blob_payload, upload_fn=upload_fn)
 
-    panda = await session.get(Panda, review.panda_id)
-    if panda is not None:
-        panda.walrus_blob_id = blob_id
-        panda.walrus_last_synced_at = datetime.now(timezone.utc)
-        panda.walrus_sync_status = "synced"
+    await _mark_panda_walrus_status(session, review.panda_id, "synced", blob_id=blob_id)
 
     await session.flush()
     return {"status": "archived", "archive_type": "review_batch", "walrus_blob_id": blob_id}
@@ -150,6 +178,7 @@ async def _archive_skill_snapshot(
     }
     blob_id = await _upload(blob_payload, upload_fn=upload_fn)
     version_row.walrus_blob_id = blob_id
+    await _mark_panda_walrus_status(session, panda_id, "synced", blob_id=blob_id)
     await session.flush()
     return {
         "status": "archived",

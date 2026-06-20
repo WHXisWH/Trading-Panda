@@ -9,6 +9,33 @@ interface SkillMemoryVersionCardProps {
   onViewDiff?: () => void;
 }
 
+function walrusArchiveLabel(skillVersion: SkillVersionApi): {
+  label: string;
+  className: string;
+} {
+  const archive = skillVersion.walrus_archive;
+  const status = archive?.status ?? (skillVersion.walrus_blob_id ? "archived" : "pending");
+  if (status === "archived") {
+    return {
+      label: `Walrus archived ${archive?.walrus_blob_id ?? skillVersion.walrus_blob_id}`,
+      className: "border-product-green/25 bg-product-green/[0.06] text-product-green",
+    };
+  }
+  if (status === "failed" || status === "unavailable") {
+    return {
+      label:
+        status === "unavailable"
+          ? "Walrus unavailable — skill kept in PostgreSQL"
+          : "Walrus archive failed — skill kept in PostgreSQL",
+      className: "border-amber-400/25 bg-amber-400/[0.07] text-amber-300",
+    };
+  }
+  return {
+    label: "Walrus archive pending",
+    className: "border-product-line bg-black/20 text-product-muted",
+  };
+}
+
 export function SkillMemoryVersionCard({
   memory,
   skillVersion,
@@ -58,9 +85,16 @@ export function SkillMemoryVersionCard({
         </>
       ) : null}
       {skillVersion ? (
-        <p className="font-mono text-[11px] text-product-muted">
-          Digest {skillVersion.skill_hash.slice(0, 12)}…
-        </p>
+        <div className="space-y-2">
+          <p className="font-mono text-[11px] text-product-muted">
+            Digest {skillVersion.skill_hash.slice(0, 12)}…
+          </p>
+          <p
+            className={`inline-flex rounded-full border px-2.5 py-1 font-mono text-[11px] ${walrusArchiveLabel(skillVersion).className}`}
+          >
+            {walrusArchiveLabel(skillVersion).label}
+          </p>
+        </div>
       ) : null}
       {onViewDiff ? (
         <button

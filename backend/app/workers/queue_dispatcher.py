@@ -46,7 +46,11 @@ async def dispatch_job(session: AsyncSession, job: AsyncJob) -> dict[str, Any]:
             result = await process_walrus_archive_job(session, job.payload or {})
         else:
             raise ValueError(f"Unknown job type: {job.job_type}")
-        job.status = "completed"
+        if result.get("status") == "failed":
+            job.status = "failed"
+            job.last_error = result.get("error") or result.get("reason")
+        else:
+            job.status = "completed"
         return result
     except Exception as exc:
         job.status = "failed" if job.attempts >= job.max_attempts else "pending"
