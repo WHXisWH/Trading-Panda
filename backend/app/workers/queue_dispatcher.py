@@ -51,6 +51,7 @@ async def dispatch_job(session: AsyncSession, job: AsyncJob) -> dict[str, Any]:
             job.last_error = result.get("error") or result.get("reason")
         else:
             job.status = "completed"
+            job.last_error = None
         return result
     except Exception as exc:
         job.status = "failed" if job.attempts >= job.max_attempts else "pending"

@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from app.integrations.walrus import _json_default
+from app.integrations.walrus import _blob_id_from_store_response, _json_default
 from app.db.models import Panda, SkillVersion
 from app.services.skill_memory_service import walrus_archive_status_from_job
 from app.workers.walrus_sync_worker import process_walrus_archive_job
@@ -27,6 +27,17 @@ def test_walrus_json_default_serializes_review_payload_values():
 def test_walrus_json_default_rejects_unknown_objects():
     with pytest.raises(TypeError):
         json.dumps({"bad": object()}, default=_json_default)
+
+
+def test_walrus_blob_id_from_newly_created_response():
+    assert (
+        _blob_id_from_store_response({"newlyCreated": {"blobObject": {"blobId": "blob-new"}}})
+        == "blob-new"
+    )
+
+
+def test_walrus_blob_id_from_already_certified_response():
+    assert _blob_id_from_store_response({"alreadyCertified": {"blobId": "blob-old"}}) == "blob-old"
 
 
 def test_walrus_archive_status_prefers_archived_blob():

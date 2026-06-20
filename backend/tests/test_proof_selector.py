@@ -3,6 +3,7 @@
 from app.services.policy_compatibility import PolicyMirror
 from app.services.proof_selector import (
     AUTO_SCORE_THRESHOLD,
+    allowed_pairs_hash_bytes,
     compute_proof_key,
     evaluate_eligibility,
 )
@@ -50,6 +51,14 @@ def test_compute_proof_key_deterministic():
     c = compute_proof_key("fact-1", 2, "hash-a")
     assert a == b
     assert a != c
+
+
+def test_allowed_pairs_hash_matches_sorted_comma_join():
+    import hashlib
+
+    expected = hashlib.sha256("DEEP-SUI,SUI-USDC".encode()).digest()
+
+    assert allowed_pairs_hash_bytes(["SUI/USDC", "DEEP/SUI"]) == expected
 
 
 def test_auto_eligible_when_all_checks_pass():

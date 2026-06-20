@@ -10,6 +10,7 @@ from typing import Any, Callable, Awaitable
 from app.config import settings
 from app.schemas.errors import ApiError, ApiErrorCode
 from app.services.package_ids import package_id_for_move_call
+from app.services.pysui_compat import pysui_object_id, tx_digest_from_result, tx_failure_reason
 from app.services.wallet_verify import normalize_sui_address
 
 logger = logging.getLogger(__name__)
@@ -32,6 +33,7 @@ class ChainProofParams:
     proof_key: str
     proof_source: int
     policy_version: int
+    pair_hash: bytes | None = None
     trade_fact_id_hash: bytes = b""
     current_daily_loss: int = 0
 
@@ -140,6 +142,7 @@ class AgentSignerService:
 
     async def _submit_with_pysui(self, params: ChainProofParams, private_key: str) -> SubmitResult:
         from pysui import SuiConfig, SyncClient  # type: ignore[import-untyped]
+        from pysui.sui.sui_types.scalars import SuiU8, SuiU64  # type: ignore[import-untyped]
         from pysui.sui.sui_txn import SyncTransaction  # type: ignore[import-untyped]
 
         package_id = package_id_for_move_call()
@@ -154,7 +157,7 @@ class AgentSignerService:
         tx = SyncTransaction(client=client)
 
         side_code = 1 if params.side.upper() == "BUY" else 2
-        pair_hash = list(params.pair.encode("utf-8"))
+        pair_hash = list(params.pair_hash or params.pair.encode("utf-8"))
         decision_hash = list(params.decision_hash)
         proof_key_hash = list(bytes.fromhex(params.proof_key))
         trade_fact_id_hash = list(params.trade_fact_id_hash or params.proof_key[:16].encode())
@@ -162,26 +165,28 @@ class AgentSignerService:
         tx.move_call(
             target=f"{package_id}::chain_proof_executor::submit_chain_proof",
             arguments=[
-                params.vault_object_id,
-                params.policy_object_id,
+                pysui_object_id(params.vault_object_id),
+                pysui_object_id(params.policy_object_id),
                 pair_hash,
-                side_code,
-                params.notional,
-                params.reference_price,
+                SuiU8(side_code),
+                SuiU64(params.notional),
+                SuiU64(params.reference_price),
                 decision_hash,
                 proof_key_hash,
                 trade_fact_id_hash,
-                params.proof_source,
-                params.policy_version,
-                params.current_daily_loss,
-                "0x6",
+                SuiU8(params.proof_source),
+                SuiU64(params.policy_version),
+                SuiU64(params.current_daily_loss),
+                pysui_object_id("0x6"),
             ],
         )
         result = tx.execute(gas_budget="10000000")
         if not result.is_ok():
             raise RuntimeError(str(result.result_string))
+        if failure_reason := tx_failure_reason(result):
+            raise RuntimeError(failure_reason)
 
-        digest = str(result.digest)
+        digest = tx_digest_from_result(result)
         return SubmitResult(
             tx_digest=digest,
             dry_run=False,

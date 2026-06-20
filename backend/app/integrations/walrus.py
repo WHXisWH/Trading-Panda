@@ -27,22 +27,27 @@ async def upload_blob(data: dict) -> str:
     payload = json.dumps(data, default=_json_default).encode()
     async with httpx.AsyncClient() as client:
         resp = await client.put(
-            f"{settings.walrus_publisher_url}/v1/store",
+            f"{settings.walrus_publisher_url}/v1/blobs",
             content=payload,
             headers={"Content-Type": "application/json"},
             timeout=30.0,
         )
         resp.raise_for_status()
-        result = resp.json()
-        return result["newlyCreated"]["blobObject"]["blobId"]
+        return _blob_id_from_store_response(resp.json())
 
 
 async def download_blob(blob_id: str) -> dict:
     """Download and parse JSON blob from Walrus."""
     async with httpx.AsyncClient() as client:
         resp = await client.get(
-            f"{settings.walrus_aggregator_url}/v1/{blob_id}",
+            f"{settings.walrus_aggregator_url}/v1/blobs/{blob_id}",
             timeout=30.0,
         )
         resp.raise_for_status()
         return resp.json()
+
+
+def _blob_id_from_store_response(result: dict) -> str:
+    if "newlyCreated" in result:
+        return result["newlyCreated"]["blobObject"]["blobId"]
+    return result["alreadyCertified"]["blobId"]

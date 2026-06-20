@@ -160,6 +160,7 @@ async def apply_skill_update_from_review(
     session.add(skill_version)
 
     panda.active_skill_version = next_version
+    await session.flush()
 
     from app.db.models import TradeFact
 

@@ -6,9 +6,20 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import Panda, SkillMemory, Strategy, StrategyHistory
+from app.db.models import Panda, PandaPosition, SkillMemory, Strategy, StrategyHistory
 from app.engine.experience_engine import ExperienceEngine
 from app.engine.strategy_ghost import StrategyGhost
+from app.services.market_pairs import canonical_market_pair
+
+
+def positions_dict(rows: list[PandaPosition]) -> dict[str, float]:
+    positions: dict[str, float] = {}
+    for row in rows:
+        quantity = float(row.quantity or 0)
+        if quantity <= 0:
+            continue
+        positions[canonical_market_pair(row.pair)] = quantity
+    return positions
 
 
 async def load_actor_context(session: AsyncSession, panda_id: str) -> dict | None:
@@ -27,6 +38,10 @@ async def load_actor_context(session: AsyncSession, panda_id: str) -> dict | Non
     parsed = strategy_row.parsed_json if strategy_row else {}
     exp_engine = ExperienceEngine(panda_id)
     experience = await exp_engine.load(session)
+    position_result = await session.execute(
+        select(PandaPosition).where(PandaPosition.panda_id == panda_id)
+    )
+    positions = positions_dict(position_result.scalars().all())
 
     personality = {
         "panda_id": panda_id,
@@ -124,6 +139,7 @@ async def load_actor_context(session: AsyncSession, panda_id: str) -> dict | Non
         "max_assets": max_assets,
         "strategy_id": strategy_row.id if strategy_row else None,
         "ghosts": ghosts,
+        "positions": positions,
     }
 
 

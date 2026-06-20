@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 from app.services.agent_signer import AgentSignerService, ChainProofParams, SubmitResult
+from app.services.pysui_compat import tx_digest_from_result, tx_failure_reason
 from app.workers.chain_execution_worker import decision_hash_bytes
 
 
@@ -15,6 +16,35 @@ def test_decision_hash_bytes_hex():
 
 def test_decision_hash_bytes_plain():
     assert len(decision_hash_bytes("decision-1")) == 32
+
+
+def test_tx_digest_from_result_uses_result_data_digest():
+    class ResultData:
+        digest = "REAL_DIGEST"
+
+    class Result:
+        result_data = ResultData()
+
+    assert tx_digest_from_result(Result()) == "REAL_DIGEST"
+
+
+def test_tx_failure_reason_detects_failed_effects():
+    result = type(
+        "Result",
+        (),
+        {
+            "result_data": {
+                "effects": {
+                    "status": {
+                        "status": "failure",
+                        "error": "CommandArgumentError",
+                    }
+                }
+            }
+        },
+    )()
+
+    assert tx_failure_reason(result) == "CommandArgumentError"
 
 
 @pytest.mark.asyncio

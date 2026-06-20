@@ -43,6 +43,15 @@ def pair_hash_bytes(pair: str) -> bytes:
     return pair.encode("utf-8")
 
 
+def allowed_pairs_hash_bytes(pairs: list[str]) -> bytes:
+    normalized = sorted(
+        canonical_market_pair(pair)
+        for pair in pairs
+        if canonical_market_pair(pair)
+    )
+    return hashlib.sha256(",".join(normalized).encode()).digest()
+
+
 def proof_key_hash_bytes(proof_key: str) -> bytes:
     return bytes.fromhex(proof_key)
 

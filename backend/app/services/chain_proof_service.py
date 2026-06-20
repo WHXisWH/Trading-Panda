@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
@@ -185,22 +185,47 @@ async def attach_execution_result(
     intent: OrderIntent,
     fact: TradeFact,
 ) -> ChainExecutionLog:
-    log = ChainExecutionLog(
-        panda_id=panda_id,
-        order_intent_id=order_intent_id,
-        trade_fact_id=trade_fact_id,
-        tx_digest=submit_result.tx_digest,
-        event_type=CHAIN_PROOF_EVENT_TYPE,
-        event_payload=submit_result.event_payload or {},
-        policy_version=policy_version,
-        decision_hash=decision_hash,
-        proof_key=proof_key,
-        proof_source=proof_source,
-        manual_requested_by=manual_requested_by,
-        status="confirmed" if not submit_result.dry_run else "confirmed",
-        retryable=False,
+    existing_result = await session.execute(
+        select(ChainExecutionLog).where(
+            or_(
+                ChainExecutionLog.proof_key == proof_key,
+                and_(
+                    ChainExecutionLog.trade_fact_id == trade_fact_id,
+                    ChainExecutionLog.policy_version == policy_version,
+                    ChainExecutionLog.decision_hash == decision_hash,
+                ),
+            )
+        )
     )
-    session.add(log)
+    log = existing_result.scalar_one_or_none()
+    if log is None:
+        log = ChainExecutionLog(
+            panda_id=panda_id,
+            order_intent_id=order_intent_id,
+            trade_fact_id=trade_fact_id,
+            tx_digest=submit_result.tx_digest,
+            event_type=CHAIN_PROOF_EVENT_TYPE,
+            event_payload=submit_result.event_payload or {},
+            policy_version=policy_version,
+            decision_hash=decision_hash,
+            proof_key=proof_key,
+            proof_source=proof_source,
+            manual_requested_by=manual_requested_by,
+            status="confirmed" if not submit_result.dry_run else "confirmed",
+            retryable=False,
+        )
+        session.add(log)
+    else:
+        log.tx_digest = submit_result.tx_digest
+        log.event_type = CHAIN_PROOF_EVENT_TYPE
+        log.event_payload = submit_result.event_payload or {}
+        log.policy_version = policy_version
+        log.decision_hash = decision_hash
+        log.proof_source = proof_source
+        log.manual_requested_by = manual_requested_by
+        log.status = "confirmed"
+        log.error_message = None
+        log.retryable = False
     await session.flush()
 
     fact.proof_status = "confirmed"

@@ -113,6 +113,7 @@ class PandaActor:
         self.state.active_strategy = ctx["strategy"]
         self.state.experience = ctx["experience"]
         self.state.skill_memories = ctx.get("skill_memories") or []
+        self.state.positions = ctx.get("positions") or {}
         self.state.emotion = ctx["emotion"]
         self._ghosts = GhostManager()
         for ghost in ctx.get("ghosts") or []:

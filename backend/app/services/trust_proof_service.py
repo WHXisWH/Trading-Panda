@@ -9,6 +9,7 @@ from typing import Any, Callable, Awaitable
 
 from app.config import settings
 from app.services.package_ids import package_id_for_move_call
+from app.services.pysui_compat import pysui_object_id, tx_digest_from_result, tx_failure_reason
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +57,7 @@ class TrustProofService:
 
         private_key = (settings.sui_private_key or "").strip()
         admin_cap_id = (settings.admin_cap_id or "").strip()
-        if not private_key or not admin_cap_id or not package_id_for_move_call():
+        if not _usable_private_key(private_key) or not admin_cap_id or not package_id_for_move_call():
             return self._dry_run_merkle(params)
 
         try:
@@ -74,7 +75,7 @@ class TrustProofService:
 
         private_key = (settings.sui_private_key or "").strip()
         admin_cap_id = (settings.admin_cap_id or "").strip()
-        if not private_key or not admin_cap_id or not package_id_for_move_call():
+        if not _usable_private_key(private_key) or not admin_cap_id or not package_id_for_move_call():
             return self._dry_run_skill(params)
 
         try:
@@ -105,6 +106,7 @@ class TrustProofService:
         admin_cap_id: str,
     ) -> TrustSubmitResult:
         from pysui import SuiConfig, SyncClient  # type: ignore[import-untyped]
+        from pysui.sui.sui_types.scalars import SuiU64  # type: ignore[import-untyped]
         from pysui.sui.sui_txn import SyncTransaction  # type: ignore[import-untyped]
 
         root_bytes = bytes.fromhex(params.root_hash)
@@ -118,19 +120,21 @@ class TrustProofService:
         tx.move_call(
             target=f"{package_id}::trust_proof::submit_merkle_root",
             arguments=[
-                params.panda_object_id,
-                admin_cap_id,
+                pysui_object_id(params.panda_object_id),
+                pysui_object_id(admin_cap_id),
                 list(root_bytes),
-                params.trade_count,
-                params.start_trade_id,
-                params.end_trade_id,
-                "0x6",
+                SuiU64(params.trade_count),
+                SuiU64(params.start_trade_id),
+                SuiU64(params.end_trade_id),
+                pysui_object_id("0x6"),
             ],
         )
         result = tx.execute(gas_budget="10000000")
         if not result.is_ok():
             raise RuntimeError(str(result.result_string))
-        return TrustSubmitResult(tx_digest=str(result.digest), dry_run=False)
+        if failure_reason := tx_failure_reason(result):
+            raise RuntimeError(failure_reason)
+        return TrustSubmitResult(tx_digest=tx_digest_from_result(result), dry_run=False)
 
     async def _submit_skill_with_pysui(
         self,
@@ -139,6 +143,7 @@ class TrustProofService:
         admin_cap_id: str,
     ) -> TrustSubmitResult:
         from pysui import SuiConfig, SyncClient  # type: ignore[import-untyped]
+        from pysui.sui.sui_types.scalars import SuiU64  # type: ignore[import-untyped]
         from pysui.sui.sui_txn import SyncTransaction  # type: ignore[import-untyped]
 
         digest_bytes = _skill_hash_bytes(params.skill_hash)
@@ -150,17 +155,19 @@ class TrustProofService:
         tx.move_call(
             target=f"{package_id}::trust_proof::submit_skill_digest",
             arguments=[
-                params.panda_object_id,
-                admin_cap_id,
-                params.skill_version,
+                pysui_object_id(params.panda_object_id),
+                pysui_object_id(admin_cap_id),
+                SuiU64(params.skill_version),
                 list(digest_bytes),
-                "0x6",
+                pysui_object_id("0x6"),
             ],
         )
         result = tx.execute(gas_budget="10000000")
         if not result.is_ok():
             raise RuntimeError(str(result.result_string))
-        return TrustSubmitResult(tx_digest=str(result.digest), dry_run=False)
+        if failure_reason := tx_failure_reason(result):
+            raise RuntimeError(failure_reason)
+        return TrustSubmitResult(tx_digest=tx_digest_from_result(result), dry_run=False)
 
 
 def _skill_hash_bytes(skill_hash: str) -> bytes:
@@ -168,3 +175,8 @@ def _skill_hash_bytes(skill_hash: str) -> bytes:
     if len(normalized) == 64 and all(c in "0123456789abcdef" for c in normalized):
         return bytes.fromhex(normalized)
     return hashlib.sha256(skill_hash.encode()).digest()
+
+
+def _usable_private_key(private_key: str) -> bool:
+    normalized = private_key.strip()
+    return bool(normalized and normalized != "base64-encoded-private-key")

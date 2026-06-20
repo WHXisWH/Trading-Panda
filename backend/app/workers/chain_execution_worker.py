@@ -6,6 +6,7 @@ import hashlib
 import logging
 from typing import Any
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import ChainExecutionLog, OrderIntent, PandaVault, TradeFact, TradingPolicy
@@ -17,7 +18,7 @@ from app.services.agent_signer import (
     proof_source_to_u8,
 )
 from app.services.chain_proof_service import attach_execution_result
-from app.services.proof_selector import load_proof_context
+from app.services.proof_selector import allowed_pairs_hash_bytes, load_proof_context
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +70,7 @@ async def process_chain_proof_job(
         proof_key=proof_key,
         proof_source=proof_source_to_u8(proof_source),
         policy_version=intent.policy_version,
+        pair_hash=allowed_pairs_hash_bytes(policy_row.allowed_pairs or [fact.pair]),
     )
 
     try:
@@ -134,6 +136,19 @@ async def _record_failure(
     error_message: str,
     retryable: bool,
 ) -> ChainExecutionLog:
+    existing_result = await session.execute(
+        select(ChainExecutionLog).where(ChainExecutionLog.proof_key == proof_key)
+    )
+    existing = existing_result.scalar_one_or_none()
+    if existing is not None:
+        existing.status = "failed"
+        existing.error_message = error_message
+        existing.retryable = retryable
+        fact.proof_status = "failed"
+        fact.chain_execution_log_id = existing.id
+        await session.flush()
+        return existing
+
     log = ChainExecutionLog(
         panda_id=panda_id,
         order_intent_id=intent.id,
