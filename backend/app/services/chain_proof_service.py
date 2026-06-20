@@ -28,6 +28,12 @@ def _truncate(value: str | None, head: int = 8, tail: int = 6) -> str:
     return f"{value[:head]}…{value[-tail:]}"
 
 
+def is_dry_run_execution(tx_digest: str | None, event_payload: dict[str, Any] | None) -> bool:
+    if tx_digest and tx_digest.startswith("DRYRUN_"):
+        return True
+    return bool((event_payload or {}).get("dry_run"))
+
+
 def _job_timeline(job: AsyncJob | None, log: ChainExecutionLog | None) -> list[dict[str, Any]]:
     steps: list[dict[str, str]] = []
     if job is None and log is None:
@@ -76,6 +82,10 @@ async def get_chain_proof_status(
             select(ChainExecutionLog).where(ChainExecutionLog.proof_key == fact.proof_key)
         )
         log = result.scalar_one_or_none()
+    dry_run = is_dry_run_execution(
+        log.tx_digest if log else None,
+        log.event_payload if log else None,
+    )
 
     job: AsyncJob | None = None
     if fact.proof_key:
@@ -115,6 +125,7 @@ async def get_chain_proof_status(
         "chain_execution": {
             "id": log.id if log else None,
             "status": log.status if log else fact.proof_status,
+            "dry_run": dry_run,
             "tx_digest": log.tx_digest if log else None,
             "tx_digest_short": _truncate(log.tx_digest if log else None),
             "policy_version": log.policy_version if log else intent.policy_version,

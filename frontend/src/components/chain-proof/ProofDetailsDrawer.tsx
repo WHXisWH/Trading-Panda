@@ -33,6 +33,12 @@ export function ProofDetailsDrawer({ open, onOpenChange, status }: ProofDetailsD
           <dd className="break-all font-mono">{exec.proof_key}</dd>
         </div>
         <div>
+          <dt className="text-neutral-500">Submission mode</dt>
+          <dd className={exec.dry_run ? "text-amber-300" : "text-emerald-300"}>
+            {exec.dry_run ? "Dry-run only — no on-chain transaction" : "Real testnet transaction"}
+          </dd>
+        </div>
+        <div>
           <dt className="text-neutral-500">PandaVault</dt>
           <dd className="break-all font-mono">{objects.vault_object_id ?? "—"}</dd>
         </div>

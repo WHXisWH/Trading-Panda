@@ -165,6 +165,7 @@ export interface ChainProofStatusApi {
   chain_execution: {
     id: string | null;
     status: ChainProofStatus | string;
+    dry_run: boolean;
     tx_digest: string | null;
     tx_digest_short: string | null;
     policy_version: number | null;

@@ -33,8 +33,11 @@ export function useChainProof(
     },
     onSuccess: (data) => {
       const digest = data.status.chain_execution.tx_digest;
+      const isDryRun = data.status.chain_execution.dry_run;
       if (digest) {
-        toast.success("Chain Proof confirmed", { description: digest });
+        toast.success(isDryRun ? "Dry-run proof recorded" : "Chain Proof confirmed", {
+          description: isDryRun ? "No on-chain transaction was submitted." : digest,
+        });
       } else {
         toast.message("Proof submitted", { description: "Waiting for confirmation." });
       }

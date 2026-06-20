@@ -88,6 +88,12 @@ export default function ChainProofPageClient() {
                 ? status.agent_signer.address
                 : "Not configured on server"}
             </p>
+            {status.chain_execution.dry_run ? (
+              <p className="mt-2 text-[12px] text-amber-300/90">
+                Current result is dry-run only. Configure the Agent Signer private key for a real
+                testnet PTB.
+              </p>
+            ) : null}
           </section>
         </div>
 
