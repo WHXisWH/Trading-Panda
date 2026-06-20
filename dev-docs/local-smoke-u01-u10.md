@@ -111,3 +111,40 @@ Expected:
 - Chain Proof shows disabled, dry-run, or real tx state explicitly.
 - Safety loads current policy state.
 - `/strategy/<panda_id>` redirects to `/training-ledger/<panda_id>?feed=strategy`.
+
+## Growth Smoke: Leaderboard / Achievements / Check-in
+
+Run from `backend/` after at least one local Panda exists:
+
+```bash
+./.venv-local/bin/python scripts/smoke_growth.py \
+  --panda-id <panda_id> \
+  --frontend-url http://localhost:3001
+```
+
+This verifies:
+
+- Backend `GET /leaderboard?dimension=pnl|winrate|level`
+- Backend `GET /achievements`
+- Backend `GET/POST /checkin`
+- Frontend BFF `/api/leaderboard`, `/api/achievements`, `/api/checkin`
+
+Pass signal:
+
+```text
+GROWTH SMOKE PASSED
+```
+
+Browser spot checks:
+
+```text
+http://localhost:3001/leaderboard
+http://localhost:3001/achievements
+http://localhost:3001/profile
+```
+
+Expected:
+
+- Leaderboard shows ranked Panda rows or a clear empty state.
+- Achievements shows the catalog and `first_panda` unlocked for a wallet with a Panda.
+- Profile shows Daily Check-in, and after claiming it shows `Checked` plus a streak.
