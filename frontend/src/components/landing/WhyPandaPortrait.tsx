@@ -1,14 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import { clsx } from "clsx";
-import { PandaCanvasRenderer } from "@/components/panda/PandaCanvasRenderer";
-import type { PandaCanvasRenderOptions } from "@/lib/pandaCanvasAssets";
 import { WHY_PANDA } from "@/lib/landing/landingContent";
-
-const WHY_RENDER_OPTIONS: PandaCanvasRenderOptions = {
-  tierMode: "discrete",
-  traitOpacityMode: "solid",
-};
+import { heroPandaPortraitPath } from "@/lib/landing/heroPandaPortraits";
 
 export function WhyPandaPortrait({ className }: { className?: string }) {
   return (
@@ -19,11 +14,13 @@ export function WhyPandaPortrait({ className }: { className?: string }) {
         className,
       )}
     >
-      <PandaCanvasRenderer
-        stats={WHY_PANDA.preset.stats}
-        showBackground
-        renderOptions={WHY_RENDER_OPTIONS}
-        className="h-full w-full"
+      <Image
+        src={heroPandaPortraitPath(WHY_PANDA.id)}
+        alt={`${WHY_PANDA.name} panda portrait`}
+        width={512}
+        height={512}
+        sizes="112px"
+        className="h-full w-full object-contain"
       />
       <span className="absolute bottom-2 right-2 h-2.5 w-2.5 rounded-full bg-product-green shadow-[0_0_8px_rgba(109,255,144,0.7)] ring-2 ring-black/70" />
     </div>

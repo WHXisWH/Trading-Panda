@@ -8,10 +8,18 @@ import {
   TrainingLoopSection,
   WhySection,
 } from "@/components/landing/LandingSections";
+import { DEFAULT_HERO_PANDA_PORTRAIT } from "@/lib/landing/heroPandaPortraits";
 
 export default function LandingPage() {
   return (
-    <PageContainer variant="wide" className="pb-16 pt-2">
+    <>
+      <link
+        rel="preload"
+        as="image"
+        href={DEFAULT_HERO_PANDA_PORTRAIT}
+        type="image/webp"
+      />
+      <PageContainer variant="wide" className="pb-16 pt-2">
       <LandingHero />
       <WhySection />
       <HowItWorksSection />
@@ -26,5 +34,6 @@ export default function LandingPage() {
         </p>
       </footer>
     </PageContainer>
+    </>
   );
 }

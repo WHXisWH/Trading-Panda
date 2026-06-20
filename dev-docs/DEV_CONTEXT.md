@@ -2,7 +2,7 @@
 
 > 本文档以「忒修斯之船」方式持续维护：只换木板、不换整船。部署事实变更时同步更新对应段落；任何改动必须在本文末尾「§9 变更日志」追加一行。
 >
-> **最后同步**：2026-06-20（Vercel SSR build fix）
+> **最后同步**：2026-06-20（首页 Hero 熊猫静态肖像）
 
 ---
 
@@ -602,3 +602,6 @@ Package ID：**0x595087bb3e5f6c5011585797e4eb4db513b55d39ce84f984bb357e9375c1146
 | 2026-06-20 | **Backend health DB ping 修正** | `/health` 改为复用应用全局 SQLAlchemy engine，并将 DB ping timeout 调整为 3s。 | 避免每次 health 创建新 engine 导致短超时误报 `db:error`；训练 actor 已可恢复，health 需准确反映 DB 连通性。 |
 | 2026-06-20 | **Backend market consumer health + reconnect** | `MarketDataConsumer` 增加断线自动重连、订阅状态、last_error 与 message_count；backend `/health` 暴露 `market_consumer` 状态。 | 用于生产确认 backend 是否真正订阅 `market:tick:*`，避免只看到 Redis configured 但 actor 收不到 tick。 |
 | 2026-06-20 | **Render 部署与生产 Training 闭环验收** | 推送 `b04b80d`/`2abe7a1`/`ffebd68`/`666533b`/`733aeb1` 到 `main`，部署 backend 与 market-monitor；取消两次 Python 3.14 构建后用 rootDir `.python-version=3.12.12` 成功部署。 | 公网 backend `/health` 200：`db=connected`、`market_consumer.subscribed=true`；market-monitor `/health` 200 且 Redis connected；公网 `start → 自然 market-monitor tick → actor last_decision 更新 → stop` 成功（DEEP-SUI，stale HOLD/OBSERVE），证明 Training Ledger ↔ Agent ↔ market tick 基础闭环已通。 |
+| 2026-06-20 | **首页 Hero 熊猫预烘焙静态图（方案 B）**：抽取 `lib/pandaCanvasDraw.ts`；新增 `pnpm panda:hero:bake` → `public/assets/panda/hero/*.webp`；`PandaSpotlightCarousel` / `WhyPandaPortrait` 改 `next/image`；首页 preload `balanced.webp`。 | 慢网首屏不再出现「半只熊猫」；Carousel 切换 archetype 即时换图；Canvas 仍用于 How it works / Training loop 等交互区；`vitest heroPandaPortraits` + `tsc` 通过。 |
+| 2026-06-20 | **HyperFrames demo 脚本与分镜初稿**：在 `video-demo/` 新增 `design.md`、`SCRIPT.md`、`STORYBOARD.md` 与 `.hyperframes/expanded-prompt.md`，按现有产品页面与黑金绿视觉系统规划 4 分 32 秒 demo。 | 已固化 8 个场景、口播文案、镜头清单与素材需求；后续可直接进入 capture / composition authoring，未改动主产品代码。 |
+| 2026-06-20 | **How it works Step 1 预览熊猫静态图**：烘焙 `how-it-works-mint.webp`（无纸纹背景，对齐原 `showBackground={false}`）；`PandaNftPreview` 改 `PandaHeroPortrait`；随机生成仍更新雷达图/标签，肖像固定静态。 | Step 1 圆圈预览不再逐层加载 Canvas；`pnpm panda:hero:bake` 一并产出 5 张 landing 肖像；`vitest` + `tsc` 通过。 |

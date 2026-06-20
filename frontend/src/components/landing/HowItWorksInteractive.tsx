@@ -20,7 +20,11 @@ import {
 } from "lucide-react";
 import { clsx } from "clsx";
 import { HOW_STEPS } from "@/lib/landing/landingContent";
-import { PandaCanvasRenderer } from "@/components/panda/PandaCanvasRenderer";
+import {
+  HOW_IT_WORKS_MINT_PANDA_STATS,
+  HOW_IT_WORKS_MINT_PORTRAIT,
+} from "@/lib/landing/howItWorksMintPreview";
+import { PandaHeroPortrait } from "@/components/panda/PandaHeroPortrait";
 import type { PandaStats, PandaEmotion } from "@/utils/pandaHelper";
 
 const HOW_ICONS = [Sparkles, SlidersHorizontal, Radar, Activity, Eye, Brain] as const;
@@ -259,15 +263,7 @@ function renderPreview(index: number) {
 // --- Preview Sub-components ---
 
 function PandaNftPreview() {
-  const [stats, setStats] = useState<PandaStats>({
-    boldness: 65,
-    patience: 45,
-    intuition: 70,
-    focus: 55,
-    contrarian: 40,
-    emotion: "calm",
-    experience: 15,
-  });
+  const [stats, setStats] = useState<PandaStats>(HOW_IT_WORKS_MINT_PANDA_STATS);
 
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -308,9 +304,10 @@ function PandaNftPreview() {
           />
           {/* Panda Canvas Renderer */}
           <div className="h-full w-full overflow-hidden rounded-full bg-black/20">
-            <PandaCanvasRenderer
-              stats={stats}
-              showBackground={false}
+            <PandaHeroPortrait
+              src={HOW_IT_WORKS_MINT_PORTRAIT}
+              alt="Mint preview panda identity"
+              sizes="240px"
               className="h-full w-full max-w-none origin-center scale-[1.12] -translate-y-1"
             />
           </div>

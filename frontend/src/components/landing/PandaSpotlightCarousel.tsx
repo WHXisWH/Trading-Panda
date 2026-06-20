@@ -3,14 +3,8 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { clsx } from "clsx";
 import { ArrowRight, CircleDot, ShieldCheck, Vault } from "lucide-react";
-import { PandaCanvasRenderer } from "@/components/panda/PandaCanvasRenderer";
-import type { PandaCanvasRenderOptions } from "@/lib/pandaCanvasAssets";
+import { PandaHeroPortrait } from "@/components/panda/PandaHeroPortrait";
 import { PANDA_HERO_ARCHETYPES, type PandaArchetype } from "@/lib/landing/landingContent";
-
-const HERO_RENDER_OPTIONS: PandaCanvasRenderOptions = {
-  tierMode: "discrete",
-  traitOpacityMode: "solid",
-};
 
 function usePrefersReducedMotion(): boolean {
   const [reduced, setReduced] = useState(false);
@@ -158,11 +152,10 @@ export function PandaSpotlightCarousel() {
               <div className="absolute h-[86%] w-[86%] rounded-full border border-product-green/25 shadow-[inset_0_0_28px_rgba(109,255,144,0.08)]" />
 
               <div className="relative h-[78%] w-[78%] overflow-hidden rounded-full border border-product-gold/35 bg-[#efece3] p-2 shadow-[0_28px_90px_rgba(0,0,0,0.54)]">
-                <PandaCanvasRenderer
-                  key={activePanda.id}
-                  stats={activePanda.preset.stats}
-                  showBackground
-                  renderOptions={HERO_RENDER_OPTIONS}
+                <PandaHeroPortrait
+                  archetypeId={activePanda.id}
+                  priority
+                  alt={`${activePanda.name} panda agent portrait`}
                   className="h-full w-full max-w-none"
                 />
               </div>
@@ -208,10 +201,10 @@ export function PandaSpotlightCarousel() {
                   )}
                 >
                   <div className="mx-auto h-16 w-16 overflow-hidden rounded-full bg-[#efece3] ring-1 ring-product-gold/25">
-                    <PandaCanvasRenderer
-                      stats={panda.preset.stats}
-                      showBackground
-                      renderOptions={HERO_RENDER_OPTIONS}
+                    <PandaHeroPortrait
+                      archetypeId={panda.id}
+                      sizes="64px"
+                      alt={`${panda.name} thumbnail`}
                       className="h-full w-full max-w-none"
                     />
                   </div>
