@@ -82,9 +82,10 @@ app.include_router(api_router)
 async def health():
     from sqlalchemy import text
 
-    from app.db.database import get_engine
+    import app.db.database as database
 
-    engine = get_engine()
+    database.ensure_engine()
+    engine = database.engine
     from app.engine.actor_manager import actor_manager
 
     if engine is None:
@@ -95,7 +96,7 @@ async def health():
                 async with engine.connect() as conn:
                     await conn.execute(text("SELECT 1"))
 
-            await asyncio.wait_for(_ping_db(), timeout=1.5)
+            await asyncio.wait_for(_ping_db(), timeout=3.0)
             db_status = "connected"
         except Exception:
             db_status = "error"
