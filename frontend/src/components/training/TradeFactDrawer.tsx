@@ -23,26 +23,65 @@ function MetricRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" ? (value as Record<string, unknown>) : null;
+}
+
+function numberValue(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function formatMoney(value: unknown): string {
+  const n = numberValue(value);
+  if (n == null) return "—";
+  return `$${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+}
+
+function formatNumber(value: unknown, digits = 4): string {
+  const n = numberValue(value);
+  if (n == null) return "—";
+  return n.toLocaleString(undefined, { maximumFractionDigits: digits });
+}
+
+function formatPct(value: unknown): string {
+  const n = numberValue(value);
+  if (n == null) return "—";
+  return `${(n * 100).toFixed(2)}%`;
+}
+
+function formatPositions(value: TradeFactApi["ledger_snapshot_after"]): string {
+  const positions = value?.positions;
+  if (!positions || positions.length === 0) return "Flat";
+  return positions
+    .map((position) => `${position.asset} × ${formatNumber(position.quantity, 4)}`)
+    .join(" · ");
+}
+
 function JsonHint({ label, value }: { label: string; value?: Record<string, unknown> | null }) {
   if (!value) return null;
   const keys = Object.keys(value).slice(0, 4);
   return <MetricRow label={label} value={keys.length > 0 ? keys.join(" · ") : "—"} />;
 }
 
-export function TradeFactDrawer({ open, onOpenChange, intent, tradeFact }: Props) {
+export function TradeFactEvidenceContent({ intent, tradeFact }: Pick<Props, "intent" | "tradeFact">) {
+  const intentDecision = asRecord(intent?.decision_snapshot);
+  const tradeDecision = asRecord(tradeFact?.decision_snapshot);
+  const decision = tradeDecision ?? intentDecision;
+  const execution = asRecord(tradeFact?.execution_snapshot);
+  const policy = asRecord(tradeFact?.policy_snapshot ?? intent?.policy_snapshot);
+  const market = asRecord(tradeFact?.market_snapshot ?? intent?.market_snapshot);
   const decisionSteps =
-    tradeFact?.decision_snapshot && typeof tradeFact.decision_snapshot === "object"
-      ? (tradeFact.decision_snapshot.steps as Array<Record<string, unknown>> | undefined)
+    decision && Array.isArray(decision.steps)
+      ? (decision.steps as Array<Record<string, unknown>>)
       : undefined;
 
   return (
-    <Drawer
-      open={open}
-      onOpenChange={onOpenChange}
-      variant="product"
-      title="Trade Fact evidence"
-      description="Market, policy, and ledger evidence for the selected decision."
-    >
+    <>
       {intent ? (
         <section className="space-y-3">
           <h4 className="product-field-label">Order Intent</h4>
@@ -50,11 +89,18 @@ export function TradeFactDrawer({ open, onOpenChange, intent, tradeFact }: Props
           <MetricRow label="Pair" value={intent.pair} />
           <MetricRow label="Status" value={intent.status} />
           <MetricRow label="Final score" value={intent.final_score != null ? intent.final_score.toFixed(2) : "—"} />
-          <MetricRow label="Reference price" value={String(intent.reference_price)} />
+          <MetricRow label="Entry threshold" value={formatNumber(decision?.entry_threshold, 4)} />
+          <MetricRow label="Notional" value={formatMoney(intent.notional)} />
+          <MetricRow label="Reference price" value={formatNumber(intent.reference_price, 6)} />
+          <MetricRow label="Policy version" value={String(intent.policy_version ?? policy?.version ?? "—")} />
           <TruncatedEvidence label="Decision hash" value={intent.decision_hash} />
           {intent.rejection_reason ? <MetricRow label="Rejection" value={intent.rejection_reason} /> : null}
-          <JsonHint label="Policy snapshot" value={intent.policy_snapshot ?? null} />
-          <JsonHint label="Market snapshot" value={intent.market_snapshot ?? null} />
+          {market ? (
+            <>
+              <MetricRow label="Market RSI" value={formatNumber(market.rsi, 2)} />
+              <MetricRow label="Market regime" value={String(market.market_regime ?? "—")} />
+            </>
+          ) : null}
         </section>
       ) : (
         <p className="text-[12px] text-product-muted">Select a decision row to inspect evidence.</p>
@@ -67,18 +113,29 @@ export function TradeFactDrawer({ open, onOpenChange, intent, tradeFact }: Props
           <TruncatedEvidence label="Fact hash" value={tradeFact.fact_hash} />
           <MetricRow label="Proof status" value={tradeFact.proof_status} />
           <MetricRow label="Review status" value={tradeFact.review_status} />
-          {tradeFact.realized_pnl != null ? (
-            <MetricRow label="Realized PnL" value={tradeFact.realized_pnl.toFixed(4)} />
+          <MetricRow label="Executed notional" value={formatMoney(execution?.notional)} />
+          <MetricRow label="Executed quantity" value={formatNumber(execution?.quantity, 4)} />
+          <MetricRow label="Execution price" value={formatNumber(execution?.reference_price, 6)} />
+          <MetricRow label="Position size" value={formatPct(execution?.position_pct)} />
+          {tradeFact.realized_pnl != null ? <MetricRow label="Realized PnL" value={formatMoney(tradeFact.realized_pnl)} /> : null}
+          {tradeFact.realized_pnl_pct != null ? <MetricRow label="Realized PnL %" value={formatPct(tradeFact.realized_pnl_pct)} /> : null}
+          {tradeFact.ledger_snapshot_before ? (
+            <div className="space-y-2">
+              <p className="product-field-label">Ledger before</p>
+              <MetricRow label="Cash" value={formatMoney(tradeFact.ledger_snapshot_before.cash_balance)} />
+              <MetricRow label="Equity" value={formatMoney(tradeFact.ledger_snapshot_before.equity)} />
+              <MetricRow label="Position" value={formatPositions(tradeFact.ledger_snapshot_before)} />
+            </div>
           ) : null}
-          {tradeFact.realized_pnl_pct != null ? (
-            <MetricRow label="Realized PnL %" value={`${(tradeFact.realized_pnl_pct * 100).toFixed(2)}%`} />
+          {tradeFact.ledger_snapshot_after ? (
+            <div className="space-y-2">
+              <p className="product-field-label">Ledger after</p>
+              <MetricRow label="Cash" value={formatMoney(tradeFact.ledger_snapshot_after.cash_balance)} />
+              <MetricRow label="Equity" value={formatMoney(tradeFact.ledger_snapshot_after.equity)} />
+              <MetricRow label="Position" value={formatPositions(tradeFact.ledger_snapshot_after)} />
+            </div>
           ) : null}
-          {tradeFact.execution_snapshot ? <JsonHint label="Execution snapshot" value={tradeFact.execution_snapshot} /> : null}
-          {tradeFact.outcome ? <JsonHint label="Outcome" value={tradeFact.outcome} /> : null}
-          {tradeFact.decision_snapshot ? <JsonHint label="Decision snapshot" value={tradeFact.decision_snapshot} /> : null}
-          {tradeFact.policy_snapshot ? <JsonHint label="Policy snapshot" value={tradeFact.policy_snapshot} /> : null}
-          {tradeFact.ledger_snapshot_before ? <JsonHint label="Ledger before" value={tradeFact.ledger_snapshot_before} /> : null}
-          {tradeFact.ledger_snapshot_after ? <JsonHint label="Ledger after" value={tradeFact.ledger_snapshot_after} /> : null}
+          {tradeFact.outcome ? <JsonHint label="Outcome evidence" value={tradeFact.outcome} /> : null}
           {decisionSteps && decisionSteps.length > 0 ? (
             <div className="space-y-2">
               <p className="product-field-label">8-step reasoning</p>
@@ -110,6 +167,20 @@ export function TradeFactDrawer({ open, onOpenChange, intent, tradeFact }: Props
           ) : null}
         </section>
       ) : null}
+    </>
+  );
+}
+
+export function TradeFactDrawer({ open, onOpenChange, intent, tradeFact }: Props) {
+  return (
+    <Drawer
+      open={open}
+      onOpenChange={onOpenChange}
+      variant="product"
+      title="Trade Fact evidence"
+      description="Market, policy, and ledger evidence for the selected decision."
+    >
+      <TradeFactEvidenceContent intent={intent} tradeFact={tradeFact} />
     </Drawer>
   );
 }

@@ -128,16 +128,24 @@ export default function TrainingLedgerPage({ params }: { params: { id: string } 
   }, [intents, ledger?.last_order_intent]);
 
   const selectedTradeFact: TradeFactApi | null = useMemo(() => {
-    if (!selectedTradeFactId) {
+    if (selectedTradeFactId) {
+      return tradeFacts.find((f) => f.id === selectedTradeFactId) ?? null;
+    }
+    if (!selectedIntent) {
       return null;
     }
-    return tradeFacts.find((f) => f.id === selectedTradeFactId) ?? null;
-  }, [selectedTradeFactId, tradeFacts]);
+    return tradeFacts.find((f) => f.order_intent_id === selectedIntent.id) ?? null;
+  }, [selectedIntent, selectedTradeFactId, tradeFacts]);
 
-  const handleSelectIntent = useCallback((intent: OrderIntentApi) => {
-    setSelectedIntent(intent);
-    setDrawerOpen(true);
-  }, []);
+  const handleSelectIntent = useCallback(
+    (intent: OrderIntentApi) => {
+      const fact = tradeFacts.find((f) => f.order_intent_id === intent.id);
+      setSelectedIntent(intent);
+      setSelectedTradeFactId(fact?.id ?? null);
+      setDrawerOpen(true);
+    },
+    [tradeFacts],
+  );
 
   const handleToggleTraining = useCallback(async () => {
     if (!session.isRunning) {
