@@ -12,12 +12,12 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.db.models import OrderIntent, OutboxEvent, Trade, TradeFact
+from app.db.models import OrderIntent, OutboxEvent, PandaVault, Trade, TradeFact, TradingPolicy
 from app.engine.decision_pipeline import DecisionResult
 from app.engine.event_publisher import EventPublisher
 from app.engine.market_event import MarketEvent
 from app.services.ledger_service import LedgerService
-from app.services.policy_compatibility import PolicyMirror
+from app.services.policy_compatibility import PolicyMirror, policy_mirror_from_row
 from app.services.policy_gate import PolicyGate, PolicyGateResult
 from app.services.post_commit_hooks import after_trade_fact_committed
 from app.services.trade_fact_close import apply_close_fields, enrich_sell_outcome
@@ -70,6 +70,29 @@ class TradeFactWriter:
         self._ledger = ledger or LedgerService()
         self._gate = policy_gate or PolicyGate()
 
+    async def _fresh_policy_mirror(
+        self,
+        session: AsyncSession,
+        *,
+        policy_id: str | None,
+        vault_id: str | None,
+        fallback: PolicyMirror | None,
+    ) -> PolicyMirror | None:
+        if not policy_id:
+            return fallback
+
+        policy_row = await session.get(TradingPolicy, policy_id)
+        if policy_row is None:
+            return None
+
+        vault_row = await session.get(PandaVault, vault_id) if vault_id else None
+        from app.services.agent_wallet import is_mirror_synced
+
+        return policy_mirror_from_row(
+            policy_row,
+            mirror_synced=is_mirror_synced(vault_row, policy_row),
+        )
+
     async def commit_tick(
         self,
         session: AsyncSession,
@@ -93,6 +116,12 @@ class TradeFactWriter:
         pair = event.pair or event.asset
         side = "HOLD" if result.zone != "EXECUTE" else result.action
         reference_price = float(event.reference_price or event.price)
+        policy = await self._fresh_policy_mirror(
+            session,
+            policy_id=policy_id,
+            vault_id=vault_id,
+            fallback=policy,
+        )
         notional = 0.0
         if side in ("BUY", "SELL"):
             account = await self._ledger.get_or_create_account(
