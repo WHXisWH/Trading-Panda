@@ -106,6 +106,7 @@ async def health():
         "db": db_status,
         "redis": "configured" if settings.redis_url else "not configured",
         "active_actors": actor_manager.active_count,
+        "market_consumer": actor_manager.market_consumer_status(),
     }
 
 

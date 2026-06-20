@@ -165,5 +165,8 @@ class ActorManager:
     def active_count(self) -> int:
         return len(self._actors)
 
+    def market_consumer_status(self) -> dict:
+        return self._market_consumer.status()
+
 
 actor_manager = ActorManager()
