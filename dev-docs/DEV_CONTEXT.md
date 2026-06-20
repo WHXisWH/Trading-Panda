@@ -2,7 +2,7 @@
 
 > 本文档以「忒修斯之船」方式持续维护：只换木板、不换整船。部署事实变更时同步更新对应段落；任何改动必须在本文末尾「§9 变更日志」追加一行。
 >
-> **最后同步**：2026-06-20（WebSocket Hub 部署 Cloudflare）
+> **最后同步**：2026-06-20（Vercel SSR build fix）
 
 ---
 
@@ -74,11 +74,15 @@ TradingPanda 是 Sui 链上的 **AI 交易宠物养成系统**，目标是 Sui O
 frontend/   → Vercel
             Next.js 14 App Router + TypeScript
             HTTP API Gateway（Next.js API Routes）；**不承载 WebSocket**
-            域名：[待 Vercel 部署后填入]
+            项目：mooses-projects-b6ad2548/frontend
+            Production Ready：https://frontend-pjvovgnsg-mooses-projects-b6ad2548.vercel.app
+            Alias：https://frontend-mooses-projects-b6ad2548.vercel.app
+            当前 Vercel Deployment Protection/SSO 返回 HTTP 401；需在 Vercel 关闭保护后公网可访问
 
 market-monitor/ → **Render / 任意主机**（无需 VPS DeepBook 栈）
             默认 Mysten 公开 Indexer HTTP（OHLCV + 盘口 + 成交量）；可选 `DEEPBOOK_DATABASE_URL` PG
             `PUBLISH market:tick:*`；`GET /health`；`GET /candles/{pool}`
+            Render URL：https://trading-panda-market-monitor.onrender.com
             设计见 docs/market-monitor-design.md
 
 websocket/  → Cloudflare Workers + Durable Objects（**已部署**）
@@ -90,7 +94,7 @@ websocket/  → Cloudflare Workers + Durable Objects（**已部署**）
 backend/    → Render (Web Service)
             Python 3.11 + FastAPI + uvicorn
             端口：由 Render 注入 $PORT（本地默认 8000）
-            域名：[待 Render 部署后填入]
+            Render URL：https://trading-panda-backend.onrender.com
 
 Database    → Supabase（PostgreSQL 15+）或 Render PostgreSQL
             连接池：PgBouncer Transaction 模式（端口 6543）
@@ -588,3 +592,5 @@ Package ID：**0x595087bb3e5f6c5011585797e4eb4db513b55d39ce84f984bb357e9375c1146
 | 2026-06-19 | **Fix 首页 How it works 熊猫形象拉伸** | `PandaNftPreview` 移除 `h-[140%] w-[140%]`（与 `w-full` 冲突导致非等比）；改用 `scale-[1.12]` 放大；`PandaCanvasRenderer` canvas 增加 `object-contain`。 | Step 1 预览圆圈内熊猫比例正常；`tsc` 通过。 |
 | 2026-06-19 | **Fix Start training 误报 Feed strategy first** | `GET /panda/:id` 的 `panda_detail_dict` 补 `active_strategy_id`；前端新增 `hasActiveStrategy()`（`active_strategy_id` 或 `current_strategy`）用于 Training Ledger / Profile 门控。 | 已 Feed 且库内 Live 的策略可正常 Start training；`pytest test_panda_serializer` + `vitest hasActiveStrategy/profileCta` + `tsc` 通过。 |
 | 2026-06-20 | **WebSocket Hub 部署 Cloudflare**：`wrangler.toml` DO 迁移改为 `new_sqlite_classes`（Free plan 兼容）；上传 Workers Secrets（`JWT_SECRET` + Upstash REST）；`wrangler deploy` → `trading-panda-ws.502488946.workers.dev`；新增 `websocket/scripts/deploy.sh`。 | 生产 WSS：`wss://trading-panda-ws.502488946.workers.dev/ws?token={JWT}`；Vercel 须设 `NEXT_PUBLIC_WS_URL`；本地联调仍用 `:8787` |
+| 2026-06-20 | **部署监控与外部服务创建** | 监控 VS Code Claude Code 并按授权确认权限提示；Render CLI 创建 `trading-panda-market-monitor` 与 `trading-panda-backend` 两个 Web Service；Vercel 项目 link 到 `mooses-projects-b6ad2548/frontend` 并写入生产环境变量；`frontend/.env.local` 在 `vercel link` 覆盖后已恢复。 | Render 服务 URL 已写入 §3；本机 Wrangler session 当前未登录，但 Cloudflare Worker 部署事实以上一条记录为准；首次 Vercel production 构建失败（`@mysten/dapp-kit`/Sui prerender `transport` 错误），本地 `pnpm build` 在恢复 `.env.local` 后通过。 |
+| 2026-06-20 | **Vercel SSR prerender 修复并部署** | `frontend/src/app/layout.tsx` 改为 `next/dynamic` 加载 `Providers` 且 `ssr:false`，使 `@mysten/dapp-kit` / `SuiClientProvider` 仅在客户端初始化；Vercel `NEXT_PUBLIC_WS_URL` 更新为 Cloudflare WSS；从 `frontend/` 目录执行 production deploy。 | `pnpm build`、`pnpm type-check` 本地通过；Vercel deployment `dpl_J24cC82H4JEQRTRfeQdVLYNuqP1T` 状态 `Ready`，URL `https://frontend-pjvovgnsg-mooses-projects-b6ad2548.vercel.app`；公网访问仍被 Vercel Deployment Protection/SSO 拦截为 HTTP 401，需关闭保护后验收页面。 |

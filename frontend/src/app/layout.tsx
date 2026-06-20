@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import "@mysten/dapp-kit/dist/index.css";
 import "./globals.css";
-import { Providers } from "./providers";
+import dynamic from "next/dynamic";
+
+const Providers = dynamic(() => import("./providers").then((m) => m.Providers), {
+  ssr: false,
+});
 import { AppShell } from "@/components/layout/AppShell";
 import { Navbar } from "@/components/layout/Navbar";
 import { ProductCanvas } from "@/components/layout/ProductCanvas";
