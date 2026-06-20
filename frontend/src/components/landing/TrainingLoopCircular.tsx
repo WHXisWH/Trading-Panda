@@ -14,7 +14,7 @@ import {
 import { clsx } from "clsx";
 import { TRAINING_LOOP } from "@/lib/landing/landingContent";
 import { PandaCanvasRenderer } from "@/components/panda/PandaCanvasRenderer";
-import type { PandaCanvasRenderOptions } from "@/lib/pandaCanvasAssets";
+import { canvasTier, type PandaCanvasRenderOptions } from "@/lib/pandaCanvasAssets";
 import { DEFAULT_PANDA_STATS, type PandaEmotion } from "@/utils/pandaHelper";
 
 const LOOP_ICONS = [
@@ -43,6 +43,9 @@ const NODE_RADIUS = RING_RADIUS;
 const CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
 const GLOW_GREEN = "#6dff90";
+/** One visual experience tier per full loop (canvasTier steps every ~10). */
+const EXPERIENCE_PER_LOOP = 10;
+const MAX_EXPERIENCE = 100;
 
 /** Step 1 node sits at sector center — progress starts here, grows clockwise. */
 const RING_START_ANGLE = ((0.5) / SEGMENT_COUNT) * 360 - 90;
@@ -88,8 +91,7 @@ type LoopFillState = {
 export function TrainingLoopCircular() {
   const [fillState, setFillState] = useState<LoopFillState>({ activeIndex: 0, stepProgress: 0 });
   const [isRingComplete, setIsRingComplete] = useState(false);
-  const [xp, setXp] = useState(35);
-  const [level, setLevel] = useState(1);
+  const [experience, setExperience] = useState(DEFAULT_PANDA_STATS.experience);
   const [isEvolving, setIsEvolving] = useState(false);
 
   const { activeIndex, stepProgress } = fillState;
@@ -109,18 +111,19 @@ export function TrainingLoopCircular() {
           return { ...current, stepProgress: nextProgress };
         }
 
-        setXp((currentXp) => {
-          const added = currentXp + 100 / SEGMENT_COUNT;
-          if (added >= 100) {
-            setIsEvolving(true);
-            setLevel((l) => l + 1);
-            window.setTimeout(() => setIsEvolving(false), 700);
-            return 0;
-          }
-          return added;
-        });
-
         if (current.activeIndex >= SEGMENT_COUNT - 1) {
+          setExperience((currentExperience) => {
+            const prevTier = canvasTier(currentExperience);
+            const nextExperience = Math.min(
+              MAX_EXPERIENCE,
+              currentExperience + EXPERIENCE_PER_LOOP,
+            );
+            if (canvasTier(nextExperience) > prevTier) {
+              setIsEvolving(true);
+              window.setTimeout(() => setIsEvolving(false), 700);
+            }
+            return nextExperience;
+          });
           setIsRingComplete(true);
           window.setTimeout(() => {
             setIsRingComplete(false);
@@ -137,6 +140,7 @@ export function TrainingLoopCircular() {
   }, [isRingComplete]);
 
   const ActiveStepIcon = LOOP_ICONS[activeIndex];
+  const experienceTier = canvasTier(experience);
   const ringIsFull = isRingComplete || (activeIndex === SEGMENT_COUNT - 1 && stepProgress >= 1);
   const fillRatio = ringIsFull ? 1 : (activeIndex + stepProgress) / SEGMENT_COUNT;
   const filledLength = fillRatio * CIRCUMFERENCE;
@@ -257,7 +261,7 @@ export function TrainingLoopCircular() {
                   <PandaCanvasRenderer
                     stats={{
                       ...DEFAULT_PANDA_STATS,
-                      experience: Math.floor(xp),
+                      experience: Math.floor(experience),
                       emotion: getPandaEmotion(activeIndex),
                     }}
                     showBackground
@@ -278,11 +282,11 @@ export function TrainingLoopCircular() {
                 >
                   <div className="flex items-center gap-5">
                     <span className="font-mono text-[12px] font-black uppercase tracking-tighter text-product-gold">
-                      LVL {level}
+                      LVL {experienceTier}
                     </span>
                     <div className="h-4 w-px bg-product-line/30" />
                     <span className="font-mono text-[12px] font-black text-product-green">
-                      {Math.floor(xp)}% XP
+                      {Math.floor(experience)}% XP
                     </span>
                   </div>
                 </div>
