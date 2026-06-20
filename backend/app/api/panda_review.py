@@ -111,7 +111,16 @@ async def post_request_review(
     try:
         await _load_owned_panda(panda_id, user, db)
         data = await request_review(db, panda_id, trade_fact_id, source="manual")
-        await process_pending_jobs(db)
+        outcomes = []
+        # First pass creates TradeReview; second pass applies Skill Memory from review_completed.
+        outcomes.extend(await process_pending_jobs(db))
+        outcomes.extend(await process_pending_jobs(db))
+        review = await get_review_for_fact(db, trade_fact_id)
+        if review is not None:
+            data["review"] = review_to_dict(review)
+        data["jobs"] = outcomes
+        data["skill_memories"] = await list_skill_memories(db, panda_id, limit=5)
+        data["latest_skill_version"] = await get_latest_skill_version(db, panda_id)
     except ApiError as exc:
         return _api_error_response(exc)
     return JSONResponse(content=success(data))

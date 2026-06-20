@@ -50,7 +50,14 @@ export async function requestTradeReview(
   jwt: string,
   pandaId: string,
   tradeFactId: string,
-): Promise<{ trade_fact_id: string; status: string; job_id: string | null }> {
+): Promise<{
+  trade_fact_id: string;
+  status: string;
+  job_id: string | null;
+  review?: TradeReviewApi;
+  skill_memories?: SkillMemoryApi[];
+  latest_skill_version?: SkillVersionApi | null;
+}> {
   const res = await fetch(
     `/api/panda/${pandaId}/trade-facts/${tradeFactId}/review`,
     { method: "POST", headers: authHeaders(jwt) },

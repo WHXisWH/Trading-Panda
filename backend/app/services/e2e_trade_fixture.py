@@ -6,6 +6,7 @@ import json
 from typing import Any
 
 E2E_POSITION_PCT = 0.004
+E2E_SELL_POSITION_PCT = 0.005
 E2E_PERSONALITY: dict[str, int] = {
     "boldness": 100,
     "patience": 0,
@@ -32,6 +33,31 @@ def build_e2e_buy_strategy(pair: str) -> dict[str, Any]:
                 "condition": "< 30",
                 "threshold": 30.0,
                 "action": "BUY",
+            }
+        ],
+        "risk_management": {
+            "stop_loss_pct": 0.03,
+            "take_profit_pct": 0.06,
+            "max_drawdown_pct": 0.15,
+        },
+    }
+
+
+def build_e2e_sell_strategy(pair: str) -> dict[str, Any]:
+    return {
+        "philosophy": "contrarian",
+        "target_pairs": [pair],
+        "position_sizing": {
+            "type": "fixed",
+            "value": E2E_SELL_POSITION_PCT,
+            "scale_in": False,
+        },
+        "signal_rules": [
+            {
+                "indicator": "RSI",
+                "condition": "> 70",
+                "threshold": 70.0,
+                "action": "SELL",
             }
         ],
         "risk_management": {
@@ -74,3 +100,18 @@ def build_e2e_tick(pair: str = "DEEP-SUI") -> dict[str, Any]:
         "freshness_sec": 1.0,
         "health": "fresh",
     }
+
+
+def build_e2e_sell_tick(pair: str = "DEEP-SUI") -> dict[str, Any]:
+    tick = build_e2e_tick(pair)
+    tick.update(
+        {
+            "price": 0.024,
+            "prev_price": 0.0238,
+            "reference_price": 0.024,
+            "rsi": 82.0,
+            "market_regime": "bear",
+            "source": "manual_e2e_close_fixture",
+        }
+    )
+    return tick

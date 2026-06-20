@@ -8,11 +8,18 @@ interface EvidenceCourtroomProps {
 
 export function EvidenceCourtroom({ hypothesis }: EvidenceCourtroomProps) {
   return (
-    <section className="space-y-4 rounded-2xl border border-[var(--color-border)] bg-white p-5">
-      <h2 className="font-sans text-sm font-bold text-neutral-900">Evidence courtroom</h2>
+    <section className="ledger-surface space-y-5 p-5">
       <div>
-        <p className="text-[11px] uppercase tracking-wide text-neutral-500">Original thesis</p>
-        <p className="mt-1 text-[13px] text-neutral-800">{hypothesis.thesis}</p>
+        <p className="product-field-label">Evidence courtroom</p>
+        <h2 className="mt-1 font-sans text-lg font-black text-product-text">
+          Why the Panda learned
+        </h2>
+      </div>
+      <div>
+        <p className="product-field-label">Original thesis</p>
+        <p className="mt-2 rounded-xl border border-product-line bg-black/20 px-3 py-2 text-[13px] leading-relaxed text-product-text">
+          {hypothesis.thesis}
+        </p>
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <EvidenceList title="Confirming" items={hypothesis.confirming_evidence} tone="ok" />
@@ -39,19 +46,24 @@ function EvidenceList({
     <div
       className={
         tone === "ok"
-          ? "rounded-xl border border-emerald-100 bg-emerald-50/50 p-3"
-          : "rounded-xl border border-amber-100 bg-amber-50/50 p-3"
+          ? "rounded-xl border border-product-green/25 bg-product-green/[0.06] p-3 shadow-[inset_0_1px_0_rgba(109,255,144,0.08)]"
+          : "rounded-xl border border-product-gold/20 bg-product-gold/[0.045] p-3 shadow-[inset_0_1px_0_rgba(225,186,92,0.06)]"
       }
     >
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-neutral-600">
+      <p className="font-mono text-[10px] font-extrabold uppercase tracking-[0.16em] text-product-muted">
         {title}
       </p>
       {items.length === 0 ? (
-        <p className="mt-2 text-[12px] text-neutral-500">None recorded.</p>
+        <p className="mt-2 text-[12px] text-product-muted">None recorded.</p>
       ) : (
-        <ul className="mt-2 space-y-1.5 text-[12px] text-neutral-700">
+        <ul className="mt-2 space-y-1.5 text-[12px] leading-relaxed text-product-text">
           {items.map((item) => (
-            <li key={item}>• {item}</li>
+            <li key={item} className="flex gap-2">
+              <span className={tone === "ok" ? "text-product-green" : "text-product-gold"}>
+                •
+              </span>
+              <span>{item}</span>
+            </li>
           ))}
         </ul>
       )}

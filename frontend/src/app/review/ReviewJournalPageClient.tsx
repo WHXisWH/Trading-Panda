@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { ProductPageShell } from "@/components/layout/ProductPageShell";
 import { DisclosureL0 } from "@/lib/ui/disclosure";
@@ -22,6 +22,7 @@ import {
   fetchPandaReviews,
   fetchSkillMemories,
   fetchTradeFactReview,
+  requestTradeReview,
 } from "@/services/review.service";
 
 export default function ReviewJournalPageClient() {
@@ -29,6 +30,7 @@ export default function ReviewJournalPageClient() {
   const pandaId = searchParams.get("panda") ?? "";
   const tradeFactId = searchParams.get("fact") ?? "";
   const { jwt } = useAuth();
+  const queryClient = useQueryClient();
 
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [skillDiffOpen, setSkillDiffOpen] = useState(false);
@@ -44,6 +46,18 @@ export default function ReviewJournalPageClient() {
     queryKey: ["review", pandaId, tradeFactId, jwt],
     queryFn: () => fetchTradeFactReview(jwt!, pandaId, tradeFactId),
     enabled: !!jwt && !!pandaId && !!tradeFactId,
+  });
+
+  const requestReviewMutation = useMutation({
+    mutationFn: () => requestTradeReview(jwt!, pandaId, tradeFactId),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["review", pandaId, tradeFactId, jwt] }),
+        queryClient.invalidateQueries({ queryKey: ["reviews", pandaId, jwt] }),
+        queryClient.invalidateQueries({ queryKey: ["skill-memories", pandaId, jwt] }),
+        queryClient.invalidateQueries({ queryKey: ["skill-version", pandaId, jwt] }),
+      ]);
+    },
   });
 
   const review = useMemo(() => {
@@ -68,7 +82,7 @@ export default function ReviewJournalPageClient() {
     review?.skill_update?.memory ??
     skillMemories.find((m) => m.status === "verified" || m.status === "supported") ??
     null;
-  const skillUpdated = Boolean(review?.skill_update?.updated);
+  const skillUpdated = Boolean(review?.skill_update?.updated || activeMemory);
 
   if (!pandaId) {
     return (
@@ -88,8 +102,35 @@ export default function ReviewJournalPageClient() {
         description="Outcome story and realized PnL first. Evidence refs and skill diff stay in drawers."
       />
       {isLoading || !review || !hypothesis ? (
-        <div className="rounded-2xl border border-[var(--color-border)] p-8 text-center text-[13px] text-neutral-500">
-          {isLoading ? "Loading review…" : "No closed trade review available yet."}
+        <div className="ledger-surface p-8 text-center text-[13px] text-product-muted">
+          <p>
+            {isLoading
+              ? "Loading review…"
+              : tradeFactId
+                ? "No review has been created for this closed trade yet."
+                : "No closed trade review available yet."}
+          </p>
+          {tradeFactId && !review ? (
+            <div className="mt-4 flex flex-col items-center gap-2">
+              <Button
+                size="sm"
+                onClick={() => requestReviewMutation.mutate()}
+                disabled={!jwt || requestReviewMutation.isPending}
+              >
+                {requestReviewMutation.isPending ? "Reviewing…" : "Request review"}
+              </Button>
+              {requestReviewMutation.error ? (
+                <p className="max-w-md text-[12px] text-product-red">
+                  {(requestReviewMutation.error as Error).message}
+                </p>
+              ) : null}
+              {selectedReviewQuery.error && !requestReviewMutation.error ? (
+                <p className="max-w-md text-[12px] text-product-muted">
+                  Review is not available yet. Request it once the position is closed.
+                </p>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       ) : (
         <>
@@ -110,6 +151,13 @@ export default function ReviewJournalPageClient() {
             skillVersion={latestSkill ?? null}
             onViewDiff={() => setSkillDiffOpen(true)}
           />
+
+          {activeMemory ? (
+            <div className="rounded-2xl border border-product-green/25 bg-gradient-to-r from-product-green/[0.12] via-product-green/[0.04] to-transparent px-4 py-3 text-[13px] text-product-green shadow-[inset_0_1px_0_rgba(109,255,144,0.1)]">
+              <span className="font-semibold">Panda learned</span> this trade as skill
+              memory v{activeMemory.version}.
+            </div>
+          ) : null}
 
           <div className="flex flex-wrap gap-3">
             <Button variant="outline" size="sm" onClick={() => setEvidenceOpen(true)}>
@@ -134,7 +182,7 @@ export default function ReviewJournalPageClient() {
         title="Review evidence"
         description="Decision hash, trade fact refs, and snapshots."
       >
-        <pre className="overflow-x-auto rounded-lg bg-neutral-50 p-3 text-[11px] text-neutral-700">
+        <pre className="overflow-x-auto rounded-xl border border-product-line bg-black/30 p-3 text-[11px] leading-relaxed text-product-muted">
           {JSON.stringify(review?.evidence ?? {}, null, 2)}
         </pre>
       </Drawer>
@@ -146,11 +194,16 @@ export default function ReviewJournalPageClient() {
         title="Skill diff"
         description="Latest verified or supported memory entries."
       >
-        <ul className="space-y-3 text-[12px] text-neutral-700">
+        <ul className="space-y-3 text-[12px] text-product-text">
           {skillMemories.slice(0, 5).map((m) => (
-            <li key={m.id} className="rounded-lg border border-[var(--color-border)] p-3">
-              <p className="font-medium">v{m.version} · {m.status}</p>
-              <p className="mt-1">{m.rule_text}</p>
+            <li
+              key={m.id}
+              className="rounded-xl border border-product-line bg-white/[0.035] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
+            >
+              <p className="font-mono text-[11px] font-bold text-product-green">
+                v{m.version} · {m.status}
+              </p>
+              <p className="mt-2 leading-relaxed text-product-text">{m.rule_text}</p>
             </li>
           ))}
         </ul>
