@@ -7,6 +7,7 @@ import {
   strategyPath,
   trainingLedgerPath,
 } from "@/lib/ui/routeJump";
+import { legacyStrategyRedirectPath } from "@/lib/ui/strategyRedirect";
 
 describe("routeJump MVP journey", () => {
   it("builds agent wallet setup path", () => {
@@ -17,6 +18,7 @@ describe("routeJump MVP journey", () => {
 
   it("builds strategy and training paths", () => {
     expect(strategyPath("abc")).toBe("/training-ledger/abc?feed=strategy");
+    expect(legacyStrategyRedirectPath("abc")).toBe("/training-ledger/abc?feed=strategy");
     expect(trainingLedgerPath("abc")).toBe("/training-ledger/abc");
     expect(trainingLedgerPath("abc", { feedStrategy: true })).toBe(
       "/training-ledger/abc?feed=strategy",
